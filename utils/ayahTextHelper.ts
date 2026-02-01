@@ -4,13 +4,22 @@ import { SURAHS } from '../constants/surahData';
  * Get ayah text from local data or API
  * For now, returns a placeholder. In production, this should fetch from quran.json or API
  */
+let quranDataCache: any = null;
+
+/**
+ * Get ayah text from local data or API
+ */
 export async function getAyahText(surahNumber: number, ayahNumber: number): Promise<string> {
     try {
-        // Try to use local quran.json first
-        const response = await fetch('/quran.json');
-        if (response.ok) {
-            const data = await response.json();
-            const surah = data.data?.surahs?.[surahNumber - 1];
+        if (!quranDataCache) {
+            const response = await fetch('/quran.json');
+            if (response.ok) {
+                quranDataCache = await response.json();
+            }
+        }
+
+        if (quranDataCache) {
+            const surah = quranDataCache.data?.surahs?.[surahNumber - 1];
             if (surah) {
                 const ayah = surah.ayahs?.find((a: any) => a.numberInSurah === ayahNumber);
                 if (ayah && ayah.text) {
@@ -46,14 +55,18 @@ export async function getAyahText(surahNumber: number, ayahNumber: number): Prom
 export async function getAyahTexts(ayahRefs: Array<{ surahNumber: number; ayahNumber: number }>): Promise<Map<string, string>> {
     const results = new Map<string, string>();
 
-    // Try loading from local file first for better performance
+    // Try loading from local cache first
     try {
-        const response = await fetch('/quran.json');
-        if (response.ok) {
-            const data = await response.json();
+        if (!quranDataCache) {
+            const response = await fetch('/quran.json');
+            if (response.ok) {
+                quranDataCache = await response.json();
+            }
+        }
 
+        if (quranDataCache) {
             ayahRefs.forEach(ref => {
-                const surah = data.data?.surahs?.[ref.surahNumber - 1];
+                const surah = quranDataCache.data?.surahs?.[ref.surahNumber - 1];
                 if (surah) {
                     const ayah = surah.ayahs?.find((a: any) => a.numberInSurah === ref.ayahNumber);
                     if (ayah && ayah.text) {
@@ -68,7 +81,7 @@ export async function getAyahTexts(ayahRefs: Array<{ surahNumber: number; ayahNu
             }
         }
     } catch (error) {
-        console.warn('Batch load from local failed, will try one by one');
+        console.warn('Batch load from cache failed, will try fallback');
     }
 
     // Fallback: fetch missing ones individually

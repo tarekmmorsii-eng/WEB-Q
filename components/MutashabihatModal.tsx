@@ -44,6 +44,13 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
         const ruleWords = rule.rule.trim().split(/\s+/);
         if (ruleWords.length === 0) return;
 
+        const colors = {
+            'START': '#10b981', // Green
+            'END': '#ef4444',   // Red
+            'MIDDLE': '#3b82f6', // Blue
+            'OTHER': '#d97706'  // Amber
+        };
+
         for (let i = 0; i <= words.length - ruleWords.length; i++) {
             let match = true;
             for (let j = 0; j < ruleWords.length; j++) {
@@ -53,11 +60,19 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
                 }
             }
             if (match) {
+                // Smart Type Detection based on position in this specific ayah text
+                let effectiveType = rule.type;
+                if (i === 0) effectiveType = 'START';
+                else if (i + ruleWords.length === words.length) effectiveType = 'END';
+                else effectiveType = 'MIDDLE';
+
+                const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
+
                 for (let j = 0; j < ruleWords.length; j++) {
                     // Only color if not already colored by a higher-priority rule
                     if (!wordInfos[i + j].color) {
-                        wordInfos[i + j].color = rule.color;
-                        wordInfos[i + j].type = rule.type;
+                        wordInfos[i + j].color = effectiveColor;
+                        wordInfos[i + j].type = effectiveType;
                         wordInfos[i + j].isBold = true;
                     }
                 }

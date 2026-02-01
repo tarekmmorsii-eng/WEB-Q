@@ -13,12 +13,17 @@ import { getMatchingWords } from '../utils/similarityCalculator';
 // For now, I will inline a version of it here or refactor later.
 // Let's create a local version to ensure stability.
 
-function HighlightingText({ text, absoluteAyahNumber, rules: manualRules }: { text: string, absoluteAyahNumber?: number, rules?: any[] }) {
+function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRule }: { text: string, absoluteAyahNumber?: number, rules?: any[], onlyRule?: string }) {
     if (!text) return <span className="text-gray-800 dark:text-gray-200">{text}</span>;
 
     // Get all rules for this ayah from the global map PLUS any manual rules passed
     const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
-    const allRules = [...autoRules];
+    let allRules = [...autoRules];
+
+    // Filter by specific rule if requested
+    if (onlyRule) {
+        allRules = allRules.filter(r => r.rule === onlyRule);
+    }
 
     // Add manual rules if not already present
     if (manualRules) {
@@ -47,6 +52,13 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules }: { te
         const ruleWords = rule.rule.trim().split(/\s+/);
         if (ruleWords.length === 0) return;
 
+        const colors = {
+            'START': '#10b981', // Green
+            'END': '#ef4444',   // Red
+            'MIDDLE': '#3b82f6', // Blue
+            'OTHER': '#d97706'  // Amber
+        };
+
         for (let i = 0; i <= words.length - ruleWords.length; i++) {
             let match = true;
             for (let j = 0; j < ruleWords.length; j++) {
@@ -56,11 +68,19 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules }: { te
                 }
             }
             if (match) {
+                // Smart Type Detection based on position in this specific ayah text
+                let effectiveType = rule.type;
+                if (i === 0) effectiveType = 'START';
+                else if (i + ruleWords.length === words.length) effectiveType = 'END';
+                else effectiveType = 'MIDDLE';
+
+                const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
+
                 for (let j = 0; j < ruleWords.length; j++) {
                     // Only color if not already colored by a higher-priority rule
                     if (!wordInfos[i + j].color) {
-                        wordInfos[i + j].color = rule.color;
-                        wordInfos[i + j].type = rule.type;
+                        wordInfos[i + j].color = effectiveColor;
+                        wordInfos[i + j].type = effectiveType;
                         wordInfos[i + j].isBold = true;
                     }
                 }
@@ -121,25 +141,49 @@ export default function MutashabihatIndex({
     // Load texts dynamically when Surah changes
     useEffect(() => {
         const loadTexts = async () => {
+            if (currentSurahMutashabihat.length === 0) return;
             setIsLoading(true);
-            const enriched: Mutashabiha[] = [];
 
-            for (const mut of currentSurahMutashabihat) {
-                // Fetch Source Text if missing
-                const sourceText = mut.sourceAyah.text || await getAyahText(mut.sourceAyah.surahNumber, mut.sourceAyah.ayahNumber);
+            // Collect all unique aya refs needed
+            const refsSet = new Set<string>();
+            const uniqueRefs: Array<{ surahNumber: number; ayahNumber: number }> = [];
 
-                // Fetch Similar Texts
-                const similarWithTexts = await Promise.all(mut.similarAyahs.map(async (sim) => {
-                    const simText = sim.text || await getAyahText(sim.surahNumber, sim.ayahNumber);
-                    return { ...sim, text: simText };
-                }));
+            currentSurahMutashabihat.forEach(mut => {
+                const sKey = `${mut.sourceAyah.surahNumber}-${mut.sourceAyah.ayahNumber}`;
+                if (!refsSet.has(sKey)) {
+                    refsSet.add(sKey);
+                    uniqueRefs.push({ surahNumber: mut.sourceAyah.surahNumber, ayahNumber: mut.sourceAyah.ayahNumber });
+                }
 
-                enriched.push({
-                    ...mut,
-                    sourceAyah: { ...mut.sourceAyah, text: sourceText },
-                    similarAyahs: similarWithTexts
+                mut.similarAyahs.forEach(sim => {
+                    const simKey = `${sim.surahNumber}-${sim.ayahNumber}`;
+                    if (!refsSet.has(simKey)) {
+                        refsSet.add(simKey);
+                        uniqueRefs.push({ surahNumber: sim.surahNumber, ayahNumber: sim.ayahNumber });
+                    }
                 });
-            }
+            });
+
+            // Batch fetch all texts
+            const { getAyahTexts } = await import('../utils/ayahTextHelper');
+            const textsMap = await getAyahTexts(uniqueRefs);
+
+            // Enrich the data
+            const enriched = currentSurahMutashabihat.map(mut => {
+                const sourceKey = `${mut.sourceAyah.surahNumber}-${mut.sourceAyah.ayahNumber}`;
+                return {
+                    ...mut,
+                    sourceAyah: {
+                        ...mut.sourceAyah,
+                        text: mut.sourceAyah.text || textsMap.get(sourceKey) || ''
+                    },
+                    similarAyahs: mut.similarAyahs.map(sim => ({
+                        ...sim,
+                        text: sim.text || textsMap.get(`${sim.surahNumber}-${sim.ayahNumber}`) || ''
+                    }))
+                };
+            });
+
             setEnrichedMutashabihat(enriched);
             setIsLoading(false);
         };
@@ -202,10 +246,42 @@ export default function MutashabihatIndex({
             targets.forEach(t => {
                 const ruleKey = t.rule || 'OTHER';
                 if (!groups[ruleKey]) {
+                    // Smart Position Detection for the Group Header
+                    const textWords = (t.text || "").trim().split(/\s+/).filter(w => w.length > 0);
+                    const ruleWords = (t.rule || "").trim().split(/\s+/).filter(w => w.length > 0);
+
+                    let detectedType = t.ruleType || 'OTHER';
+
+                    if (textWords.length > 0 && ruleWords.length > 0) {
+                        // Find first occurrence in the target text
+                        for (let i = 0; i <= textWords.length - ruleWords.length; i++) {
+                            let match = true;
+                            for (let j = 0; j < ruleWords.length; j++) {
+                                if (textWords[i + j] !== ruleWords[j]) {
+                                    match = false;
+                                    break;
+                                }
+                            }
+                            if (match) {
+                                if (i === 0) detectedType = 'START';
+                                else if (i + ruleWords.length === textWords.length) detectedType = 'END';
+                                else detectedType = 'MIDDLE';
+                                break;
+                            }
+                        }
+                    }
+
+                    const colors = {
+                        'START': '#10b981',
+                        'END': '#ef4444',
+                        'MIDDLE': '#3b82f6',
+                        'OTHER': '#d97706'
+                    };
+
                     groups[ruleKey] = {
                         rule: t.rule || '',
-                        ruleType: t.ruleType || 'OTHER',
-                        ruleColor: t.ruleColor || '#d97706',
+                        ruleType: detectedType,
+                        ruleColor: (colors as any)[detectedType] || colors.OTHER,
                         ayahs: new Map()
                     };
                 }
@@ -230,13 +306,9 @@ export default function MutashabihatIndex({
             ...g,
             ayahs: Array.from(g.ayahs.values()).sort((a, b) => a.ayahNumber - b.ayahNumber)
         })).sort((a, b) => {
-            // Sort groups: START first, then END, then MIDDLE
-            const priority = { 'START': 1, 'END': 2, 'MIDDLE': 3, 'OTHER': 4 };
-            const pA = priority[a.ruleType as keyof typeof priority] || 5;
-            const pB = priority[b.ruleType as keyof typeof priority] || 5;
-            if (pA !== pB) return pA - pB;
-            // Shortest rules first for START (broad groups first)
-            return a.rule.length - b.rule.length;
+            const ruleA = a.rule || "";
+            const ruleB = b.rule || "";
+            return ruleA.localeCompare(ruleB, 'ar');
         });
     }, [inside]);
 
@@ -531,21 +603,32 @@ function MutashabihaCard({ item }: { item: { mut: Mutashabiha, targets: any[] } 
 }
 
 function InternalGroupSection({ group }: { group: any }) {
-    const { rule, ruleColor, ayahs } = group;
+    const { rule, ruleType, ruleColor, ayahs } = group;
+
+    const typeDesc = ruleType === 'START' ? 'اللون الأخضر للمتشابه في بداية الآيات' :
+        ruleType === 'END' ? 'اللون الأحمر للمتشابه في نهاية الآيات' :
+            ruleType === 'MIDDLE' ? 'اللون الأزرق للمتشابه في وسط الآيات' : '';
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden mb-6 border-r-4" style={{ borderRightColor: ruleColor }}>
             {/* Group Header - Book Style */}
-            <div className="p-3 bg-gray-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between" dir="rtl">
-                <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold" style={{ color: ruleColor }}>*</span>
-                    <span className="font-bold text-lg" style={{ color: ruleColor }}>
-                        ({rule}) :
+            <div className="p-3 bg-gray-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-800 flex flex-col gap-1" dir="rtl">
+                <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xl font-bold" style={{ color: ruleColor }}>*</span>
+                        <span className="font-bold text-lg" style={{ color: ruleColor }}>
+                            ({rule}) :
+                        </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded uppercase">
+                        {ayahs.length} مواضع
                     </span>
                 </div>
-                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded uppercase">
-                    {ayahs.length} مواضع
-                </span>
+                {typeDesc && (
+                    <div className="text-[10px] font-medium opacity-70 pr-5" style={{ color: ruleColor }}>
+                        {typeDesc}
+                    </div>
+                )}
             </div>
 
             {/* Ayahs List */}
@@ -556,6 +639,7 @@ function InternalGroupSection({ group }: { group: any }) {
                             <HighlightingText
                                 text={ayah.text}
                                 absoluteAyahNumber={ayah.absoluteAyahNumber}
+                                onlyRule={rule}
                             />
                             <span className="inline-flex mr-2 text-sm font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30 whitespace-nowrap">
                                 ({ayah.ayahNumber})
