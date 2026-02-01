@@ -315,6 +315,12 @@ export default function MutashabihatIndex({
         })).sort((a, b) => {
             const ruleA = a.rule || "";
             const ruleB = b.rule || "";
+
+            // Push "الأمر بذكر الله" to the end
+            const specialRule = "الأمر بذكر الله";
+            if (ruleA === specialRule && ruleB !== specialRule) return 1;
+            if (ruleB === specialRule && ruleA !== specialRule) return -1;
+
             return ruleA.localeCompare(ruleB, 'ar');
         });
     }, [inside]);

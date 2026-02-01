@@ -297,6 +297,11 @@ export default function MutashabihatModal({
                                         const ruleB = b.rule || "";
 
                                         if (ruleA !== ruleB) {
+                                            // Special case: push "الأمر بذكر الله" to bottom of section
+                                            const specialRule = "الأمر بذكر الله";
+                                            if (ruleA === specialRule) return 1;
+                                            if (ruleB === specialRule) return -1;
+
                                             return ruleA.localeCompare(ruleB, 'ar');
                                         }
                                         // Then by surah/ayah
