@@ -229,8 +229,8 @@ export async function getProcessedMutashabihat(): Promise<Mutashabiha[]> {
         console.log("📂 Processing new JSON mutashabihat data...");
         const jsonData = await processMutashabihatData(MUTASHABIHAT_DATA_FULL as any);
 
-        const coreResults = await Promise.all(corePromises);
-        allMutashabihat = [...coreResults.flat(), ...jsonData, ...customData];
+        // const coreResults = await Promise.all(corePromises);
+        allMutashabihat = [...jsonData, ...customData];
 
         console.log(`✅ Loaded ${allMutashabihat.length} total associations (${jsonData.length} from JSON).`);
         cachedProcessedMutashabihat = allMutashabihat;
