@@ -1,0 +1,62 @@
+=== Tablet Portrait Success Settings (Golden Reference) ===
+Date: 2026-01-03
+Status: PERFECT STABILITY
+
+1. CSS Rules (in index.css):
+----------------------------
+/* 🔒 ROBUST TABLET PADDING - Enforced via JS detection */
+.mushaf-page-qpc[data-device-type="tablet"] {
+  padding: 50px 70px !important;
+}
+
+/* Tablet Font Adjustments & STRICT LINE LOCKING */
+.mushaf-page-qpc[data-device-type="tablet"] [class*="quran-text-"],
+.mushaf-page-qpc[data-device-type="tablet"] [class*="qpc-font-page-"] {
+  /* Font Size: 26px (Maximize Readability) */
+  font-size: clamp(26px, 3.8vh, 38px) !important;
+  
+  /* Font Weight: Bold (Maximize Clarity) */
+  font-weight: bold !important;
+
+  /* 🔒 STRICT LINE HEIGHT: Force exactly 1/15th of available space */
+  /* Calculation: (100dvh - 110px padding) / 15 lines */
+  line-height: calc((100dvh - 110px) / 15) !important;
+  height: calc((100dvh - 110px) / 15) !important;
+  
+  /* Flexbox centering to lock glyphs vertically */
+  display: flex !important;
+  align-items: center !important;
+}
+
+2. Component Logic (in QPCV1PageRenderer.tsx):
+----------------------------------------------
+A. Device Detection (Immediate No-Flash):
+   const getInitialDeviceType = () => { ... logic ... }
+   const [deviceType, setDeviceType] = useState(getInitialDeviceType);
+
+B. Container Styles (Tablet Portrait):
+   case 'tablet':
+       return {
+           width: '100vw',
+           minHeight: '100dvh',
+           padding: '50px 70px',
+           paddingBottom: '20px', // Space above footer
+           display: 'flex',
+           flexDirection: 'column',
+           justifyContent: 'space-between',
+           position: 'relative'
+       };
+
+C. Footer Styling (The "Nuclear" Fix):
+   style={{
+       position: 'fixed', // Pins to viewport bottom
+       bottom: '0',
+       left: '0',
+       right: '0',
+       zIndex: 50,
+       backgroundColor: 'var(--bg-primary)'
+   }}
+
+3. HTML Cache Busting (in index.html):
+--------------------------------------
+<script src="/index.tsx?v=2026-01-03-v1"></script>

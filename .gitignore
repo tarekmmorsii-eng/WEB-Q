@@ -1,0 +1,49 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Backups and temporary files
+*.backup
+*.backup_*
+*.broken_*
+*.corrupted
+*.corrupted_*
+*.old_*
+*_NEW.txt
+temp_*.txt
+*.tmp
+*.bak
+
+# Production builds
+hostinger-upload/
+hostinger-upload.zip
+
+# Environment
+.env
+.env.*
+
+# Temporary data/audit scripts (Optional - keep if you want them on GitHub)
+# *.cjs
+# *.mjs
+# *.py

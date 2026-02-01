@@ -1,0 +1,113 @@
+================================================================================
+FINAL SUCCESS SETTINGS FOR V2 RENDERER (ALL DEVICES)
+DATE: 2026-01-12
+STATUS: VERIFIED & WORKING
+================================================================================
+
+--------------------------------------------------------------------------------
+1. DEVICE DETECTION LOGIC (QPCV2PageRenderer.tsx)
+--------------------------------------------------------------------------------
+This logic ensures Tablets (even wide ones) are not mistaken for Desktops.
+
+const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>(() => {
+    if (typeof window !== 'undefined') {
+        const width = window.innerWidth;
+        const isTouch = window.matchMedia('(pointer: coarse)').matches;
+        
+        if (isTouch) {
+            if (width < 900) return 'mobile';
+            return 'tablet'; 
+        } else {
+            // Golden Settings Alignment: Desktop starts at > 1366
+            if (width >= 1367) return 'desktop'; 
+            if (width > 700) return 'tablet';
+            return 'mobile';
+        }
+    }
+    return 'desktop';
+});
+
+const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => {
+    if (typeof window !== 'undefined') {
+        return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    }
+    return 'portrait';
+});
+
+// Listener in useEffect:
+useEffect(() => {
+    const handleResize = () => {
+        const width = window.innerWidth;
+        const isTouch = window.matchMedia('(pointer: coarse)').matches;
+        const isMobile = window.matchMedia('(max-width: 899px) and (hover: none) and (pointer: coarse)').matches;
+        const isTablet = window.matchMedia('(min-width: 900px) and (max-width: 1366px) and (hover: none) and (pointer: coarse)').matches;
+        const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+
+        if (isMobile) {
+            setDeviceType('mobile');
+        } else if (isTablet) {
+            setDeviceType('tablet');
+        } else if (isDesktop) {
+            setDeviceType('desktop');
+        } else {
+            if (isTouch) {
+                if (width < 900) setDeviceType('mobile');
+                else setDeviceType('tablet'); 
+            } else {
+                if (width >= 1367) setDeviceType('desktop');
+                else if (width > 700) setDeviceType('tablet'); 
+                else setDeviceType('mobile'); 
+            }
+        }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+}, []);
+
+// Render:
+<div 
+    data-device-type={deviceType} 
+    data-orientation={orientation}
+    ...
+>
+
+--------------------------------------------------------------------------------
+2. CSS RULES (index.css)
+--------------------------------------------------------------------------------
+
+/* A. Desktop Safety (Avoids Tablets) */
+@media (min-width: 1367px) {
+  /* Desktop styles... */
+}
+
+/* B. Mobile Landscape (40px) */
+.mushaf-page-qpc[data-device-type="mobile"][data-orientation="landscape"] .qpc-v2-text {
+  font-size: 40px !important;
+  font-weight: bold !important;
+  line-height: 2.2 !important;
+  display: inline-block !important;
+}
+
+/* C. Tablet Landscape (42px + Max Width) */
+.mushaf-page-qpc[data-device-type="tablet"][data-orientation="landscape"] {
+  padding: 30px 5% !important;
+  max-width: 1000px !important;
+  overflow-y: auto !important;
+  display: block !important;
+}
+
+.mushaf-page-qpc[data-device-type="tablet"][data-orientation="landscape"] .qpc-v2-text {
+  font-size: 42px !important;
+  font-weight: bold !important;
+  line-height: 2.2 !important;
+  display: inline-block !important;
+}
+
+/* D. Portrait Restrictions */
+@media screen {
+  .mushaf-page-qpc[data-device-type="tablet"][data-orientation="portrait"] .qpc-v2-text {
+    display: flex !important; /* Retain flex/center for portrait lines */
+  }
+}

@@ -1,0 +1,697 @@
+import React, { useState } from 'react';
+import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning } from 'lucide-react';
+import clsx from 'clsx';
+import { AppSettings, BottomBarSettings } from '../types';
+import { THEMES, Theme } from '../constants/themes';
+import { translations, LANGUAGE_NAMES, Language } from '../i18n/translations';
+import { loadQPCV1Data, SURAH_NAMES } from './QPCV1PageRenderer';
+import HelpModal from './HelpModal';
+
+interface SettingsProps {
+    isOpen: boolean;
+    onClose: () => void;
+    settings: AppSettings;
+    onSave: (settings: AppSettings) => void;
+    currentLanguage: Language;
+    onOpenIndex?: () => void;
+    onOpenSearch?: () => void;
+    onOpenMemorization?: () => void;
+    onOpenNotifications?: () => void;
+    onOpenMutashabihat?: () => void;
+    onOpenColorPicker?: () => void;
+    onTogglePageBookmark?: () => void;
+    isPageBookmarked?: boolean;
+    hasUpdate?: boolean;
+    onUpdateApp?: () => void;
+}
+
+export default function Settings({
+    isOpen, onClose, settings, onSave, currentLanguage,
+    onOpenIndex, onOpenSearch, onOpenMemorization,
+    onOpenNotifications, onOpenMutashabihat, onOpenColorPicker,
+    onTogglePageBookmark, isPageBookmarked,
+    hasUpdate = false,
+    onUpdateApp
+}: SettingsProps) {
+    const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
+    const t = translations[currentLanguage];
+    const [isExporting, setIsExporting] = useState(false);
+    const [showAllSettings, setShowAllSettings] = useState(false);
+    const [showHelpModal, setShowHelpModal] = useState(false);
+
+    // ---------------------------
+    // Offline & PWA Manager
+    // ---------------------------
+    const [installPrompt, setInstallPrompt] = useState<any>(null);
+    const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    React.useEffect(() => {
+        // 1. Capture install prompt
+        const handleBeforeInstallPrompt = (e: any) => {
+            e.preventDefault();
+            setInstallPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        // 2. Listen for SW progress
+        const handleMessage = (event: MessageEvent) => {
+            const data = event.data;
+            if (data.type === 'DOWNLOAD_START') {
+                setIsDownloading(true);
+                setDownloadProgress(0);
+            } else if (data.type === 'DOWNLOAD_PROGRESS') {
+                const percent = Math.round((data.count / data.total) * 100);
+                setDownloadProgress(percent);
+            } else if (data.type === 'DOWNLOAD_COMPLETE') {
+                setIsDownloading(false);
+                setDownloadProgress(100);
+                setTimeout(() => setDownloadProgress(null), 3000); // Hide after 3s
+            }
+        };
+
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.addEventListener('message', handleMessage);
+        }
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            if (navigator.serviceWorker) {
+                navigator.serviceWorker.removeEventListener('message', handleMessage);
+            }
+        };
+    }, []);
+
+    const handleInstallApp = () => {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        installPrompt.userChoice.then((choiceResult: any) => {
+            if (choiceResult.outcome === 'accepted') {
+                setInstallPrompt(null);
+            }
+        });
+    };
+
+    const handleDownloadAllFonts = () => {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            setIsDownloading(true);
+            setDownloadProgress(0);
+            navigator.serviceWorker.controller.postMessage('CACHE_ALL_FONTS');
+        } else {
+            alert(currentLanguage === 'ar' ? 'Service Worker غير نشط. يرجى تحديث الصفحة والمحاولة مرة أخرى.' : 'Service Worker is inactive. Please refresh the page and try again.');
+        }
+    };
+
+    // مزامنة الإعدادات المحلية عند فتح القائمة أو تغيير الإعدادات الخارجية
+    // مزامنة الإعدادات المحلية عند تغيير الإعدادات الخارجية
+    React.useEffect(() => {
+        setLocalSettings(settings);
+    }, [settings]);
+
+    // إعادة تعيين واجهة المستخدم عند فتح القائمة
+    React.useEffect(() => {
+        if (isOpen) {
+            setLocalSettings(settings); // Ensure fresh start
+            setShowAllSettings(false);
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleSave = () => {
+        onSave(localSettings);
+        onClose();
+    };
+
+    const toggleBottomBarItem = (key: keyof BottomBarSettings) => {
+        setLocalSettings(prev => ({
+            ...prev,
+            bottomBar: {
+                ...prev.bottomBar,
+                [key]: !prev.bottomBar[key]
+            }
+        }));
+    };
+
+
+
+    const handleExportReviewData = async () => {
+        setIsExporting(true);
+        try {
+            const data = await loadQPCV1Data();
+            let csvContent = "\uFEFF" + (currentLanguage === 'ar' ? "رقم الجزء,رقم الصفحة,اسم آخر سورة,رقم آخر آية" : "Juz,Page,Last Surah,Last Ayah") + "\n";
+
+            for (let i = 1; i <= 604; i++) {
+                const pageNum = i;
+                const page = data.pages[i - 1];
+
+                // حساب الجزء تقريبي (نفس المستخدم في التذييل)
+                const juz = Math.ceil((pageNum * 30) / 604);
+
+                let lastSurahName = "غير معروف";
+                let lastAyahNumber = 0;
+
+                // البحث العكسي عن آخر آية في الصفحة
+                if (page && page.lines) {
+                    // نبحث من آخر سطر صعوداً
+                    for (let l = page.lines.length - 1; l >= 0; l--) {
+                        const line = page.lines[l];
+                        if (line.words) {
+                            // نبحث من آخر كلمة في السطر يساراً
+                            for (let w = line.words.length - 1; w >= 0; w--) {
+                                const word = line.words[w];
+                                // الشرط: الكلمة تملك رقم سورة ورقم آية
+                                if (word.surah && word.ayah) {
+                                    lastSurahName = SURAH_NAMES[word.surah] || "";
+                                    lastAyahNumber = word.ayah;
+                                    break;
+                                }
+                            }
+                        }
+                        if (lastAyahNumber !== 0) break;
+                    }
+                }
+
+                csvContent += `${juz},${pageNum},${lastSurahName},${lastAyahNumber}\n`;
+            }
+
+            // تحميل الملف
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "quran_page_review.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (error) {
+            console.error(error);
+            alert(t.error);
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleClearAllData = async () => {
+        const confirmed = confirm(t.confirmClearData);
+
+        if (!confirmed) return;
+
+        try {
+            // 1. Clear localStorage
+            localStorage.clear();
+
+            // 2. Clear Service Worker caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+
+            // 3. Unregister Service Workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map(reg => reg.unregister()));
+            }
+
+            // 4. Reload the page to apply changes
+            window.location.reload();
+        } catch (error) {
+            console.error('Error clearing data:', error);
+            alert(t.error);
+        }
+    };
+
+    const currentTheme = THEMES.find(th => th.id === localSettings.theme) || THEMES[0];
+
+    const quickAccessButtons = [
+        { icon: Menu, label: t.index, onClick: onOpenIndex },
+        { icon: Search, label: t.search, onClick: onOpenSearch },
+        { icon: BarChart3, label: t.memorizationStats, onClick: onOpenMemorization },
+        { icon: Bell, label: t.notifications, onClick: onOpenNotifications },
+        { icon: FileWarning, label: currentLanguage === 'ar' ? 'المتشابهات' : 'Similar Verses', onClick: onOpenMutashabihat },
+    ];
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[96vh] md:max-h-[90vh] flex flex-col overflow-hidden border border-amber-200/20 dark:border-slate-700">
+                {/* Header - Non-sticky since parent is flex-col */}
+                <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 p-4 flex justify-between items-center shrink-0 z-10">
+                    <div className="flex items-center gap-3">
+                        <img
+                            src="/final_logo.png"
+                            alt="Logo"
+                            className="w-10 h-10 rounded-full border border-amber-500/30"
+                        />
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            {t.settingsTitle}
+                            {hasUpdate && (
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                                    <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider animate-pulse select-none">
+                                        {t.tinyUpdate}
+                                    </span>
+                                </div>
+                            )}
+                        </h2>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                    >
+                        <X size={24} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                </div>
+
+                {/* Scrollable Content wrapper */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-8 min-h-0">
+                    {/* Quick Access Buttons */}
+                    <section>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {quickAccessButtons.map((btn, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        onClose();
+                                        btn.onClick?.();
+                                    }}
+                                    className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <btn.icon size={24} className="text-amber-600 dark:text-amber-500" />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">{btn.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Toggle Buttons Row */}
+                        <div className="grid grid-cols-4 gap-3 mt-3">
+                            {/* Dark/Light Mode Toggle */}
+                            <button
+                                onClick={() => {
+                                    const currentTheme = THEMES.find(th => th.id === localSettings.theme) || THEMES[0];
+                                    const newThemeId = currentTheme.isDark ? 'classic-mushaf' : 'calm-night';
+                                    const updatedSettings = { ...localSettings, theme: newThemeId };
+                                    setLocalSettings(updatedSettings);
+                                    onSave(updatedSettings);
+                                    onClose();
+                                }}
+                                className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                {currentTheme.isDark ? <Sun size={24} className="text-amber-600 dark:text-amber-500" /> : <Moon size={24} className="text-amber-600 dark:text-amber-500" />}
+                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                    {currentTheme.isDark ? t.lightMode : t.darkMode}
+                                </span>
+                            </button>
+
+                            {/* Prayer Mode Toggle */}
+                            <button
+                                onClick={() => {
+                                    const updatedSettings = { ...localSettings, prayerMode: !localSettings.prayerMode };
+                                    setLocalSettings(updatedSettings);
+                                    onSave(updatedSettings);
+                                    onClose();
+                                }}
+                                className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                <MousePointer2
+                                    size={24}
+                                    className="text-amber-600 dark:text-amber-500"
+                                    fill={localSettings.prayerMode ? "currentColor" : "none"}
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{t.prayerMode}</span>
+                            </button>
+
+                            {/* Page Bookmark Toggle */}
+                            <button
+                                onClick={() => {
+                                    onTogglePageBookmark?.();
+                                    onClose();
+                                }}
+                                className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                <Bookmark
+                                    size={24}
+                                    className="text-amber-600 dark:text-amber-500"
+                                    fill={isPageBookmarked ? "currentColor" : "none"}
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{t.bookmark}</span>
+                            </button>
+
+                            {/* Fullscreen Toggle (hide on iOS) */}
+                            {!(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
+                                <button
+                                    onClick={() => {
+                                        const doc = document as any;
+                                        const docEl = document.documentElement as any;
+                                        const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement;
+
+                                        if (!isFullscreen) {
+                                            if (docEl.requestFullscreen) docEl.requestFullscreen();
+                                            else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+                                        } else {
+                                            if (doc.exitFullscreen) doc.exitFullscreen();
+                                            else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+                                        }
+                                        onClose();
+                                    }}
+                                    className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <Maximize size={24} className="text-amber-600 dark:text-amber-500" />
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.fullscreen}</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* More Settings Toggle Button */}
+                        <button
+                            onClick={() => setShowAllSettings(!showAllSettings)}
+                            className="w-full mt-4 flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white dark:bg-slate-700 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                                    <Settings2 size={20} className="text-gray-600 dark:text-gray-300" />
+                                </div>
+                                <span className="font-medium text-gray-900 dark:text-white">
+                                    {showAllSettings ? t.hideDetailedSettings : t.moreSettings}
+                                </span>
+                            </div>
+                            {showAllSettings ? (
+                                <ChevronUp size={20} className="text-gray-500" />
+                            ) : (
+                                <ChevronDown size={20} className="text-gray-500" />
+                            )}
+                        </button>
+                    </section>
+
+                    {showAllSettings && (
+                        <>
+
+                            {/* Language Selection */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Globe size={20} />
+                                    {t.languages}
+                                </h3>
+                                <select
+                                    value={localSettings.language}
+                                    onChange={(e) => setLocalSettings(prev => ({ ...prev, language: e.target.value }))}
+                                    className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                                >
+                                    {Object.entries(LANGUAGE_NAMES).map(([code, name]) => (
+                                        <option key={code} value={code}>{name}</option>
+                                    ))}
+                                </select>
+                            </section>
+
+
+
+                            {/* Color Themes */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Palette size={20} />
+                                    {t.colorThemes}
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        onClose(); // Close settings modal
+                                        onOpenColorPicker?.(); // Open Color Picker Modal
+                                    }}
+                                    className="w-full p-6 rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-700 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800/50 transition-all flex flex-col items-center justify-center gap-3 group"
+                                >
+                                    <div className="flex -space-x-2">
+                                        <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-white dark:border-slate-800" />
+                                        <div className="w-8 h-8 rounded-full bg-blue-200 border-2 border-white dark:border-slate-800" />
+                                        <div className="w-8 h-8 rounded-full bg-green-200 border-2 border-white dark:border-slate-800" />
+                                    </div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300 group-hover:text-amber-700 dark:group-hover:text-amber-400">
+                                        {t.selectTheme || 'اختر نمط الألوان'}
+                                    </span>
+                                </button>
+
+                                {/* Color Stop Signs Toggle */}
+                                <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer mt-4">
+                                    <span className="text-gray-900 dark:text-white flex items-center gap-2">
+                                        {t.colorStopSigns || 'تلوين علامات الوقف'}
+                                        <span className="text-3xl text-amber-600 dark:text-amber-500 font-serif mx-4 gap-4 flex items-center">
+                                            <span>ۘ</span> <span>ۚ</span> <span>ۖ</span> <span>ۗ</span> <span>ۙ</span> <span>ۛ</span>
+                                        </span>
+                                    </span>
+                                    <input
+                                        type="checkbox"
+                                        checked={localSettings.colorStopSigns}
+                                        onChange={(e) => {
+                                            const newSettings = { ...localSettings, colorStopSigns: e.target.checked };
+                                            setLocalSettings(newSettings);
+                                        }}
+                                        className="w-5 h-5 text-amber-600 rounded focus:ring-2 focus:ring-amber-500"
+                                    />
+                                </label>
+
+
+
+                            </section>
+
+                            {/* Sound Settings */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    {localSettings.soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                                    {t.soundSettings}
+                                </h3>
+                                <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                    <span className="text-gray-900 dark:text-white">{t.pageFlipSound}</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={localSettings.soundEnabled}
+                                        onChange={(e) => setLocalSettings(prev => ({ ...prev, soundEnabled: e.target.checked }))}
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </label>
+
+
+                            </section>
+
+                            {/* Bottom Bar Customization */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Layout size={20} />
+                                    {t.bottomBarCustomization}
+                                </h3>
+                                <div className="space-y-2">
+                                    {[
+                                        { key: 'showIndex' as keyof BottomBarSettings, label: t.index },
+                                        { key: 'showSearch' as keyof BottomBarSettings, label: t.search },
+                                        { key: 'showMemorization' as keyof BottomBarSettings, label: t.memorizationStats },
+                                        { key: 'showNotifications' as keyof BottomBarSettings, label: t.notifications },
+                                        { key: 'showDarkMode' as keyof BottomBarSettings, label: t.darkMode + ' / ' + t.lightMode },
+                                        { key: 'showBookmark' as keyof BottomBarSettings, label: t.bookmark },
+                                        { key: 'showPrayerMode' as keyof BottomBarSettings, label: t.prayerMode },
+                                        { key: 'showFullscreen' as keyof BottomBarSettings, label: t.fullscreen },
+                                        { key: 'showPageNavigation' as keyof BottomBarSettings, label: t.pageNavigation },
+                                    ].map(({ key, label }) => (
+                                        <label
+                                            key={key}
+                                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                        >
+                                            <span className="text-gray-900 dark:text-white">{label}</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={localSettings.bottomBar[key]}
+                                                onChange={() => toggleBottomBarItem(key)}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </label>
+                                    ))}
+                                </div>
+                            </section>
+
+
+
+                            {/* Offline Manager */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Download size={20} />
+                                    {t.offlineMode}
+                                </h3>
+
+                                {hasUpdate && (
+                                    <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
+                                                    <Download size={20} className="text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-blue-900 dark:text-blue-100 text-sm">{t.updateAvailable}</p>
+                                                    <p className="text-xs text-blue-700 dark:text-blue-300">{t.updateDescription}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={onUpdateApp}
+                                                className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-lg active:scale-95 transition-all whitespace-nowrap"
+                                            >
+                                                {t.updateNow}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-3">
+                                    {/* Install App Button */}
+                                    {installPrompt && (
+                                        <button
+                                            onClick={handleInstallApp}
+                                            className="w-full flex items-center justify-between p-4 bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+                                        >
+                                            <span className="font-medium">{t.installApp}</span>
+                                            <Download size={20} />
+                                        </button>
+                                    )}
+
+                                    {/* Download Button */}
+                                    <button
+                                        onClick={handleDownloadAllFonts}
+                                        disabled={isDownloading}
+                                        className={clsx(
+                                            "w-full flex items-center justify-between p-4 rounded-lg transition-colors border-2",
+                                            isDownloading
+                                                ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
+                                                : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer"
+                                        )}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                {isDownloading ? t.updatingMushaf : t.downloadMushaf}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {isDownloading
+                                                    ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
+                                                    : t.downloadMushafDescription
+                                                }
+                                            </span>
+                                        </div>
+                                        {isDownloading ? (
+                                            <Loader2 size={24} className="animate-spin text-blue-600" />
+                                        ) : (
+                                            <Download size={24} className="text-blue-600 dark:text-blue-400" />
+                                        )}
+                                    </button>
+
+                                    {/* Progress Bar */}
+                                    {downloadProgress !== null && (
+                                        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
+                                            <div
+                                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                                style={{ width: `${downloadProgress}%` }}
+                                            ></div>
+                                        </div>
+                                    )}
+
+                                    {downloadProgress === 100 && (
+                                        <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
+                                            {t.downloadSuccess}
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* Contact Section */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Mail size={20} />
+                                    {t.contact || 'للتواصل'}
+                                </h3>
+                                <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center gap-2 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                                    <a
+                                        href="mailto:Tarek.morsii@gmail.com"
+                                        className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted underline-offset-4"
+                                    >
+                                        Tarek.morsii@gmail.com
+                                    </a>
+                                </div>
+                            </section>
+
+                            {/* Developer Tools */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <FileSpreadsheet size={20} />
+                                    {t.developerTools}
+                                </h3>
+                                <button
+                                    onClick={handleExportReviewData}
+                                    disabled={isExporting}
+                                    className="w-full flex items-center justify-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                                >
+                                    {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                                    <span>{t.exportReviewData}</span>
+                                </button>
+
+                                {/* Clear All Data Button */}
+                                <button
+                                    onClick={handleClearAllData}
+                                    className="w-full flex items-center justify-center gap-2 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors mt-3"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                    </svg>
+                                    <span>{t.clearAllData}</span>
+                                </button>
+                            </section>
+
+                            {/* Help Section */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <HelpCircle size={20} />
+                                    {t.help || 'المساعدة والتعليمات'}
+                                </h3>
+                                <button
+                                    onClick={() => setShowHelpModal(true)}
+                                    className="w-full flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800"
+                                >
+                                    <span className="font-medium text-emerald-800 dark:text-emerald-200">
+                                        {t.howToUse || 'كيفية استخدام التطبيق'}
+                                    </span>
+                                    <HelpCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
+                                </button>
+                            </section>
+
+                            {/* Contact Section */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Mail size={20} />
+                                    {t.contact || 'للتواصل'}
+                                </h3>
+                                <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center gap-2 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                                    <a
+                                        href="mailto:Tarek.morsii@gmail.com"
+                                        className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted underline-offset-4"
+                                    >
+                                        Tarek.morsii@gmail.com
+                                    </a>
+                                </div>
+                            </section>
+                        </>
+                    )}
+                </div>
+
+                {/* Footer - Always visible and pinned to bottom */}
+                <div className="p-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex gap-3 justify-end items-center shrink-0 z-10 backdrop-blur-sm">
+                    <button
+                        onClick={onClose}
+                        className="px-5 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-800 transition-all font-medium text-sm active:scale-95"
+                    >
+                        {t.cancel}
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        className="px-8 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-lg shadow-amber-600/20 transition-all font-bold text-sm active:scale-95"
+                    >
+                        {t.save}
+                    </button>
+                </div>
+            </div>
+
+            <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
+        </div>
+    );
+}

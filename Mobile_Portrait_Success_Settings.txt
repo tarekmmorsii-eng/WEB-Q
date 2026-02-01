@@ -1,0 +1,60 @@
+=== Mobile Portrait Success Settings (Golden Reference) ===
+Date: 2026-01-03
+Status: PERFECT STABILITY + SURGICAL SPACING
+
+1. Media Query Scope:
+---------------------
+@media screen and (max-width: 768px) and (orientation: portrait)
+
+2. Container Styles (.mushaf-page-qpc):
+---------------------------------------
+padding: 20px 15px 10px 20px !important; /* Scaled margins (Left 20px for safety) */
+max-width: 100vw !important;
+overflow-x: hidden !important;
+height: 100dvh !important;
+box-sizing: border-box !important;
+display: block !important;
+
+3. Text Styling (Strict Line Locking):
+-------------------------------------
+[class*="quran-text-"],
+[class*="qpc-font-page-"] {
+    /* 🔒 CALCULATION: (100dvh - 65px) / 15 lines */
+    /* 65px deduction fills the screen aggressively but safely */
+    line-height: calc((100dvh - 65px) / 15) !important;
+    height: calc((100dvh - 65px) / 15) !important;
+    
+    /* Flexbox Locking */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    /* Font Size: 6.5vw (Maximized) */
+    font-size: 6.5vw !important;
+
+    overflow: visible !important;
+    text-align: center !important;
+    word-spacing: -7px !important; /* Optimized spacing */
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+4. Surgical Spacing (Mobile Only):
+---------------------------------
+/* Stop Signs (Waqf) - Preventing Overlap */
+.stop-sign-glyph {
+    margin: 0 -1px !important; /* Gentle negative margin */
+}
+
+/* Ayah Markers - Aggressive Compression */
+.qpc-ayah-number {
+    margin: 0 -8px !important; /* Strong compression to save line space */
+}
+
+5. Footer:
+----------
+.page-footer {
+    margin-top: 15px !important;
+    padding-bottom: 5px !important;
+    min-height: 30px !important;
+}

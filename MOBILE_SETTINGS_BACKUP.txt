@@ -1,0 +1,151 @@
+========================================
+نسخة الموبايل - الإعدادات المثالية النهائية
+تاريخ الحفظ: 2025-12-30
+========================================
+
+ملاحظة مهمة: هذه النسخة النهائية المستقرة لإعدادات الموبايل (العمودي والأفقي)
+لا تقم بتعديلها إلا إذا كنت متأكداً تماماً من التغييرات المطلوبة
+
+========================================
+1. الموبايل العمودي (Portrait - max 768px)
+========================================
+
+/* === الموبايل والتابلت الصغير (Portrait - max 768px) === */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .mushaf-page-qpc {
+    /* Minimal horizontal padding for maximum text space */
+    padding: 15px 5px 0 5px !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    height: 100dvh !important;
+    box-sizing: border-box !important;
+    display: block !important;
+  }
+
+  [class*="quran-text-"],
+  [class*="qpc-font-page-"] {
+    display: inline-block !important;
+    vertical-align: baseline !important;
+
+    /* Balanced: large but fits screen */
+    font-size: 6.5vw !important;
+    line-height: calc((100dvh - 95px) / 15) !important;
+
+    overflow: visible !important;
+    text-align: center !important;
+    /* Compact spacing */
+    word-spacing: -7px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* السماح بالتمرير إذا تجاوز المحتوى - لضمان ظهور الفوتر */
+  .mushaf-page-qpc {
+    overflow-y: auto !important;
+  }
+
+  .page-footer {
+    margin-top: 15px !important;
+    /* فراغ ذكي */
+    padding-bottom: 5px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    min-height: 30px !important;
+  }
+}
+
+========================================
+2. الموبايل/التابلت الأفقي (Landscape - max 1440px)
+========================================
+
+/* === الوضع الأفقي (Landscape) لجميع الأجهزة (موبايل وتابلت) === */
+@media screen and (max-width: 1440px) and (orientation: landscape) {
+  .mushaf-page-qpc {
+    overflow-y: auto !important;
+    padding: 20px 5% !important;
+    max-width: 1000px !important; /* تحديد العرض لمنع التمدد البشع في التابلت */
+    margin: 0 auto !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    display: block !important;
+  }
+
+  [class*="quran-text-"],
+  [class*="qpc-font-page-"] {
+    /* الخط الضخم والسميك المطلوب للمصحف */
+    font-size: clamp(28px, 6vw, 48px) !important;
+    line-height: 2.0 !important;
+    word-spacing: -8px !important;
+    display: inline-block !important;
+    vertical-align: baseline !important;
+  }
+}
+
+========================================
+3. الإعدادات الإضافية في QPCV1PageRenderer.tsx
+========================================
+
+الإعدادات في دالة getContainerStyles():
+
+case 'mobile':
+  return {
+    maxWidth: '100%',
+    width: '100%',
+    height: isLandscape ? 'auto' : '100dvh', // Allow scrolling in landscape
+    minHeight: isLandscape ? '100dvh' : 'auto',
+    padding: isLandscape ? '10px 5%' : '0 5px',
+    overflowY: isLandscape ? 'auto' : 'hidden',
+    overflowX: 'hidden',
+    boxSizing: 'border-box' as const
+  };
+
+========================================
+4. الميزات الرئيسية للإعدادات الحالية
+========================================
+
+✅ الموبايل العمودي:
+- حجم خط كبير وواضح: 6.5vw
+- 15 سطر بالضبط تملأ الشاشة
+- الفوتر ظاهر دائماً في جميع الصفحات
+- هوامش صغيرة (5px) لتوفير مساحة
+- تقارب الكلمات: -7px لكثافة حبر عالية
+
+✅ الموبايل/التابلت الأفقي:
+- خط ضخم وسميك: clamp(28px, 6vw, 48px)
+- تمرير رأسي سلس
+- عرض محدد (1000px) لمنع التمدد الزائد
+- توسيط تلقائي
+- سهولة القراءة مع line-height 2.0
+
+========================================
+5. القيود والملاحظات المهمة
+========================================
+
+⚠️ علامات الوقف:
+- تقفز قليلاً بسبب دمجها في glyphs الخط
+- هذا سلوك طبيعي لا يمكن حله بـ CSS فقط
+- تم قبول هذا التباين البسيط
+
+⚠️ لا تعدّل:
+- font-size (6.5vw للعمودي)
+- line-height (calc((100dvh - 95px) / 15))
+- word-spacing (-7px للعمودي، -8px للأفقي)
+- padding (15px 5px 0 5px للعمودي)
+- هذه القيم متوازنة بدقة!
+
+========================================
+6. صيغة line-height المستخدمة
+========================================
+
+calc((100dvh - 95px) / 15)
+
+التفسير:
+- 100dvh: ارتفاع الشاشة الكامل
+- 95px: احتياطي (15px top + 20px footer gap + 60px footer)
+- / 15: توزيع على 15 سطر من القرآن
+
+========================================
+نهاية الملف - لا تعدّل بدون نسخ احتياطي!
+========================================

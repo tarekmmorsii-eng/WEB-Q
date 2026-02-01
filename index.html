@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>مصحف المراجعة - القرآن الكريم</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="تطبيق القرآن الكريم للحفظ والتلاوة - مطابق لمصحف المدينة النبوية" />
+  <meta name="theme-color" content="#b45309" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="المصحف" />
+
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/logo192.png">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Amiri+Quran&display=swap"
+    rel="stylesheet">
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "clsx": "https://aistudiocdn.com/clsx@^2.1.1"
+  }
+}
+    </script>
+  <script>
+    window.addEventListener('error', function (event) {
+      const errorDiv = document.createElement('div');
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '0';
+      errorDiv.style.left = '0';
+      errorDiv.style.width = '100%';
+      errorDiv.style.backgroundColor = '#fee2e2';
+      errorDiv.style.color = '#991b1b';
+      errorDiv.style.padding = '1rem';
+      errorDiv.style.zIndex = '9999';
+      errorDiv.style.borderBottom = '1px solid #ef4444';
+      errorDiv.style.fontFamily = 'monospace';
+      errorDiv.textContent = 'Global Error: ' + event.message + ' at ' + event.filename + ':' + event.lineno;
+      document.body.appendChild(errorDiv);
+      console.error('Global Error:', event.error);
+    });
+
+    window.addEventListener('unhandledrejection', function (event) {
+      const errorDiv = document.createElement('div');
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '50px';
+      errorDiv.style.left = '0';
+      errorDiv.style.width = '100%';
+      errorDiv.style.backgroundColor = '#fef3c7';
+      errorDiv.style.color = '#92400e';
+      errorDiv.style.padding = '1rem';
+      errorDiv.style.zIndex = '9999';
+      errorDiv.style.borderBottom = '1px solid #f59e0b';
+      errorDiv.style.fontFamily = 'monospace';
+      errorDiv.textContent = 'Unhandled Promise Rejection: ' + event.reason;
+      document.body.appendChild(errorDiv);
+      console.error('Unhandled Rejection:', event.reason);
+    });
+  </script>
+  <style>
+
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx?v=2026-01-03-v7"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function (registration) {
+            console.log('✅ Service Worker registered:', registration.scope);
+
+            // تحقق من التحديثات
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'activated') {
+                  console.log('🔄 New Service Worker activated!');
+                }
+              });
+            });
+
+            // 🚀 resume/start font download check
+            if (registration.active) {
+              registration.active.postMessage('CHECK_AND_DOWNLOAD_FONTS');
+            } else if (navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage('CHECK_AND_DOWNLOAD_FONTS');
+            }
+          })
+          .catch(function (err) {
+            console.log('❌ Service Worker registration failed:', err);
+          });
+
+        // Handle case where controller creates/changes
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage('CHECK_AND_DOWNLOAD_FONTS');
+          }
+        });
+      });
+    }
+  </script>
+</body>
+
+</html>
