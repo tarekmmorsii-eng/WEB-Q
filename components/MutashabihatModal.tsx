@@ -276,7 +276,7 @@ export default function MutashabihatModal({
 
 
 
-                        // Define labels and order
+                        // Define sections and order
                         const sections = [
                             { key: 'START', labelEn: 'Start of Verse', labelAr: 'بداية الآيات' },
                             { key: 'END', labelEn: 'End of Verse', labelAr: 'نهاية الآيات' },
@@ -291,6 +291,19 @@ export default function MutashabihatModal({
                                     const items = groups[section.key as keyof typeof groups];
                                     if (items.length === 0) return null;
 
+                                    // Alphabetical sort within section by rule
+                                    const sortedItems = [...items].sort((a, b) => {
+                                        const ruleA = a.rule || "";
+                                        const ruleB = b.rule || "";
+
+                                        if (ruleA !== ruleB) {
+                                            return ruleA.localeCompare(ruleB, 'ar');
+                                        }
+                                        // Then by surah/ayah
+                                        if (a.surahNumber !== b.surahNumber) return a.surahNumber - b.surahNumber;
+                                        return a.ayahNumber - b.ayahNumber;
+                                    });
+
                                     return (
                                         <div key={section.key} className="space-y-3">
                                             <div className="flex items-center gap-2 border-b border-amber-200 dark:border-slate-700 pb-2 mb-2">
@@ -298,30 +311,27 @@ export default function MutashabihatModal({
                                                     {section.key === 'START' && '🟢'}
                                                     {section.key === 'END' && '🔴'}
                                                     {section.key === 'MIDDLE' && '🔵'}
-                                                    {section.key === 'FREQ' && '🔁'}
-                                                    {section.key === 'OTHER' && '🔸'}
+                                                    {section.key === 'FREQ' && '🔄'}
+                                                    {section.key === 'OTHER' && '⚪'}
                                                 </span>
-                                                <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                                                <h4 className="text-md font-semibold text-slate-700 dark:text-slate-300">
                                                     {isArabic ? section.labelAr : section.labelEn}
+                                                    <span className="ml-2 text-xs font-normal text-slate-500">
+                                                        ({sortedItems.length})
+                                                    </span>
                                                 </h4>
-                                                <span className="bg-slate-100 dark:bg-slate-700 text-xs px-2 py-0.5 rounded-full text-slate-500">
-                                                    {items.length}
-                                                </span>
                                             </div>
 
                                             <div className="space-y-4">
-                                                {items.map((ayah, index) => {
+                                                {sortedItems.map((ayah, idx) => {
                                                     const similarSurahName = getSurahName(ayah.surahNumber);
                                                     const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
                                                     const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
                                                     const similarity = ayah.similarity;
 
-                                                    // Global index relative to the group isn't great, maybe just normal index?
-
                                                     return (
                                                         <div
-                                                            key={`${ayah.surahNumber}-${ayah.ayahNumber}-${index}`}
-                                                            className="p-4 bg-white dark:bg-slate-800 border-2 rounded-xl hover:shadow-md transition-all shadow-sm"
+                                                            key={`${ayah.surahNumber}-${ayah.ayahNumber}-${idx}`}
                                                             style={{
                                                                 borderColor: ayah.ruleColor || similarity?.color || '#e5e7eb'
                                                             }}
@@ -329,7 +339,7 @@ export default function MutashabihatModal({
                                                             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                                                                 <div className="flex items-center gap-2 flex-1">
                                                                     <span className="bg-slate-200 dark:bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                                                                        {index + 1}
+                                                                        {idx + 1}
                                                                     </span>
 
                                                                     {/* Similarity Badge */}

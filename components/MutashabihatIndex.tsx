@@ -141,7 +141,14 @@ export default function MutashabihatIndex({
     // Load texts dynamically when Surah changes
     useEffect(() => {
         const loadTexts = async () => {
-            if (currentSurahMutashabihat.length === 0) return;
+            // Reset state when surah changes to prevent "ghost" data from previous surah
+            setEnrichedMutashabihat([]);
+
+            if (currentSurahMutashabihat.length === 0) {
+                setIsLoading(false);
+                return;
+            }
+
             setIsLoading(true);
 
             // Collect all unique aya refs needed
