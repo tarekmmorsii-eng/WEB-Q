@@ -13,6 +13,10 @@ import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihat
 function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: string, absoluteAyahNumber?: number, manualRules?: any[] }) {
     if (!text) return <>{text}</>;
 
+    const normalize = (t: string) => {
+        return t.replace(/[\u064B-\u065F\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "");
+    };
+
     // Get all rules for this ayah from the global map PLUS any manual rules passed
     const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
     const allRules = [...autoRules];
@@ -26,8 +30,11 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
 
     if (allRules.length === 0) return <span className="text-slate-900 dark:text-slate-100">{text}</span>;
 
-    const words = text.split(/\s+/).filter(w => w.length > 0);
-    const wordInfos = new Array(words.length).fill(null).map(() => ({ color: '', type: '', isBold: false }));
+    const rawWords = text.split(/\s+/).filter(w => w.length > 0);
+    // Identify non-word symbols to ignore for position detection
+    const isSymbol = (w: string) => normalize(w).length === 0;
+
+    const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false }));
 
     // Sort rules: START > END > MIDDLE, then by length (longest first)
     const sortedRules = [...allRules].sort((a, b) => {
@@ -41,7 +48,8 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
     // Phrase-based matching
     sortedRules.forEach(rule => {
         if (!rule.rule) return;
-        const ruleWords = rule.rule.trim().split(/\s+/);
+        const ruleNormalized = normalize(rule.rule);
+        const ruleWords = ruleNormalized.trim().split(/\s+/);
         if (ruleWords.length === 0) return;
 
         const colors = {
@@ -51,19 +59,35 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
             'OTHER': '#d97706'  // Amber
         };
 
-        for (let i = 0; i <= words.length - ruleWords.length; i++) {
+        for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
             let match = true;
             for (let j = 0; j < ruleWords.length; j++) {
-                if (words[i + j] !== ruleWords[j]) {
+                if (normalize(rawWords[i + j]) !== ruleWords[j]) {
                     match = false;
                     break;
                 }
             }
             if (match) {
-                // Smart Type Detection based on position in this specific ayah text
+                // Smart Type Detection
+                let isStart = true;
+                for (let k = 0; k < i; k++) {
+                    if (!isSymbol(rawWords[k])) {
+                        isStart = false;
+                        break;
+                    }
+                }
+
+                let isEnd = true;
+                for (let k = i + ruleWords.length; k < rawWords.length; k++) {
+                    if (!isSymbol(rawWords[k])) {
+                        isEnd = false;
+                        break;
+                    }
+                }
+
                 let effectiveType = rule.type;
-                if (i === 0) effectiveType = 'START';
-                else if (i + ruleWords.length === words.length) effectiveType = 'END';
+                if (isStart) effectiveType = 'START';
+                else if (isEnd) effectiveType = 'END';
                 else effectiveType = 'MIDDLE';
 
                 const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
@@ -82,7 +106,7 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
 
     return (
         <div className="flex flex-wrap justify-center gap-x-1.5 gap-y-2" dir="rtl">
-            {words.map((word, i) => {
+            {rawWords.map((word, i) => {
                 const info = wordInfos[i];
                 return (
                     <span
