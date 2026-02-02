@@ -14,10 +14,9 @@ import AyahOptionsModal from './components/AyahOptionsModal';
 import SurahRatingModal from './components/SurahRatingModal';
 import MutashabihatModal from './components/MutashabihatModal';
 import MutashabihatIndex from './components/MutashabihatIndex';
-
 import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
 
-import { getProcessedMutashabihat, findMutashabihatForAyah } from './utils/mutashabihatProcessor';
+import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
 import { Mutashabiha } from './types';
 import TourWelcomeModal from './components/TourWelcomeModal';
 import TourClickOverlay from './components/TourClickOverlay';
@@ -205,9 +204,12 @@ export default function App() {
   const [isMutashabihatIndexOpen, setIsMutashabihatIndexOpen] = useState(false);
   const [mutashabihatData, setMutashabihatData] = useState<Mutashabiha[]>([]);
   const [currentMutashabiha, setCurrentMutashabiha] = useState<Mutashabiha | null>(null);
+  const [multipleMutashabihat, setMultipleMutashabihat] = useState<Mutashabiha[]>([]);
+  const [isMutashabihatSelectionOpen, setIsMutashabihatSelectionOpen] = useState(false);
   const [isMutashabihatModalOpen, setIsMutashabihatModalOpen] = useState(false);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [activeMutashabihaId, setActiveMutashabihaId] = useState<string | null>(null);
+  const [selectorIsInsideSurah, setSelectorIsInsideSurah] = useState<boolean>(false);
 
   // Load mutashabihat data on mount with custom user data
   useEffect(() => {
@@ -227,10 +229,15 @@ export default function App() {
             const surahInfo = SURAHS.find(s => s.number === a.surahNumber);
             return surahInfo && a.ayahNumber > 0 && a.ayahNumber <= surahInfo.ayahCount;
           })
-        })).filter(mut => mut.similarAyahs.length > 0 || mut.id.startsWith('tarteel_')); // الحفاظ على البيانات الأساسية
+        })).filter(mut => mut.similarAyahs.length > 0 || mut.id.startsWith('tarteel_'));
 
-        setMutashabihatData([...baseData, ...customData]);
-        console.log(`✅ Mutashabihat Loaded: ${baseData.length} Base, ${customData.length} Custom`);
+        // دمج البيانات: المخصص يحل محل الأساسي إذا تشابه المعرف
+        const mergedMap = new Map<string, Mutashabiha>();
+        baseData.forEach(m => mergedMap.set(m.id, m));
+        customData.forEach(m => mergedMap.set(m.id, m));
+
+        setMutashabihatData(Array.from(mergedMap.values()));
+        console.log(`✅ Mutashabihat Loaded: ${mergedMap.size} total associations.`);
       } catch (error) {
         console.error('❌ Error loading mutashabihat:', error);
       }
@@ -238,8 +245,9 @@ export default function App() {
     loadData();
   }, []);
 
-  const handleAddSimilarAyah = (mutashabihaId: string) => {
+  const handleAddSimilarAyah = (mutashabihaId: string, isInsideSurah: boolean) => {
     setActiveMutashabihaId(mutashabihaId);
+    setSelectorIsInsideSurah(isInsideSurah);
     setIsSelectorOpen(true);
   };
 
@@ -253,11 +261,35 @@ export default function App() {
 
       setMutashabihatData(prev => {
         const newData = [...prev];
-        const index = newData.findIndex(m => m.id === activeMutashabihaId);
+        let mutIndex = newData.findIndex(m => m.id === activeMutashabihaId);
 
-        if (index !== -1) {
-          const mut = newData[index];
-          // استخدام النص العربي الأصلي المخزن في الـ sourceAyah للمقارنة
+        // التعامل مع المعرفات المدمجة "merged_surah_ayah"
+        if (mutIndex === -1 && activeMutashabihaId?.startsWith('merged_')) {
+          const [_, sNum, aNum] = activeMutashabihaId.split('_').map(Number);
+          // ابحث عن سجل مخصص موجود بالفعل لهذه الآية
+          const customId = `custom_${sNum}_${aNum}`;
+          mutIndex = newData.findIndex(m => m.id === customId);
+
+          if (mutIndex === -1) {
+            // إنشاء سجل مخصص جديد
+            const newMut: Mutashabiha = {
+              id: customId,
+              sourceAyah: {
+                surahNumber: sNum,
+                ayahNumber: aNum,
+                text: currentMutashabiha?.sourceAyah.text || ''
+              },
+              similarAyahs: []
+            };
+            newData.push(newMut);
+            mutIndex = newData.length - 1;
+          }
+        }
+
+        if (mutIndex !== -1) {
+          const mut = { ...newData[mutIndex] };
+          mut.similarAyahs = [...mut.similarAyahs];
+
           const similarityInfo = calculateMutashabihatSimilarity(mut.sourceAyah.text || '', targetText);
 
           if (!mut.similarAyahs.some(a => a.surahNumber === surah && a.ayahNumber === ayah)) {
@@ -267,14 +299,24 @@ export default function App() {
               text: targetText,
               similarity: {
                 ...similarityInfo,
-                label: `مضافة: ${similarityInfo.label}`, // تمييزها بصرياً
+                label: `مضافة: ${similarityInfo.label}`,
                 labelEn: `Added: ${similarityInfo.labelEn}`
               },
               isCustom: true
             });
 
-            if (currentMutashabiha && currentMutashabiha.id === activeMutashabihaId) {
-              setCurrentMutashabiha({ ...mut });
+            newData[mutIndex] = mut;
+
+            // تحديث العرض الحالي
+            if (currentMutashabiha && (currentMutashabiha.id === activeMutashabihaId || currentMutashabiha.id === mut.id)) {
+              // إذا كان العرض مدمجاً، نحتاج لإعادة إنتاج الدمج لرؤية التغيير
+              if (currentMutashabiha.id.startsWith('merged_')) {
+                const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
+                const updatedMerged = getMergedMutashabihaForAyah(s, a, newData);
+                if (updatedMerged) setCurrentMutashabiha(updatedMerged);
+              } else {
+                setCurrentMutashabiha(mut);
+              }
             }
           }
         }
@@ -297,15 +339,41 @@ export default function App() {
   const handleDeleteSimilarAyah = (mutId: string, surah: number, ayah: number) => {
     setMutashabihatData(prev => {
       const newData = [...prev];
-      const index = newData.findIndex(m => m.id === mutId);
 
-      if (index !== -1) {
-        newData[index].similarAyahs = newData[index].similarAyahs.filter(
-          a => !(a.surahNumber === surah && a.ayahNumber === ayah)
-        );
+      // إذا كان المعرف مدمجاً، قد نحتاج لحذف الآية من عدة سجلات
+      const isMerged = mutId.startsWith('merged_');
+      let affected = false;
 
-        if (currentMutashabiha && currentMutashabiha.id === mutId) {
-          setCurrentMutashabiha({ ...newData[index] });
+      newData.forEach((m, idx) => {
+        const isMatch = isMerged
+          ? (mutId === `merged_${m.sourceAyah.surahNumber}_${m.sourceAyah.ayahNumber}` ||
+            m.similarAyahs.some(sa => `merged_${sa.surahNumber}_${sa.ayahNumber}` === mutId))
+          : m.id === mutId;
+
+        if (isMatch) {
+          const originalLength = m.similarAyahs.length;
+          const filteredItems = m.similarAyahs.filter(
+            a => !(a.surahNumber === surah && a.ayahNumber === ayah)
+          );
+
+          if (filteredItems.length !== originalLength) {
+            newData[idx] = { ...m, similarAyahs: filteredItems };
+            affected = true;
+          }
+        }
+      });
+
+      if (affected) {
+        // تحديث العرض الحالي
+        if (currentMutashabiha) {
+          if (currentMutashabiha.id.startsWith('merged_')) {
+            const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
+            const updatedMerged = getMergedMutashabihaForAyah(s, a, newData);
+            setCurrentMutashabiha(updatedMerged);
+          } else if (currentMutashabiha.id === mutId) {
+            const updated = newData.find(m => m.id === mutId);
+            setCurrentMutashabiha(updated || null);
+          }
         }
 
         const customOnly = newData.filter(m =>
@@ -317,6 +385,15 @@ export default function App() {
       return newData;
     });
   };
+
+  const handleOpenMutashabihat = useCallback((surah: number, ayah: number) => {
+    const merged = getMergedMutashabihaForAyah(surah, ayah, mutashabihatData);
+
+    if (merged) {
+      setCurrentMutashabiha(merged);
+      setIsMutashabihatModalOpen(true);
+    }
+  }, [mutashabihatData]);
 
   // 1. Manual Update Logic (Top Level)
   const [toastAction, setToastAction] = useState<{ label: string, onClick: () => void } | undefined>(undefined);
@@ -1426,9 +1503,13 @@ export default function App() {
                   isPrayerMode={settings.prayerMode}
                   language={settings.language}
                   mutashabihatData={mutashabihatData}
-                  onOpenMutashabihat={(mutashabiha) => {
-                    setCurrentMutashabiha(mutashabiha);
-                    setIsMutashabihatModalOpen(true);
+                  onOpenMutashabihat={(mutOrSurah, optAyah) => {
+                    if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+                      setCurrentMutashabiha(mutOrSurah);
+                      setIsMutashabihatModalOpen(true);
+                    } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
+                      handleOpenMutashabihat(mutOrSurah, optAyah);
+                    }
                   }}
                   onDeleteSimilarAyah={handleDeleteSimilarAyah}
                   onAddSimilarAyah={handleAddSimilarAyah}
@@ -1770,6 +1851,8 @@ export default function App() {
         onClose={() => setIsSelectorOpen(false)}
         onSelect={handleSelectSimilarAyah}
         language={settings.language}
+        lockedSurah={selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
+        excludedSurah={!selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
       />
 
       {toastMessage && (

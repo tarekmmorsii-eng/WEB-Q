@@ -19,36 +19,31 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText 
 }) {
     if (!text) return <>{text}</>;
 
-    // Get all rules for this ayah from the global map PLUS any manual rules passed
-    const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
-    let allRules = [...autoRules];
+    // --- STRICT CONTEXTUAL MATCHING: Only highlight what is shared with reference texts ---
+    let allRules: any[] = manualRules ? [...manualRules] : [];
+    const candidates = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
 
-    // Add manual rules if not already present
-    if (manualRules) {
-        manualRules.forEach(mr => {
-            if (!allRules.find(r => r.rule === mr.rule)) allRules.push(mr);
-        });
-    }
-
-    // --- STRICT REQUIREMENT: FILTER OUT SINGLE-WORD RULES ---
-    allRules = allRules.filter(r => getRealWordCount(r.rule) >= 2);
-
-    // --- DYNAMIC MATCHING ---
+    // Generate rules ONLY from shared phrases with references
     if (referenceText) {
         const refs = Array.isArray(referenceText) ? referenceText : [referenceText];
         refs.forEach(ref => {
             if (!ref || ref === text) return;
             const shared = findSharedPhrases(text, ref);
             shared.forEach(p => {
-                // Double check 2-word minimum
-                if (getRealWordCount(p.phrase) < 2) return;
+                const normP = quranNormalize(p.phrase);
+                // Try to find an official metadata (type/color) for this shared phrase
+                const official = candidates.find(c => quranNormalize(c.rule).includes(normP) || normP.includes(quranNormalize(c.rule)));
 
-                if (!allRules.some(r => quranNormalize(r.rule).includes(quranNormalize(p.phrase)))) {
-                    allRules.push({
-                        rule: p.phrase,
-                        type: 'MIDDLE',
-                        isDynamic: true
-                    });
+                if (official) {
+                    if (!allRules.some(r => r.rule === official.rule)) allRules.push(official);
+                } else {
+                    if (!allRules.some(r => r.rule === p.phrase)) {
+                        allRules.push({
+                            rule: p.phrase,
+                            type: 'MIDDLE',
+                            isDynamic: true
+                        });
+                    }
                 }
             });
         });
@@ -78,10 +73,10 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText 
         if (ruleWords.length === 0) return;
 
         const colors = {
-            'START': '#10b981',
-            'END': '#ef4444',
-            'MIDDLE': '#3b82f6',
-            'OTHER': '#d97706'
+            'START': '#10b981', // Green
+            'END': '#10b981',   // Unified to Green
+            'MIDDLE': '#10b981',// Unified to Green
+            'OTHER': '#10b981'  // Unified to Green
         };
 
         for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
@@ -199,7 +194,7 @@ interface MutashabihatModalProps {
     language: string;
     onNavigateToAyah?: (surahNumber: number, ayahNumber: number) => void;
     onDeleteSimilarAyah?: (mutashabihaId: string, surahNumber: number, ayahNumber: number) => void;
-    onAddSimilarAyah?: (mutashabihaId: string) => void;
+    onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
 }
 
 export default function MutashabihatModal({
@@ -213,6 +208,18 @@ export default function MutashabihatModal({
 }: MutashabihatModalProps) {
     const [ayahTexts, setAyahTexts] = useState<Map<string, string>>(new Map());
     const [isLoading, setIsLoading] = useState(false);
+
+    // State for filtering tabs
+    const [activeTab, setActiveTab] = useState<'all' | 'inside' | 'outside'>('inside');
+
+    useEffect(() => {
+        if (mutashabiha) {
+            // Check if there are matches inside the surah
+            const hasInside = mutashabiha.similarAyahs.some(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber);
+            if (!hasInside) setActiveTab('all');
+            else setActiveTab('inside');
+        }
+    }, [mutashabiha?.id]);
 
     const isArabic = language === 'ar';
 
@@ -325,6 +332,55 @@ export default function MutashabihatModal({
                     )}
                 </div>
 
+                {/* Tab Switcher */}
+                <div className="flex bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl mb-6 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
+                    <button
+                        onClick={() => setActiveTab('all')}
+                        className={clsx(
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            activeTab === 'all'
+                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                        )}
+                    >
+                        <span>🔗</span>
+                        {isArabic ? 'الكل' : 'All'}
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                            {mutashabiha.similarAyahs.length}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('inside')}
+                        className={clsx(
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            activeTab === 'inside'
+                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                        )}
+                    >
+                        <span>📍</span>
+                        {isArabic ? 'داخل السورة' : 'Inside Surah'}
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                            {mutashabiha.similarAyahs.filter(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber).length}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('outside')}
+                        className={clsx(
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            activeTab === 'outside'
+                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                        )}
+                    >
+                        <span>🌍</span>
+                        {isArabic ? 'خارج السورة' : 'Outside Surah'}
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                            {mutashabiha.similarAyahs.filter(a => a.surahNumber !== mutashabiha.sourceAyah.surahNumber).length}
+                        </span>
+                    </button>
+                </div>
+
                 {/* Similar Ayahs */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
@@ -373,119 +429,88 @@ export default function MutashabihatModal({
                             { key: 'OTHER', labelEn: 'Other Matches', labelAr: 'متشابهات أخرى' }
                         ];
 
+                        // Flatten and filter by active tab
+                        const allSortedItems = sections.flatMap(section => {
+                            const items = groups[section.key as keyof typeof groups];
+                            return [...items].sort((a, b) => {
+                                const ruleA = a.rule || "";
+                                const ruleB = b.rule || "";
+                                if (ruleA !== ruleB) {
+                                    const specialRule = "الأمر بذكر الله";
+                                    if (ruleA === specialRule) return 1;
+                                    if (ruleB === specialRule) return -1;
+                                    return ruleA.localeCompare(ruleB, 'ar');
+                                }
+                                if (a.surahNumber !== b.surahNumber) return a.surahNumber - b.surahNumber;
+                                return a.ayahNumber - b.ayahNumber;
+                            });
+                        }).filter(ayah => {
+                            if (activeTab === 'all') return true;
+                            if (activeTab === 'inside') return ayah.surahNumber === mutashabiha.sourceAyah.surahNumber;
+                            return ayah.surahNumber !== mutashabiha.sourceAyah.surahNumber;
+                        });
+
+                        if (allSortedItems.length === 0) return null;
+
                         return (
-                            <div className="space-y-8">
-                                {sections.map(section => {
-                                    const items = groups[section.key as keyof typeof groups];
-                                    if (items.length === 0) return null;
-
-                                    // Alphabetical sort within section by rule
-                                    const sortedItems = [...items].sort((a, b) => {
-                                        const ruleA = a.rule || "";
-                                        const ruleB = b.rule || "";
-
-                                        if (ruleA !== ruleB) {
-                                            // Special case: push "الأمر بذكر الله" to bottom of section
-                                            const specialRule = "الأمر بذكر الله";
-                                            if (ruleA === specialRule) return 1;
-                                            if (ruleB === specialRule) return -1;
-
-                                            return ruleA.localeCompare(ruleB, 'ar');
-                                        }
-                                        // Then by surah/ayah
-                                        if (a.surahNumber !== b.surahNumber) return a.surahNumber - b.surahNumber;
-                                        return a.ayahNumber - b.ayahNumber;
-                                    });
+                            <div className="space-y-4">
+                                {allSortedItems.map((ayah, globalIdx) => {
+                                    const similarSurahName = getSurahName(ayah.surahNumber);
+                                    const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
+                                    const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
+                                    const similarity = ayah.similarity;
 
                                     return (
-                                        <div key={section.key} className="space-y-3">
-                                            <div className="flex items-center gap-2 border-b border-amber-200 dark:border-slate-700 pb-2 mb-2">
-                                                <span className="text-xl">
-                                                    {section.key === 'START' && '🟢'}
-                                                    {section.key === 'END' && '🔴'}
-                                                    {section.key === 'MIDDLE' && '🔵'}
-                                                    {section.key === 'FREQ' && '🔄'}
-                                                    {section.key === 'OTHER' && '⚪'}
-                                                </span>
-                                                <h4 className="text-md font-semibold text-slate-700 dark:text-slate-300">
-                                                    {isArabic ? section.labelAr : section.labelEn}
-                                                    <span className="ml-2 text-xs font-normal text-slate-500">
-                                                        ({sortedItems.length})
+                                        <div
+                                            key={`${ayah.surahNumber}-${ayah.ayahNumber}-${globalIdx}`}
+                                            className="p-4 rounded-xl border-r-4 bg-slate-100 dark:bg-slate-800 shadow-sm border-l-0"
+                                            style={{
+                                                borderColor: '#10b981' // Unified Green Border
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div className="flex items-center gap-3 flex-1">
+                                                    <span className="bg-slate-200 dark:bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                                                        {globalIdx + 1}
                                                     </span>
-                                                </h4>
-                                            </div>
 
-                                            <div className="space-y-4">
-                                                {sortedItems.map((ayah, idx) => {
-                                                    const similarSurahName = getSurahName(ayah.surahNumber);
-                                                    const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
-                                                    const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
-                                                    const similarity = ayah.similarity;
+                                                    <p className="font-bold text-slate-700 dark:text-slate-200" dir="rtl">
+                                                        {similarSurahName} - {isArabic ? 'آية' : 'Ayah'} {ayah.ayahNumber}
+                                                    </p>
 
-                                                    return (
-                                                        <div
-                                                            key={`${ayah.surahNumber}-${ayah.ayahNumber}-${idx}`}
-                                                            style={{
-                                                                borderColor: ayah.ruleColor || similarity?.color || '#e5e7eb'
+                                                    <button
+                                                        onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
+                                                        className="text-xs bg-white hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-900/40 text-slate-700 dark:text-amber-600 dark:text-slate-300 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95"
+                                                    >
+                                                        {isArabic ? 'اذهب' : 'Go'}
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    {onDeleteSimilarAyah && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDeleteSimilarAyah(mutashabiha.id, ayah.surahNumber, ayah.ayahNumber);
                                                             }}
+                                                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                                                            title={isArabic ? 'حذف' : 'Delete'}
                                                         >
-                                                            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                                                                <div className="flex items-center gap-2 flex-1">
-                                                                    <span className="bg-slate-200 dark:bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                                                                        {idx + 1}
-                                                                    </span>
-
-                                                                    {/* Similarity Badge */}
-                                                                    {similarity && (
-                                                                        <span
-                                                                            className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm"
-                                                                            style={{ backgroundColor: similarity.color }}
-                                                                        >
-                                                                            {similarity.percentage}% - {isArabic ? similarity.label : similarity.labelEn}
-                                                                        </span>
-                                                                    )}
-
-                                                                    <p className="font-bold text-slate-700 dark:text-slate-200" dir="rtl">
-                                                                        {similarSurahName} - {isArabic ? 'آية' : 'Ayah'} {ayah.ayahNumber}
-                                                                    </p>
-
-                                                                    <button
-                                                                        onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
-                                                                        className="text-xs bg-slate-100 hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-900/40 text-slate-700 dark:text-amber-600 dark:text-slate-300 px-2 py-1 rounded transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95"
-                                                                    >
-                                                                        {isArabic ? 'اذهب' : 'Go'}
-                                                                    </button>
-                                                                </div>
-
-                                                                <div className="flex items-center gap-2">
-                                                                    {onDeleteSimilarAyah && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                onDeleteSimilarAyah(mutashabiha.id, ayah.surahNumber, ayah.ayahNumber);
-                                                                            }}
-                                                                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
-                                                                            title={isArabic ? 'حذف' : 'Delete'}
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
-                                                            {!isLoading && (
-                                                                <div className="text-lg leading-relaxed text-slate-800 dark:text-slate-200 text-right px-2 py-2" style={{ fontFamily: "'Amiri Quran', serif" }}>
-                                                                    <HighlightedText
-                                                                        text={ayahText}
-                                                                        absoluteAyahNumber={ayah.absoluteAyahNumber}
-                                                                        referenceText={[sourceText, ...mutashabiha.similarAyahs.filter(sa => sa.ayahNumber !== ayah.ayahNumber).map(sa => sa.text || '')]}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
+
+                                            {!isLoading && (
+                                                <div className="font-quran text-xl leading-loose text-slate-900 dark:text-slate-50 text-right px-2 py-2">
+                                                    <HighlightedText
+                                                        text={ayahText}
+                                                        absoluteAyahNumber={ayah.absoluteAyahNumber}
+                                                        referenceText={[sourceText]} // STRICT: Only compare with source source
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -494,14 +519,19 @@ export default function MutashabihatModal({
                     })()}
                 </div>
 
-                {/* Add New Mutashabiha Button */}
-                {onAddSimilarAyah && (
+                {/* Add New Mutashabiha Button - NOT in "All" tab */}
+                {onAddSimilarAyah && activeTab !== 'all' && (
                     <button
-                        onClick={() => onAddSimilarAyah(mutashabiha.id)}
+                        onClick={() => onAddSimilarAyah(mutashabiha.id, activeTab === 'inside')}
                         className="w-full mt-4 p-4 border-2 border-dashed border-amber-300 dark:border-slate-600 rounded-xl flex items-center justify-center gap-2 text-amber-800 dark:text-slate-400 hover:border-amber-500 hover:text-amber-900 dark:hover:text-slate-200 transition-all group"
                     >
                         <Plus size={20} className="group-hover:scale-110 transition-transform" />
-                        <span className="font-bold">{isArabic ? 'إضافة آية متشابهة أخرى' : 'Add another similar verse'}</span>
+                        <span className="font-bold">
+                            {activeTab === 'inside'
+                                ? (isArabic ? 'إضافة متشابهة داخل السورة' : 'Add within surah')
+                                : (isArabic ? 'إضافة متشابهة من خارج السورة' : 'Add from outside surah')
+                            }
+                        </span>
                     </button>
                 )}
 
