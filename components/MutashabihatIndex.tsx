@@ -219,10 +219,11 @@ interface MutashabihatIndexProps {
     onClose: () => void;
     mutashabihatData: Mutashabiha[];
     isDarkMode?: boolean;
+    onNavigateToAyah?: (surahNumber: number, ayahNumber: number) => void;
 }
 
 export default function MutashabihatIndex({
-    isOpen, onClose, mutashabihatData, isDarkMode
+    isOpen, onClose, mutashabihatData, isDarkMode, onNavigateToAyah
 }: MutashabihatIndexProps) {
     const [selectedSurahId, setSelectedSurahId] = useState<number>(1);
     const [searchQuery, setSearchQuery] = useState("");
@@ -505,9 +506,17 @@ export default function MutashabihatIndex({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="بحث في السورة أو المتشابهات..."
-                                className="w-full p-2.5 pr-10 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-right focus:ring-2 focus:ring-amber-500 outline-none"
+                                className="w-full p-2.5 pr-10 pl-10 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-right focus:ring-2 focus:ring-amber-500 outline-none"
                                 dir="rtl"
                             />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                            )}
                         </div>
                         <div className="shrink-0 text-sm text-gray-600 dark:text-gray-400">
                             <span className="flex items-center gap-1">
@@ -574,7 +583,11 @@ export default function MutashabihatIndex({
                                 <div className="text-center py-10 text-gray-400 italic">لا توجد متشابهات داخلية مسجلة</div>
                             ) : (
                                 groupedInside.map((group, idx) => (
-                                    <InternalGroupSection key={`${group.rule}_${idx}`} group={group} />
+                                    <InternalGroupSection
+                                        key={`${group.rule}_${idx}`}
+                                        group={group}
+                                        onNavigateToAyah={onNavigateToAyah}
+                                    />
                                 ))
                             )}
                         </div>
@@ -595,7 +608,11 @@ export default function MutashabihatIndex({
                                 <div className="text-center py-10 text-gray-400 italic">لا توجد متشابهات خارجية مسجلة</div>
                             ) : (
                                 outside.map((item, idx) => (
-                                    <MutashabihaCard key={`${item.mut.id}_out_${idx}`} item={item} />
+                                    <MutashabihaCard
+                                        key={`${item.mut.id}_out_${idx}`}
+                                        item={item}
+                                        onNavigateToAyah={onNavigateToAyah}
+                                    />
                                 ))
                             )}
                         </div>
@@ -606,7 +623,7 @@ export default function MutashabihatIndex({
     );
 }
 
-function MutashabihaCard({ item }: { item: { mut: Mutashabiha, targets: any[] } }) {
+function MutashabihaCard({ item, onNavigateToAyah }: { item: { mut: Mutashabiha, targets: any[] }, onNavigateToAyah?: (s: number, a: number) => void }) {
     const { mut, targets } = item;
 
     // Use the first target text as reference for the source to create highlights, 
@@ -621,8 +638,17 @@ function MutashabihaCard({ item }: { item: { mut: Mutashabiha, targets: any[] } 
             <div className="p-4 bg-amber-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700">
                 <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-slate-900 px-2 py-1 rounded">
-                        آية {mut.sourceAyah.ayahNumber}
+                        آية {mut.sourceAyah.ayahNumber} {mut.sourceAyah.surahNumber !== mut.sourceAyah.surahNumber ? `(${SURAHS.find(s => s.number === mut.sourceAyah.surahNumber)?.name})` : ''}
                     </span>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigateToAyah?.(mut.sourceAyah.surahNumber, mut.sourceAyah.ayahNumber);
+                        }}
+                        className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white px-2 py-0.5 rounded transition-colors"
+                    >
+                        اذهب
+                    </button>
                 </div>
                 <div className="text-right font-quran text-xl leading-loose text-gray-900 dark:text-white">
                     <HighlightingText
@@ -724,14 +750,20 @@ function MutashabihaCard({ item }: { item: { mut: Mutashabiha, targets: any[] } 
                                                                 {SURAHS.find(s => s.number === target.surahNumber)?.name} : {target.ayahNumber}
                                                             </span>
                                                             {target.similarity && (
-                                                                <span
-                                                                    className="text-[10px] px-1.5 py-0.5 rounded text-white"
-                                                                    style={{ backgroundColor: target.similarity.color }}
-                                                                >
+                                                                <span className="text-[10px] px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: target.similarity.color }}>
                                                                     {target.similarity.label}
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onNavigateToAyah?.(target.surahNumber, target.ayahNumber);
+                                                            }}
+                                                            className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white px-2 py-0.5 rounded transition-colors shadow-sm active:scale-95"
+                                                        >
+                                                            اذهب
+                                                        </button>
                                                     </div>
                                                     <div className="text-right font-quran text-lg leading-relaxed text-gray-700 dark:text-gray-300">
                                                         <HighlightingText
@@ -754,7 +786,7 @@ function MutashabihaCard({ item }: { item: { mut: Mutashabiha, targets: any[] } 
     );
 }
 
-function InternalGroupSection({ group }: { group: any }) {
+function InternalGroupSection({ group, onNavigateToAyah }: { group: any, onNavigateToAyah?: (s: number, a: number) => void }) {
     const { rule, ruleType, ruleColor, ayahs } = group;
 
     const typeDesc = ruleType === 'START' ? 'اللون الأخضر للمتشابه في بداية الآيات' :
@@ -794,9 +826,20 @@ function InternalGroupSection({ group }: { group: any }) {
                                 onlyRule={rule}
                                 referenceText={ayahs.map((a: any) => a.text)}
                             />
-                            <span className="inline-flex mr-2 text-sm font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30 whitespace-nowrap">
-                                ({ayah.ayahNumber})
-                            </span>
+                            <div className="flex items-center gap-1 mt-1 justify-end">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber);
+                                    }}
+                                    className="text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded transition-colors"
+                                >
+                                    اذهب
+                                </button>
+                                <span className="inline-flex text-sm font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30 whitespace-nowrap">
+                                    ({ayah.ayahNumber})
+                                </span>
+                            </div>
                         </div>
                     </div>
                 ))}

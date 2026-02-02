@@ -25,7 +25,7 @@ import PrayerModeButton from './components/PrayerModeButton';
 import FullscreenExitButton from './components/FullscreenExitButton';
 import SplashScreen from './components/SplashScreen';
 import { ViewMode, LocationData, VerseBookmark, Ayah, PageData, NotificationItem, MemorizationRating, SurahRating, AppSettings } from './types';
-import { fetchPage } from './services/quranService';
+import { fetchPage, getAyahPage } from './services/quranService';
 import { TOTAL_PAGES } from './constants';
 import { SURAHS } from './constants/surahData';
 import ColorPickerModal from './components/ColorPickerModal';
@@ -1742,6 +1742,12 @@ export default function App() {
         onClose={() => setIsMutashabihatIndexOpen(false)}
         mutashabihatData={mutashabihatData}
         isDarkMode={currentTheme.isDark}
+        onNavigateToAyah={async (surah, ayah) => {
+          const page = await getAyahPage(surah, ayah);
+          setCurrentPage(page);
+          setHighlightedAyah({ surah, ayah });
+          setIsMutashabihatIndexOpen(false);
+        }}
       />
 
       <MutashabihatModal
@@ -1749,14 +1755,11 @@ export default function App() {
         onClose={() => setIsMutashabihatModalOpen(false)}
         mutashabiha={currentMutashabiha}
         language={settings.language}
-        onNavigateToAyah={(surah, ayah) => {
-          // Navigate to the ayah's page and highlight it
-          const surahData = SURAHS.find(s => s.number === surah);
-          if (surahData) {
-            setCurrentPage(surahData.startPage);
-            setHighlightedAyah({ surah, ayah });
-            setIsMutashabihatModalOpen(false);
-          }
+        onNavigateToAyah={async (surah, ayah) => {
+          const page = await getAyahPage(surah, ayah);
+          setCurrentPage(page);
+          setHighlightedAyah({ surah, ayah });
+          setIsMutashabihatModalOpen(false);
         }}
         onDeleteSimilarAyah={handleDeleteSimilarAyah}
         onAddSimilarAyah={handleAddSimilarAyah}

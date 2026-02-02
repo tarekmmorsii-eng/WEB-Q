@@ -448,6 +448,13 @@ export default function MutashabihatModal({
                                                                     <p className="font-bold text-slate-700 dark:text-slate-200" dir="rtl">
                                                                         {similarSurahName} - {isArabic ? 'آية' : 'Ayah'} {ayah.ayahNumber}
                                                                     </p>
+
+                                                                    <button
+                                                                        onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
+                                                                        className="text-xs bg-slate-100 hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-900/40 text-slate-700 dark:text-amber-600 dark:text-slate-300 px-2 py-1 rounded transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95"
+                                                                    >
+                                                                        {isArabic ? 'اذهب' : 'Go'}
+                                                                    </button>
                                                                 </div>
 
                                                                 <div className="flex items-center gap-2">
@@ -463,12 +470,6 @@ export default function MutashabihatModal({
                                                                             <Trash2 size={16} />
                                                                         </button>
                                                                     )}
-                                                                    <button
-                                                                        onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
-                                                                        className="text-xs bg-slate-600 hover:bg-slate-700 text-white px-3 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md active:scale-95"
-                                                                    >
-                                                                        {isArabic ? 'اذهب' : 'Go'}
-                                                                    </button>
                                                                 </div>
                                                             </div>
 
