@@ -7,25 +7,29 @@ import { getAyahTexts } from '../utils/ayahTextHelper';
 import { getMatchingWords } from '../utils/similarityCalculator';
 import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihatData';
 
+// --- Helper Functions (Quranic Processing) ---
+const quranNormalize = (t: string) => {
+    if (!t) return "";
+    return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
+        .replace(/[أإآ]/g, "ا")
+        .replace(/ى/g, "ي");
+};
+
+const quranStripConjunction = (normalizedWord: string, ruleWord: string) => {
+    if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
+    if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
+        return { match: true, prefixLen: 1 };
+    }
+    return { match: false, prefixLen: 0 };
+};
+
+const quranIsSymbol = (w: string) => quranNormalize(w).length === 0;
+
 /**
  * مكون لعرض النص مع تلوين الكلمات المتطابقة بناءً على القواعد
  */
 function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: string, absoluteAyahNumber?: number, manualRules?: any[] }) {
     if (!text) return <>{text}</>;
-
-    const normalize = (t: string) => {
-        return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
-            .replace(/[أإآ]/g, "ا")
-            .replace(/ى/g, "ي");
-    };
-
-    const stripConjunction = (normalizedWord: string, ruleWord: string) => {
-        if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
-        if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
-            return { match: true, prefixLen: 1 };
-        }
-        return { match: false, prefixLen: 0 };
-    };
 
     // Get all rules for this ayah from the global map PLUS any manual rules passed
     const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
@@ -41,8 +45,6 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
     if (allRules.length === 0) return <span className="text-slate-900 dark:text-slate-100">{text}</span>;
 
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
-    const isSymbol = (w: string) => normalize(w).length === 0;
-
     const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
     const sortedRules = [...allRules].sort((a, b) => {
@@ -55,7 +57,7 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
 
     sortedRules.forEach(rule => {
         if (!rule.rule) return;
-        const ruleNormalized = normalize(rule.rule);
+        const ruleNormalized = quranNormalize(rule.rule);
         const ruleWords = ruleNormalized.trim().split(/\s+/);
         if (ruleWords.length === 0) return;
 
@@ -71,7 +73,7 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
             let currentPrefixes = new Array(ruleWords.length).fill(0);
 
             for (let j = 0; j < ruleWords.length; j++) {
-                const res = stripConjunction(normalize(rawWords[i + j]), ruleWords[j]);
+                const res = quranStripConjunction(quranNormalize(rawWords[i + j]), ruleWords[j]);
                 if (!res.match) {
                     match = false;
                     break;
@@ -82,7 +84,7 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
             if (match) {
                 let isStart = true;
                 for (let k = 0; k < i; k++) {
-                    if (!isSymbol(rawWords[k])) {
+                    if (!quranIsSymbol(rawWords[k])) {
                         isStart = false;
                         break;
                     }
@@ -90,7 +92,7 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
 
                 let isEnd = true;
                 for (let k = i + ruleWords.length; k < rawWords.length; k++) {
-                    if (!isSymbol(rawWords[k])) {
+                    if (!quranIsSymbol(rawWords[k])) {
                         isEnd = false;
                         break;
                     }

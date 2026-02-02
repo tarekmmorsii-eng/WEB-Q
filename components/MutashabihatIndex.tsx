@@ -8,27 +8,26 @@ import { getAyahText } from '../utils/ayahTextHelper';
 
 import { getMatchingWords } from '../utils/similarityCalculator';
 
-// Temporary reuse of HighlightedText logic if not exported separately.
-// Ideally HighlightedText should be its own component file.
-// For now, I will inline a version of it here or refactor later.
-// Let's create a local version to ensure stability.
+// --- Helper Functions (Quranic Processing) ---
+const quranNormalize = (t: string) => {
+    if (!t) return "";
+    return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
+        .replace(/[أإآ]/g, "ا")
+        .replace(/ى/g, "ي");
+};
+
+const quranStripConjunction = (normalizedWord: string, ruleWord: string) => {
+    if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
+    if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
+        return { match: true, prefixLen: 1 };
+    }
+    return { match: false, prefixLen: 0 };
+};
+
+const quranIsSymbol = (w: string) => quranNormalize(w).length === 0;
 
 function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRule }: { text: string, absoluteAyahNumber?: number, rules?: any[], onlyRule?: string }) {
     if (!text) return <span className="text-gray-800 dark:text-gray-200">{text}</span>;
-
-    const normalize = (t: string) => {
-        return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
-            .replace(/[أإآ]/g, "ا")
-            .replace(/ى/g, "ي");
-    };
-
-    const stripConjunction = (normalizedWord: string, ruleWord: string) => {
-        if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
-        if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
-            return { match: true, prefixLen: 1 };
-        }
-        return { match: false, prefixLen: 0 };
-    };
 
     // Get all rules for this ayah from the global map PLUS any manual rules passed
     const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
@@ -36,8 +35,8 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
 
     // Filter by specific rule if requested
     if (onlyRule) {
-        const normOnly = normalize(onlyRule);
-        allRules = allRules.filter(r => normalize(r.rule) === normOnly);
+        const normOnly = quranNormalize(onlyRule);
+        allRules = allRules.filter(r => quranNormalize(r.rule) === normOnly);
     }
 
     // Add manual rules if not already present
@@ -50,8 +49,6 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
     if (allRules.length === 0) return <span className="text-gray-800 dark:text-gray-200 text-right w-full" dir="rtl">{text}</span>;
 
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
-    const isSymbol = (w: string) => normalize(w).length === 0;
-
     const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
     const sortedRules = [...allRules].sort((a, b) => {
@@ -64,7 +61,7 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
 
     sortedRules.forEach(rule => {
         if (!rule.rule) return;
-        const ruleNormalized = normalize(rule.rule);
+        const ruleNormalized = quranNormalize(rule.rule);
         const ruleWords = ruleNormalized.trim().split(/\s+/);
         if (ruleWords.length === 0) return;
 
@@ -80,7 +77,7 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
             let currentPrefixes = new Array(ruleWords.length).fill(0);
 
             for (let j = 0; j < ruleWords.length; j++) {
-                const res = stripConjunction(normalize(rawWords[i + j]), ruleWords[j]);
+                const res = quranStripConjunction(quranNormalize(rawWords[i + j]), ruleWords[j]);
                 if (!res.match) {
                     match = false;
                     break;
@@ -91,7 +88,7 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
             if (match) {
                 let isStart = true;
                 for (let k = 0; k < i; k++) {
-                    if (!isSymbol(rawWords[k])) {
+                    if (!quranIsSymbol(rawWords[k])) {
                         isStart = false;
                         break;
                     }
@@ -99,7 +96,7 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
 
                 let isEnd = true;
                 for (let k = i + ruleWords.length; k < rawWords.length; k++) {
-                    if (!isSymbol(rawWords[k])) {
+                    if (!quranIsSymbol(rawWords[k])) {
                         isEnd = false;
                         break;
                     }
@@ -315,25 +312,44 @@ export default function MutashabihatIndex({
             targets.forEach(t => {
                 const ruleKey = t.rule || 'OTHER';
                 if (!groups[ruleKey]) {
-                    // Smart Position Detection for the Group Header
-                    const textWords = (t.text || "").trim().split(/\s+/).filter(w => w.length > 0);
-                    const ruleWords = (t.rule || "").trim().split(/\s+/).filter(w => w.length > 0);
+                    const ruleNormalized = quranNormalize(ruleKey);
+                    const ruleWords = ruleNormalized.trim().split(/\s+/);
+                    const targetRawWords = (t.text || "").trim().split(/\s+/).filter(w => w.length > 0);
 
                     let detectedType = t.ruleType || 'OTHER';
 
-                    if (textWords.length > 0 && ruleWords.length > 0) {
-                        // Find first occurrence in the target text
-                        for (let i = 0; i <= textWords.length - ruleWords.length; i++) {
+                    if (targetRawWords.length > 0 && ruleWords.length > 0) {
+                        for (let i = 0; i <= targetRawWords.length - ruleWords.length; i++) {
                             let match = true;
                             for (let j = 0; j < ruleWords.length; j++) {
-                                if (textWords[i + j] !== ruleWords[j]) {
+                                // Use the same conjunction stripping and normalization as HighlightingText
+                                const normTarget = quranNormalize(targetRawWords[i + j]);
+                                const res = quranStripConjunction(normTarget, ruleWords[j]);
+                                if (!res.match) {
                                     match = false;
                                     break;
                                 }
                             }
                             if (match) {
-                                if (i === 0) detectedType = 'START';
-                                else if (i + ruleWords.length === textWords.length) detectedType = 'END';
+                                // Replicate the smart position detection from HighlightingText
+                                let isStart = true;
+                                for (let k = 0; k < i; k++) {
+                                    if (!quranIsSymbol(targetRawWords[k])) {
+                                        isStart = false;
+                                        break;
+                                    }
+                                }
+
+                                let isEnd = true;
+                                for (let k = i + ruleWords.length; k < targetRawWords.length; k++) {
+                                    if (!quranIsSymbol(targetRawWords[k])) {
+                                        isEnd = false;
+                                        break;
+                                    }
+                                }
+
+                                if (isStart) detectedType = 'START';
+                                else if (isEnd) detectedType = 'END';
                                 else detectedType = 'MIDDLE';
                                 break;
                             }
