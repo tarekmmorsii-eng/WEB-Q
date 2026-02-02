@@ -6,34 +6,22 @@ import { getSurahName } from '../utils/quranHelpers';
 import { getAyahTexts } from '../utils/ayahTextHelper';
 import { getMatchingWords } from '../utils/similarityCalculator';
 import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihatData';
-
-// --- Helper Functions (Quranic Processing) ---
-const quranNormalize = (t: string) => {
-    if (!t) return "";
-    return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
-        .replace(/[أإآ]/g, "ا")
-        .replace(/ى/g, "ي");
-};
-
-const quranStripConjunction = (normalizedWord: string, ruleWord: string) => {
-    if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
-    if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
-        return { match: true, prefixLen: 1 };
-    }
-    return { match: false, prefixLen: 0 };
-};
-
-const quranIsSymbol = (w: string) => quranNormalize(w).length === 0;
+import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
 
 /**
  * مكون لعرض النص مع تلوين الكلمات المتطابقة بناءً على القواعد
  */
-function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: string, absoluteAyahNumber?: number, manualRules?: any[] }) {
+function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText }: {
+    text: string,
+    absoluteAyahNumber?: number,
+    manualRules?: any[],
+    referenceText?: string | string[]
+}) {
     if (!text) return <>{text}</>;
 
     // Get all rules for this ayah from the global map PLUS any manual rules passed
     const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
-    const allRules = [...autoRules];
+    let allRules = [...autoRules];
 
     // Add manual rules if not already present
     if (manualRules) {
@@ -42,17 +30,45 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
         });
     }
 
+    // --- STRICT REQUIREMENT: FILTER OUT SINGLE-WORD RULES ---
+    allRules = allRules.filter(r => getRealWordCount(r.rule) >= 2);
+
+    // --- DYNAMIC MATCHING ---
+    if (referenceText) {
+        const refs = Array.isArray(referenceText) ? referenceText : [referenceText];
+        refs.forEach(ref => {
+            if (!ref || ref === text) return;
+            const shared = findSharedPhrases(text, ref);
+            shared.forEach(p => {
+                // Double check 2-word minimum
+                if (getRealWordCount(p.phrase) < 2) return;
+
+                if (!allRules.some(r => quranNormalize(r.rule).includes(quranNormalize(p.phrase)))) {
+                    allRules.push({
+                        rule: p.phrase,
+                        type: 'MIDDLE',
+                        isDynamic: true
+                    });
+                }
+            });
+        });
+    }
+
     if (allRules.length === 0) return <span className="text-slate-900 dark:text-slate-100">{text}</span>;
 
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
     const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
+    // Sort rules: Longest first
     const sortedRules = [...allRules].sort((a, b) => {
+        const lenA = (a.rule?.length || 0);
+        const lenB = (b.rule?.length || 0);
+        if (lenA !== lenB) return lenB - lenA;
+
         const priority: any = { 'START': 1, 'END': 2, 'MIDDLE': 3, 'OTHER': 4 };
         const pa = priority[a.type] || 5;
         const pb = priority[b.type] || 5;
-        if (pa !== pb) return pa - pb;
-        return (b.rule?.length || 0) - (a.rule?.length || 0);
+        return pa - pb;
     });
 
     sortedRules.forEach(rule => {
@@ -74,11 +90,18 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
 
             for (let j = 0; j < ruleWords.length; j++) {
                 const res = quranStripConjunction(quranNormalize(rawWords[i + j]), ruleWords[j]);
-                if (!res.match) {
+                const resRev = quranStripConjunction(ruleWords[j], quranNormalize(rawWords[i + j]));
+
+                if (res.match) {
+                    currentPrefixes[j] = res.prefixLen;
+                } else if (resRev.match) {
+                    currentPrefixes[j] = 0;
+                } else if (quranNormalize(rawWords[i + j]) === ruleWords[j]) {
+                    currentPrefixes[j] = 0;
+                } else {
                     match = false;
                     break;
                 }
-                currentPrefixes[j] = res.prefixLen;
             }
 
             if (match) {
@@ -127,14 +150,16 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
 
                 if (info.prefixLen > 0) {
                     let splitIdx = info.prefixLen;
-                    if (word.length > splitIdx && word[splitIdx] === '\u064E') splitIdx++;
-
                     const prefixPart = word.substring(0, splitIdx);
-                    const mainPart = word.substring(splitIdx);
+                    let extra = 0;
+                    if (word.length > splitIdx && /[\u064B-\u0652]/.test(word[splitIdx])) extra = 1;
+
+                    const pPart = word.substring(0, splitIdx + extra);
+                    const mPart = word.substring(splitIdx + extra);
 
                     return (
                         <span key={i} className="flex">
-                            <span className="text-slate-900 dark:text-slate-100">{prefixPart}</span>
+                            <span className="text-slate-900 dark:text-slate-100">{pPart}</span>
                             <span
                                 className={clsx("transition-colors duration-300 rounded px-1 font-bold")}
                                 style={{
@@ -143,7 +168,7 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
                                     textShadow: `0 0 10px ${info.color}25`
                                 }}
                             >
-                                {mainPart}
+                                {mPart}
                             </span>
                         </span>
                     );
@@ -290,10 +315,11 @@ export default function MutashabihatModal({
                             <Loader2 className="animate-spin text-amber-600" size={32} />
                         </div>
                     ) : (
-                        <div className="text-xl leading-loose text-slate-900 dark:text-slate-100 text-center font-arabic px-4 py-3" style={{ fontFamily: "'Amiri Quran', serif" }}>
+                        <div className="p-5 text-right font-quran text-2xl leading-loose" style={{ direction: 'rtl' }}>
                             <HighlightedText
                                 text={sourceText}
                                 absoluteAyahNumber={mutashabiha.sourceAyah.absoluteAyahNumber}
+                                referenceText={mutashabiha.similarAyahs.map(a => a.text || '')}
                             />
                         </div>
                     )}
@@ -451,6 +477,7 @@ export default function MutashabihatModal({
                                                                     <HighlightedText
                                                                         text={ayahText}
                                                                         absoluteAyahNumber={ayah.absoluteAyahNumber}
+                                                                        referenceText={[sourceText, ...mutashabiha.similarAyahs.filter(sa => sa.ayahNumber !== ayah.ayahNumber).map(sa => sa.text || '')]}
                                                                     />
                                                                 </div>
                                                             )}

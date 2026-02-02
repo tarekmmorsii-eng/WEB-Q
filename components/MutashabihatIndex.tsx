@@ -7,26 +7,15 @@ import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihat
 import { getAyahText } from '../utils/ayahTextHelper';
 
 import { getMatchingWords } from '../utils/similarityCalculator';
+import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
 
-// --- Helper Functions (Quranic Processing) ---
-const quranNormalize = (t: string) => {
-    if (!t) return "";
-    return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
-        .replace(/[أإآ]/g, "ا")
-        .replace(/ى/g, "ي");
-};
-
-const quranStripConjunction = (normalizedWord: string, ruleWord: string) => {
-    if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
-    if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
-        return { match: true, prefixLen: 1 };
-    }
-    return { match: false, prefixLen: 0 };
-};
-
-const quranIsSymbol = (w: string) => quranNormalize(w).length === 0;
-
-function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRule }: { text: string, absoluteAyahNumber?: number, rules?: any[], onlyRule?: string }) {
+function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRule, referenceText }: {
+    text: string,
+    absoluteAyahNumber?: number,
+    rules?: any[],
+    onlyRule?: string,
+    referenceText?: string | string[]
+}) {
     if (!text) return <span className="text-gray-800 dark:text-gray-200">{text}</span>;
 
     // Get all rules for this ayah from the global map PLUS any manual rules passed
@@ -46,17 +35,47 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
         });
     }
 
+    // --- STRICT REQUIREMENT: FILTER OUT SINGLE-WORD RULES ---
+    allRules = allRules.filter(r => getRealWordCount(r.rule) >= 2);
+
+    // --- DYNAMIC MATCHING ---
+    // If referenceTexts are provided, find shared phrases and treat them as temporary rules
+    if (referenceText) {
+        const refs = Array.isArray(referenceText) ? referenceText : [referenceText];
+        refs.forEach(ref => {
+            if (!ref || ref === text) return;
+            const shared = findSharedPhrases(text, ref);
+            shared.forEach(p => {
+                // Double check 2-word minimum for dynamic matches
+                if (getRealWordCount(p.phrase) < 2) return;
+
+                // Only add if it's longer or distinct from existing rules
+                if (!allRules.some(r => quranNormalize(r.rule).includes(quranNormalize(p.phrase)))) {
+                    allRules.push({
+                        rule: p.phrase,
+                        type: 'MIDDLE',
+                        isDynamic: true
+                    });
+                }
+            });
+        });
+    }
+
     if (allRules.length === 0) return <span className="text-gray-800 dark:text-gray-200 text-right w-full" dir="rtl">{text}</span>;
 
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
     const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
+    // Sort rules: Longest first to prefer specific matches over generic ones
     const sortedRules = [...allRules].sort((a, b) => {
+        const lenA = a.rule?.length || 0;
+        const lenB = b.rule?.length || 0;
+        if (lenA !== lenB) return lenB - lenA;
+
         const priority: any = { 'START': 1, 'END': 2, 'MIDDLE': 3, 'OTHER': 4 };
         const pa = priority[a.type] || 5;
         const pb = priority[b.type] || 5;
-        if (pa !== pb) return pa - pb;
-        return (b.rule?.length || 0) - (a.rule?.length || 0);
+        return pa - pb;
     });
 
     sortedRules.forEach(rule => {
@@ -72,22 +91,39 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
             'OTHER': '#d97706'
         };
 
-        for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
+        const realWordIndices = rawWords.map((w, idx) => ({ norm: quranNormalize(w), idx })).filter(item => item.norm.length > 0);
+
+        for (let i = 0; i <= realWordIndices.length - ruleWords.length; i++) {
             let match = true;
             let currentPrefixes = new Array(ruleWords.length).fill(0);
+            let matchedRawIndices: number[] = [];
 
             for (let j = 0; j < ruleWords.length; j++) {
-                const res = quranStripConjunction(quranNormalize(rawWords[i + j]), ruleWords[j]);
-                if (!res.match) {
+                const targetRealWord = realWordIndices[i + j];
+                const res = quranStripConjunction(targetRealWord.norm, ruleWords[j]);
+                const resRev = quranStripConjunction(ruleWords[j], targetRealWord.norm);
+
+                if (res.match) {
+                    currentPrefixes[j] = res.prefixLen;
+                    matchedRawIndices.push(targetRealWord.idx);
+                } else if (resRev.match) {
+                    currentPrefixes[j] = 0;
+                    matchedRawIndices.push(targetRealWord.idx);
+                } else if (targetRealWord.norm === ruleWords[j]) {
+                    currentPrefixes[j] = 0;
+                    matchedRawIndices.push(targetRealWord.idx);
+                } else {
                     match = false;
                     break;
                 }
-                currentPrefixes[j] = res.prefixLen;
             }
 
             if (match) {
+                const startRawIdx = matchedRawIndices[0];
+                const endRawIdx = matchedRawIndices[matchedRawIndices.length - 1];
+
                 let isStart = true;
-                for (let k = 0; k < i; k++) {
+                for (let k = 0; k < startRawIdx; k++) {
                     if (!quranIsSymbol(rawWords[k])) {
                         isStart = false;
                         break;
@@ -95,7 +131,7 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
                 }
 
                 let isEnd = true;
-                for (let k = i + ruleWords.length; k < rawWords.length; k++) {
+                for (let k = endRawIdx + 1; k < rawWords.length; k++) {
                     if (!quranIsSymbol(rawWords[k])) {
                         isEnd = false;
                         break;
@@ -109,12 +145,13 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
 
                 const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
 
-                for (let j = 0; j < ruleWords.length; j++) {
-                    if (!wordInfos[i + j].color) {
-                        wordInfos[i + j].color = effectiveColor;
-                        wordInfos[i + j].type = effectiveType;
-                        wordInfos[i + j].isBold = true;
-                        wordInfos[i + j].prefixLen = currentPrefixes[j];
+                for (let j = 0; j < matchedRawIndices.length; j++) {
+                    const rawIdx = matchedRawIndices[j];
+                    if (!wordInfos[rawIdx].color) {
+                        wordInfos[rawIdx].color = effectiveColor;
+                        wordInfos[rawIdx].type = effectiveType;
+                        wordInfos[rawIdx].isBold = true;
+                        wordInfos[rawIdx].prefixLen = currentPrefixes[j];
                     }
                 }
             }
@@ -129,23 +166,24 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
                     return <span key={i} className="rounded px-0.5 opacity-90 text-gray-800 dark:text-gray-200">{word}</span>;
                 }
 
-                // If word has a conjunction prefix (و / ف) that should NOT be colored
                 if (info.prefixLen > 0) {
-                    // We need to find the split point in the RAW word.
-                    // This is tricky due to tashkeel. Let's find the first character that matches و or ف.
-                    // Usually it's the very first character raw.
-                    const prefix = word.substring(0, info.prefixLen + (word.length > info.prefixLen && word[info.prefixLen] === '\u064E' ? 1 : 0)); // Handle cases like 'فَـ'
-                    // Actually, let's keep it simple: prefix is the first letter, 
-                    // and if next char is Fatha (064E), take it too.
+                    // Split the prefix (conjunction) from the word
                     let splitIdx = info.prefixLen;
-                    if (word.length > splitIdx && word[splitIdx] === '\u064E') splitIdx++;
-
+                    // Handle tashkeel optionally? quranStripConjunction tells us raw prefix chars.
+                    // To be safe, we look at the raw word for the first splitIdx characters.
+                    // But wait, tashkeel might be in between. 
+                    // Let's use a simpler approach: finding the first letter that matches the stripped body.
                     const prefixPart = word.substring(0, splitIdx);
-                    const mainPart = word.substring(splitIdx);
+                    // Check if there is a Fatha/Damma after prefix (like فَـ or وَـ)
+                    let extra = 0;
+                    if (word.length > splitIdx && /[\u064B-\u0652]/.test(word[splitIdx])) extra = 1;
+
+                    const pPart = word.substring(0, splitIdx + extra);
+                    const mPart = word.substring(splitIdx + extra);
 
                     return (
                         <span key={i} className="flex">
-                            <span className="text-gray-800 dark:text-gray-200">{prefixPart}</span>
+                            <span className="text-gray-800 dark:text-gray-200">{pPart}</span>
                             <span
                                 className={clsx("rounded px-0.5 font-bold")}
                                 style={{
@@ -153,7 +191,7 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
                                     backgroundColor: `${info.color}20`,
                                 }}
                             >
-                                {mainPart}
+                                {mPart}
                             </span>
                         </span>
                     );
@@ -351,10 +389,20 @@ export default function MutashabihatIndex({
                                 if (isStart) detectedType = 'START';
                                 else if (isEnd) detectedType = 'END';
                                 else detectedType = 'MIDDLE';
+
+                                // Priority Logic: If this rule is ALREADY marked as MIDDLE in another ayah of this group, 
+                                // keep it MIDDLE to maintain consistency (User's preference).
+                                if (groups[ruleKey] && groups[ruleKey].ruleType === 'MIDDLE') {
+                                    detectedType = 'MIDDLE';
+                                }
+
                                 break;
                             }
                         }
                     }
+
+                    // FILTER: Group rule itself must be at least 2 words
+                    if (getRealWordCount(ruleKey) < 2) return;
 
                     const colors = {
                         'START': '#10b981',
@@ -371,18 +419,23 @@ export default function MutashabihatIndex({
                     };
                 }
 
-                // Add source if it belongs to this rule
-                if (mut.sourceAyah.absoluteAyahNumber) {
+                // Add source ONLY if it actually contains the rule phrase
+                const sourceContains = (mut.sourceAyah.text || "").includes(ruleKey) ||
+                    (findSharedPhrases(mut.sourceAyah.text || "", ruleKey).length > 0);
+
+                if (mut.sourceAyah.absoluteAyahNumber && sourceContains) {
                     groups[ruleKey].ayahs.set(mut.sourceAyah.absoluteAyahNumber, {
                         ...mut.sourceAyah,
+                        isSource: true
                     });
                 }
 
-                // Add target
-                if (t.absoluteAyahNumber) {
-                    groups[ruleKey].ayahs.set(t.absoluteAyahNumber, {
-                        ...t,
-                    });
+                // Add target ONLY if it actually contains the rule phrase
+                const targetContains = (t.text || "").includes(ruleKey) ||
+                    (findSharedPhrases(t.text || "", ruleKey).length > 0);
+
+                if (t.absoluteAyahNumber && targetContains) {
+                    groups[ruleKey].ayahs.set(t.absoluteAyahNumber, { ...t });
                 }
             });
         });
@@ -572,7 +625,11 @@ function MutashabihaCard({ item }: { item: { mut: Mutashabiha, targets: any[] } 
                     </span>
                 </div>
                 <div className="text-right font-quran text-xl leading-loose text-gray-900 dark:text-white">
-                    <HighlightingText text={mut.sourceAyah.text} absoluteAyahNumber={mut.sourceAyah.absoluteAyahNumber} />
+                    <HighlightingText
+                        text={mut.sourceAyah.text}
+                        absoluteAyahNumber={mut.sourceAyah.absoluteAyahNumber}
+                        referenceText={targets.map(t => t.text)}
+                    />
                 </div>
             </div>
 
@@ -677,7 +734,11 @@ function MutashabihaCard({ item }: { item: { mut: Mutashabiha, targets: any[] } 
                                                         </div>
                                                     </div>
                                                     <div className="text-right font-quran text-lg leading-relaxed text-gray-700 dark:text-gray-300">
-                                                        <HighlightingText text={target.text} absoluteAyahNumber={target.absoluteAyahNumber} />
+                                                        <HighlightingText
+                                                            text={target.text}
+                                                            absoluteAyahNumber={target.absoluteAyahNumber}
+                                                            referenceText={mut.sourceAyah.text}
+                                                        />
                                                     </div>
                                                 </div>
                                             ))}
@@ -731,6 +792,7 @@ function InternalGroupSection({ group }: { group: any }) {
                                 text={ayah.text}
                                 absoluteAyahNumber={ayah.absoluteAyahNumber}
                                 onlyRule={rule}
+                                referenceText={ayahs.map((a: any) => a.text)}
                             />
                             <span className="inline-flex mr-2 text-sm font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30 whitespace-nowrap">
                                 ({ayah.ayahNumber})
