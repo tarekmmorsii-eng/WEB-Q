@@ -17,7 +17,17 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
     if (!text) return <span className="text-gray-800 dark:text-gray-200">{text}</span>;
 
     const normalize = (t: string) => {
-        return t.replace(/[\u064B-\u065F\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "");
+        return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
+            .replace(/[أإآ]/g, "ا")
+            .replace(/ى/g, "ي");
+    };
+
+    const stripConjunction = (normalizedWord: string, ruleWord: string) => {
+        if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
+        if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
+            return { match: true, prefixLen: 1 };
+        }
+        return { match: false, prefixLen: 0 };
     };
 
     // Get all rules for this ayah from the global map PLUS any manual rules passed
@@ -26,7 +36,8 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
 
     // Filter by specific rule if requested
     if (onlyRule) {
-        allRules = allRules.filter(r => r.rule === onlyRule);
+        const normOnly = normalize(onlyRule);
+        allRules = allRules.filter(r => normalize(r.rule) === normOnly);
     }
 
     // Add manual rules if not already present
@@ -39,12 +50,10 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
     if (allRules.length === 0) return <span className="text-gray-800 dark:text-gray-200 text-right w-full" dir="rtl">{text}</span>;
 
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
-    // Identify non-word symbols to ignore for position detection
     const isSymbol = (w: string) => normalize(w).length === 0;
 
-    const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false }));
+    const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
-    // Sort rules: START > END > MIDDLE, then by length (longest first)
     const sortedRules = [...allRules].sort((a, b) => {
         const priority: any = { 'START': 1, 'END': 2, 'MIDDLE': 3, 'OTHER': 4 };
         const pa = priority[a.type] || 5;
@@ -53,7 +62,6 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
         return (b.rule?.length || 0) - (a.rule?.length || 0);
     });
 
-    // Phrase-based matching
     sortedRules.forEach(rule => {
         if (!rule.rule) return;
         const ruleNormalized = normalize(rule.rule);
@@ -61,23 +69,26 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
         if (ruleWords.length === 0) return;
 
         const colors = {
-            'START': '#10b981', // Green
-            'END': '#ef4444',   // Red
-            'MIDDLE': '#3b82f6', // Blue
-            'OTHER': '#d97706'  // Amber
+            'START': '#10b981',
+            'END': '#ef4444',
+            'MIDDLE': '#3b82f6',
+            'OTHER': '#d97706'
         };
 
         for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
             let match = true;
+            let currentPrefixes = new Array(ruleWords.length).fill(0);
+
             for (let j = 0; j < ruleWords.length; j++) {
-                if (normalize(rawWords[i + j]) !== ruleWords[j]) {
+                const res = stripConjunction(normalize(rawWords[i + j]), ruleWords[j]);
+                if (!res.match) {
                     match = false;
                     break;
                 }
+                currentPrefixes[j] = res.prefixLen;
             }
+
             if (match) {
-                // Smart Type Detection based on position in this specific ayah text
-                // Check if index 'i' is effectively the start (ignoring preceding symbols)
                 let isStart = true;
                 for (let k = 0; k < i; k++) {
                     if (!isSymbol(rawWords[k])) {
@@ -86,7 +97,6 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
                     }
                 }
 
-                // Check if it's effectively the end
                 let isEnd = true;
                 for (let k = i + ruleWords.length; k < rawWords.length; k++) {
                     if (!isSymbol(rawWords[k])) {
@@ -103,11 +113,11 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
                 const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
 
                 for (let j = 0; j < ruleWords.length; j++) {
-                    // Only color if not already colored by a higher-priority rule
                     if (!wordInfos[i + j].color) {
                         wordInfos[i + j].color = effectiveColor;
                         wordInfos[i + j].type = effectiveType;
                         wordInfos[i + j].isBold = true;
+                        wordInfos[i + j].prefixLen = currentPrefixes[j];
                     }
                 }
             }
@@ -118,16 +128,47 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
         <div className="flex flex-wrap gap-x-1 gap-y-1 justify-start text-right w-full" dir="rtl">
             {rawWords.map((word, i) => {
                 const info = wordInfos[i];
+                if (!info.color) {
+                    return <span key={i} className="rounded px-0.5 opacity-90 text-gray-800 dark:text-gray-200">{word}</span>;
+                }
+
+                // If word has a conjunction prefix (و / ف) that should NOT be colored
+                if (info.prefixLen > 0) {
+                    // We need to find the split point in the RAW word.
+                    // This is tricky due to tashkeel. Let's find the first character that matches و or ف.
+                    // Usually it's the very first character raw.
+                    const prefix = word.substring(0, info.prefixLen + (word.length > info.prefixLen && word[info.prefixLen] === '\u064E' ? 1 : 0)); // Handle cases like 'فَـ'
+                    // Actually, let's keep it simple: prefix is the first letter, 
+                    // and if next char is Fatha (064E), take it too.
+                    let splitIdx = info.prefixLen;
+                    if (word.length > splitIdx && word[splitIdx] === '\u064E') splitIdx++;
+
+                    const prefixPart = word.substring(0, splitIdx);
+                    const mainPart = word.substring(splitIdx);
+
+                    return (
+                        <span key={i} className="flex">
+                            <span className="text-gray-800 dark:text-gray-200">{prefixPart}</span>
+                            <span
+                                className={clsx("rounded px-0.5 font-bold")}
+                                style={{
+                                    color: info.color,
+                                    backgroundColor: `${info.color}20`,
+                                }}
+                            >
+                                {mainPart}
+                            </span>
+                        </span>
+                    );
+                }
+
                 return (
                     <span
                         key={i}
-                        className={clsx(
-                            "rounded px-0.5 transition-colors duration-300",
-                            info.isBold ? "font-bold" : "opacity-90"
-                        )}
+                        className={clsx("rounded px-0.5 font-bold")}
                         style={{
-                            color: info.color ? info.color : 'currentColor',
-                            backgroundColor: info.color ? `${info.color}20` : 'transparent',
+                            color: info.color,
+                            backgroundColor: `${info.color}20`,
                         }}
                     >
                         {word}

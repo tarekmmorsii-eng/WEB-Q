@@ -14,7 +14,17 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
     if (!text) return <>{text}</>;
 
     const normalize = (t: string) => {
-        return t.replace(/[\u064B-\u065F\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "");
+        return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
+            .replace(/[أإآ]/g, "ا")
+            .replace(/ى/g, "ي");
+    };
+
+    const stripConjunction = (normalizedWord: string, ruleWord: string) => {
+        if (normalizedWord === ruleWord) return { match: true, prefixLen: 0 };
+        if ((normalizedWord.startsWith('و') || normalizedWord.startsWith('ف')) && normalizedWord.slice(1) === ruleWord) {
+            return { match: true, prefixLen: 1 };
+        }
+        return { match: false, prefixLen: 0 };
     };
 
     // Get all rules for this ayah from the global map PLUS any manual rules passed
@@ -31,12 +41,10 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
     if (allRules.length === 0) return <span className="text-slate-900 dark:text-slate-100">{text}</span>;
 
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
-    // Identify non-word symbols to ignore for position detection
     const isSymbol = (w: string) => normalize(w).length === 0;
 
-    const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false }));
+    const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
-    // Sort rules: START > END > MIDDLE, then by length (longest first)
     const sortedRules = [...allRules].sort((a, b) => {
         const priority: any = { 'START': 1, 'END': 2, 'MIDDLE': 3, 'OTHER': 4 };
         const pa = priority[a.type] || 5;
@@ -45,7 +53,6 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
         return (b.rule?.length || 0) - (a.rule?.length || 0);
     });
 
-    // Phrase-based matching
     sortedRules.forEach(rule => {
         if (!rule.rule) return;
         const ruleNormalized = normalize(rule.rule);
@@ -53,22 +60,26 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
         if (ruleWords.length === 0) return;
 
         const colors = {
-            'START': '#10b981', // Green
-            'END': '#ef4444',   // Red
-            'MIDDLE': '#3b82f6', // Blue
-            'OTHER': '#d97706'  // Amber
+            'START': '#10b981',
+            'END': '#ef4444',
+            'MIDDLE': '#3b82f6',
+            'OTHER': '#d97706'
         };
 
         for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
             let match = true;
+            let currentPrefixes = new Array(ruleWords.length).fill(0);
+
             for (let j = 0; j < ruleWords.length; j++) {
-                if (normalize(rawWords[i + j]) !== ruleWords[j]) {
+                const res = stripConjunction(normalize(rawWords[i + j]), ruleWords[j]);
+                if (!res.match) {
                     match = false;
                     break;
                 }
+                currentPrefixes[j] = res.prefixLen;
             }
+
             if (match) {
-                // Smart Type Detection
                 let isStart = true;
                 for (let k = 0; k < i; k++) {
                     if (!isSymbol(rawWords[k])) {
@@ -93,11 +104,11 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
                 const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
 
                 for (let j = 0; j < ruleWords.length; j++) {
-                    // Only color if not already colored by a higher-priority rule
                     if (!wordInfos[i + j].color) {
                         wordInfos[i + j].color = effectiveColor;
                         wordInfos[i + j].type = effectiveType;
                         wordInfos[i + j].isBold = true;
+                        wordInfos[i + j].prefixLen = currentPrefixes[j];
                     }
                 }
             }
@@ -108,17 +119,42 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
         <div className="flex flex-wrap justify-center gap-x-1.5 gap-y-2" dir="rtl">
             {rawWords.map((word, i) => {
                 const info = wordInfos[i];
+                if (!info.color) {
+                    return <span key={i} className="transition-colors duration-300 rounded px-1 text-slate-900 dark:text-slate-100">{word}</span>;
+                }
+
+                if (info.prefixLen > 0) {
+                    let splitIdx = info.prefixLen;
+                    if (word.length > splitIdx && word[splitIdx] === '\u064E') splitIdx++;
+
+                    const prefixPart = word.substring(0, splitIdx);
+                    const mainPart = word.substring(splitIdx);
+
+                    return (
+                        <span key={i} className="flex">
+                            <span className="text-slate-900 dark:text-slate-100">{prefixPart}</span>
+                            <span
+                                className={clsx("transition-colors duration-300 rounded px-1 font-bold")}
+                                style={{
+                                    color: info.color,
+                                    backgroundColor: `${info.color}15`,
+                                    textShadow: `0 0 10px ${info.color}25`
+                                }}
+                            >
+                                {mainPart}
+                            </span>
+                        </span>
+                    );
+                }
+
                 return (
                     <span
                         key={i}
-                        className={clsx(
-                            "transition-colors duration-300 rounded px-1",
-                            info.isBold ? "font-bold" : "opacity-100"
-                        )}
+                        className={clsx("transition-colors duration-300 rounded px-1 font-bold")}
                         style={{
-                            color: info.color ? info.color : 'currentColor',
-                            backgroundColor: info.color ? `${info.color}15` : 'transparent',
-                            textShadow: info.color ? `0 0 10px ${info.color}25` : 'none'
+                            color: info.color,
+                            backgroundColor: `${info.color}15`,
+                            textShadow: `0 0 10px ${info.color}25`
                         }}
                     >
                         {word}
