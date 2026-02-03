@@ -13,6 +13,8 @@ interface AyahOptionsModalProps {
     onBookmark: () => void;
     isBookmarked: boolean;
     language: string;
+    hasMutashabihat?: boolean;
+    onOpenMutashabihat?: () => void;
 }
 
 export default function AyahOptionsModal({
@@ -24,7 +26,9 @@ export default function AyahOptionsModal({
     onRate,
     onBookmark,
     isBookmarked,
-    language
+    language,
+    hasMutashabihat,
+    onOpenMutashabihat
 }: AyahOptionsModalProps) {
     if (!isOpen) return null;
 
@@ -144,14 +148,32 @@ export default function AyahOptionsModal({
 
                 <div className="w-full h-px bg-gray-200 mb-6" />
 
-                {/* Bookmark Button */}
-                <button
-                    onClick={handleBookmark}
-                    className="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white py-4 rounded-xl flex items-center justify-center gap-3 transition-colors mb-6 font-medium shadow-md"
-                >
-                    <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} className={isBookmarked ? "text-amber-400" : ""} />
-                    {isBookmarked ? t.removeBookmark : t.addBookmark}
-                </button>
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-3 mb-6">
+                    {/* Mutashabihat Button (Always visible) */}
+                    <button
+                        onClick={() => {
+                            onOpenMutashabihat?.();
+                            onClose();
+                        }}
+                        className="w-full bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white py-4 rounded-xl flex items-center justify-center gap-3 transition-colors font-bold shadow-md"
+                    >
+                        <span className="text-xl">📖</span>
+                        {language === 'ar'
+                            ? (hasMutashabihat ? 'عرض المتشابهات' : 'إضافة متشابهة')
+                            : (hasMutashabihat ? 'View Mutashabihat' : 'Add Mutashabihat')
+                        }
+                    </button>
+
+                    {/* Bookmark Button */}
+                    <button
+                        onClick={handleBookmark}
+                        className="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white py-4 rounded-xl flex items-center justify-center gap-3 transition-colors font-medium shadow-md"
+                    >
+                        <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} className={isBookmarked ? "text-amber-400" : ""} />
+                        {isBookmarked ? t.removeBookmark : t.addBookmark}
+                    </button>
+                </div>
 
                 {/* Close Button */}
                 <button

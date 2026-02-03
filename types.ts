@@ -106,6 +106,7 @@ export interface AppSettings {
   pageMargins: number; // 0 - 50
   colorStopSigns?: boolean; // New setting for stop sign coloring
   prayerMode: boolean;
+  showMutashabihatIndicators: boolean;
 }
 
 // Mutashabihat (Similar Verses) Types

@@ -441,14 +441,45 @@ export default function Settings({
                                         type="checkbox"
                                         checked={localSettings.colorStopSigns}
                                         onChange={(e) => {
-                                            const newSettings = { ...localSettings, colorStopSigns: e.target.checked };
-                                            setLocalSettings(newSettings);
+                                            setLocalSettings(prev => ({ ...prev, colorStopSigns: e.target.checked }));
                                         }}
                                         className="w-5 h-5 text-amber-600 rounded focus:ring-2 focus:ring-amber-500"
                                     />
                                 </label>
 
+                                {/* Mutashabihat Indicators Toggle */}
+                                <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer mt-3">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-900 dark:text-white font-medium">
+                                                {currentLanguage === 'ar' ? 'إظهار علامات المتشابهات' : 'Show Mutashabihat Indicators'}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {currentLanguage === 'ar' ? 'الخطوط الملونة تحت أرقام الآيات' : 'Colored lines under ayah numbers'}
+                                            </span>
+                                        </div>
 
+                                        {/* Preview Icon */}
+                                        <div className="w-10 h-10 shrink-0">
+                                            <svg viewBox="0 0 100 110" className="w-full h-full overflow-visible">
+                                                <g fill="none" stroke="#B45309" strokeWidth="4">
+                                                    <path d="M50,12 C65,12 85,22 88,48 C91,74 72,88 50,88 C28,88 10,72 12,48 C14,24 35,12 50,12 Z" />
+                                                </g>
+                                                <text x="50" y="55" fill="#B45309" fontSize="40" fontWeight="bold" textAnchor="middle" dominantBaseline="central">١</text>
+                                                <line x1="20" y1="102" x2="50" y2="102" stroke="#22c55e" strokeWidth="12" strokeLinecap="round" />
+                                                <line x1="50" y1="102" x2="80" y2="102" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={localSettings.showMutashabihatIndicators}
+                                        onChange={(e) => {
+                                            setLocalSettings(prev => ({ ...prev, showMutashabihatIndicators: e.target.checked }));
+                                        }}
+                                        className="w-5 h-5 text-amber-600 rounded focus:ring-2 focus:ring-amber-500"
+                                    />
+                                </label>
 
                             </section>
 

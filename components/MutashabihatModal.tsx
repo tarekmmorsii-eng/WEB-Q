@@ -352,32 +352,40 @@ export default function MutashabihatModal({
                     <button
                         onClick={() => setActiveTab('inside')}
                         className={clsx(
-                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
                             activeTab === 'inside'
-                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
                                 : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
                         )}
                     >
-                        <span>📍</span>
-                        {isArabic ? 'داخل السورة' : 'Inside Surah'}
-                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
-                            {mutashabiha.similarAyahs.filter(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber).length}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span>📍</span>
+                            {isArabic ? 'داخل السورة' : 'Inside Surah'}
+                            <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                {mutashabiha.similarAyahs.filter(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber).length}
+                            </span>
+                        </div>
+                        {/* Green line indicator */}
+                        <div className="w-12 h-1 rounded-full bg-green-500 opacity-80" />
                     </button>
                     <button
                         onClick={() => setActiveTab('outside')}
                         className={clsx(
-                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
                             activeTab === 'outside'
-                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
                                 : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
                         )}
                     >
-                        <span>🌍</span>
-                        {isArabic ? 'خارج السورة' : 'Outside Surah'}
-                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
-                            {mutashabiha.similarAyahs.filter(a => a.surahNumber !== mutashabiha.sourceAyah.surahNumber).length}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span>🌍</span>
+                            {isArabic ? 'خارج السورة' : 'Outside Surah'}
+                            <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                {mutashabiha.similarAyahs.filter(a => a.surahNumber !== mutashabiha.sourceAyah.surahNumber).length}
+                            </span>
+                        </div>
+                        {/* Red line indicator */}
+                        <div className="w-12 h-1 rounded-full bg-red-500 opacity-80" />
                     </button>
                 </div>
 

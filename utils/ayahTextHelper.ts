@@ -23,7 +23,22 @@ export async function getAyahText(surahNumber: number, ayahNumber: number): Prom
             if (surah) {
                 const ayah = surah.ayahs?.find((a: any) => a.numberInSurah === ayahNumber);
                 if (ayah && ayah.text) {
-                    return ayah.text;
+                    let text = ayah.text;
+                    // Clean Basmalah from first ayah (except Fatiha)
+                    if (surahNumber !== 1 && ayahNumber === 1) {
+                        const basmalahs = [
+                            "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                            "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ",
+                            "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ"
+                        ];
+                        for (const b of basmalahs) {
+                            if (text.startsWith(b)) {
+                                text = text.replace(b, "").trim();
+                                break;
+                            }
+                        }
+                    }
+                    return text;
                 }
             }
         }
@@ -37,7 +52,22 @@ export async function getAyahText(surahNumber: number, ayahNumber: number): Prom
         if (response.ok) {
             const data = await response.json();
             if (data.data && data.data.text) {
-                return data.data.text;
+                let text = data.data.text;
+                // Clean Basmalah from first ayah (except Fatiha)
+                if (surahNumber !== 1 && ayahNumber === 1) {
+                    const basmalahs = [
+                        "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                        "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ",
+                        "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ"
+                    ];
+                    for (const b of basmalahs) {
+                        if (text.startsWith(b)) {
+                            text = text.replace(b, "").trim();
+                            break;
+                        }
+                    }
+                }
+                return text;
             }
         }
     } catch (error) {
@@ -70,7 +100,22 @@ export async function getAyahTexts(ayahRefs: Array<{ surahNumber: number; ayahNu
                 if (surah) {
                     const ayah = surah.ayahs?.find((a: any) => a.numberInSurah === ref.ayahNumber);
                     if (ayah && ayah.text) {
-                        results.set(`${ref.surahNumber}-${ref.ayahNumber}`, ayah.text);
+                        let text = ayah.text;
+                        // Clean Basmalah from first ayah (except Fatiha)
+                        if (ref.surahNumber !== 1 && ref.ayahNumber === 1) {
+                            const basmalahs = [
+                                "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                                "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ",
+                                "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ"
+                            ];
+                            for (const b of basmalahs) {
+                                if (text.startsWith(b)) {
+                                    text = text.replace(b, "").trim();
+                                    break;
+                                }
+                            }
+                        }
+                        results.set(`${ref.surahNumber}-${ref.ayahNumber}`, text);
                     }
                 }
             });

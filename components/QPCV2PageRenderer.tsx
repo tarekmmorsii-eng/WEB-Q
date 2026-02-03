@@ -77,30 +77,32 @@ interface AyahSeparatorProps {
     deviceType?: 'mobile' | 'tablet' | 'desktop';
     orientation?: 'portrait' | 'landscape';
     language?: string;
+    mutashabihatType?: 'none' | 'inside' | 'outside' | 'both';
+    onMutashabihatClick?: (e: React.MouseEvent) => void;
 }
 
-const AyahSeparator: React.FC<AyahSeparatorProps> = ({ ayahNumber, accentColor, rating, deviceType = 'desktop', orientation = 'portrait', language = 'ar' }) => {
-    // تحويل رقم الآية للأرقام العربية الشرقية فقط إذا كانت اللغة عربية
+const AyahSeparator: React.FC<AyahSeparatorProps> = ({
+    ayahNumber, accentColor, rating, deviceType = 'desktop', orientation = 'portrait', language = 'ar',
+    mutashabihatType = 'none', onMutashabihatClick
+}) => {
+    // ... (rest of the component logic)
     const arabicNumber = language === 'ar' ? ayahNumber.toLocaleString('ar-EG') : ayahNumber.toString();
-
-    // ضبط حجم الخط بناءً على عدد الخانات
     const digitCount = ayahNumber.toString().length;
 
-    // Rating colors
     const ratingColors = {
-        good: '#22c55e',   // green-500
-        medium: '#eab308', // yellow-500
-        weak: '#ef4444'    // red-500
+        good: '#22c55e',
+        medium: '#eab308',
+        weak: '#ef4444'
     };
 
     const activeColor = rating ? ratingColors[rating] : accentColor;
     const fillColor = rating ? ratingColors[rating] : 'none';
-
     const isTabletLandscape = deviceType === 'tablet' && orientation === 'landscape';
 
     return (
         <span
             className="ayah-separator-container"
+            onClick={onMutashabihatClick}
             style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -109,20 +111,19 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({ ayahNumber, accentColor, 
                 width: deviceType === 'mobile' ? '1.5em' : (isTabletLandscape ? '1.45em' : '1.9em'),
                 height: deviceType === 'mobile' ? '1.5em' : (isTabletLandscape ? '1.45em' : '1.9em'),
                 margin: deviceType === 'mobile' ? '0 2px' : (isTabletLandscape ? '0 3px' : '0 4px'),
-                fontSize: deviceType === 'mobile' ? '0.9em' : (isTabletLandscape ? '0.95em' : '1.1em')
+                fontSize: deviceType === 'mobile' ? '0.9em' : (isTabletLandscape ? '0.95em' : '1.1em'),
+                cursor: onMutashabihatClick ? 'pointer' : 'default'
             }}
         >
-            {/* SVG الزخرفة مع الرقم في المنتصف */}
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 100 100"
                 style={{
                     width: '100%',
                     height: '100%',
-                    overflow: 'visible' // Allow glow
+                    overflow: 'visible'
                 }}
             >
-                {/* Background Fill for Rating */}
                 {rating && (
                     <circle cx="50" cy="50" r="42" fill={fillColor} fillOpacity="0.2" stroke={activeColor} strokeWidth="3" />
                 )}
@@ -132,10 +133,9 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({ ayahNumber, accentColor, 
                     <path d="M45,15 C60,13 82,25 85,50 C88,75 70,85 48,85 C26,85 15,75 14,52 C13,29 30,17 45,15" opacity="0.8" strokeWidth="2" />
                     <path d="M55,18 C70,20 80,30 82,52 C84,74 75,82 55,82 C35,82 20,74 22,50 C24,26 40,16 55,18" opacity="0.6" strokeWidth="1.5" />
                 </g>
-                {/* رقم الآية - توسيط مع dominant-baseline و text-anchor */}
                 <text
                     x="50"
-                    y="55" // Adjusted Y for better visual centering
+                    y="55"
                     fill={activeColor}
                     fontSize={digitCount >= 3 ? '32' : digitCount >= 2 ? '38' : '44'}
                     fontFamily="'Almarai', sans-serif"
@@ -146,6 +146,24 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({ ayahNumber, accentColor, 
                 >
                     {arabicNumber}
                 </text>
+
+                {/* Mutashabihat Indicator Line */}
+                {mutashabihatType !== 'none' && (
+                    <g className="mutashabihat-line-indicator">
+                        {mutashabihatType === 'inside' && (
+                            <line x1="20" y1="96" x2="80" y2="96" stroke="#22c55e" strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {mutashabihatType === 'outside' && (
+                            <line x1="20" y1="96" x2="80" y2="96" stroke="#ef4444" strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {mutashabihatType === 'both' && (
+                            <>
+                                <line x1="20" y1="96" x2="50" y2="96" stroke="#22c55e" strokeWidth="6" strokeLinecap="round" />
+                                <line x1="50" y1="96" x2="80" y2="96" stroke="#ef4444" strokeWidth="6" strokeLinecap="round" />
+                            </>
+                        )}
+                    </g>
+                )}
             </svg>
         </span>
     );
@@ -174,6 +192,7 @@ interface QPCV2PageRendererProps {
     onOpenMutashabihat?: (mutOrSurah: Mutashabiha | number, ayah?: number) => void;
     onDeleteSimilarAyah?: (mutashabihaId: string, surahNumber: number, ayahNumber: number) => void;
     onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
+    showMutashabihatIndicators?: boolean;
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -196,7 +215,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     mutashabihatData = [],
     onOpenMutashabihat,
     onDeleteSimilarAyah,
-    onAddSimilarAyah
+    onAddSimilarAyah,
+    showMutashabihatIndicators = true
 }) => {
     const t = translations[language as Language] || translations.ar;
 
@@ -1203,56 +1223,35 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
                                         {word.isEnd ? (
                                             <span id="tour-ayah-number" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                                                {/* Mutashabihat Indicator */}
                                                 {(() => {
                                                     const hasMutashabihat = findMutashabihatForAyah(word.surah, word.ayah, mutashabihatData);
-                                                    if (!hasMutashabihat) return null;
 
-                                                    // Get the color of the highest similarity, prioritized by ruleColor if available
-                                                    const indicatorColor = hasMutashabihat.similarAyahs.find(a => a.ruleColor)?.ruleColor ||
-                                                        hasMutashabihat.highestSimilarity?.color ||
-                                                        '#f97316';
-                                                    const similarityCount = hasMutashabihat.similarAyahs.length;
+                                                    let mutType: 'none' | 'inside' | 'outside' | 'both' = 'none';
+                                                    if (showMutashabihatIndicators && hasMutashabihat) {
+                                                        const similarAyahs = hasMutashabihat.similarAyahs;
+                                                        const hasInside = similarAyahs.some(a => a.surahNumber === word.surah);
+                                                        const hasOutside = similarAyahs.some(a => a.surahNumber !== word.surah);
+
+                                                        if (hasInside && hasOutside) mutType = 'both';
+                                                        else if (hasInside) mutType = 'inside';
+                                                        else if (hasOutside) mutType = 'outside';
+                                                    }
 
                                                     return (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onOpenMutashabihat?.(word.surah, word.ayah);
+                                                        <AyahSeparator
+                                                            ayahNumber={word.ayah}
+                                                            accentColor={accentColor}
+                                                            deviceType={deviceType}
+                                                            orientation={orientation}
+                                                            rating={getEffectiveRating(word.surah, word.ayah)}
+                                                            language={language}
+                                                            mutashabihatType={mutType}
+                                                            onMutashabihatClick={(e) => {
+                                                                // لا تقم بإيقاف الانتشار، دع الحدث يصل للأب ليفتح نافذة الخيارات
                                                             }}
-                                                            className="mutashabihat-indicator"
-                                                            style={{
-                                                                position: 'absolute',
-                                                                right: '100%',
-                                                                marginRight: deviceType === 'mobile' ? '2px' : '4px',
-                                                                width: deviceType === 'mobile' ? '6px' : '8px',
-                                                                height: deviceType === 'mobile' ? '6px' : '8px',
-                                                                borderRadius: '50%',
-                                                                backgroundColor: indicatorColor,
-                                                                cursor: 'pointer',
-                                                                border: 'none',
-                                                                padding: 0,
-                                                                boxShadow: `0 0 4px ${indicatorColor}99`,
-                                                                animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                                                                zIndex: 10
-                                                            }}
-                                                            title={
-                                                                language === 'ar'
-                                                                    ? `${similarityCount} متشابهة${similarityCount > 1 ? '' : ''}`
-                                                                    : `${similarityCount} similar verse${similarityCount > 1 ? 's' : ''}`
-                                                            }
                                                         />
                                                     );
                                                 })()}
-
-                                                <AyahSeparator
-                                                    ayahNumber={word.ayah}
-                                                    accentColor={accentColor}
-                                                    deviceType={deviceType}
-                                                    orientation={orientation}
-                                                    rating={getEffectiveRating(word.surah, word.ayah)}
-                                                    language={language}
-                                                />
                                             </span>
                                         ) : (
                                             <span dangerouslySetInnerHTML={{

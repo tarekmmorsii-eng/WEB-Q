@@ -55,6 +55,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   pageMargins: 20,
   colorStopSigns: true,
   prayerMode: false,
+  showMutashabihatIndicators: true,
 };
 
 export default function App() {
@@ -387,12 +388,23 @@ export default function App() {
   };
 
   const handleOpenMutashabihat = useCallback((surah: number, ayah: number) => {
-    const merged = getMergedMutashabihaForAyah(surah, ayah, mutashabihatData);
+    let merged = getMergedMutashabihaForAyah(surah, ayah, mutashabihatData);
 
-    if (merged) {
-      setCurrentMutashabiha(merged);
-      setIsMutashabihatModalOpen(true);
+    if (!merged) {
+      // إنشاء كائن فارغ ليتمكن المستخدم من الإضافة
+      merged = {
+        id: `merged_${surah}_${ayah}`,
+        sourceAyah: {
+          surahNumber: surah,
+          ayahNumber: ayah,
+          text: "" // سيقوم المكون بجلب النص إذا كان فارغاً
+        },
+        similarAyahs: []
+      };
     }
+
+    setCurrentMutashabiha(merged);
+    setIsMutashabihatModalOpen(true);
   }, [mutashabihatData]);
 
   // 1. Manual Update Logic (Top Level)
@@ -1503,6 +1515,7 @@ export default function App() {
                   isPrayerMode={settings.prayerMode}
                   language={settings.language}
                   mutashabihatData={mutashabihatData}
+                  showMutashabihatIndicators={settings.showMutashabihatIndicators}
                   onOpenMutashabihat={(mutOrSurah, optAyah) => {
                     if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
                       setCurrentMutashabiha(mutOrSurah);
@@ -1789,6 +1802,10 @@ export default function App() {
             }}
             isBookmarked={verseBookmarks.some(vb => vb.id === `${currentPage}-${ratingModalData.surah}-${ratingModalData.ayah}`)}
             language={settings.language}
+            hasMutashabihat={!!findMutashabihatForAyah(ratingModalData.surah, ratingModalData.ayah, mutashabihatData)}
+            onOpenMutashabihat={() => {
+              handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
+            }}
           />
         )
       }
