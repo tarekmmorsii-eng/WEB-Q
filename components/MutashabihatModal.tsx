@@ -6,59 +6,129 @@ import { getSurahName } from '../utils/quranHelpers';
 import { getAyahTexts } from '../utils/ayahTextHelper';
 import { getMatchingWords } from '../utils/similarityCalculator';
 import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihatData';
+import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
 
 /**
  * مكون لعرض النص مع تلوين الكلمات المتطابقة بناءً على القواعد
  */
-function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: string, absoluteAyahNumber?: number, manualRules?: any[] }) {
+function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText }: {
+    text: string,
+    absoluteAyahNumber?: number,
+    manualRules?: any[],
+    referenceText?: string | string[]
+}) {
     if (!text) return <>{text}</>;
 
-    // Get all rules for this ayah from the global map PLUS any manual rules passed
-    const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
-    const allRules = [...autoRules];
+    // --- STRICT CONTEXTUAL MATCHING: Only highlight what is shared with reference texts ---
+    let allRules: any[] = manualRules ? [...manualRules] : [];
+    const candidates = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
 
-    // Add manual rules if not already present
-    if (manualRules) {
-        manualRules.forEach(mr => {
-            if (!allRules.find(r => r.rule === mr.rule)) allRules.push(mr);
+    // Generate rules ONLY from shared phrases with references
+    if (referenceText) {
+        const refs = Array.isArray(referenceText) ? referenceText : [referenceText];
+        refs.forEach(ref => {
+            if (!ref || ref === text) return;
+            const shared = findSharedPhrases(text, ref);
+            shared.forEach(p => {
+                const normP = quranNormalize(p.phrase);
+                // Try to find an official metadata (type/color) for this shared phrase
+                const official = candidates.find(c => quranNormalize(c.rule).includes(normP) || normP.includes(quranNormalize(c.rule)));
+
+                if (official) {
+                    if (!allRules.some(r => r.rule === official.rule)) allRules.push(official);
+                } else {
+                    if (!allRules.some(r => r.rule === p.phrase)) {
+                        allRules.push({
+                            rule: p.phrase,
+                            type: 'MIDDLE',
+                            isDynamic: true
+                        });
+                    }
+                }
+            });
         });
     }
 
     if (allRules.length === 0) return <span className="text-slate-900 dark:text-slate-100">{text}</span>;
 
-    const words = text.split(/\s+/).filter(w => w.length > 0);
-    const wordInfos = new Array(words.length).fill(null).map(() => ({ color: '', type: '', isBold: false }));
+    const rawWords = text.split(/\s+/).filter(w => w.length > 0);
+    const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
-    // Sort rules: START > END > MIDDLE, then by length (longest first)
+    // Sort rules: Longest first
     const sortedRules = [...allRules].sort((a, b) => {
+        const lenA = (a.rule?.length || 0);
+        const lenB = (b.rule?.length || 0);
+        if (lenA !== lenB) return lenB - lenA;
+
         const priority: any = { 'START': 1, 'END': 2, 'MIDDLE': 3, 'OTHER': 4 };
         const pa = priority[a.type] || 5;
         const pb = priority[b.type] || 5;
-        if (pa !== pb) return pa - pb;
-        return (b.rule?.length || 0) - (a.rule?.length || 0);
+        return pa - pb;
     });
 
-    // Phrase-based matching
     sortedRules.forEach(rule => {
         if (!rule.rule) return;
-        const ruleWords = rule.rule.trim().split(/\s+/);
+        const ruleNormalized = quranNormalize(rule.rule);
+        const ruleWords = ruleNormalized.trim().split(/\s+/);
         if (ruleWords.length === 0) return;
 
-        for (let i = 0; i <= words.length - ruleWords.length; i++) {
+        const colors = {
+            'START': '#10b981', // Green
+            'END': '#10b981',   // Unified to Green
+            'MIDDLE': '#10b981',// Unified to Green
+            'OTHER': '#10b981'  // Unified to Green
+        };
+
+        for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
             let match = true;
+            let currentPrefixes = new Array(ruleWords.length).fill(0);
+
             for (let j = 0; j < ruleWords.length; j++) {
-                if (words[i + j] !== ruleWords[j]) {
+                const res = quranStripConjunction(quranNormalize(rawWords[i + j]), ruleWords[j]);
+                const resRev = quranStripConjunction(ruleWords[j], quranNormalize(rawWords[i + j]));
+
+                if (res.match) {
+                    currentPrefixes[j] = res.prefixLen;
+                } else if (resRev.match) {
+                    currentPrefixes[j] = 0;
+                } else if (quranNormalize(rawWords[i + j]) === ruleWords[j]) {
+                    currentPrefixes[j] = 0;
+                } else {
                     match = false;
                     break;
                 }
             }
+
             if (match) {
+                let isStart = true;
+                for (let k = 0; k < i; k++) {
+                    if (!quranIsSymbol(rawWords[k])) {
+                        isStart = false;
+                        break;
+                    }
+                }
+
+                let isEnd = true;
+                for (let k = i + ruleWords.length; k < rawWords.length; k++) {
+                    if (!quranIsSymbol(rawWords[k])) {
+                        isEnd = false;
+                        break;
+                    }
+                }
+
+                let effectiveType = rule.type;
+                if (isStart) effectiveType = 'START';
+                else if (isEnd) effectiveType = 'END';
+                else effectiveType = 'MIDDLE';
+
+                const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
+
                 for (let j = 0; j < ruleWords.length; j++) {
-                    // Only color if not already colored by a higher-priority rule
                     if (!wordInfos[i + j].color) {
-                        wordInfos[i + j].color = rule.color;
-                        wordInfos[i + j].type = rule.type;
+                        wordInfos[i + j].color = effectiveColor;
+                        wordInfos[i + j].type = effectiveType;
                         wordInfos[i + j].isBold = true;
+                        wordInfos[i + j].prefixLen = currentPrefixes[j];
                     }
                 }
             }
@@ -67,19 +137,46 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules }: { text: stri
 
     return (
         <div className="flex flex-wrap justify-center gap-x-1.5 gap-y-2" dir="rtl">
-            {words.map((word, i) => {
+            {rawWords.map((word, i) => {
                 const info = wordInfos[i];
+                if (!info.color) {
+                    return <span key={i} className="transition-colors duration-300 rounded px-1 text-slate-900 dark:text-slate-100">{word}</span>;
+                }
+
+                if (info.prefixLen > 0) {
+                    let splitIdx = info.prefixLen;
+                    const prefixPart = word.substring(0, splitIdx);
+                    let extra = 0;
+                    if (word.length > splitIdx && /[\u064B-\u0652]/.test(word[splitIdx])) extra = 1;
+
+                    const pPart = word.substring(0, splitIdx + extra);
+                    const mPart = word.substring(splitIdx + extra);
+
+                    return (
+                        <span key={i} className="flex">
+                            <span className="text-slate-900 dark:text-slate-100">{pPart}</span>
+                            <span
+                                className={clsx("transition-colors duration-300 rounded px-1 font-bold")}
+                                style={{
+                                    color: info.color,
+                                    backgroundColor: `${info.color}15`,
+                                    textShadow: `0 0 10px ${info.color}25`
+                                }}
+                            >
+                                {mPart}
+                            </span>
+                        </span>
+                    );
+                }
+
                 return (
                     <span
                         key={i}
-                        className={clsx(
-                            "transition-colors duration-300 rounded px-1",
-                            info.isBold ? "font-bold" : "opacity-100"
-                        )}
+                        className={clsx("transition-colors duration-300 rounded px-1 font-bold")}
                         style={{
-                            color: info.color ? info.color : 'currentColor',
-                            backgroundColor: info.color ? `${info.color}15` : 'transparent',
-                            textShadow: info.color ? `0 0 10px ${info.color}25` : 'none'
+                            color: info.color,
+                            backgroundColor: `${info.color}15`,
+                            textShadow: `0 0 10px ${info.color}25`
                         }}
                     >
                         {word}
@@ -97,7 +194,7 @@ interface MutashabihatModalProps {
     language: string;
     onNavigateToAyah?: (surahNumber: number, ayahNumber: number) => void;
     onDeleteSimilarAyah?: (mutashabihaId: string, surahNumber: number, ayahNumber: number) => void;
-    onAddSimilarAyah?: (mutashabihaId: string) => void;
+    onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
 }
 
 export default function MutashabihatModal({
@@ -111,6 +208,18 @@ export default function MutashabihatModal({
 }: MutashabihatModalProps) {
     const [ayahTexts, setAyahTexts] = useState<Map<string, string>>(new Map());
     const [isLoading, setIsLoading] = useState(false);
+
+    // State for filtering tabs
+    const [activeTab, setActiveTab] = useState<'all' | 'inside' | 'outside'>('inside');
+
+    useEffect(() => {
+        if (mutashabiha) {
+            // Check if there are matches inside the surah
+            const hasInside = mutashabiha.similarAyahs.some(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber);
+            if (!hasInside) setActiveTab('all');
+            else setActiveTab('inside');
+        }
+    }, [mutashabiha?.id]);
 
     const isArabic = language === 'ar';
 
@@ -213,13 +322,63 @@ export default function MutashabihatModal({
                             <Loader2 className="animate-spin text-amber-600" size={32} />
                         </div>
                     ) : (
-                        <div className="text-xl leading-loose text-slate-900 dark:text-slate-100 text-center font-arabic px-4 py-3" style={{ fontFamily: "'Amiri Quran', serif" }}>
+                        <div className="p-5 text-right font-quran text-2xl leading-loose" style={{ direction: 'rtl' }}>
                             <HighlightedText
                                 text={sourceText}
                                 absoluteAyahNumber={mutashabiha.sourceAyah.absoluteAyahNumber}
+                                referenceText={mutashabiha.similarAyahs.map(a => a.text || '')}
                             />
                         </div>
                     )}
+                </div>
+
+                {/* Tab Switcher */}
+                <div className="flex bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl mb-6 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
+                    <button
+                        onClick={() => setActiveTab('all')}
+                        className={clsx(
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            activeTab === 'all'
+                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                        )}
+                    >
+                        <span>🔗</span>
+                        {isArabic ? 'الكل' : 'All'}
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                            {mutashabiha.similarAyahs.length}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('inside')}
+                        className={clsx(
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            activeTab === 'inside'
+                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                        )}
+                    >
+                        <span>📍</span>
+                        {isArabic ? 'داخل السورة' : 'Inside Surah'}
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                            {mutashabiha.similarAyahs.filter(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber).length}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('outside')}
+                        className={clsx(
+                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                            activeTab === 'outside'
+                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                        )}
+                    >
+                        <span>🌍</span>
+                        {isArabic ? 'خارج السورة' : 'Outside Surah'}
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                            {mutashabiha.similarAyahs.filter(a => a.surahNumber !== mutashabiha.sourceAyah.surahNumber).length}
+                        </span>
+                    </button>
                 </div>
 
                 {/* Similar Ayahs */}
@@ -261,7 +420,7 @@ export default function MutashabihatModal({
 
 
 
-                        // Define labels and order
+                        // Define sections and order
                         const sections = [
                             { key: 'START', labelEn: 'Start of Verse', labelAr: 'بداية الآيات' },
                             { key: 'END', labelEn: 'End of Verse', labelAr: 'نهاية الآيات' },
@@ -270,102 +429,88 @@ export default function MutashabihatModal({
                             { key: 'OTHER', labelEn: 'Other Matches', labelAr: 'متشابهات أخرى' }
                         ];
 
+                        // Flatten and filter by active tab
+                        const allSortedItems = sections.flatMap(section => {
+                            const items = groups[section.key as keyof typeof groups];
+                            return [...items].sort((a, b) => {
+                                const ruleA = a.rule || "";
+                                const ruleB = b.rule || "";
+                                if (ruleA !== ruleB) {
+                                    const specialRule = "الأمر بذكر الله";
+                                    if (ruleA === specialRule) return 1;
+                                    if (ruleB === specialRule) return -1;
+                                    return ruleA.localeCompare(ruleB, 'ar');
+                                }
+                                if (a.surahNumber !== b.surahNumber) return a.surahNumber - b.surahNumber;
+                                return a.ayahNumber - b.ayahNumber;
+                            });
+                        }).filter(ayah => {
+                            if (activeTab === 'all') return true;
+                            if (activeTab === 'inside') return ayah.surahNumber === mutashabiha.sourceAyah.surahNumber;
+                            return ayah.surahNumber !== mutashabiha.sourceAyah.surahNumber;
+                        });
+
+                        if (allSortedItems.length === 0) return null;
+
                         return (
-                            <div className="space-y-8">
-                                {sections.map(section => {
-                                    const items = groups[section.key as keyof typeof groups];
-                                    if (items.length === 0) return null;
+                            <div className="space-y-4">
+                                {allSortedItems.map((ayah, globalIdx) => {
+                                    const similarSurahName = getSurahName(ayah.surahNumber);
+                                    const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
+                                    const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
+                                    const similarity = ayah.similarity;
 
                                     return (
-                                        <div key={section.key} className="space-y-3">
-                                            <div className="flex items-center gap-2 border-b border-amber-200 dark:border-slate-700 pb-2 mb-2">
-                                                <span className="text-xl">
-                                                    {section.key === 'START' && '🟢'}
-                                                    {section.key === 'END' && '🔴'}
-                                                    {section.key === 'MIDDLE' && '🔵'}
-                                                    {section.key === 'FREQ' && '🔁'}
-                                                    {section.key === 'OTHER' && '🔸'}
-                                                </span>
-                                                <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                                                    {isArabic ? section.labelAr : section.labelEn}
-                                                </h4>
-                                                <span className="bg-slate-100 dark:bg-slate-700 text-xs px-2 py-0.5 rounded-full text-slate-500">
-                                                    {items.length}
-                                                </span>
-                                            </div>
+                                        <div
+                                            key={`${ayah.surahNumber}-${ayah.ayahNumber}-${globalIdx}`}
+                                            className="p-4 rounded-xl border-r-4 bg-slate-100 dark:bg-slate-800 shadow-sm border-l-0"
+                                            style={{
+                                                borderColor: '#10b981' // Unified Green Border
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                                <div className="flex items-center gap-3 flex-1">
+                                                    <span className="bg-slate-200 dark:bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                                                        {globalIdx + 1}
+                                                    </span>
 
-                                            <div className="space-y-4">
-                                                {items.map((ayah, index) => {
-                                                    const similarSurahName = getSurahName(ayah.surahNumber);
-                                                    const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
-                                                    const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
-                                                    const similarity = ayah.similarity;
+                                                    <p className="font-bold text-slate-700 dark:text-slate-200" dir="rtl">
+                                                        {similarSurahName} - {isArabic ? 'آية' : 'Ayah'} {ayah.ayahNumber}
+                                                    </p>
 
-                                                    // Global index relative to the group isn't great, maybe just normal index?
+                                                    <button
+                                                        onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
+                                                        className="text-xs bg-white hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-900/40 text-slate-700 dark:text-amber-600 dark:text-slate-300 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95"
+                                                    >
+                                                        {isArabic ? 'اذهب' : 'Go'}
+                                                    </button>
+                                                </div>
 
-                                                    return (
-                                                        <div
-                                                            key={`${ayah.surahNumber}-${ayah.ayahNumber}-${index}`}
-                                                            className="p-4 bg-white dark:bg-slate-800 border-2 rounded-xl hover:shadow-md transition-all shadow-sm"
-                                                            style={{
-                                                                borderColor: ayah.ruleColor || similarity?.color || '#e5e7eb'
+                                                <div className="flex items-center gap-2">
+                                                    {onDeleteSimilarAyah && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDeleteSimilarAyah(mutashabiha.id, ayah.surahNumber, ayah.ayahNumber);
                                                             }}
+                                                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                                                            title={isArabic ? 'حذف' : 'Delete'}
                                                         >
-                                                            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                                                                <div className="flex items-center gap-2 flex-1">
-                                                                    <span className="bg-slate-200 dark:bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                                                                        {index + 1}
-                                                                    </span>
-
-                                                                    {/* Similarity Badge */}
-                                                                    {similarity && (
-                                                                        <span
-                                                                            className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm"
-                                                                            style={{ backgroundColor: similarity.color }}
-                                                                        >
-                                                                            {similarity.percentage}% - {isArabic ? similarity.label : similarity.labelEn}
-                                                                        </span>
-                                                                    )}
-
-                                                                    <p className="font-bold text-slate-700 dark:text-slate-200" dir="rtl">
-                                                                        {similarSurahName} - {isArabic ? 'آية' : 'Ayah'} {ayah.ayahNumber}
-                                                                    </p>
-                                                                </div>
-
-                                                                <div className="flex items-center gap-2">
-                                                                    {onDeleteSimilarAyah && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                onDeleteSimilarAyah(mutashabiha.id, ayah.surahNumber, ayah.ayahNumber);
-                                                                            }}
-                                                                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
-                                                                            title={isArabic ? 'حذف' : 'Delete'}
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    )}
-                                                                    <button
-                                                                        onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
-                                                                        className="text-xs bg-slate-600 hover:bg-slate-700 text-white px-3 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md active:scale-95"
-                                                                    >
-                                                                        {isArabic ? 'اذهب' : 'Go'}
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-
-                                                            {!isLoading && (
-                                                                <div className="text-lg leading-relaxed text-slate-800 dark:text-slate-200 text-right px-2 py-2" style={{ fontFamily: "'Amiri Quran', serif" }}>
-                                                                    <HighlightedText
-                                                                        text={ayahText}
-                                                                        absoluteAyahNumber={ayah.absoluteAyahNumber}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
+
+                                            {!isLoading && (
+                                                <div className="font-quran text-xl leading-loose text-slate-900 dark:text-slate-50 text-right px-2 py-2">
+                                                    <HighlightedText
+                                                        text={ayahText}
+                                                        absoluteAyahNumber={ayah.absoluteAyahNumber}
+                                                        referenceText={[sourceText]} // STRICT: Only compare with source source
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -374,14 +519,19 @@ export default function MutashabihatModal({
                     })()}
                 </div>
 
-                {/* Add New Mutashabiha Button */}
-                {onAddSimilarAyah && (
+                {/* Add New Mutashabiha Button - NOT in "All" tab */}
+                {onAddSimilarAyah && activeTab !== 'all' && (
                     <button
-                        onClick={() => onAddSimilarAyah(mutashabiha.id)}
+                        onClick={() => onAddSimilarAyah(mutashabiha.id, activeTab === 'inside')}
                         className="w-full mt-4 p-4 border-2 border-dashed border-amber-300 dark:border-slate-600 rounded-xl flex items-center justify-center gap-2 text-amber-800 dark:text-slate-400 hover:border-amber-500 hover:text-amber-900 dark:hover:text-slate-200 transition-all group"
                     >
                         <Plus size={20} className="group-hover:scale-110 transition-transform" />
-                        <span className="font-bold">{isArabic ? 'إضافة آية متشابهة أخرى' : 'Add another similar verse'}</span>
+                        <span className="font-bold">
+                            {activeTab === 'inside'
+                                ? (isArabic ? 'إضافة متشابهة داخل السورة' : 'Add within surah')
+                                : (isArabic ? 'إضافة متشابهة من خارج السورة' : 'Add from outside surah')
+                            }
+                        </span>
                     </button>
                 )}
 

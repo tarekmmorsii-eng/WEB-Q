@@ -50,6 +50,17 @@ try {
                             color: mut.color
                         };
 
+                        // Standardize colors based on type
+                        const colors: any = {
+                            'START': '#10b981',
+                            'END': '#ef4444',
+                            'MIDDLE': '#3b82f6',
+                            'OTHER': '#d97706'
+                        };
+                        if (colors[mut.type]) {
+                            ruleInfo.color = colors[mut.type];
+                        }
+
                         if (mut.rule) {
                             addRuleToMap(srcAbs, ruleInfo);
                             addRuleToMap(mutAbs, ruleInfo);

@@ -171,9 +171,9 @@ interface QPCV2PageRendererProps {
     isPrayerMode?: boolean;
     language?: string;
     mutashabihatData?: Mutashabiha[];
-    onOpenMutashabihat?: (mutashabiha: Mutashabiha) => void;
+    onOpenMutashabihat?: (mutOrSurah: Mutashabiha | number, ayah?: number) => void;
     onDeleteSimilarAyah?: (mutashabihaId: string, surahNumber: number, ayahNumber: number) => void;
-    onAddSimilarAyah?: (mutashabihaId: string) => void;
+    onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -1218,7 +1218,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                onOpenMutashabihat?.(hasMutashabihat);
+                                                                onOpenMutashabihat?.(word.surah, word.ayah);
                                                             }}
                                                             className="mutashabihat-indicator"
                                                             style={{

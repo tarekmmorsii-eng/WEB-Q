@@ -92,6 +92,22 @@ export async function processMutashabihatData(rawData: Record<string, Mutashabih
 }
 
 /**
+ * البحث عن جميع المتشابهات لآية معينة - يدعم الآيات التي لها أكثر من موضع تشابه
+ */
+export function findAllMutashabihatForAyah(
+    surahNumber: number,
+    ayahNumber: number,
+    mutashabihat: Mutashabiha[]
+): Mutashabiha[] {
+    if (!mutashabihat) return [];
+    return mutashabihat.filter(
+        (mut) =>
+            (mut.sourceAyah.surahNumber === surahNumber && mut.sourceAyah.ayahNumber === ayahNumber) ||
+            mut.similarAyahs.some(s => s.surahNumber === surahNumber && s.ayahNumber === ayahNumber)
+    );
+}
+
+/**
  * البحث عن متشابهات لآية معينة - يدعم البحث في كلاً من الآية الرئيسية والمتشابهات
  */
 export function findMutashabihatForAyah(
@@ -99,12 +115,12 @@ export function findMutashabihatForAyah(
     ayahNumber: number,
     mutashabihat: Mutashabiha[]
 ): Mutashabiha | null {
-    if (!mutashabihat) return null;
-    return mutashabihat.find(
-        (mut) =>
-            (mut.sourceAyah.surahNumber === surahNumber && mut.sourceAyah.ayahNumber === ayahNumber) ||
-            mut.similarAyahs.some(s => s.surahNumber === surahNumber && s.ayahNumber === ayahNumber)
-    ) || null;
+    const all = findAllMutashabihatForAyah(surahNumber, ayahNumber, mutashabihat);
+    if (all.length === 0) return null;
+
+    // Priority: Group where current ayah is the SOURCE
+    const asSource = all.find(m => m.sourceAyah.surahNumber === surahNumber && m.sourceAyah.ayahNumber === ayahNumber);
+    return asSource || all[0];
 }
 
 /**
@@ -117,6 +133,85 @@ export function getMutashabihatCountInSurah(
     return mutashabihat.filter(
         (mut) => mut.sourceAyah.surahNumber === surahNumber
     ).length;
+}
+
+/**
+ * الحصول على كائن متشابهات مدمج لكافة المجموعات التي تنتمي إليها الآية
+ */
+export function getMergedMutashabihaForAyah(
+    surah: number,
+    ayah: number,
+    mutashabihat: Mutashabiha[]
+): Mutashabiha | null {
+    const allMatches = findAllMutashabihatForAyah(surah, ayah, mutashabihat);
+    if (allMatches.length === 0) return null;
+    if (allMatches.length === 1) return allMatches[0];
+
+    // Identify our target ayah reference from existing data
+    let targetRef: AyahReference | undefined;
+    for (const m of allMatches) {
+        if (m.sourceAyah.surahNumber === surah && m.sourceAyah.ayahNumber === ayah) {
+            targetRef = m.sourceAyah;
+            break;
+        }
+        targetRef = m.similarAyahs.find(s => s.surahNumber === surah && s.ayahNumber === ayah);
+        if (targetRef) break;
+    }
+
+    if (!targetRef) return allMatches[0];
+
+    const combinedSimilar: AyahReference[] = [];
+    const seenKeys = new Set<string>();
+    seenKeys.add(`${surah}-${ayah}`);
+
+    allMatches.forEach(mut => {
+        const isTargetSource = mut.sourceAyah.surahNumber === surah && mut.sourceAyah.ayahNumber === ayah;
+
+        if (isTargetSource) {
+            // الآية الحالية هي المصدر، أضف كل المتشابهات المرتبطة بها
+            mut.similarAyahs.forEach(s => {
+                const key = `${s.surahNumber}-${s.ayahNumber}`;
+                if (!seenKeys.has(key)) {
+                    combinedSimilar.push(s);
+                    seenKeys.add(key);
+                }
+            });
+        } else {
+            // الآية الحالية هي أحد المتشابهات، جد نص التشابه (القاعدة) الذي ربطها بالمصدر
+            const targetInGroup = mut.similarAyahs.find(s => s.surahNumber === surah && s.ayahNumber === ayah);
+            const targetRule = targetInGroup?.rule;
+
+            // أضف آية المصدر الخاصة بالمجموعة
+            const sourceKey = `${mut.sourceAyah.surahNumber}-${mut.sourceAyah.ayahNumber}`;
+            if (!seenKeys.has(sourceKey)) {
+                combinedSimilar.push(mut.sourceAyah);
+                seenKeys.add(sourceKey);
+            }
+
+            // أضف المتشابهات الأخرى فقط إذا كانت تشترك في نفس نص التشابه
+            mut.similarAyahs.forEach(s => {
+                const key = `${s.surahNumber}-${s.ayahNumber}`;
+                if (seenKeys.has(key)) return;
+
+                if (targetRule && s.rule) {
+                    const r1 = targetRule.trim();
+                    const r2 = s.rule.trim();
+                    // تطابق القواعد يسمح بكلمة واحدة (مثل إذ، تلك)
+                    if (r1 === r2 || r1.includes(r2) || r2.includes(r1)) {
+                        combinedSimilar.push(s);
+                        seenKeys.add(key);
+                    }
+                }
+            });
+        }
+    });
+
+    return {
+        id: `merged_${surah}_${ayah}`,
+        sourceAyah: targetRef,
+        similarAyahs: combinedSimilar,
+        showContext: allMatches.some(m => m.showContext)
+    };
 }
 
 // Note: PROCESSED_MUTASHABIHAT is now async and will be initialized in App.tsx
@@ -229,8 +324,8 @@ export async function getProcessedMutashabihat(): Promise<Mutashabiha[]> {
         console.log("📂 Processing new JSON mutashabihat data...");
         const jsonData = await processMutashabihatData(MUTASHABIHAT_DATA_FULL as any);
 
-        const coreResults = await Promise.all(corePromises);
-        allMutashabihat = [...coreResults.flat(), ...jsonData, ...customData];
+        // const coreResults = await Promise.all(corePromises);
+        allMutashabihat = [...jsonData, ...customData];
 
         console.log(`✅ Loaded ${allMutashabihat.length} total associations (${jsonData.length} from JSON).`);
         cachedProcessedMutashabihat = allMutashabihat;

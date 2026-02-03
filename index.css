@@ -137,6 +137,12 @@ div[data-atlas] {
   -webkit-user-select: none;
 }
 
+.font-quran {
+  font-family: 'UthmanicHafs', 'Amiri', serif !important;
+  letter-spacing: 0 !important;
+  word-spacing: 2px !important;
+}
+
 /* =================================================================
    GOLDEN SUCCESS SETTINGS (Approved by User 2026-01-04)
    Adapting selectors for V2 (.qpc-v2-text)

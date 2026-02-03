@@ -16,16 +16,32 @@ interface SurahWithAyahs extends Surah {
 const extractSurahs = (ayahs: Ayah[]) => {
   const surahs: any = {};
   ayahs.forEach(ayah => {
-    // @ts-ignore - The API returns surah object inside ayah or we construct it
-    // In the full Quran JSON, ayahs might not have the full surah object attached
-    // But we need to return it as part of PageData.
-    // We will handle this in the fetchPage logic.
-    if (ayah.surah && !surahs[ayah.surah.number]) {
-      // @ts-ignore
-      surahs[ayah.surah.number] = ayah.surah;
+    // Check both potential locations for surah data
+    const surahData = ayah.surah || (fullQuranData?.surahs ? fullQuranData.surahs.find(s => s.number === (ayah as any).surahNumber) : null);
+
+    if (surahData && !surahs[surahData.number]) {
+      surahs[surahData.number] = surahData;
     }
   });
   return surahs;
+};
+
+/**
+ * Get the exact page number for a specific ayah
+ */
+export const getAyahPage = async (surahNumber: number, ayahNumber: number): Promise<number> => {
+  if (!fullQuranData) {
+    await loadQuranData();
+  }
+
+  const surah = fullQuranData?.surahs?.[surahNumber - 1];
+  if (surah) {
+    const ayah = surah.ayahs.find(a => a.numberInSurah === ayahNumber);
+    if (ayah) return ayah.page;
+  }
+
+  // Fallback to surah start page if ayah mapping fails
+  return getSurahStartPage(surahNumber);
 };
 
 const loadQuranData = async () => {

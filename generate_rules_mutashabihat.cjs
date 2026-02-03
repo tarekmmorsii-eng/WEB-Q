@@ -9,7 +9,9 @@ const OUTPUT_FILE = path.join(__dirname, 'constants', 'mutashabiha_data_full.jso
 
 function normalizeText(text) {
     if (!text) return "";
-    return text.replace(/[\u064B-\u065F\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "");
+    return text.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "")
+        .replace(/[أإآ]/g, "ا")
+        .replace(/ى/g, "ي");
 }
 
 function getWords(text) {

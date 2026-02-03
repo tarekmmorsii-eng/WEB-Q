@@ -9,26 +9,40 @@ interface MutashabihatSelectorModalProps {
     onClose: () => void;
     onSelect: (surahNumber: number, ayahNumber: number) => void;
     language: string;
+    lockedSurah?: number; // Force this surah only
+    excludedSurah?: number; // Hide this surah
 }
 
 export default function MutashabihatSelectorModal({
     isOpen,
     onClose,
     onSelect,
-    language
+    language,
+    lockedSurah,
+    excludedSurah
 }: MutashabihatSelectorModalProps) {
-    const [selectedSurah, setSelectedSurah] = useState<number>(1);
+    const [selectedSurah, setSelectedSurah] = useState<number>(lockedSurah || 1);
     const [selectedAyah, setSelectedAyah] = useState<number>(1);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Update selected surah if locked changes
+    React.useEffect(() => {
+        if (lockedSurah) setSelectedSurah(lockedSurah);
+    }, [lockedSurah]);
 
     const isArabic = language === 'ar';
 
     if (!isOpen) return null;
 
-    const filteredSurahs = SURAHS.filter(s =>
-        s.name.includes(searchQuery) ||
-        s.number.toString() === searchQuery
-    );
+    const filteredSurahs = SURAHS.filter(s => {
+        // Apply locked filter
+        if (lockedSurah && s.number !== lockedSurah) return false;
+        // Apply excluded filter
+        if (excludedSurah && s.number === excludedSurah) return false;
+
+        return s.name.includes(searchQuery) ||
+            s.number.toString() === searchQuery;
+    });
 
     const surah = SURAHS.find(s => s.number === selectedSurah);
     const ayahCount = surah?.ayahCount || 0;
