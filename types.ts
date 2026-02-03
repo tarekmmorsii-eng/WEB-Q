@@ -63,6 +63,22 @@ export interface NotificationItem {
   description?: string;
   time?: string;
   isRead?: boolean;
+
+  // Enhanced Notification Types
+  category?: 'text' | 'surah' | 'quran_part' | 'page';
+  metadata?: {
+    surahNumber?: number; // Was imageName
+    juz?: number;
+    hizb?: number;
+    rub?: number;
+    page?: number;
+
+    // Ranges
+    startPage?: number;
+    endPage?: number;
+    startAyah?: number;
+    endAyah?: number;
+  };
 }
 
 export interface MemorizationRating {
