@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Upload } from 'lucide-react';
 import clsx from 'clsx';
 import { NotificationItem } from '../types';
+import { SURAHS } from '../constants/surahData';
 
 interface NotificationManagerProps {
     isOpen: boolean;
@@ -30,16 +31,43 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [formType, setFormType] = useState<'daily' | 'weekly'>('daily');
     const [formDays, setFormDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
     const [formTimes, setFormTimes] = useState<string[]>(['08:00']);
-    const [formIsAlarm, setFormIsAlarm] = useState(false);
+    const [formIsAlarm, setFormIsAlarm] = useState(true);
     const [formSound, setFormSound] = useState<string>('/islamic_song.mp3');
+
+    // New State for Enhanced Types
+    // New State for Enhanced Types
+    const [formCategory, setFormCategory] = useState<'text' | 'surah' | 'quran_part' | 'page'>('text');
+    const [formSurahNumber, setFormSurahNumber] = useState<number>(1);
+    const [formJuz, setFormJuz] = useState<number>(1);
+    const [formHizb, setFormHizb] = useState<number>(1);
+    const [formRub, setFormRub] = useState<number>(1);
+
+    // Ranges
+    const [formStartPage, setFormStartPage] = useState<number>(1);
+    const [formEndPage, setFormEndPage] = useState<number>(1);
+    const [formStartAyah, setFormStartAyah] = useState<number>(1);
+    const [formEndAyah, setFormEndAyah] = useState<number>(7); // Default Fatiha
 
     const resetForm = () => {
         setFormName('');
         setFormType('daily');
         setFormDays([0, 1, 2, 3, 4, 5, 6]);
         setFormTimes(['08:00']);
-        setFormIsAlarm(false);
+        setFormIsAlarm(true);
         setFormSound('/islamic_song.mp3');
+
+        // Reset new fields
+        // Reset new fields
+        setFormCategory('text');
+        setFormSurahNumber(1);
+        setFormJuz(1);
+        setFormHizb(1);
+        setFormRub(1);
+        setFormStartPage(1);
+        setFormEndPage(1);
+        setFormStartAyah(1);
+        setFormEndAyah(7);
+
         setEditingId(null);
         setShowAddForm(false);
     };
@@ -78,6 +106,19 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             type: formType,
             days: formType === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : formDays,
             times: formTimes,
+            category: formCategory,
+            metadata: {
+                surahNumber: formCategory === 'surah' ? formSurahNumber : undefined,
+                juz: formCategory === 'quran_part' ? formJuz : undefined,
+                hizb: formCategory === 'quran_part' ? formHizb : undefined,
+                rub: formCategory === 'quran_part' ? formRub : undefined,
+                // Page & Ranges
+                page: formCategory === 'page' ? formStartPage : undefined, // Legacy support
+                startPage: formStartPage,
+                endPage: formEndPage,
+                startAyah: formCategory === 'surah' ? formStartAyah : undefined,
+                endAyah: formCategory === 'surah' ? formEndAyah : undefined
+            }
         };
 
         if (editingId) {
@@ -96,6 +137,21 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         setFormTimes(notification.times);
         setFormIsAlarm(notification.isAlarm || false);
         setFormSound(notification.sound || '/islamic_song.mp3');
+
+        // Load enhanced fields
+        // Load enhanced fields
+        setFormCategory(notification.category || 'text');
+        setFormSurahNumber(notification.metadata?.surahNumber || 1);
+        setFormJuz(notification.metadata?.juz || 1);
+        setFormHizb(notification.metadata?.hizb || 1);
+        setFormRub(notification.metadata?.rub || 1);
+
+        // Ranges
+        setFormStartPage(notification.metadata?.startPage || notification.metadata?.page || 1);
+        setFormEndPage(notification.metadata?.endPage || notification.metadata?.page || 1);
+        setFormStartAyah(notification.metadata?.startAyah || 1);
+        setFormEndAyah(notification.metadata?.endAyah || 1);
+
         setEditingId(notification.id);
         setShowAddForm(true);
     };
@@ -142,7 +198,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-amber-200 dark:border-slate-700">
-                    <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100">{t.notificationManagerTitle}</h2>
+                    <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100">إدارة التنبيهات والإشعارات</h2>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-amber-100 dark:hover:bg-slate-800 rounded-full transition-colors"
@@ -173,6 +229,20 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         {notification.name}
                                                     </h3>
                                                     <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                        {notification.category === 'surah' && notification.metadata ? (
+                                                            <span className="block text-amber-700 dark:text-amber-300 mb-1">
+                                                                {notification.metadata.startAyah && notification.metadata.endAyah ?
+                                                                    `من آية ${notification.metadata.startAyah} إلى آية ${notification.metadata.endAyah}` : ''}
+                                                                {notification.metadata.startPage && notification.metadata.endPage ?
+                                                                    ` (صفحة ${notification.metadata.startPage} - ${notification.metadata.endPage})` : ''}
+                                                            </span>
+                                                        ) : notification.category === 'page' && notification.metadata ? (
+                                                            <span className="block text-amber-700 dark:text-amber-300 mb-1">
+                                                                {notification.metadata.startPage === notification.metadata.endPage ?
+                                                                    `صفحة ${notification.metadata.startPage}` :
+                                                                    `من صفحة ${notification.metadata.startPage} إلى ${notification.metadata.endPage}`}
+                                                            </span>
+                                                        ) : null}
                                                         {notification.type === 'daily' ? t.daily :
                                                             notification.days.map(d => DAYS[d]).join('، ')}
                                                     </p>
@@ -196,6 +266,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleToggle(notification.id)}
+                                                        title={notification.isEnabled ? t.disableNotification || "تعطيل الإشعار" : t.enableNotification || "تفعيل الإشعار"}
                                                         className={clsx(
                                                             "p-2 rounded-full transition-colors",
                                                             notification.isEnabled
@@ -207,12 +278,14 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     </button>
                                                     <button
                                                         onClick={() => handleEdit(notification)}
+                                                        title={t.editNotification || "تعديل الإشعار"}
                                                         className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(notification.id)}
+                                                        title={t.deleteNotification || "حذف الإشعار"}
                                                         className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                                     >
                                                         <Trash2 size={20} />
@@ -239,18 +312,387 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 {editingId ? t.editNotification : t.addNewNotification}
                             </h3>
 
-                            {/* Name */}
-                            <div>
+
+
+                            {/* Category Selection */}
+                            <div className="bg-amber-50 dark:bg-slate-800/50 p-3 rounded-lg border border-amber-200 dark:border-slate-700">
                                 <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
-                                    {t.notificationName}
+                                    نوع الإشعار
                                 </label>
-                                <input
-                                    type="text"
-                                    value={formName}
-                                    onChange={(e) => setFormName(e.target.value)}
-                                    className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    placeholder={t.notificationNamePlaceholder}
-                                />
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <button
+                                        onClick={() => setFormCategory('text')}
+                                        className={clsx(
+                                            "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
+                                            formCategory === 'text'
+                                                ? "bg-amber-600 text-white"
+                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                        )}
+                                    >
+                                        تنبيه
+                                    </button>
+                                    <button
+                                        onClick={() => setFormCategory('surah')}
+                                        className={clsx(
+                                            "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
+                                            formCategory === 'surah'
+                                                ? "bg-amber-600 text-white"
+                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                        )}
+                                    >
+                                        اسم السورة
+                                    </button>
+                                    <button
+                                        onClick={() => setFormCategory('quran_part')}
+                                        className={clsx(
+                                            "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
+                                            formCategory === 'quran_part'
+                                                ? "bg-amber-600 text-white"
+                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                        )}
+                                    >
+                                        الجزء والحزب
+                                    </button>
+                                    <button
+                                        onClick={() => setFormCategory('page')}
+                                        className={clsx(
+                                            "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
+                                            formCategory === 'page'
+                                                ? "bg-amber-600 text-white"
+                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                        )}
+                                    >
+                                        رقم الصفحة
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Dynamic Content based on Category */}
+                            <div>
+                                {formCategory === 'text' && (
+                                    <div>
+                                        <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
+                                            اسم التنبيه
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formName}
+                                            onChange={(e) => setFormName(e.target.value)}
+                                            className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                            placeholder={t.notificationNamePlaceholder}
+                                        />
+                                    </div>
+                                )}
+
+                                {formCategory === 'surah' && (
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
+                                                اختر السورة
+                                            </label>
+                                            <select
+                                                value={formSurahNumber}
+                                                onChange={(e) => {
+                                                    const sNum = parseInt(e.target.value);
+                                                    setFormSurahNumber(sNum);
+                                                    // Get Surah details
+                                                    const surah = SURAHS.find(s => s.number === sNum);
+                                                    if (surah) {
+                                                        setFormName(`سورة ${surah.name}`);
+                                                        setFormStartAyah(1);
+                                                        setFormEndAyah(surah.ayahCount);
+                                                        setFormStartPage(surah.startPage);
+
+                                                        // Calculate end page
+                                                        const nextSurah = SURAHS.find(s => s.number === sNum + 1);
+                                                        const endP = nextSurah ? nextSurah.startPage - (nextSurah.startPage > surah.startPage ? 1 : 0) : 604;
+                                                        // Adjust if next surah starts on same page (unlikely for most, but just in case of edge cases)
+                                                        const actualEndPage = endP < surah.startPage ? surah.startPage : endP;
+                                                        setFormEndPage(actualEndPage);
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                            >
+                                                {SURAHS.map(surah => (
+                                                    <option key={surah.number} value={surah.number}>
+                                                        {surah.number}. {surah.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {/* Page Range */}
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+                                                    أرقام الصفحات (من - إلى)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min={(() => {
+                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                            return s ? s.startPage : 1;
+                                                        })()}
+                                                        max={(() => {
+                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                            if (!s) return 604;
+                                                            const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
+                                                            return nextS ? nextS.startPage - (nextS.startPage > s.startPage ? 1 : 0) : 604;
+                                                        })()}
+                                                        value={formStartPage}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            setFormStartPage(val);
+                                                        }}
+                                                        onBlur={() => {
+                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                            const minP = s ? s.startPage : 1;
+                                                            const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
+                                                            const maxP = nextS ? nextS.startPage - (nextS.startPage > (s?.startPage || 0) ? 1 : 0) : 604;
+
+                                                            const val = Math.min(maxP, Math.max(minP, formStartPage || minP));
+                                                            setFormStartPage(val);
+                                                            // Ensure end page is at least start page on blur
+                                                            if (formEndPage < val) setFormEndPage(val);
+                                                        }}
+                                                        className="w-full px-2 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center"
+                                                    />
+                                                    <span className="text-slate-400">-</span>
+                                                    <div className="relative w-full">
+                                                        <input
+                                                            type="number"
+                                                            min={formStartPage}
+                                                            max={(() => {
+                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                                if (!s) return 604;
+                                                                const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
+                                                                return nextS ? nextS.startPage - (nextS.startPage > s.startPage ? 1 : 0) : 604;
+                                                            })()}
+                                                            value={formEndPage}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 0;
+                                                                setFormEndPage(val);
+                                                            }}
+                                                            onBlur={() => {
+                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                                const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
+                                                                const maxP = nextS ? nextS.startPage - (nextS.startPage > (s?.startPage || 0) ? 1 : 0) : 604;
+
+                                                                const val = Math.min(maxP, Math.max(formStartPage, formEndPage || formStartPage));
+                                                                setFormEndPage(val);
+                                                            }}
+                                                            className={clsx(
+                                                                "w-full px-2 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center",
+                                                                formEndPage < formStartPage
+                                                                    ? "border-red-500 ring-1 ring-red-500"
+                                                                    : "border-amber-300 dark:border-slate-600"
+                                                            )}
+                                                        />
+                                                        {formEndPage < formStartPage && (
+                                                            <div className="absolute -bottom-5 left-0 right-0 text-center">
+                                                                <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
+                                                                    غير صحيح
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Ayah Range */}
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+                                                    أرقام الآيات (من - إلى)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max={(() => {
+                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                            return s ? s.ayahCount : 1;
+                                                        })()}
+                                                        value={formStartAyah}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            setFormStartAyah(val);
+                                                        }}
+                                                        onBlur={() => {
+                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                            const maxAyah = s ? s.ayahCount : 999;
+                                                            const val = Math.min(maxAyah, Math.max(1, formStartAyah || 1));
+                                                            setFormStartAyah(val);
+                                                            if (formEndAyah < val) setFormEndAyah(val);
+                                                        }}
+                                                        className="w-full px-2 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center"
+                                                    />
+                                                    <span className="text-slate-400">-</span>
+                                                    <div className="relative w-full">
+                                                        <input
+                                                            type="number"
+                                                            min={formStartAyah}
+                                                            max={(() => {
+                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                                return s ? s.ayahCount : 1;
+                                                            })()}
+                                                            value={formEndAyah}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 0;
+                                                                setFormEndAyah(val);
+                                                            }}
+                                                            onBlur={() => {
+                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
+                                                                const maxAyah = s ? s.ayahCount : 999;
+                                                                const val = Math.min(maxAyah, Math.max(formStartAyah, formEndAyah || formStartAyah));
+                                                                setFormEndAyah(val);
+                                                            }}
+                                                            className={clsx(
+                                                                "w-full px-2 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center",
+                                                                formEndAyah < formStartAyah
+                                                                    ? "border-red-500 ring-1 ring-red-500"
+                                                                    : "border-amber-300 dark:border-slate-600"
+                                                            )}
+                                                        />
+                                                        {formEndAyah < formStartAyah && (
+                                                            <div className="absolute -bottom-5 left-0 right-0 text-center">
+                                                                <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
+                                                                    غير صحيح
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {formCategory === 'quran_part' && (
+                                    <div>
+                                        <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
+                                            الجزء / الحزب / الربع
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <label className="text-xs text-slate-500 mb-1 block">الجزء</label>
+                                                <select
+                                                    value={formJuz}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value);
+                                                        setFormJuz(val);
+                                                        setFormName(`الجزء ${val}`);
+                                                    }}
+                                                    className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
+                                                >
+                                                    {[...Array(30)].map((_, i) => (
+                                                        <option key={i} value={i + 1}>{i + 1}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-slate-500 mb-1 block">الحزب</label>
+                                                <select
+                                                    value={formHizb}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value);
+                                                        setFormHizb(val);
+                                                        setFormName(`الحزب ${val}`);
+                                                    }}
+                                                    className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
+                                                >
+                                                    {[...Array(60)].map((_, i) => (
+                                                        <option key={i} value={i + 1}>{i + 1}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-slate-500 mb-1 block">الربع</label>
+                                                <select
+                                                    value={formRub}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value);
+                                                        setFormRub(val);
+                                                        setFormName(`الربع ${val}`);
+                                                    }}
+                                                    className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
+                                                >
+                                                    {[...Array(240)].map((_, i) => (
+                                                        <option key={i} value={i + 1}>{i + 1}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {formCategory === 'page' && (
+                                    <div>
+                                        <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
+                                            أرقام الصفحات (604 صفحة كحد أقصى)
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs text-slate-500 mb-1 block">من صفحة</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max="604"
+                                                    value={formStartPage}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value) || 0;
+                                                        setFormStartPage(val);
+                                                    }}
+                                                    onBlur={() => {
+                                                        const val = Math.min(604, Math.max(1, formStartPage || 1));
+                                                        setFormStartPage(val);
+                                                        // Ensure End >= Start
+                                                        if (formEndPage < val) {
+                                                            setFormEndPage(val);
+                                                            setFormName(`من صفحة ${val} إلى ${val}`);
+                                                        } else {
+                                                            setFormName(`من صفحة ${val} إلى ${formEndPage}`);
+                                                        }
+                                                    }}
+                                                    className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                    placeholder="البداية"
+                                                />
+                                            </div>
+                                            <div className="relative">
+                                                <label className="text-xs text-slate-500 mb-1 block">إلى صفحة</label>
+                                                <input
+                                                    type="number"
+                                                    min={formStartPage}
+                                                    max="604"
+                                                    value={formEndPage}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value) || 0;
+                                                        setFormEndPage(val);
+                                                    }}
+                                                    onBlur={() => {
+                                                        const val = Math.min(604, Math.max(formStartPage, formEndPage || formStartPage));
+                                                        setFormEndPage(val);
+                                                        setFormName(`من صفحة ${formStartPage} إلى ${val}`);
+                                                    }}
+                                                    className={clsx(
+                                                        "w-full px-4 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500",
+                                                        formEndPage < formStartPage
+                                                            ? "border-red-500 ring-1 ring-red-500"
+                                                            : "border-amber-300 dark:border-slate-600"
+                                                    )}
+                                                    placeholder="النهاية"
+                                                />
+                                                {formEndPage < formStartPage && (
+                                                    <div className="absolute -bottom-5 left-0 right-0 text-center">
+                                                        <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
+                                                            غير صحيح
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Type */}
