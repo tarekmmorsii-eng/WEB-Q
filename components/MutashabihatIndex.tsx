@@ -175,6 +175,12 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
                     }
                 }
 
+                // --- NEW CONDITIONAL HIGHLIGHTING RULE ---
+                // If it's a 1-word match and NOT at start or end, skip it
+                if (ruleWords.length === 1 && !isStart && !isEnd) {
+                    return;
+                }
+
                 let effectiveType = rule.type;
                 if (isStart) effectiveType = 'START';
                 else if (isEnd) effectiveType = 'END';
@@ -473,11 +479,57 @@ export default function MutashabihatIndex({
             });
         });
 
-        // Filter out empty groups and sort
-        return Object.values(groups).filter(g => g.ayahs.size > 0).map(g => ({
-            ...g,
-            ayahs: Array.from(g.ayahs.values()).sort((a, b) => a.ayahNumber - b.ayahNumber)
-        })).sort((a, b) => {
+        // Filter out empty groups and calculate sorting scores
+        return Object.values(groups).filter(g => g.ayahs.size > 0).map(g => {
+            const ayahsList = Array.from(g.ayahs.values()).map(ayah => {
+                // Calculate match scores for sorting
+                const ruleNormalized = quranNormalize(g.rule);
+                const ruleWords = ruleNormalized.trim().split(/\s+/);
+                const targetText = ayah.text || "";
+                const targetRawWords = targetText.trim().split(/\s+/).filter(w => w.length > 0);
+
+                let headCount = 0;
+                let tailCount = 0;
+                let midCount = 0;
+
+                if (targetRawWords.length > 0 && ruleWords.length > 0) {
+                    for (let i = 0; i <= targetRawWords.length - ruleWords.length; i++) {
+                        let match = true;
+                        for (let j = 0; j < ruleWords.length; j++) {
+                            const normTarget = quranNormalize(targetRawWords[i + j]);
+                            const res = quranStripConjunction(normTarget, ruleWords[j]);
+                            if (!res.match) { match = false; break; }
+                        }
+                        if (match) {
+                            let isStart = true;
+                            for (let k = 0; k < i; k++) { if (!quranIsSymbol(targetRawWords[k])) { isStart = false; break; } }
+                            let isEnd = true;
+                            for (let k = i + ruleWords.length; k < targetRawWords.length; k++) { if (!quranIsSymbol(targetRawWords[k])) { isEnd = false; break; } }
+
+                            if (isStart) headCount = Math.max(headCount, ruleWords.length);
+                            else if (isEnd) tailCount = Math.max(tailCount, ruleWords.length);
+                            else midCount = Math.max(midCount, ruleWords.length);
+                        }
+                    }
+                }
+
+                // Advanced sorting score: Head priority (weight 1.1), but Tail/Mid wins if >= 2*Head
+                let priorityScore = headCount * 1.1;
+                if ((tailCount + midCount) >= headCount * 2 && (tailCount + midCount) > 0) {
+                    priorityScore = (tailCount + midCount);
+                }
+
+                return { ...ayah, priorityScore };
+            });
+
+            return {
+                ...g,
+                ayahs: ayahsList.sort((a, b) => {
+                    if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
+                    return a.ayahNumber - b.ayahNumber;
+                })
+            };
+        }).sort((a, b) => {
             const ruleA = a.rule || "";
             const ruleB = b.rule || "";
 

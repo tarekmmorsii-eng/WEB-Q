@@ -72,7 +72,7 @@ export const findSharedPhrases = (text1: string, text2: string) => {
                 else break;
             }
 
-            if (k >= 2) {
+            if (k >= 1) {
                 const startIdx = realWords1[i].originalIdx;
                 const endIdx = realWords1[i + k - 1].originalIdx;
                 const phrase = words1.slice(startIdx, endIdx + 1).join(' ');

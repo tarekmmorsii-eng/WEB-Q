@@ -11,11 +11,12 @@ import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases
 /**
  * مكون لعرض النص مع تلوين الكلمات المتطابقة بناءً على القواعد
  */
-function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText }: {
+function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText, forceColor }: {
     text: string,
     absoluteAyahNumber?: number,
     manualRules?: any[],
-    referenceText?: string | string[]
+    referenceText?: string | string[],
+    forceColor?: string
 }) {
     if (!text) return <>{text}</>;
 
@@ -91,10 +92,10 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText 
         if (ruleWords.length === 0) return;
 
         const colors = {
-            'START': '#10b981', // Green
-            'END': '#10b981',   // Unified to Green
-            'MIDDLE': '#10b981',// Unified to Green
-            'OTHER': '#10b981'  // Unified to Green
+            'START': forceColor || '#10b981',
+            'END': forceColor || '#10b981',
+            'MIDDLE': forceColor || '#10b981',
+            'OTHER': forceColor || '#10b981'
         };
 
         for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
@@ -132,6 +133,12 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText 
                         isEnd = false;
                         break;
                     }
+                }
+
+                // --- NEW CONDITIONAL HIGHLIGHTING RULE ---
+                // If it's a 1-word match and NOT at start or end, skip it
+                if (ruleWords.length === 1 && !isStart && !isEnd) {
+                    continue;
                 }
 
                 let effectiveType = rule.type;
@@ -345,6 +352,7 @@ export default function MutashabihatModal({
                                 text={sourceText}
                                 absoluteAyahNumber={mutashabiha.sourceAyah.absoluteAyahNumber}
                                 referenceText={mutashabiha.similarAyahs.map(a => a.text || '')}
+                                forceColor={activeTab === 'outside' ? '#ef4444' : undefined}
                             />
                         </div>
                     )}
@@ -446,41 +454,64 @@ export default function MutashabihatModal({
 
 
 
-                        // Define sections and order
-                        const sections = [
-                            { key: 'START', labelEn: 'Start of Verse', labelAr: 'بداية الآيات' },
-                            { key: 'END', labelEn: 'End of Verse', labelAr: 'نهاية الآيات' },
-                            { key: 'MIDDLE', labelEn: 'Middle of Verse', labelAr: 'وسط الآيات' },
-                            { key: 'FREQ', labelEn: 'Frequent Words', labelAr: 'كلمات مكررة (نفس السورة)' },
-                            { key: 'OTHER', labelEn: 'Other Matches', labelAr: 'متشابهات أخرى' }
-                        ];
+                        // Filter by tab and apply advanced sorting
+                        const filteredSimilarAyahs = (mutashabiha?.similarAyahs || [])
+                            .filter(a => {
+                                if (activeTab === 'inside') return a.surahNumber === mutashabiha?.sourceAyah.surahNumber;
+                                if (activeTab === 'outside') return a.surahNumber !== mutashabiha?.sourceAyah.surahNumber;
+                                return true;
+                            })
+                            .map(ayah => {
+                                // Calculate priority score for sorting
+                                const ruleText = ayah.rule || mutashabiha?.similarAyahs[0]?.rule || "";
+                                const ruleNormalized = quranNormalize(ruleText);
+                                const ruleWords = ruleNormalized.trim().split(/\s+/);
+                                const targetText = ayahTexts.get(`${ayah.surahNumber}-${ayah.ayahNumber}`) || "";
+                                const targetRawWords = targetText.trim().split(/\s+/).filter(w => w.length > 0);
 
-                        // Flatten and filter by active tab
-                        const allSortedItems = sections.flatMap(section => {
-                            const items = groups[section.key as keyof typeof groups];
-                            return [...items].sort((a, b) => {
-                                const ruleA = a.rule || "";
-                                const ruleB = b.rule || "";
-                                if (ruleA !== ruleB) {
-                                    const specialRule = "الأمر بذكر الله";
-                                    if (ruleA === specialRule) return 1;
-                                    if (ruleB === specialRule) return -1;
-                                    return ruleA.localeCompare(ruleB, 'ar');
+                                let headCount = 0;
+                                let tailCount = 0;
+                                let midCount = 0;
+
+                                if (targetRawWords.length > 0 && ruleWords.length > 0) {
+                                    for (let i = 0; i <= targetRawWords.length - ruleWords.length; i++) {
+                                        let match = true;
+                                        for (let j = 0; j < ruleWords.length; j++) {
+                                            const normTarget = quranNormalize(targetRawWords[i + j]);
+                                            const res = quranStripConjunction(normTarget, ruleWords[j]);
+                                            if (!res.match) { match = false; break; }
+                                        }
+                                        if (match) {
+                                            let isStart = true;
+                                            for (let k = 0; k < i; k++) { if (!quranIsSymbol(targetRawWords[k])) { isStart = false; break; } }
+                                            let isEnd = true;
+                                            for (let k = i + ruleWords.length; k < targetRawWords.length; k++) { if (!quranIsSymbol(targetRawWords[k])) { isEnd = false; break; } }
+
+                                            if (isStart) headCount = Math.max(headCount, ruleWords.length);
+                                            else if (isEnd) tailCount = Math.max(tailCount, ruleWords.length);
+                                            else midCount = Math.max(midCount, ruleWords.length);
+                                        }
+                                    }
                                 }
-                                if (a.surahNumber !== b.surahNumber) return a.surahNumber - b.surahNumber;
+
+                                // Advanced sorting score: Head priority (weight 1.1), but Tail/Mid wins if >= 2*Head
+                                let priorityScore = headCount * 1.1;
+                                if ((tailCount + midCount) >= headCount * 2 && (tailCount + midCount) > 0) {
+                                    priorityScore = (tailCount + midCount);
+                                }
+
+                                return { ...ayah, priorityScore };
+                            })
+                            .sort((a, b) => {
+                                if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
                                 return a.ayahNumber - b.ayahNumber;
                             });
-                        }).filter(ayah => {
-                            if (activeTab === 'all') return true;
-                            if (activeTab === 'inside') return ayah.surahNumber === mutashabiha.sourceAyah.surahNumber;
-                            return ayah.surahNumber !== mutashabiha.sourceAyah.surahNumber;
-                        });
 
-                        if (allSortedItems.length === 0) return null;
+                        if (filteredSimilarAyahs.length === 0) return null;
 
                         return (
                             <div className="space-y-4">
-                                {allSortedItems.map((ayah, globalIdx) => {
+                                {filteredSimilarAyahs.map((ayah, globalIdx) => {
                                     const similarSurahName = getSurahName(ayah.surahNumber);
                                     const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
                                     const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
@@ -491,7 +522,7 @@ export default function MutashabihatModal({
                                             key={`${ayah.surahNumber}-${ayah.ayahNumber}-${globalIdx}`}
                                             className="p-4 rounded-xl border-r-4 bg-slate-100 dark:bg-slate-800 shadow-sm border-l-0"
                                             style={{
-                                                borderColor: '#10b981' // Unified Green Border
+                                                borderColor: ayah.surahNumber !== mutashabiha.sourceAyah.surahNumber ? '#ef4444' : '#10b981'
                                             }}
                                         >
                                             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -534,6 +565,7 @@ export default function MutashabihatModal({
                                                         text={ayahText}
                                                         absoluteAyahNumber={ayah.absoluteAyahNumber}
                                                         referenceText={[sourceText]} // STRICT: Only compare with source source
+                                                        forceColor={ayah.surahNumber !== mutashabiha.sourceAyah.surahNumber ? '#ef4444' : undefined}
                                                     />
                                                 </div>
                                             )}
