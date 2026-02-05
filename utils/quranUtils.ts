@@ -8,7 +8,7 @@ export const quranNormalize = (t: string) => {
         .replace(/[أإآ]/g, "ا")
         .replace(/ى/g, "ي")
         .replace(/ة/g, "ه")
-        .replace(/[۞٭۩]/g, ""); // Symbols
+        .replace(/[۞٭۩\-\/\(\)]/g, ""); // Symbols and common rule separators
 };
 
 export const quranStripConjunction = (normalizedWord: string, ruleWord: string) => {

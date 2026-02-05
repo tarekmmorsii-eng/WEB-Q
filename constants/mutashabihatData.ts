@@ -30,46 +30,44 @@ try {
         if (!exists) rules.push(ruleObj);
     };
 
-    // Populate the map from the full JSON data
-    Object.values(MUTASHABIHAT_DATA_FULL).forEach((juzData: any) => {
-        if (Array.isArray(juzData)) {
-            juzData.forEach((entry: any) => {
-                if (!entry || !entry.src) return; // Safety check
+    // Populate the map from the flat JSON data structure
+    if (Array.isArray(MUTASHABIHAT_DATA_FULL)) {
+        MUTASHABIHAT_DATA_FULL.forEach((entry: any) => {
+            if (!entry || !entry.sourceAyah) return;
 
-                const srcAbs = entry.src.ayah;
+            const srcAbs = entry.sourceAyah.absoluteAyahNumber;
 
-                if (entry.muts && Array.isArray(entry.muts)) {
-                    entry.muts.forEach((mut: any) => {
-                        if (!mut) return;
-                        const mutAbs = Array.isArray(mut.ayah) ? mut.ayah[0] : mut.ayah;
+            if (entry.similarAyahs && Array.isArray(entry.similarAyahs)) {
+                entry.similarAyahs.forEach((mut: any) => {
+                    if (!mut) return;
+                    const mutAbs = mut.absoluteAyahNumber;
 
-                        // Rule info
-                        const ruleInfo = {
-                            rule: mut.rule,
-                            type: mut.type,
-                            color: mut.color
-                        };
+                    // Rule info
+                    const ruleInfo = {
+                        rule: mut.rule,
+                        type: mut.ruleType || mut.type,
+                        color: mut.color || mut.ruleColor
+                    };
 
-                        // Standardize colors based on type
-                        const colors: any = {
-                            'START': '#10b981',
-                            'END': '#ef4444',
-                            'MIDDLE': '#3b82f6',
-                            'OTHER': '#d97706'
-                        };
-                        if (colors[mut.type]) {
-                            ruleInfo.color = colors[mut.type];
-                        }
+                    // Standardize colors based on type
+                    const colors: any = {
+                        'START': '#10b981',
+                        'END': '#ef4444',
+                        'MIDDLE': '#3b82f6',
+                        'OTHER': '#d97706'
+                    };
+                    if (colors[ruleInfo.type]) {
+                        ruleInfo.color = colors[ruleInfo.type];
+                    }
 
-                        if (mut.rule) {
-                            addRuleToMap(srcAbs, ruleInfo);
-                            addRuleToMap(mutAbs, ruleInfo);
-                        }
-                    });
-                }
-            });
-        }
-    });
+                    if (ruleInfo.rule) {
+                        if (srcAbs) addRuleToMap(srcAbs, ruleInfo);
+                        if (mutAbs) addRuleToMap(mutAbs, ruleInfo);
+                    }
+                });
+            }
+        });
+    }
     // 🚀 Expert Supplementary Rules (User Feedback Corrections)
     // Absolute numbers: Baqarah 48 -> 55, Baqarah 123 -> 130 (including 7 Fatiha ayahs)
     const SUPPLEMENTARY_RULES = [

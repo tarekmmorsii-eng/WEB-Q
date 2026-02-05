@@ -51,11 +51,29 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText 
 
     if (allRules.length === 0) return <span className="text-slate-900 dark:text-slate-100">{text}</span>;
 
+    // --- RULE SPLITTING ---
+    const effectivelySplitRules: any[] = [];
+    allRules.forEach(r => {
+        if (!r.rule) return;
+        // Clean parentheses from the rule before splitting
+        const cleanRule = r.rule.replace(/[\(\)]/g, '');
+        const parts = cleanRule.split(/\s*[\/\-]\s*|\s*\.\.\.\s*|\s*…\s*/);
+        if (parts.length > 1) {
+            parts.forEach(p => {
+                if (p.trim().length > 0) {
+                    effectivelySplitRules.push({ ...r, rule: p.trim() });
+                }
+            });
+        } else {
+            effectivelySplitRules.push({ ...r, rule: cleanRule.trim() });
+        }
+    });
+
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
     const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
     // Sort rules: Longest first
-    const sortedRules = [...allRules].sort((a, b) => {
+    const sortedRules = [...effectivelySplitRules].sort((a, b) => {
         const lenA = (a.rule?.length || 0);
         const lenB = (b.rule?.length || 0);
         if (lenA !== lenB) return lenB - lenA;

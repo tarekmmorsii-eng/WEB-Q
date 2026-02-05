@@ -22,10 +22,28 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
     const autoRules = absoluteAyahNumber ? (AYAH_RULE_MAP.get(absoluteAyahNumber) || []) : [];
     let allRules = [...autoRules];
 
-    // Filter by specific rule if requested
+    // Filter by specific rule if requested - support multi-part rules like "(A / B / C)"
     if (onlyRule) {
-        const normOnly = quranNormalize(onlyRule);
-        allRules = allRules.filter(r => quranNormalize(r.rule) === normOnly);
+        const cleanOnly = onlyRule.replace(/[\(\)]/g, '');
+        // Split by /, -, ..., or unicode ellipsis …
+        const parts = cleanOnly.split(/\s*[\/\-]\s*|\s*\.\.\.\s*|\s*…\s*/).filter(p => p.length > 0).map(p => quranNormalize(p));
+
+        const originalRules = [...allRules];
+        allRules = originalRules.filter(r => {
+            const normR = quranNormalize(r.rule);
+            return parts.some(p => normR.includes(p) || p.includes(normR));
+        });
+
+        // Add the group's title parts as candidates too, especially for single-word variations
+        parts.forEach(p => {
+            if (p.length >= 2 && !allRules.some(r => quranNormalize(r.rule).includes(p))) {
+                allRules.push({
+                    rule: p,
+                    type: 'MIDDLE', // Default to blue if not matched in map
+                    isDynamic: true
+                });
+            }
+        });
     }
 
     // Add manual rules if not already present
@@ -36,7 +54,8 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
     }
 
     // --- STRICT REQUIREMENT: FILTER OUT SINGLE-WORD RULES ---
-    allRules = allRules.filter(r => getRealWordCount(r.rule) >= 2);
+    // Reduced to 1 to support explicit single-word mutashabihat defined in data
+    allRules = allRules.filter(r => getRealWordCount(r.rule) >= 1);
 
     // --- DYNAMIC MATCHING ---
     // If referenceTexts are provided, find shared phrases and treat them as temporary rules
@@ -46,8 +65,8 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
             if (!ref || ref === text) return;
             const shared = findSharedPhrases(text, ref);
             shared.forEach(p => {
-                // Double check 2-word minimum for dynamic matches
-                if (getRealWordCount(p.phrase) < 2) return;
+                // Double check 1-word minimum for dynamic matches
+                if (getRealWordCount(p.phrase) < 1) return;
 
                 // Only add if it's longer or distinct from existing rules
                 if (!allRules.some(r => quranNormalize(r.rule).includes(quranNormalize(p.phrase)))) {
@@ -63,11 +82,29 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
 
     if (allRules.length === 0) return <span className="text-gray-800 dark:text-gray-200 text-right w-full" dir="rtl">{text}</span>;
 
+    // --- RULE SPLITTING: If a rule contains " - ", " / ", or "...", treat parts as separate rules ---
+    const effectivelySplitRules: any[] = [];
+    allRules.forEach(r => {
+        if (!r.rule) return;
+        // Clean parentheses from the rule before splitting
+        const cleanRule = r.rule.replace(/[\(\)]/g, '');
+        const parts = cleanRule.split(/\s*[\/\-]\s*|\s*\.\.\.\s*|\s*…\s*/);
+        if (parts.length > 1) {
+            parts.forEach(p => {
+                if (p.trim().length > 0) {
+                    effectivelySplitRules.push({ ...r, rule: p.trim() });
+                }
+            });
+        } else {
+            effectivelySplitRules.push({ ...r, rule: cleanRule.trim() });
+        }
+    });
+
     const rawWords = text.split(/\s+/).filter(w => w.length > 0);
     const wordInfos = new Array(rawWords.length).fill(null).map(() => ({ color: '', type: '', isBold: false, prefixLen: 0 }));
 
-    // Sort rules: Longest first to prefer specific matches over generic ones
-    const sortedRules = [...allRules].sort((a, b) => {
+    // Sort rules: Longest first
+    const sortedRules = [...effectivelySplitRules].sort((a, b) => {
         const lenA = a.rule?.length || 0;
         const lenB = b.rule?.length || 0;
         if (lenA !== lenB) return lenB - lenA;
@@ -402,8 +439,8 @@ export default function MutashabihatIndex({
                         }
                     }
 
-                    // FILTER: Group rule itself must be at least 2 words
-                    if (getRealWordCount(ruleKey) < 2) return;
+                    // FILTER: Group rule itself must be at least 1 word
+                    if (getRealWordCount(ruleKey) < 1) return;
 
                     const colors = {
                         'START': '#10b981',
@@ -420,28 +457,24 @@ export default function MutashabihatIndex({
                     };
                 }
 
-                // Add source ONLY if it actually contains the rule phrase
-                const sourceContains = (mut.sourceAyah.text || "").includes(ruleKey) ||
-                    (findSharedPhrases(mut.sourceAyah.text || "", ruleKey).length > 0);
-
-                if (mut.sourceAyah.absoluteAyahNumber && sourceContains) {
+                // TRUST THE DATABASE: If the ayah is linked to this rule in the data, add it.
+                // We no longer perform strict text-containment check here because some rules
+                // are descriptive categories rather than literal phrases.
+                if (mut.sourceAyah.absoluteAyahNumber) {
                     groups[ruleKey].ayahs.set(mut.sourceAyah.absoluteAyahNumber, {
                         ...mut.sourceAyah,
                         isSource: true
                     });
                 }
 
-                // Add target ONLY if it actually contains the rule phrase
-                const targetContains = (t.text || "").includes(ruleKey) ||
-                    (findSharedPhrases(t.text || "", ruleKey).length > 0);
-
-                if (t.absoluteAyahNumber && targetContains) {
+                if (t.absoluteAyahNumber) {
                     groups[ruleKey].ayahs.set(t.absoluteAyahNumber, { ...t });
                 }
             });
         });
 
-        return Object.values(groups).map(g => ({
+        // Filter out empty groups and sort
+        return Object.values(groups).filter(g => g.ayahs.size > 0).map(g => ({
             ...g,
             ayahs: Array.from(g.ayahs.values()).sort((a, b) => a.ayahNumber - b.ayahNumber)
         })).sort((a, b) => {

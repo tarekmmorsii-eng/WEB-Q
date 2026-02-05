@@ -1,0 +1,116 @@
+const fs = require('fs');
+
+// دالة لمسح البيانات القديمة والبدء بهيكل جديد
+// سنستخدم هيكل القائمة المسطحة (Flat Array) لضمان التوافق مع MutashabihatIndex.tsx
+const baqarahGroups = [
+    { rule: "الَّذِينَ", ayahs: [3, 27, 46, 121, 146, 156, 262, 274, 275], type: "START" },
+    { rule: "إِنَّ الَّذِينَ كَفَرُوا", ayahs: [6, 161], type: "START" },
+    { rule: "وَمِنَ النَّاسِ", ayahs: [8, 165, 204, 207], type: "START" },
+    { rule: "وَإِذَا قِيلَ", ayahs: [11, 14, 91, 170, 206], type: "START" },
+    { rule: "وَإِذَا لَقُوا الَّذِينَ آمَنُوا قَالُوا آمَنَّا", ayahs: [14, 76], type: "START" },
+    { rule: "أُولَئِكَ الَّذِينَ اشْتَرَوْا", ayahs: [16, 86, 175], type: "START" },
+    { rule: "مَثَلُهُمْ - مَثَلُ - وَمَثَلُ", ayahs: [17, 261, 171, 265], type: "START" },
+    { rule: "صُمٌّ بُكْمٌ عُمْيٌ", ayahs: [18, 171], type: "START" },
+    { rule: "عَلَى كُلِّ شَيْءٍ قَدِيرٌ", ayahs: [20, 106, 109, 148, 259, 284], type: "END" },
+    { rule: "يَا أَيُّهَا النَّاسُ", ayahs: [21, 168], type: "START" },
+    { rule: "لَعَلَّكُمْ تَتَّقُونَ", ayahs: [21, 63, 179, 183], type: "END" },
+    { rule: "وَأَنْتُمْ تَعْلَمُونَ", ayahs: [22, 42, 188], type: "END" },
+    { rule: "وَإِنْ كُنْتُمْ", ayahs: [23, 283], type: "START" },
+    { rule: "إِنْ كُنْتُمْ صَادِقِينَ", ayahs: [23, 31, 94, 111], type: "END" },
+    { rule: "فَإِنْ لَمْ تَفْعَلُوا", ayahs: [24, 279], type: "START" },
+    { rule: "هُمْ فِيهَا خَالِدُونَ", ayahs: [25, 39, 81, 82, 217, 257, 275], type: "END" },
+    { rule: "أُولَئِكَ هُمُ الْخَاسِرُونَ", ayahs: [27, 121], type: "END" },
+    { rule: "إِلَيْهِ تُرْجَعُونَ", ayahs: [28, 245], type: "END" },
+    { rule: "بِكُلِّ شَيْءٍ عَلِيمٌ", ayahs: [29, 231, 282], type: "END" },
+    { rule: "وَإِذْ قَالَ", ayahs: [30, 54, 76, 126, 260], type: "START" },
+    { rule: "وَإِذْ", ayahs: [30, 34, 49, 50, 51, 53, 54, 55, 58, 60, 61, 63, 67, 72, 83, 84, 93, 124, 125, 126, 127, 260], type: "START" },
+    { rule: "قَالُوا", ayahs: [32, 68, 69, 70], type: "START" },
+    { rule: "التَّوَّابُ الرَّحِيمُ", ayahs: [37, 54, 128, 160], type: "END" },
+    { rule: "وَلَا خَوْفٌ عَلَيْهِمْ وَلَا هُمْ يَحْزَنُونَ", ayahs: [38, 62, 112, 262, 274, 277], type: "END" },
+    { rule: "يَا بَنِي إِسْرَائِيلَ اذْكُرُوا نِعْمَتِيَ الَّتِي أَنْعَمْتُ عَلَيْكُمْ", ayahs: [40, 47, 122], type: "START" },
+    { rule: "وَأَقِيمُوا الصَّلَاةَ وَآتُوا الزَّكَاةَ", ayahs: [43, 83, 110], type: "START" },
+    { rule: "أَفَلَا تَعْقِلُونَ", ayahs: [44, 76], type: "END" },
+    { rule: "وَاتَّقُوا يَوْمًا", ayahs: [48, 123, 281], type: "START" },
+    { rule: "ثُمَّ", ayahs: [52, 56, 64, 74, 85, 199], type: "START" },
+    { rule: "إِنَّ الَّذِينَ آمَنُوا", ayahs: [62, 218, 277], type: "START" },
+    { rule: "وَلَقَدْ", ayahs: [65, 87, 92, 99], type: "START" },
+    { rule: "لَعَلَّكُمْ تَعْقِلُونَ", ayahs: [73, 242], type: "END" },
+    { rule: "وَمَا اللَّهُ بِغَافِلٍ عَمَّا تَعْمَلُونَ", ayahs: [74, 85, 140, 149, 144], type: "END" },
+    { rule: "بَلَى مَنْ", ayahs: [81, 112], type: "START" },
+    { rule: "لَا يُخَفَّفُ عَنْهُمُ الْعَذَابُ", ayahs: [86, 162], type: "END" },
+    { rule: "وَلَمَّا جَاءَهُمْ", ayahs: [89, 101], type: "START" },
+    { rule: "إِنْ كُنْتُمْ مُؤْمِنِينَ", ayahs: [91, 93, 248, 278], type: "END" },
+    { rule: "قُلْ", ayahs: [94, 97, 139], type: "START" },
+    { rule: "بِمَا تَعْمَلُونَ بَصِيرٌ", ayahs: [96, 110, 233, 237, 265], type: "END" },
+    { rule: "لَوْ كَانُوا يَعْلَمُونَ", ayahs: [102, 103], type: "END" },
+    { rule: "يَا أَيُّهَا الَّذِينَ آمَنُوا", ayahs: [104, 153, 172, 178, 183, 208, 254, 264, 267, 278, 282], type: "START" },
+    { rule: "وَاسِعٌ عَلِيمٌ", ayahs: [115, 247, 261, 268], type: "END" },
+    { rule: "وَلَئِنِ اتَّبَعْتَ أَهْوَاءَهُمْ", ayahs: [120, 145], type: "START" },
+    { rule: "الَّذِينَ آتَيْنَاهُمُ الْكِتَابَ", ayahs: [121, 146], type: "START" },
+    { rule: "تِلْكَ", ayahs: [134, 141, 252, 253], type: "START" },
+    { rule: "فَوَلِّ وَجْهَكَ شطْرَ الْمَسْجِدِ الْحَرَامِ", ayahs: [144, 149, 150], type: "START" },
+    { rule: "الأمر بذكر الله", ayahs: [152, 198, 200, 203, 239], type: "MIDDLE" },
+    { rule: "إِنَّ الَّذِينَ يَكْتُمُونَ", ayahs: [159, 174], type: "START" },
+    { rule: "وَلَا تَتَّبِعُوا خُطُوَاتِ الشَّيْطَانِ إِنَّهُ لَكُمْ عَدُوٌّ مُبِينٌ", ayahs: [168, 169, 208, 209], type: "START" },
+    { rule: "غَفُورٌ رَحِيمٌ", ayahs: [173, 182, 192, 199, 218, 226], type: "END" },
+    { rule: "كُتِبَ عَلَيْكُمُ", ayahs: [178, 180, 183, 216], type: "START" },
+    { rule: "سَمِيعٌ عَلِيمٌ", ayahs: [181, 224, 227, 244, 256], type: "END" },
+    { rule: "خَيْرٌ لَكُمْ إِنْ كُنْتُمْ تَعْلَمُونَ", ayahs: [184, 280], type: "END" },
+    { rule: "تِلْكَ حُدُودُ اللَّهِ", ayahs: [187, 229, 230], type: "START" },
+    { rule: "يُبَيِّنُ اللَّهُ آيَاتِهِ / الآيَاتِ", ayahs: [187, 219, 221, 242, 266], type: "MIDDLE" },
+    { rule: "يَسْأَلُونَكَ", ayahs: [189, 215, 217, 219, 220, 222], type: "START" },
+    { rule: "وَاتَّقُوا اللَّهَ", ayahs: [189, 194, 196, 203, 223, 231, 233, 282], type: "START" },
+    { rule: "وَقَاتِلُوا فِي سَبِيلِ اللَّهِ", ayahs: [190, 244], type: "START" },
+    { rule: "شَدِيدُ الْعِقَابِ", ayahs: [196, 211], type: "END" },
+    { rule: "عَزِيزٌ حَكِيمٌ", ayahs: [209, 220, 228, 240, 260], type: "END" },
+    { rule: "فَإِنَّ اللَّهَ بِهِ عَلِيمٌ", ayahs: [215, 273], type: "END" },
+    { rule: "وَاللَّهُ يَعْلَمُ وَأَنْتُمْ لَا تَعْلَمُونَ", ayahs: [216, 232], type: "END" },
+    { rule: "غَفُورٌ حَلِيمٌ", ayahs: [225, 235], type: "END" },
+    { rule: "وَإِذَا طَلَّقْتُمُ النِّسَاءَ فَبَلَغْنَ أَجَلَهُنَّ", ayahs: [231, 232], type: "START" },
+    { rule: "وَالَّذِينَ يُتَوَفَّوْنَ مِنْكُمْ وَيَذَرُونَ أَزْوَاجًا", ayahs: [234, 240], type: "START" },
+    { rule: "وَاللَّهُ بِمَا تَعْمَلُونَ خَبِيرٌ", ayahs: [234, 271], type: "END" },
+    { rule: "أَلَمْ تَرَ إِلَى", ayahs: [243, 246, 258], type: "START" },
+    { rule: "الَّذِينَ يُنْفِقُونَ أَمْوَالَهُمْ", ayahs: [261, 262, 264, 274], type: "START" }
+];
+
+// دالة لتحويل المجموعات إلى الصيغة المسطحة (Source/Targets)
+// الآية رقم 1 في كل مجموعة تعتبر هي المصدر (Source) والباقي أهداف (Targets)
+// لضمان ظهورها في الفهرس تحت كل آية مشاركة
+const convertToFlatData = (surahNumber, groups) => {
+    const result = [];
+    groups.forEach((group, gIdx) => {
+        group.ayahs.forEach((srcAyah, sIdx) => {
+            const others = group.ayahs.filter(a => a !== srcAyah);
+            if (others.length > 0) {
+                result.push({
+                    id: `mut_${surahNumber}_${gIdx}_${srcAyah}`,
+                    sourceAyah: {
+                        surahNumber: surahNumber,
+                        ayahNumber: srcAyah,
+                        absoluteAyahNumber: getAbsoluteAyah(surahNumber, srcAyah)
+                    },
+                    similarAyahs: others.map(o => ({
+                        surahNumber: surahNumber,
+                        ayahNumber: o,
+                        absoluteAyahNumber: getAbsoluteAyah(surahNumber, o),
+                        rule: group.rule,
+                        ruleType: group.type
+                    }))
+                });
+            }
+        });
+    });
+    return result;
+};
+
+// حساب رقم الآية المطلق (بما أن الفاتحة 7 آيات)
+const getAbsoluteAyah = (surah, ayah) => {
+    const offsets = { 1: 0, 2: 7, 3: 293 }; // تبسيط للمثال، سورة 2 تبدأ بعد 7 آيات
+    // ملاحظة: الأوفست الفعلي سيتم حسابه بدقة في سكريبتات لاحقة
+    return (offsets[surah] || 0) + ayah;
+};
+
+const flatBaqarahData = convertToFlatData(2, baqarahGroups);
+
+fs.writeFileSync('c:/antigravity/X3 8app Q/constants/mutashabiha_data_full.json', JSON.stringify(flatBaqarahData, null, 2));
+console.log(`Successfully generated ${flatBaqarahData.length} entries for Al-Baqarah.`);

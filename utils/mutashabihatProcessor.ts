@@ -7,50 +7,58 @@ import { getAyahText } from './ayahTextHelper';
 /**
  * تحويل البيانات الخام من JSON إلى format معالج مع حساب التشابه
  */
-export async function processMutashabihatData(rawData: Record<string, MutashabihaRaw[]>): Promise<Mutashabiha[]> {
+export async function processMutashabihatData(rawData: any): Promise<Mutashabiha[]> {
     const processed: Mutashabiha[] = [];
-    let idCounter = 0;
 
-    // DEBUG: Check if raw data has rule property
-    const firstJuz = Object.keys(rawData)[0];
-    if (rawData[firstJuz]?.[0]?.muts?.[0]) {
-        console.log('🔍 PROCESSOR: Sample raw mut:', rawData[firstJuz][0].muts[0]);
+    // Case 1: New Flat Array Structure (from the book)
+    if (Array.isArray(rawData)) {
+        for (const entry of rawData) {
+            if (!entry.sourceAyah || !entry.similarAyahs) continue;
+
+            // Get source text if missing
+            let sourceText = entry.sourceAyah.text || "";
+            if (!sourceText) {
+                sourceText = await getAyahText(entry.sourceAyah.surahNumber, entry.sourceAyah.ayahNumber);
+            }
+
+            const similarAyahs: AyahReference[] = [];
+            for (const sim of entry.similarAyahs) {
+                let simText = sim.text || "";
+                if (!simText) {
+                    simText = await getAyahText(sim.surahNumber, sim.ayahNumber);
+                }
+
+                similarAyahs.push({
+                    ...sim,
+                    text: simText,
+                    similarity: sim.similarity || calculateMutashabihatSimilarity(sourceText, simText)
+                });
+            }
+
+            processed.push({
+                ...entry,
+                sourceAyah: { ...entry.sourceAyah, text: sourceText },
+                similarAyahs: sortBySimilarity(similarAyahs),
+                highestSimilarity: getHighestSimilarity(similarAyahs.map(a => a.similarity!)) || undefined
+            });
+        }
+        return processed;
     }
 
-    for (const [juz, mutations] of Object.entries(rawData)) {
+    // Case 2: Legacy Juz-based Record Structure
+    for (const [juz, mutations] of Object.entries(rawData as Record<string, MutashabihaRaw[]>)) {
         for (const mut of mutations) {
-            // Process source ayah
             const srcArray = Array.isArray(mut.src.ayah) ? mut.src.ayah : [mut.src.ayah];
-
             for (const srcAbsolute of srcArray) {
                 const sourceAyah = absoluteToSurahAyah(srcAbsolute);
-
-                // Get source text for similarity calculation
                 const sourceText = await getAyahText(sourceAyah.surahNumber, sourceAyah.ayahNumber);
-
-                // Process similar ayahs
                 const similarAyahs: AyahReference[] = [];
 
                 for (const mutItem of mut.muts) {
                     const mutArray = Array.isArray(mutItem.ayah) ? mutItem.ayah : [mutItem.ayah];
-                    const ruleType = mutItem.rule; // Capture rule
-
-                    // DEBUG: Log rule extraction
-                    if (idCounter === 1) {
-                        console.log('🚀 RULE EXTRACTION TEST:', {
-                            rawRule: mutItem.rule,
-                            extracted: ruleType,
-                            hasProperty: 'rule' in mutItem
-                        });
-                    }
-
                     for (const mutAbsolute of mutArray) {
                         const similarAyahInfo = absoluteToSurahAyah(mutAbsolute);
-
-                        // Get similar ayah text
                         const similarText = await getAyahText(similarAyahInfo.surahNumber, similarAyahInfo.ayahNumber);
-
-                        // Calculate similarity
                         const similarity = calculateMutashabihatSimilarity(sourceText, similarText);
 
                         similarAyahs.push({
@@ -65,24 +73,12 @@ export async function processMutashabihatData(rawData: Record<string, Mutashabih
                     }
                 }
 
-                // Sort by similarity (highest first)
-                const sortedSimilarAyahs = sortBySimilarity(similarAyahs);
-
-                // Get highest similarity for quick reference
-                const highestSimilarity = getHighestSimilarity(
-                    sortedSimilarAyahs.map(a => a.similarity!)
-                );
-
                 processed.push({
-                    id: `mut_${idCounter++}`,
-                    sourceAyah: {
-                        ...sourceAyah,
-                        absoluteAyahNumber: srcAbsolute,
-                        text: sourceText
-                    },
-                    similarAyahs: sortedSimilarAyahs,
+                    id: `base_${srcAbsolute}_${mut.muts[0]?.ayah || 0}`,
+                    sourceAyah: { ...sourceAyah, absoluteAyahNumber: srcAbsolute, text: sourceText },
+                    similarAyahs: sortBySimilarity(similarAyahs),
                     showContext: mut.ctx === 2,
-                    highestSimilarity: highestSimilarity || undefined
+                    highestSimilarity: getHighestSimilarity(similarAyahs.map(a => a.similarity!)) || undefined
                 });
             }
         }
