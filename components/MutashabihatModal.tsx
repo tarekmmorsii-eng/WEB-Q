@@ -8,6 +8,47 @@ import { getMatchingWords } from '../utils/similarityCalculator';
 import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihatData';
 import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
 
+function MutashabihatIcon({
+    showGreenLine = false,
+    showRedLine = false,
+    size = "w-10 h-10",
+    number = "١"
+}: {
+    showGreenLine?: boolean,
+    showRedLine?: boolean,
+    size?: string,
+    number?: string
+}) {
+    const goldColor = "#d97706"; // Premium Gold
+
+    return (
+        <div className={clsx("shrink-0", size)}>
+            <svg viewBox="0 0 100 110" className="w-full h-full overflow-visible">
+                <g fill="none" stroke={goldColor} strokeWidth="4">
+                    <path d="M50,12 C65,12 85,22 88,48 C91,74 72,88 50,88 C28,88 10,72 12,48 C14,24 35,12 50,12 Z" />
+                </g>
+                <text x="50" y="55" fill={goldColor} fontSize="40" fontWeight="bold" textAnchor="middle" dominantBaseline="central">
+                    {number}
+                </text>
+
+                {/* Underline Logic: Full width if single color, half each if dual */}
+                {showGreenLine && !showRedLine && (
+                    <line x1="20" y1="102" x2="80" y2="102" stroke="#22c55e" strokeWidth="12" strokeLinecap="round" />
+                )}
+                {showRedLine && !showGreenLine && (
+                    <line x1="20" y1="102" x2="80" y2="102" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" />
+                )}
+                {showGreenLine && showRedLine && (
+                    <>
+                        <line x1="20" y1="102" x2="50" y2="102" stroke="#22c55e" strokeWidth="12" strokeLinecap="round" />
+                        <line x1="50" y1="102" x2="80" y2="102" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" />
+                    </>
+                )}
+            </svg>
+        </div>
+    );
+}
+
 /**
  * مكون لعرض النص مع تلوين الكلمات المتطابقة بناءً على القواعد
  */
@@ -385,7 +426,7 @@ export default function MutashabihatModal({
                         )}
                     >
                         <div className="flex items-center gap-2">
-                            <span>📍</span>
+                            <MutashabihatIcon showGreenLine size="w-6 h-6" />
                             {isArabic ? 'داخل السورة' : 'Inside Surah'}
                             <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
                                 {mutashabiha.similarAyahs.filter(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber).length}
@@ -404,7 +445,7 @@ export default function MutashabihatModal({
                         )}
                     >
                         <div className="flex items-center gap-2">
-                            <span>🌍</span>
+                            <MutashabihatIcon showRedLine size="w-6 h-6" />
                             {isArabic ? 'خارج السورة' : 'Outside Surah'}
                             <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
                                 {mutashabiha.similarAyahs.filter(a => a.surahNumber !== mutashabiha.sourceAyah.surahNumber).length}
@@ -418,7 +459,7 @@ export default function MutashabihatModal({
                 {/* Similar Ayahs */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
-                        <span>🔗</span>
+                        <MutashabihatIcon showGreenLine showRedLine size="w-7 h-7" />
                         {isArabic ? 'الآيات المتشابهة:' : 'Similar Verses:'}
                         <span className="text-sm text-slate-500 dark:text-slate-400">({mutashabiha.similarAyahs.length})</span>
                     </h3>

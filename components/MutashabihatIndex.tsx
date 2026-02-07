@@ -9,6 +9,47 @@ import { getAyahText } from '../utils/ayahTextHelper';
 import { getMatchingWords } from '../utils/similarityCalculator';
 import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
 
+function MutashabihatIcon({
+    showGreenLine = false,
+    showRedLine = false,
+    size = "w-10 h-10",
+    number = "١"
+}: {
+    showGreenLine?: boolean,
+    showRedLine?: boolean,
+    size?: string,
+    number?: string
+}) {
+    const goldColor = "#d97706"; // Premium Gold
+
+    return (
+        <div className={clsx("shrink-0", size)}>
+            <svg viewBox="0 0 100 110" className="w-full h-full overflow-visible">
+                <g fill="none" stroke={goldColor} strokeWidth="4">
+                    <path d="M50,12 C65,12 85,22 88,48 C91,74 72,88 50,88 C28,88 10,72 12,48 C14,24 35,12 50,12 Z" />
+                </g>
+                <text x="50" y="55" fill={goldColor} fontSize="40" fontWeight="bold" textAnchor="middle" dominantBaseline="central">
+                    {number}
+                </text>
+
+                {/* Underline Logic: Full width if single color, half each if dual */}
+                {showGreenLine && !showRedLine && (
+                    <line x1="20" y1="102" x2="80" y2="102" stroke="#22c55e" strokeWidth="12" strokeLinecap="round" />
+                )}
+                {showRedLine && !showGreenLine && (
+                    <line x1="20" y1="102" x2="80" y2="102" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" />
+                )}
+                {showGreenLine && showRedLine && (
+                    <>
+                        <line x1="20" y1="102" x2="50" y2="102" stroke="#22c55e" strokeWidth="12" strokeLinecap="round" />
+                        <line x1="50" y1="102" x2="80" y2="102" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" />
+                    </>
+                )}
+            </svg>
+        </div>
+    );
+}
+
 function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRule, referenceText }: {
     text: string,
     absoluteAyahNumber?: number,
@@ -346,26 +387,32 @@ export default function MutashabihatIndex({
         const insideGroup: { mut: Mutashabiha, targets: any[] }[] = [];
         const outsideGroup: { mut: Mutashabiha, targets: any[] }[] = [];
 
-        const lowerQuery = searchQuery.toLowerCase().trim();
+        const query = searchQuery.trim();
+        const normalizedQuery = quranNormalize(query).toLowerCase();
 
         enrichedMutashabihat.forEach(mut => {
-            const sourceMatch = mut.sourceAyah.text?.toLowerCase().includes(lowerQuery);
-            const sourceAyahNumMatch = mut.sourceAyah.ayahNumber.toString() === lowerQuery;
+            const normalizedSourceText = quranNormalize(mut.sourceAyah.text || "").toLowerCase();
+            const sourceMatch = normalizedSourceText.includes(normalizedQuery);
+            const sourceAyahNumMatch = mut.sourceAyah.ayahNumber.toString() === query;
 
             const insideTargets = mut.similarAyahs.filter(s => {
-                const targetMatch = s.text?.toLowerCase().includes(lowerQuery) ||
-                    s.rule?.toLowerCase().includes(lowerQuery) ||
-                    s.ayahNumber.toString() === lowerQuery;
-                return s.surahNumber === selectedSurahId && (lowerQuery === "" || targetMatch || sourceMatch || sourceAyahNumMatch);
+                const normalizedTargetText = quranNormalize(s.text || "").toLowerCase();
+                const normalizedRule = quranNormalize(s.rule || "").toLowerCase();
+                const targetMatch = normalizedTargetText.includes(normalizedQuery) ||
+                    normalizedRule.includes(normalizedQuery) ||
+                    s.ayahNumber.toString() === query;
+                return s.surahNumber === selectedSurahId && (normalizedQuery === "" || targetMatch || sourceMatch || sourceAyahNumMatch);
             });
 
             const outsideTargets = mut.similarAyahs.filter(s => {
-                const surahNameMatch = SURAHS.find(surah => surah.number === s.surahNumber)?.name.includes(lowerQuery);
-                const targetMatch = s.text?.toLowerCase().includes(lowerQuery) ||
-                    s.rule?.toLowerCase().includes(lowerQuery) ||
-                    s.ayahNumber.toString() === lowerQuery ||
+                const surahNameMatch = SURAHS.find(surah => surah.number === s.surahNumber)?.name.includes(query);
+                const normalizedTargetText = quranNormalize(s.text || "").toLowerCase();
+                const normalizedRule = quranNormalize(s.rule || "").toLowerCase();
+                const targetMatch = normalizedTargetText.includes(normalizedQuery) ||
+                    normalizedRule.includes(normalizedQuery) ||
+                    s.ayahNumber.toString() === query ||
                     surahNameMatch;
-                return s.surahNumber !== selectedSurahId && (lowerQuery === "" || targetMatch || sourceMatch || sourceAyahNumMatch);
+                return s.surahNumber !== selectedSurahId && (normalizedQuery === "" || targetMatch || sourceMatch || sourceAyahNumMatch);
             });
 
             if (insideTargets.length > 0) {
@@ -556,7 +603,7 @@ export default function MutashabihatIndex({
                     </button>
 
                     <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <BookOpen className="text-amber-600" size={24} />
+                        <MutashabihatIcon showGreenLine showRedLine size="w-8 h-8" />
                         فهرس المتشابهات
                     </h1>
 
@@ -655,7 +702,7 @@ export default function MutashabihatIndex({
                         {/* Column 1: Inside Surah */}
                         <div className={clsx("space-y-4", { 'hidden md:block': activeTab === 'outside' })}>
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200 dark:border-slate-700">
-                                <Bookmark className="text-blue-500" size={20} />
+                                <MutashabihatIcon showGreenLine size="w-7 h-7" />
                                 <h3 className="font-bold text-lg text-gray-900 dark:text-white">
                                     متشابهات داخل سورة {currentSurah?.name}
                                     <span className="mr-2 text-sm font-normal text-gray-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
@@ -680,7 +727,7 @@ export default function MutashabihatIndex({
                         {/* Column 2: Outside Surah */}
                         <div className={clsx("space-y-4", { 'hidden md:block': activeTab === 'inside' })}>
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200 dark:border-slate-700">
-                                <BookOpen className="text-amber-500" size={20} />
+                                <MutashabihatIcon showRedLine size="w-7 h-7" />
                                 <h3 className="font-bold text-lg text-gray-900 dark:text-white">
                                     متشابهات مع سور أخرى
                                     <span className="mr-2 text-sm font-normal text-gray-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
