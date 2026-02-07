@@ -203,6 +203,8 @@ export default function App() {
 
   // Mutashabihat States
   const [isMutashabihatIndexOpen, setIsMutashabihatIndexOpen] = useState(false);
+  const [mutashabihatIndexSurah, setMutashabihatIndexSurah] = useState<number>(1);
+  const [mutashabihatIndexAyah, setMutashabihatIndexAyah] = useState<number | undefined>(undefined);
   const [mutashabihatData, setMutashabihatData] = useState<Mutashabiha[]>([]);
   const [currentMutashabiha, setCurrentMutashabiha] = useState<Mutashabiha | null>(null);
   const [multipleMutashabihat, setMultipleMutashabihat] = useState<Mutashabiha[]>([]);
@@ -1840,6 +1842,8 @@ export default function App() {
         onClose={() => setIsMutashabihatIndexOpen(false)}
         mutashabihatData={mutashabihatData}
         isDarkMode={currentTheme.isDark}
+        initialSurahId={mutashabihatIndexSurah}
+        initialAyahId={mutashabihatIndexAyah}
         onNavigateToAyah={async (surah, ayah) => {
           const page = await getAyahPage(surah, ayah);
           setCurrentPage(page);
@@ -1858,6 +1862,12 @@ export default function App() {
           setCurrentPage(page);
           setHighlightedAyah({ surah, ayah });
           setIsMutashabihatModalOpen(false);
+        }}
+        onOpenInIndex={(surah, ayah) => {
+          setMutashabihatIndexSurah(surah);
+          setMutashabihatIndexAyah(ayah);
+          setIsMutashabihatModalOpen(false);
+          setIsMutashabihatIndexOpen(true);
         }}
         onDeleteSimilarAyah={handleDeleteSimilarAyah}
         onAddSimilarAyah={handleAddSimilarAyah}

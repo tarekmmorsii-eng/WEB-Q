@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning } from 'lucide-react';
+import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator } from 'lucide-react';
+
 import clsx from 'clsx';
 import { AppSettings, BottomBarSettings } from '../types';
 import { THEMES, Theme } from '../constants/themes';
 import { translations, LANGUAGE_NAMES, Language } from '../i18n/translations';
 import { loadQPCV1Data, SURAH_NAMES } from './QPCV1PageRenderer';
 import HelpModal from './HelpModal';
+import VerseCalculatorModal from './VerseCalculatorModal';
+
 
 interface SettingsProps {
     isOpen: boolean;
@@ -38,6 +41,9 @@ export default function Settings({
     const [isExporting, setIsExporting] = useState(false);
     const [showAllSettings, setShowAllSettings] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
+
+    const [showVerseCalculator, setShowVerseCalculator] = useState(false);
+
 
     // ---------------------------
     // Offline & PWA Manager
@@ -225,13 +231,23 @@ export default function Settings({
 
     const currentTheme = THEMES.find(th => th.id === localSettings.theme) || THEMES[0];
 
-    const quickAccessButtons = [
+    interface QuickAccessButton {
+        icon: React.ElementType;
+        label: string;
+        onClick?: () => void;
+        keepOpen?: boolean;
+    }
+
+    const quickAccessButtons: QuickAccessButton[] = [
+
         { icon: Menu, label: t.index, onClick: onOpenIndex },
         { icon: Search, label: t.search, onClick: onOpenSearch },
         { icon: BarChart3, label: t.memorizationStats, onClick: onOpenMemorization },
         { icon: Bell, label: t.notifications, onClick: onOpenNotifications },
         { icon: FileWarning, label: currentLanguage === 'ar' ? 'المتشابهات' : 'Similar Verses', onClick: onOpenMutashabihat },
+        { icon: Calculator, label: currentLanguage === 'ar' ? 'حساب الآيات' : 'Verse Calc', onClick: () => setShowVerseCalculator(true), keepOpen: true },
     ];
+
 
     return (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
@@ -273,7 +289,7 @@ export default function Settings({
                                 <button
                                     key={idx}
                                     onClick={() => {
-                                        onClose();
+                                        if (!btn.keepOpen) onClose();
                                         btn.onClick?.();
                                     }}
                                     className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
@@ -723,6 +739,8 @@ export default function Settings({
             </div>
 
             <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
+            <VerseCalculatorModal isOpen={showVerseCalculator} onClose={() => setShowVerseCalculator(false)} currentLanguage={currentLanguage} />
         </div>
+
     );
 }

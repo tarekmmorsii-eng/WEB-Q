@@ -304,12 +304,21 @@ interface MutashabihatIndexProps {
     mutashabihatData: Mutashabiha[];
     isDarkMode?: boolean;
     onNavigateToAyah?: (surahNumber: number, ayahNumber: number) => void;
+    initialSurahId?: number;
+    initialAyahId?: number;
 }
 
 export default function MutashabihatIndex({
-    isOpen, onClose, mutashabihatData, isDarkMode, onNavigateToAyah
+    isOpen, onClose, mutashabihatData, isDarkMode, onNavigateToAyah, initialSurahId, initialAyahId
 }: MutashabihatIndexProps) {
     const [selectedSurahId, setSelectedSurahId] = useState<number>(1);
+
+    // Sync selectedSurahId with initialSurahId when it changes and index is open
+    useEffect(() => {
+        if (isOpen && initialSurahId) {
+            setSelectedSurahId(initialSurahId);
+        }
+    }, [isOpen, initialSurahId]);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<'inside' | 'outside'>('inside');
     const [enrichedMutashabihat, setEnrichedMutashabihat] = useState<Mutashabiha[]>([]);
@@ -381,6 +390,26 @@ export default function MutashabihatIndex({
             loadTexts();
         }
     }, [currentSurahMutashabihat, isOpen]);
+
+    // SCROLLING LOGIC: Scroll to specific Ayah if initialAyahId is provided
+    useEffect(() => {
+        if (isOpen && !isLoading && initialAyahId && selectedSurahId) {
+            // Small timeout to allow rendering to complete
+            const timer = setTimeout(() => {
+                const elementId = `mut-ayah-${selectedSurahId}-${initialAyahId}`;
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add temporary highlight
+                    element.classList.add('ring-4', 'ring-amber-400', 'ring-opacity-50', 'transition-all', 'duration-1000');
+                    setTimeout(() => {
+                        element.classList.remove('ring-4', 'ring-amber-400', 'ring-opacity-50');
+                    }, 2000);
+                }
+            }, 500); // 500ms delay to ensure heavy list is rendered
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, isLoading, initialAyahId, selectedSurahId]);
 
     // Split into Inside/Outside Surah
     const { inside, outside } = useMemo(() => {
@@ -765,7 +794,10 @@ function MutashabihaCard({ item, onNavigateToAyah }: { item: { mut: Mutashabiha,
     const refText = targets[0]?.text || "";
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+        <div
+            id={`mut-ayah-${mut.sourceAyah.surahNumber}-${mut.sourceAyah.ayahNumber}`}
+            className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden scroll-mt-24"
+        >
             {/* Source Verse */}
             <div className="p-4 bg-amber-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700">
                 <div className="flex justify-between items-start mb-2">
@@ -875,7 +907,11 @@ function MutashabihaCard({ item, onNavigateToAyah }: { item: { mut: Mutashabiha,
                                         </div>
                                         <div>
                                             {items.map((target, i) => (
-                                                <div key={i} className="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors border-b border-gray-50 dark:border-slate-800/50 last:border-0">
+                                                <div
+                                                    key={i}
+                                                    id={`mut-ayah-${target.surahNumber}-${target.ayahNumber}`}
+                                                    className="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors border-b border-gray-50 dark:border-slate-800/50 last:border-0 scroll-mt-24"
+                                                >
                                                     <div className="flex justify-between items-center mb-2">
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs font-bold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600 px-2 py-0.5 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700">
@@ -950,7 +986,11 @@ function InternalGroupSection({ group, onNavigateToAyah }: { group: any, onNavig
             {/* Ayahs List */}
             <div className="divide-y divide-gray-50 dark:divide-slate-800/50" dir="rtl">
                 {ayahs.map((ayah: any, i: number) => (
-                    <div key={i} className="p-3 hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <div
+                        key={i}
+                        id={`mut-ayah-${ayah.surahNumber}-${ayah.ayahNumber}`}
+                        className="p-3 hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors scroll-mt-24"
+                    >
                         <div className="text-right font-quran text-lg leading-loose text-gray-700 dark:text-gray-300">
                             <HighlightingText
                                 text={ayah.text}
