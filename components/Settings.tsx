@@ -26,6 +26,7 @@ interface SettingsProps {
     isPageBookmarked?: boolean;
     hasUpdate?: boolean;
     onUpdateApp?: () => void;
+    memorizationRatings?: any[]; // Avoiding circular dependency for now, or use MemorizationRating[] if imported
 }
 
 export default function Settings({
@@ -34,7 +35,8 @@ export default function Settings({
     onOpenNotifications, onOpenMutashabihat, onOpenColorPicker,
     onTogglePageBookmark, isPageBookmarked,
     hasUpdate = false,
-    onUpdateApp
+    onUpdateApp,
+    memorizationRatings = []
 }: SettingsProps) {
     const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
     const t = translations[currentLanguage];
@@ -739,7 +741,15 @@ export default function Settings({
             </div>
 
             <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
-            <VerseCalculatorModal isOpen={showVerseCalculator} onClose={() => setShowVerseCalculator(false)} currentLanguage={currentLanguage} />
+            <VerseCalculatorModal
+                isOpen={showVerseCalculator}
+                onClose={() => {
+                    setShowVerseCalculator(false);
+                    onClose();
+                }}
+                currentLanguage={currentLanguage}
+                memorizationRatings={memorizationRatings}
+            />
         </div>
 
     );

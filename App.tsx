@@ -1749,21 +1749,22 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
-        onSave={setSettings}
-        currentLanguage={settings.language as Language}
-        onOpenIndex={() => setIsIndexOpen(true)}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
-        onOpenNotifications={() => setIsNotificationOpen(true)}
-        onOpenMutashabihat={() => {
-          setIsSettingsOpen(false);
-          setIsMutashabihatIndexOpen(true);
+        onSave={(newSettings) => {
+          setSettings(newSettings);
+          localStorage.setItem('quran_app_settings', JSON.stringify(newSettings));
         }}
-        onOpenColorPicker={() => setIsColorPickerOpen(true)}
+        currentLanguage={settings.language as Language}
+        onOpenIndex={() => { setIsSettingsOpen(false); setIsIndexOpen(true); }}
+        onOpenSearch={() => { setIsSettingsOpen(false); setIsSearchOpen(true); }}
+        onOpenMemorization={() => { setIsSettingsOpen(false); setIsMemorizationStatsOpen(true); }}
+        onOpenNotifications={() => { setIsSettingsOpen(false); setIsNotificationOpen(true); }}
+        onOpenMutashabihat={() => { setIsSettingsOpen(false); setIsMutashabihatIndexOpen(true); }}
+        onOpenColorPicker={() => { setIsSettingsOpen(false); setIsColorPickerOpen(true); }}
         onTogglePageBookmark={togglePageBookmark}
         isPageBookmarked={isPageBookmarked}
         hasUpdate={hasAppUpdate}
         onUpdateApp={handleUpdateApp}
+        memorizationRatings={memorizationRatings}
       />
 
 

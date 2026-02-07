@@ -1,82 +1,66 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Calculator, ArrowRight, ArrowLeft, Layers, BookOpen } from 'lucide-react';
-import { translations, Language } from '../i18n/translations';
-import { SURAH_NAMES } from './QPCV1PageRenderer';
-import { JUZ_BOUNDARIES, HIZB_BOUNDARIES, RUB_BOUNDARIES } from '../constants/structureBoundaries';
+import { X, Calculator, BookOpen, AlertCircle, ChevronRight, Check, CheckCircle2, BarChart3, Layers } from 'lucide-react';
 import clsx from 'clsx';
+import { SURAHS } from '../constants/surahData';
+import { JUZ_BOUNDARIES, HIZB_BOUNDARIES, RUB_BOUNDARIES } from '../constants/structureBoundaries';
+import { MemorizationRating } from '../types';
 
 interface VerseCalculatorModalProps {
     isOpen: boolean;
     onClose: () => void;
-    currentLanguage: Language;
+    currentLanguage: string;
+    memorizationRatings?: any[]; // Using any[] to allow flexibility, but ideally MemorizationRating[]
 }
 
-// Temporary Surah Data until we confirm best way to import
-const SURAH_DATA = Array.from({ length: 114 }, (_, i) => ({
-    number: i + 1,
-    nameAr: SURAH_NAMES[i + 1] || `سورة ${i + 1}`,
-    nameEn: `Surah ${i + 1}`,
-}));
-
-const VERSE_COUNTS = [
-    7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135,
-    112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85,
-    54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13,
-    14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42,
-    29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11,
-    11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
-];
-
-type CalculationMode = 'range' | 'structure';
-type StructureType = 'juz' | 'hizb' | 'rub';
-
-export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage }: VerseCalculatorModalProps) {
-    // State for calculation mode
-    const [mode, setMode] = useState<CalculationMode>('range');
-
-    // State for range selection
+export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage, memorizationRatings = [] }: VerseCalculatorModalProps) {
     const [startSurah, setStartSurah] = useState(1);
     const [startAyah, setStartAyah] = useState(1);
     const [endSurah, setEndSurah] = useState(1);
     const [endAyah, setEndAyah] = useState(7);
 
-    // State for structure selection
-    const [structureType, setStructureType] = useState<StructureType>('juz');
+    // New Feature State
+    const [mode, setMode] = useState<'range' | 'structure'>('structure'); // Default to structure
+    const [structureType, setStructureType] = useState<'juz' | 'hizb' | 'rub'>('juz');
     const [structureIndex, setStructureIndex] = useState(1);
 
-    // Helper to calculate verses between two points
-    const calculateRange = (sSurah: number, sAyah: number, eSurah: number, eAyah: number) => {
-        if (sSurah > eSurah) return 0;
-        if (sSurah === eSurah) {
-            return Math.max(0, eAyah - sAyah + 1);
-        }
 
-        let count = 0;
-        // Verses in start surah
-        count += (VERSE_COUNTS[sSurah - 1] - sAyah + 1);
-        // Verses in full surahs between
-        for (let i = sSurah + 1; i < eSurah; i++) {
-            count += VERSE_COUNTS[i - 1];
-        }
-        // Verses in end surah
-        count += eAyah;
-        return count;
+
+    const t = {
+        title: currentLanguage === 'ar' ? 'حاسبة الآيات' : 'Verse Calculator',
+        startPoint: currentLanguage === 'ar' ? 'بداية النطاق' : 'Start Point',
+        endPoint: currentLanguage === 'ar' ? 'نهاية النطاق' : 'End Point',
+        calculate: currentLanguage === 'ar' ? 'حساب' : 'Calculate',
+        result: currentLanguage === 'ar' ? 'عدد الآيات:' : 'Verse Count:',
+        surah: currentLanguage === 'ar' ? 'السورة' : 'Surah',
+        ayah: currentLanguage === 'ar' ? 'الآية' : 'Ayah',
+        close: currentLanguage === 'ar' ? 'إغلاق' : 'Close',
+        error: currentLanguage === 'ar' ? 'تأكد من ترتيب النطاق الصحيح' : 'Invalid Range',
+        modeRange: currentLanguage === 'ar' ? 'نطاق حر' : 'Custom Range',
+        modeStructure: currentLanguage === 'ar' ? 'أجزاء وأحزاب' : 'Quran Structure',
+        typeJuz: currentLanguage === 'ar' ? 'جزء' : 'Juz',
+        typeHizb: currentLanguage === 'ar' ? 'حزب' : 'Hizb',
+        typeRub: currentLanguage === 'ar' ? 'ربع' : 'Rub',
+        selectStructure: currentLanguage === 'ar' ? 'اختر:' : 'Select:',
+        statsTitle: currentLanguage === 'ar' ? 'إحصائيات الحفظ' : 'Memorization Stats',
+        good: currentLanguage === 'ar' ? 'ممتاز' : 'Strong',
+        medium: currentLanguage === 'ar' ? 'متوسط' : 'Medium',
+        weak: currentLanguage === 'ar' ? 'ضعيف' : 'Weak',
+        unrated: currentLanguage === 'ar' ? 'غير مقيم' : 'Not Rated',
     };
 
-    // Calculate/Sync logic
-    // We want the 'structure' mode to drive the 'range' state visually, 
-    // or at least be the source of truth when active.
-    // Let's use an effect to update range state when structure changes IF in structure mode.
+    // Helper to get boundary for selected structure
+    const getStructureBoundary = () => {
+        const index = structureIndex - 1; // 0-based
+        if (structureType === 'juz') return JUZ_BOUNDARIES[index];
+        if (structureType === 'hizb') return HIZB_BOUNDARIES[index];
+        if (structureType === 'rub') return RUB_BOUNDARIES[index];
+        return null;
+    };
+
+    // Synch range when structure changes
     useEffect(() => {
         if (mode === 'structure') {
-            let boundaries;
-            switch (structureType) {
-                case 'juz': boundaries = JUZ_BOUNDARIES; break;
-                case 'hizb': boundaries = HIZB_BOUNDARIES; break;
-                case 'rub': boundaries = RUB_BOUNDARIES; break;
-            }
-
-            const boundary = boundaries[structureIndex - 1];
+            const boundary = getStructureBoundary();
             if (boundary) {
                 setStartSurah(boundary.start.surah);
                 setStartAyah(boundary.start.ayah);
@@ -86,93 +70,116 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage 
         }
     }, [mode, structureType, structureIndex]);
 
-    const totalVerses = useMemo(() => {
-        return calculateRange(startSurah, startAyah, endSurah, endAyah);
-    }, [startSurah, startAyah, endSurah, endAyah]);
-
-    const handleStartSurahChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const s = parseInt(e.target.value);
-        setStartSurah(s);
-        setStartAyah(1);
-        if (s > endSurah) {
-            setEndSurah(s);
-            setEndAyah(VERSE_COUNTS[s - 1]);
+    const calculateCount = () => {
+        if (startSurah === endSurah) {
+            return endAyah - startAyah + 1;
         }
+
+        // Ensure valid surah indices
+        if (!SURAHS[startSurah - 1] || !SURAHS[endSurah - 1]) return 0;
+
+        // First surah remaining ayahs
+        let count = SURAHS[startSurah - 1].ayahCount - startAyah + 1;
+
+        // Full intermediate surahs
+        for (let i = startSurah + 1; i < endSurah; i++) {
+            if (SURAHS[i - 1]) {
+                count += SURAHS[i - 1].ayahCount;
+            }
+        }
+
+        // Last surah ayahs
+        count += endAyah;
+
+        return count;
     };
 
-    const handleEndSurahChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const s = parseInt(e.target.value);
-        setEndSurah(s);
-        setEndAyah(VERSE_COUNTS[s - 1]);
-        if (s < startSurah) {
-            setStartSurah(s);
-            setStartAyah(1);
+    const count = calculateCount();
+    const isValid = count > 0;
+
+    // --- Memorization Statistics Logic ---
+    const stats = useMemo(() => {
+        if (!isValid) return null;
+
+        const ratingsMap = new Map();
+        if (memorizationRatings && memorizationRatings.length > 0) {
+            memorizationRatings.forEach((r: any) => ratingsMap.set(r.ayahId, r.rating));
         }
-    };
+
+        let good = 0;
+        let medium = 0;
+        let weak = 0;
+        let totalVersesReviewed = 0;
+
+        // Iterate through all verses in the range
+        let currentS = startSurah;
+        let currentA = startAyah;
+
+        // Safety check to prevent infinite loops if logic is off
+        let safetyCounter = 0;
+        const maxVerses = 7000; // More than Quran total
+
+        while ((currentS < endSurah || (currentS === endSurah && currentA <= endAyah)) && safetyCounter < maxVerses) {
+            const ayahId = `${currentS}-${currentA}`;
+            const rating = ratingsMap.get(ayahId);
+
+            if (rating) {
+                if (rating === 'good') good++;
+                else if (rating === 'medium') medium++;
+                else if (rating === 'weak') weak++;
+                totalVersesReviewed++;
+            }
+
+            // Move to next verse
+            if (SURAHS[currentS - 1] && currentA < SURAHS[currentS - 1].ayahCount) {
+                currentA++;
+            } else {
+                if (currentS >= 114) break; // End of Quran
+                currentS++;
+                currentA = 1;
+            }
+            safetyCounter++;
+        }
+
+        const unrated = count - totalVersesReviewed;
+
+        return { good, medium, weak, unrated, total: count };
+    }, [startSurah, startAyah, endSurah, endAyah, memorizationRatings, count, isValid]);
+
+    // Validation for dropdowns
+    const maxIndex = structureType === 'juz' ? 30 : structureType === 'hizb' ? 60 : 240;
+
+    // Debug logging
+    console.log('VerseCalculatorModal Render:', {
+        isOpen,
+        mode,
+        isValid,
+        count,
+        stats,
+        memorizationRatingsLength: memorizationRatings?.length
+    });
 
     if (!isOpen) return null;
 
-    const renderStructureOptions = () => {
-        let max = 30;
-        let labelPrefix = currentLanguage === 'ar' ? 'الجزء' : 'Juz';
-
-        if (structureType === 'hizb') {
-            max = 60;
-            labelPrefix = currentLanguage === 'ar' ? 'الحزب' : 'Hizb';
-        } else if (structureType === 'rub') {
-            max = 240;
-            labelPrefix = currentLanguage === 'ar' ? 'الربع' : 'Rub';
-        }
-
-        return (
-            <div className="flex gap-2">
-                <select
-                    value={structureType}
-                    onChange={(e) => {
-                        setStructureType(e.target.value as StructureType);
-                        setStructureIndex(1); // Reset index on type change
-                    }}
-                    className="flex-1 p-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                >
-                    <option value="juz">{currentLanguage === 'ar' ? 'أجزاء' : 'Juz (Parts)'}</option>
-                    <option value="hizb">{currentLanguage === 'ar' ? 'أحزاب' : 'Hizb (Parties)'}</option>
-                    <option value="rub">{currentLanguage === 'ar' ? 'أرباع' : 'Rub (Quarters)'}</option>
-                </select>
-
-                <select
-                    value={structureIndex}
-                    onChange={(e) => setStructureIndex(parseInt(e.target.value))}
-                    className="w-24 p-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-center"
-                >
-                    {Array.from({ length: max }, (_, i) => i + 1).map(num => (
-                        <option key={num} value={num}>
-                            {num}
-                        </option>
-                    ))}
-                </select>
-            </div>
-        );
-    };
-
     return (
-        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-300 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-amber-200/20 dark:border-slate-700 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border border-amber-500/20">
                 {/* Header */}
-                <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 p-4 shrink-0 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Calculator className="text-amber-600" />
-                        {currentLanguage === 'ar' ? 'حساب عدد الآيات' : 'Verse Calculator'}
-                    </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                        <X size={24} className="text-gray-600 dark:text-gray-400" />
+                <div className="bg-amber-50 dark:bg-slate-800/50 p-4 border-b border-amber-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                            <Calculator size={20} className="text-amber-600 dark:text-amber-500" />
+                        </div>
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t.title}</h2>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                        <X size={24} />
                     </button>
                 </div>
 
-                {/* Content */}
                 <div className="p-6 space-y-6 overflow-y-auto">
-
                     {/* Mode Toggle */}
-                    <div className="flex p-1 bg-gray-100 dark:bg-slate-800 rounded-xl relative">
+                    <div className="flex p-1 bg-gray-100 dark:bg-slate-800 rounded-xl relative shrink-0">
                         <button
                             onClick={() => setMode('range')}
                             className={clsx(
@@ -183,7 +190,7 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage 
                             )}
                         >
                             <BookOpen size={16} />
-                            {currentLanguage === 'ar' ? 'تحديد آيات' : 'Verses'}
+                            {t.modeRange}
                         </button>
                         <button
                             onClick={() => setMode('structure')}
@@ -195,104 +202,188 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage 
                             )}
                         >
                             <Layers size={16} />
-                            {currentLanguage === 'ar' ? 'الأجزاء والأحزاب' : 'Parts & Hizbs'}
+                            {t.modeStructure}
                         </button>
                     </div>
 
+                    {/* Structure Controls */}
                     {mode === 'structure' && (
-                        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block">
-                                {currentLanguage === 'ar' ? 'اختر التقسيم:' : 'Select Structure:'}
-                            </label>
-                            {renderStructureOptions()}
+                        <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t.selectStructure}</label>
+                                    <select
+                                        value={structureType}
+                                        onChange={(e) => {
+                                            setStructureType(e.target.value as any);
+                                            setStructureIndex(1); // Reset index
+                                        }}
+                                        className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                                    >
+                                        <option value="juz">{t.typeJuz}</option>
+                                        <option value="hizb">{t.typeHizb}</option>
+                                        <option value="rub">{t.typeRub}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 opacity-0">#</label>
+                                    <select
+                                        value={structureIndex}
+                                        onChange={(e) => setStructureIndex(Number(e.target.value))}
+                                        className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                                    >
+                                        {Array.from({ length: maxIndex }, (_, i) => i + 1).map(i => (
+                                            <option key={i} value={i}>{i}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     )}
 
-                    {/* Range Inputs (Read-onlyish in structure mode, or just auto-updated) */}
-                    <div className={clsx("space-y-6 transition-opacity duration-200", mode === 'structure' && "opacity-75 pointer-events-none")}>
-                        {/* Start Range */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block">
-                                {currentLanguage === 'ar' ? 'من:' : 'From:'}
-                            </label>
-                            <div className="flex gap-2">
+                    {/* Range Inputs (Read-only in structure mode for visual confirmation) */}
+                    <div className={clsx(
+                        "space-y-4 transition-all duration-300",
+                        mode === 'structure' ? "opacity-60 pointer-events-none grayscale" : "opacity-100"
+                    )}>
+                        {/* Wrapper for range inputs */}
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-start">
+                            {/* Start */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{t.startPoint}</label>
                                 <select
                                     value={startSurah}
-                                    onChange={handleStartSurahChange}
-                                    disabled={mode === 'structure'}
-                                    className="flex-1 p-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white disabled:opacity-70"
+                                    onChange={(e) => { setStartSurah(Number(e.target.value)); setStartAyah(1); }}
+                                    className="w-full p-2 rounded-lg border bg-white dark:bg-slate-800 text-xs truncate"
                                 >
-                                    {SURAH_DATA.map(s => (
+                                    {SURAHS.map(s => (
                                         <option key={s.number} value={s.number}>
-                                            {s.number}. {currentLanguage === 'ar' ? s.nameAr : s.nameEn}
+                                            {currentLanguage === 'ar' ? `${s.number}. ${s.name}` : `${s.number}. ${s.name}`}
                                         </option>
                                     ))}
                                 </select>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={VERSE_COUNTS[startSurah - 1]}
+                                <select
                                     value={startAyah}
-                                    disabled={mode === 'structure'}
-                                    onChange={(e) => setStartAyah(Math.min(parseInt(e.target.value) || 1, VERSE_COUNTS[startSurah - 1]))}
-                                    className="w-20 p-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-center disabled:opacity-70"
-                                />
+                                    onChange={(e) => setStartAyah(Number(e.target.value))}
+                                    className="w-full p-2 rounded-lg border bg-white dark:bg-slate-800 text-xs"
+                                >
+                                    {SURAHS[startSurah - 1] && Array.from({ length: SURAHS[startSurah - 1].ayahCount }, (_, i) => i + 1).map(i => (
+                                        <option key={i} value={i}>{t.ayah} {i}</option>
+                                    ))}
+                                </select>
                             </div>
-                        </div>
 
-                        {/* Arrow Divider */}
-                        <div className="flex justify-center text-amber-500">
-                            {currentLanguage === 'ar' ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
-                        </div>
+                            <div className="pt-8 text-gray-400">
+                                <ChevronRight size={16} className={currentLanguage === 'ar' ? 'rotate-180' : ''} />
+                            </div>
 
-                        {/* End Range */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block">
-                                {currentLanguage === 'ar' ? 'إلى:' : 'To:'}
-                            </label>
-                            <div className="flex gap-2">
+                            {/* End */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{t.endPoint}</label>
                                 <select
                                     value={endSurah}
-                                    onChange={handleEndSurahChange}
-                                    disabled={mode === 'structure'}
-                                    className="flex-1 p-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white disabled:opacity-70"
+                                    onChange={(e) => { setEndSurah(Number(e.target.value)); setEndAyah(1); }}
+                                    className="w-full p-2 rounded-lg border bg-white dark:bg-slate-800 text-xs truncate"
                                 >
-                                    {SURAH_DATA.map(s => (
+                                    {SURAHS.map(s => (
                                         <option key={s.number} value={s.number}>
-                                            {s.number}. {currentLanguage === 'ar' ? s.nameAr : s.nameEn}
+                                            {currentLanguage === 'ar' ? `${s.number}. ${s.name}` : `${s.number}. ${s.name}`}
                                         </option>
                                     ))}
                                 </select>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={VERSE_COUNTS[endSurah - 1]}
+                                <select
                                     value={endAyah}
-                                    disabled={mode === 'structure'}
-                                    onChange={(e) => setEndAyah(Math.min(parseInt(e.target.value) || 1, VERSE_COUNTS[endSurah - 1]))}
-                                    className="w-20 p-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-center disabled:opacity-70"
-                                />
+                                    onChange={(e) => setEndAyah(Number(e.target.value))}
+                                    className="w-full p-2 rounded-lg border bg-white dark:bg-slate-800 text-xs"
+                                >
+                                    {SURAHS[endSurah - 1] && Array.from({ length: SURAHS[endSurah - 1].ayahCount }, (_, i) => i + 1).map(i => (
+                                        <option key={i} value={i}>{t.ayah} {i}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>
 
-                    {/* Result */}
-                    <div className="mt-8 p-6 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-center border border-amber-100 dark:border-amber-800/30">
-                        <span className="text-sm text-amber-800 dark:text-amber-200 block mb-1 font-medium">
-                            {currentLanguage === 'ar' ? 'إجمالي عدد الآيات' : 'Total Verses'}
-                        </span>
-                        <div className="text-5xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
-                            {totalVerses}
+                    {/* Result Display */}
+                    <div className={clsx(
+                        "rounded-xl p-4 flex items-center justify-between transition-colors shrink-0",
+                        isValid
+                            ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30"
+                            : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30"
+                    )}>
+                        <div className="flex items-center gap-3">
+                            {isValid ? (
+                                <div className="bg-amber-100 dark:bg-amber-900/40 p-2 rounded-full">
+                                    <Check size={20} className="text-amber-700 dark:text-amber-500" />
+                                </div>
+                            ) : (
+                                <div className="bg-red-100 dark:bg-red-900/40 p-2 rounded-full">
+                                    <AlertCircle size={20} className="text-red-700 dark:text-red-500" />
+                                </div>
+                            )}
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                    {isValid ? t.result : t.error}
+                                </h3>
+                                {isValid && SURAHS[startSurah - 1] && SURAHS[endSurah - 1] && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {t.surah} {SURAHS[startSurah - 1].name} ({startAyah}) - {SURAHS[endSurah - 1].name} ({endAyah})
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                        {mode === 'structure' && (
-                            <span className="text-xs text-amber-600/70 dark:text-amber-400/70 block mt-2">
-                                {currentLanguage === 'ar'
-                                    ? `آيات ${structureType === 'juz' ? 'الجزء' : structureType === 'hizb' ? 'الحزب' : 'الربع'} ${structureIndex}`
-                                    : `Verses in ${structureType === 'juz' ? 'Juz' : structureType === 'hizb' ? 'Hizb' : 'Rub'} ${structureIndex}`
-                                }
-                            </span>
+                        {isValid && (
+                            <div className="text-2xl font-black text-amber-600 dark:text-amber-500">
+                                {count}
+                            </div>
                         )}
                     </div>
+
+                    {/* NEW: Memorization Stats Section */}
+                    {isValid && stats && (
+                        <div className="pt-2 border-t border-gray-100 dark:border-slate-800">
+                            <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                                <BarChart3 size={16} className="text-amber-500" />
+                                {t.statsTitle}
+                            </h4>
+
+                            {/* Distribution Bar */}
+                            <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden flex mb-3 shadow-inner">
+                                <div style={{ width: `${(stats.good / stats.total) * 100}%` }} className="h-full bg-green-500 transition-all duration-500" title={t.good} />
+                                <div style={{ width: `${(stats.medium / stats.total) * 100}%` }} className="h-full bg-yellow-500 transition-all duration-500" title={t.medium} />
+                                <div style={{ width: `${(stats.weak / stats.total) * 100}%` }} className="h-full bg-red-500 transition-all duration-500" title={t.weak} />
+                                {/* Unrated is transparent/bg color */}
+                            </div>
+
+                            {/* Detailed Counts Grid */}
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
+                                    <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                                        <span className="w-2 h-2 rounded-full bg-green-500" /> {t.good}
+                                    </span>
+                                    <span className="font-bold text-green-700 dark:text-green-400">{stats.good}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20">
+                                    <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                                        <span className="w-2 h-2 rounded-full bg-yellow-500" /> {t.medium}
+                                    </span>
+                                    <span className="font-bold text-yellow-700 dark:text-yellow-400">{stats.medium}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20">
+                                    <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                                        <span className="w-2 h-2 rounded-full bg-red-500" /> {t.weak}
+                                    </span>
+                                    <span className="font-bold text-red-700 dark:text-red-400">{stats.weak}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700">
+                                    <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                                        <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" /> {t.unrated}
+                                    </span>
+                                    <span className="font-bold text-gray-700 dark:text-gray-400">{stats.unrated}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

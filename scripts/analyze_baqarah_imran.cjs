@@ -11,17 +11,23 @@ const MAX_WORDS = 20;
 
 // --- Paths ---
 const QURAN_JSON_PATH = path.join(__dirname, '../public/quran.json');
-const REPORT_PATH = path.join(__dirname, 'baqarah_imran_report.md');
+// Changing output to .txt
+const REPORT_PATH = path.join(__dirname, 'baqarah_imran_full.txt');
 
 // --- Helper: Normalize Arabic Text ---
 function normalize(text) {
     if (!text) return "";
     return text
-        .replace(/[\u064B-\u065F\u0670]/g, '')
+        // 1. Remove Tashkeel and Madd symbols
+        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0610-\u061A]/g, '')
+        // 2. Unify Alefs
         .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627')
+        // 3. Unify Yaa/Alif Maqsura
         .replace(/[\u0649]/g, '\u064A')
+        // 4. Unify Ta Marbuta -> Ha
         .replace(/[\u0629]/g, '\u0647')
-        .replace(/[^\u0600-\u06FF\s]/g, '') // Remove punctuation
+        // 5. Remove anything that isn't a standard Arabic letter or space
+        .replace(/[^\u0621-\u064A\s]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 }
@@ -47,33 +53,31 @@ async function runAnalysis() {
         return;
     }
 
-    console.log(`Analyzing: ${surah2.name} (${surah2.ayahs.length} ayahs) vs ${surah3.name} (${surah3.ayahs.length} ayahs)`);
+    // --- Helper: Prepare Ayah words with Raw/Norm mapping ---
+    function prepareAyah(ayah) {
+        const rawWords = ayah.text.split(' ');
+        const processed = [];
 
-    // Flatten logic: Create a giant array of words for each Surah
-    // But keep metadata (ayah number, original text)
-    // Structure: [{ word: string, ayahNum: number, ayahText: string, indexInAyah: number }]
+        rawWords.forEach(raw => {
+            const clean = normalize(raw);
+            if (clean.length > 0) {
+                processed.push({ raw: raw, norm: clean });
+            }
+        });
 
-    // BUT! We need phrase comparison.
-    // Let's create an array of objects for each ayah, pre-split into words.
+        return {
+            num: ayah.numberInSurah,
+            text: ayah.text,
+            words: processed // Array of {raw, norm}
+        };
+    }
 
-    const sourceAyahs = surah2.ayahs.map(a => ({
-        num: a.numberInSurah,
-        text: a.text,
-        normalized: normalize(a.text),
-        words: normalize(a.text).split(' ')
-    }));
-
-    const targetAyahs = surah3.ayahs.map(a => ({
-        num: a.numberInSurah,
-        text: a.text,
-        normalized: normalize(a.text),
-        words: normalize(a.text).split(' ')
-    }));
+    const sourceAyahs = surah2.ayahs.map(prepareAyah);
+    const targetAyahs = surah3.ayahs.map(prepareAyah);
 
     const matches = [];
 
     // O(N*M) Comparison
-    // Iterate through every possible starting word in Source
     console.time("analysis");
 
     for (const src of sourceAyahs) {
@@ -82,54 +86,64 @@ async function runAnalysis() {
 
         for (let i = 0; i <= srcLen - MIN_WORDS; i++) {
 
-            // For each starting position in Source, scan ALL target ayahs
             for (const tgt of targetAyahs) {
                 const tgtLen = tgt.words.length;
                 if (tgtLen < MIN_WORDS) continue;
 
                 for (let j = 0; j <= tgtLen - MIN_WORDS; j++) {
 
-                    // Compare words starting at src[i] and tgt[j]
                     let mismatches = 0;
                     let k = 0;
-
-                    // Look ahead up to MAX_WORDS or end of ayah
                     const limit = Math.min(MAX_WORDS, srcLen - i, tgtLen - j);
 
-                    // We need at least MIN_WORDS match with <= 1 mismatch
-                    // Let's count length of match sequence that satisfies condition
-
-                    let validLen = 0;
+                    let maxExactLen = 0;
+                    let maxPartialLen = 0;
 
                     for (k = 0; k < limit; k++) {
-                        if (src.words[i + k] !== tgt.words[j + k]) {
+                        // Compare normalized forms
+                        if (src.words[i + k].norm !== tgt.words[j + k].norm) {
                             mismatches++;
                         }
 
                         if (mismatches > 1) {
-                            break; // Stop extending this match
+                            break;
                         }
 
-                        // If we are here, we have a valid sequence of length k+1 so far (0-indexed)
                         if (k + 1 >= MIN_WORDS) {
-                            validLen = k + 1;
+                            if (mismatches === 0) {
+                                maxExactLen = k + 1;
+                            } else {
+                                maxPartialLen = k + 1;
+                            }
                         }
                     }
 
-                    // If validLen >= MIN_WORDS, we found a match!
-                    // We only want the LONGEST valid match starting at i,j
-                    if (validLen >= MIN_WORDS) {
-                        const phraseWords = src.words.slice(i, i + validLen);
-                        const targetPhraseWords = tgt.words.slice(j, j + validLen);
+                    // Prioritize EXACT match if found, otherwise use PARTIAL
+                    let finalLen = 0;
+                    let finalType = '';
 
-                        const similarityType = mismatches === 0 ? 'EXACT' : 'PARTIAL';
+                    if (maxExactLen >= MIN_WORDS) {
+                        finalLen = maxExactLen;
+                        finalType = 'EXACT';
+                        // Re-calculate mismatches for the chosen length (should be 0)
+                        mismatches = 0;
+                    } else if (maxPartialLen >= MIN_WORDS) {
+                        finalLen = maxPartialLen;
+                        finalType = 'PARTIAL';
+                        // Re-calculate mismatches (should be 1)
+                        mismatches = 1;
+                    }
+
+                    if (finalLen > 0) {
+                        // Reconstruct text using the Raw words from the processed array
+                        const matchText = src.words.slice(i, i + finalLen).map(w => w.raw).join(' ');
 
                         matches.push({
-                            type: similarityType,
-                            text: src.text.split(' ').slice(i, i + validLen).join(' '), // Approximate reconstruction
+                            type: finalType,
+                            text: matchText,
                             source: { surah: 2, ayah: src.num, start: i, text: src.text },
                             target: { surah: 3, ayah: tgt.num, start: j, text: tgt.text },
-                            length: validLen,
+                            length: finalLen,
                             mismatches: mismatches
                         });
                     }
@@ -141,43 +155,43 @@ async function runAnalysis() {
 
     console.log(`Found ${matches.length} raw matches.`);
 
-    // --- Deduplication ---
-    // 1. Sort by length descending
-    matches.sort((a, b) => b.length - a.length);
+    // --- Deduplication & Overlap Removal ---
+    // 1. Sort: EXACT matches first, then by Length (descending)
+    matches.sort((a, b) => {
+        if (a.type !== b.type) {
+            return a.type === 'EXACT' ? -1 : 1;
+        }
+        return b.length - a.length;
+    });
 
-    // 2. Filter subsets
     const uniqueMatches = [];
 
     for (const m of matches) {
-        const isSubset = uniqueMatches.some(parent =>
-            parent.source.ayah === m.source.ayah &&
-            parent.target.ayah === m.target.ayah &&
-            // Check containment
-            m.source.start >= parent.source.start &&
-            (m.source.start + m.length) <= (parent.source.start + parent.length) &&
-            m.target.start >= parent.target.start &&
-            (m.target.start + m.length) <= (parent.target.start + parent.length)
+        // Check if this match overlaps with any already accepted match
+        const isOverlapping = uniqueMatches.some(approved =>
+            approved.source.ayah === m.source.ayah &&
+            approved.target.ayah === m.target.ayah &&
+            // Check for overlap in Source Indices
+            // (start1 < end2 && start2 < end1)
+            (m.source.start < (approved.source.start + approved.length) &&
+                approved.source.start < (m.source.start + m.length)) &&
+            // Check for overlap in Target Indices
+            (m.target.start < (approved.target.start + approved.length) &&
+                approved.target.start < (m.target.start + m.length))
         );
 
-        if (!isSubset) {
+        if (!isOverlapping) {
             uniqueMatches.push(m);
         }
     }
 
-    console.log(`Reduced to ${uniqueMatches.length} unique matches.`);
+    console.log(`Reduced to ${uniqueMatches.length} unique matches (deduplicated & non-overlapping).`);
 
-    // --- Verify Exact vs "1 letter change" ---
-    // User requested: "Partial (difference of a letter or word)"
-    // Our implementation: "1 word difference".
-    // We should filter the partials further: if mismatching word is TOTALLY DIFFERENT?
-    // Actually, "1 word difference" covers "1 letter difference" (it's a different word).
-    // But we might want to flag if the mismatching word is "close" (Levenshtein) vs "different".
-    // For now, let's just list them.
-
-    // --- Grouping and Reporting ---
-    let reportMd = `# Analysis: Al-Baqarah (2) vs Al-Imran (3) Mutashabihat\n\n`;
-    reportMd += `**Found Matches:** ${uniqueMatches.length}\n`;
-    reportMd += `**Criteria:** Min Length: ${MIN_WORDS}, Mismatches: Max 1 word.\n\n`;
+    // --- Grouping and Reporting (Plain Text) ---
+    let reportTxt = `تحليل متشابهات سورة البقرة (2) مع آل عمران (3)\n`;
+    reportTxt += `عدد التطابقات: ${uniqueMatches.length}\n`;
+    reportTxt += `المعايير: الحد الأدنى 3 كلمات، اختلاف كلمة واحدة بحد أقصى.\n`;
+    reportTxt += `==================================================\n\n`;
 
     // Group by Source Ayah
     const grouped = {};
@@ -192,24 +206,20 @@ async function runAnalysis() {
         const group = grouped[ayahNum];
         group.sort((a, b) => a.target.ayah - b.target.ayah);
 
-        // Header for Source Ayah
-        reportMd += `### Ayah ${ayahNum} (Al-Baqarah)\n`;
-        reportMd += `> ... ${group[0].source.text} ...\n\n`;
-        // Note: printing full text might be too long, but let's try.
+        reportTxt += `--- البقرة آية ${ayahNum} ---\n`;
+        reportTxt += `${group[0].source.text}\n`;
 
         for (const m of group) {
-            const icon = m.type === 'EXACT' ? '✅' : '⚠️';
-            const diffType = m.type === 'EXACT' ? 'Exact' : 'Partial (1 word diff)';
-            const phrase = m.source.text.split(' ').slice(m.source.start, m.source.start + m.length).join(' '); // Reconstruct from source
-
-            reportMd += `- ${icon} **[${diffType}]** with **Al-Imran:${m.target.ayah}**: "...${phrase}..."\n`;
-            reportMd += `  > *Target:* ... ${m.target.text} ...\n`;
+            const typeStr = m.type === 'EXACT' ? 'تطابق تام' : 'اختلاف جزئي';
+            reportTxt += `\n> [آل عمران:${m.target.ayah}] (${typeStr})\n`;
+            reportTxt += `> الجملة المتشابهة: ${m.text}\n`;
+            reportTxt += `> نص الآية في آل عمران: ${m.target.text}\n`;
         }
-        reportMd += `\n---\n`;
+        reportTxt += `\n--------------------------------\n`;
     }
 
     try {
-        fs.writeFileSync(REPORT_PATH, reportMd, 'utf8');
+        fs.writeFileSync(REPORT_PATH, reportTxt, 'utf8');
         console.log(`Report generated at: ${REPORT_PATH}`);
     } catch (e) {
         console.error("Failed to write report:", e);
