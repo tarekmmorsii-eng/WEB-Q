@@ -316,12 +316,12 @@ export async function getProcessedMutashabihat(): Promise<Mutashabiha[]> {
             customData.push(...processed);
         });
 
-        // 3. Load Generated JSON Data (Disabled - using TXT files now)
-        // console.log("📂 Processing new JSON mutashabihat data...");
-        // const jsonData = await processMutashabihatData(MUTASHABIHAT_DATA_FULL as any);
+        // 3. Load Generated JSON Data (Restored as primary source)
+        console.log("📂 Processing JSON mutashabihat data...");
+        const jsonData = await processMutashabihatData(MUTASHABIHAT_DATA_FULL as any);
 
-        // const coreResults = await Promise.all(corePromises);
-        allMutashabihat = [...customData];
+        // const coreResults = await Promise.all(corePromises); // Files are missing
+        allMutashabihat = [...jsonData, ...customData];
 
         console.log(`✅ Loaded ${allMutashabihat.length} total associations.`);
         cachedProcessedMutashabihat = allMutashabihat;
