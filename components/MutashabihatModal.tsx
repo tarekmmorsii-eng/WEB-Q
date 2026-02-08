@@ -264,6 +264,9 @@ interface MutashabihatModalProps {
     onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
 }
 
+import { parseMutashabihatText } from '../utils/mutashabihatProcessor';
+import MUTASHABIHAT_GENERATED_FULL from '../src/data/custom_mutashabihat/full_quran_generated.txt?raw';
+
 export default function MutashabihatModal({
     isOpen,
     onClose,
@@ -274,6 +277,24 @@ export default function MutashabihatModal({
     onDeleteSimilarAyah,
     onAddSimilarAyah
 }: MutashabihatModalProps) {
+    // Combine Manual and Generated Data
+    const enrichedData = React.useMemo(() => {
+        const manual = MUTASHABIHAT_DATA_FULL;
+        const { processed: generated } = parseMutashabihatText(MUTASHABIHAT_GENERATED_FULL, 'full_quran', 0);
+        return [...manual, ...generated];
+    }, []);
+
+    // Find the current mutashabiha in the ENRICHED dataset to get all targets
+    const currentEnrichedMutashabiha = React.useMemo(() => {
+        if (!mutashabiha) return null;
+        return enrichedData.find(m =>
+            m.sourceAyah.surahNumber === mutashabiha.sourceAyah.surahNumber &&
+            m.sourceAyah.ayahNumber === mutashabiha.sourceAyah.ayahNumber
+        ) || mutashabiha;
+    }, [mutashabiha, enrichedData]);
+
+    const activeMutashabiha = currentEnrichedMutashabiha;
+
     const [ayahTexts, setAyahTexts] = useState<Map<string, string>>(new Map());
     const [isLoading, setIsLoading] = useState(false);
 
@@ -318,11 +339,11 @@ export default function MutashabihatModal({
         loadTexts();
     }, [isOpen, mutashabiha]);
 
-    if (!isOpen || !mutashabiha) return null;
+    if (!isOpen || !activeMutashabiha) return null;
 
-    const sourceSurahName = getSurahName(mutashabiha.sourceAyah.surahNumber);
-    const sourceKey = `${mutashabiha.sourceAyah.surahNumber}-${mutashabiha.sourceAyah.ayahNumber}`;
-    const sourceText = ayahTexts.get(sourceKey) || mutashabiha.sourceAyah.text || '';
+    const sourceSurahName = getSurahName(activeMutashabiha.sourceAyah.surahNumber);
+    const sourceKey = `${activeMutashabiha.sourceAyah.surahNumber}-${activeMutashabiha.sourceAyah.ayahNumber}`;
+    const sourceText = ayahTexts.get(sourceKey) || activeMutashabiha.sourceAyah.text || '';
 
     // NO LONGER NEEDED: logic for allSimilarTexts as we use map now
 
@@ -574,7 +595,7 @@ export default function MutashabihatModal({
                                             key={`${ayah.surahNumber}-${ayah.ayahNumber}-${globalIdx}`}
                                             className="p-4 rounded-xl border-r-4 bg-slate-100 dark:bg-slate-800 shadow-sm border-l-0"
                                             style={{
-                                                borderColor: ayah.surahNumber !== mutashabiha.sourceAyah.surahNumber ? '#ef4444' : '#10b981'
+                                                borderColor: ayah.surahNumber !== activeMutashabiha.sourceAyah.surahNumber ? '#ef4444' : '#10b981'
                                             }}
                                         >
                                             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -608,7 +629,7 @@ export default function MutashabihatModal({
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                onDeleteSimilarAyah(mutashabiha.id, ayah.surahNumber, ayah.ayahNumber);
+                                                                onDeleteSimilarAyah(activeMutashabiha.id, ayah.surahNumber, ayah.ayahNumber);
                                                             }}
                                                             className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
                                                             title={isArabic ? 'حذف' : 'Delete'}
@@ -640,7 +661,7 @@ export default function MutashabihatModal({
                 {/* Add New Mutashabiha Button - NOT in "All" tab */}
                 {onAddSimilarAyah && activeTab !== 'all' && (
                     <button
-                        onClick={() => onAddSimilarAyah(mutashabiha.id, activeTab === 'inside')}
+                        onClick={() => onAddSimilarAyah(activeMutashabiha.id, activeTab === 'inside')}
                         className="w-full mt-4 p-4 border-2 border-dashed border-amber-300 dark:border-slate-600 rounded-xl flex items-center justify-center gap-2 text-amber-800 dark:text-slate-400 hover:border-amber-500 hover:text-amber-900 dark:hover:text-slate-200 transition-all group"
                     >
                         <Plus size={20} className="group-hover:scale-110 transition-transform" />

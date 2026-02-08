@@ -231,7 +231,7 @@ const parseRef = (ref: string): AyahReference | null => {
 /**
  * Parsing function for text content
  */
-function parseMutashabihatText(text: string, sourceIdPrefix: string, startIndex: number): { processed: Mutashabiha[], nextIndex: number } {
+export function parseMutashabihatText(text: string, sourceIdPrefix: string = 'gen', startIndex: number = 0): { processed: Mutashabiha[], nextIndex: number } {
     const results: Mutashabiha[] = [];
     let counter = startIndex;
 
