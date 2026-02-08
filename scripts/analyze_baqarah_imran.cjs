@@ -1,18 +1,41 @@
-
 const fs = require('fs');
 const path = require('path');
 
 // --- Configuration ---
 const SOURCE_SURAH = 2; // Al-Baqarah
 const TARGET_SURAH = 3; // Al-Imran
-const MIN_WORDS = 3;
+const MIN_WORDS = 4;
 // Limit max phrase length to avoid clutter
 const MAX_WORDS = 20;
+
+// Words to NOT count as 'base' words in short matches
+const COMMON_WORDS = new Set([
+    'في', 'من', 'على', 'الي', 'إلي', 'عن', 'ما', 'لا', 'يا', 'ان', 'أن', 'و', 'ف', 'ب', 'ل', 'او', 'أو', 'ثم'
+]);
 
 // --- Paths ---
 const QURAN_JSON_PATH = path.join(__dirname, '../public/quran.json');
 // Changing output to .txt
 const REPORT_PATH = path.join(__dirname, 'baqarah_imran_full.txt');
+
+// --- Helper: Levenshtein Distance ---
+function getLevenshteinDistance(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
 
 // --- Helper: Normalize Arabic Text ---
 function normalize(text) {
@@ -93,6 +116,7 @@ async function runAnalysis() {
                 for (let j = 0; j <= tgtLen - MIN_WORDS; j++) {
 
                     let mismatches = 0;
+                    let lastMismatchIdx = -1;
                     let k = 0;
                     const limit = Math.min(MAX_WORDS, srcLen - i, tgtLen - j);
 
@@ -103,17 +127,41 @@ async function runAnalysis() {
                         // Compare normalized forms
                         if (src.words[i + k].norm !== tgt.words[j + k].norm) {
                             mismatches++;
+                            lastMismatchIdx = k;
                         }
 
                         if (mismatches > 1) {
                             break;
                         }
 
-                        if (k + 1 >= MIN_WORDS) {
-                            if (mismatches === 0) {
-                                maxExactLen = k + 1;
-                            } else {
-                                maxPartialLen = k + 1;
+                        // Check if sequence length meets requirement
+                        const currentLen = k + 1;
+                        if (currentLen >= MIN_WORDS) {
+                            // Calculate 'base' (significant) words count
+                            let baseWordsCount = 0;
+                            for (let m = 0; m < currentLen; m++) {
+                                if (!COMMON_WORDS.has(src.words[i + m].norm)) {
+                                    baseWordsCount++;
+                                }
+                            }
+
+                            // Filter: at least 3 significant words for shorter matches
+                            const isSubstantial = (currentLen >= 4 && baseWordsCount >= 3) || (currentLen > 6);
+
+                            if (isSubstantial) {
+                                if (mismatches === 0) {
+                                    maxExactLen = currentLen;
+                                } else {
+                                    // Check type of difference if partial
+                                    const srcWord = src.words[i + lastMismatchIdx].norm;
+                                    const tgtWord = tgt.words[j + lastMismatchIdx].norm;
+                                    const dist = getLevenshteinDistance(srcWord, tgtWord);
+
+                                    // Accept only if it's a character-level change (dist <= 2)
+                                    if (dist <= 2) {
+                                        maxPartialLen = currentLen;
+                                    }
+                                }
                             }
                         }
                     }
@@ -125,17 +173,14 @@ async function runAnalysis() {
                     if (maxExactLen >= MIN_WORDS) {
                         finalLen = maxExactLen;
                         finalType = 'EXACT';
-                        // Re-calculate mismatches for the chosen length (should be 0)
                         mismatches = 0;
                     } else if (maxPartialLen >= MIN_WORDS) {
                         finalLen = maxPartialLen;
                         finalType = 'PARTIAL';
-                        // Re-calculate mismatches (should be 1)
                         mismatches = 1;
                     }
 
                     if (finalLen > 0) {
-                        // Reconstruct text using the Raw words from the processed array
                         const matchText = src.words.slice(i, i + finalLen).map(w => w.raw).join(' ');
 
                         matches.push({
@@ -156,7 +201,6 @@ async function runAnalysis() {
     console.log(`Found ${matches.length} raw matches.`);
 
     // --- Deduplication & Overlap Removal ---
-    // 1. Sort: EXACT matches first, then by Length (descending)
     matches.sort((a, b) => {
         if (a.type !== b.type) {
             return a.type === 'EXACT' ? -1 : 1;
@@ -167,15 +211,11 @@ async function runAnalysis() {
     const uniqueMatches = [];
 
     for (const m of matches) {
-        // Check if this match overlaps with any already accepted match
         const isOverlapping = uniqueMatches.some(approved =>
             approved.source.ayah === m.source.ayah &&
             approved.target.ayah === m.target.ayah &&
-            // Check for overlap in Source Indices
-            // (start1 < end2 && start2 < end1)
             (m.source.start < (approved.source.start + approved.length) &&
                 approved.source.start < (m.source.start + m.length)) &&
-            // Check for overlap in Target Indices
             (m.target.start < (approved.target.start + approved.length) &&
                 approved.target.start < (m.target.start + m.length))
         );
@@ -190,10 +230,12 @@ async function runAnalysis() {
     // --- Grouping and Reporting (Plain Text) ---
     let reportTxt = `تحليل متشابهات سورة البقرة (2) مع آل عمران (3)\n`;
     reportTxt += `عدد التطابقات: ${uniqueMatches.length}\n`;
-    reportTxt += `المعايير: الحد الأدنى 3 كلمات، اختلاف كلمة واحدة بحد أقصى.\n`;
+    reportTxt += `المعايير:\n`;
+    reportTxt += `- الحد الأدنى لطول الجملة: ${MIN_WORDS} كلمات.\n`;
+    reportTxt += `- التطابق الجزئي يقتصر على تغير أحرف بسيطة (مسافة تعديل <= 2).\n`;
+    reportTxt += `- فلترة التطابقات القصيرة المكونة من كلمات شائعة فقط (أقل من 3 كلمات أساسية).\n`;
     reportTxt += `==================================================\n\n`;
 
-    // Group by Source Ayah
     const grouped = {};
     uniqueMatches.forEach(m => {
         if (!grouped[m.source.ayah]) grouped[m.source.ayah] = [];
