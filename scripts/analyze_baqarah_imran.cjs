@@ -227,13 +227,25 @@ async function runAnalysis() {
 
     console.log(`Reduced to ${uniqueMatches.length} unique matches (deduplicated & non-overlapping).`);
 
+    // --- Calculate Stats ---
+    const phraseStats = {};
+    uniqueMatches.forEach(m => {
+        phraseStats[m.text] = (phraseStats[m.text] || 0) + 1;
+    });
+    const sortedStats = Object.entries(phraseStats).sort(([, a], [, b]) => b - a);
+
     // --- Grouping and Reporting (Plain Text) ---
     let reportTxt = `تحليل متشابهات سورة البقرة (2) مع آل عمران (3)\n`;
-    reportTxt += `عدد التطابقات: ${uniqueMatches.length}\n`;
+    reportTxt += `عدد التطابقات الفريدة: ${uniqueMatches.length}\n`;
     reportTxt += `المعايير:\n`;
     reportTxt += `- الحد الأدنى لطول الجملة: ${MIN_WORDS} كلمات.\n`;
     reportTxt += `- التطابق الجزئي يقتصر على تغير أحرف بسيطة (مسافة تعديل <= 2).\n`;
-    reportTxt += `- فلترة التطابقات القصيرة المكونة من كلمات شائعة فقط (أقل من 3 كلمات أساسية).\n`;
+    reportTxt += `- فلترة التطابقات القصيرة المكونة من كلمات شائعة فقط (أقل من 3 كلمات أساسية).\n\n`;
+
+    reportTxt += `--- إحصائيات أكثر الجمل تكراراً ---\n`;
+    sortedStats.slice(0, 20).forEach(([phrase, count], idx) => {
+        reportTxt += `${idx + 1}. [${count} مرة]: ${phrase}\n`;
+    });
     reportTxt += `==================================================\n\n`;
 
     const grouped = {};
@@ -263,8 +275,38 @@ async function runAnalysis() {
     try {
         fs.writeFileSync(REPORT_PATH, reportTxt, 'utf8');
         console.log(`Report generated at: ${REPORT_PATH}`);
+
+        // --- Export for App Integration ---
+        const APP_DATA_PATH = path.join(__dirname, '../src/data/custom_mutashabihat/baqarah_imran_generated.txt');
+
+        const exportGrouped = {};
+        uniqueMatches.forEach(m => {
+            const key = `${m.source.surah}:${m.source.ayah}`;
+            if (!exportGrouped[key]) exportGrouped[key] = new Set();
+            exportGrouped[key].add(`${m.target.surah}:${m.target.ayah}`);
+        });
+
+        const appTxt = Object.entries(exportGrouped)
+            .sort(([keyA], [keyB]) => {
+                const [sA, aA] = keyA.split(':').map(Number);
+                const [sB, aB] = keyB.split(':').map(Number);
+                return sA !== sB ? sA - sB : aA - aB;
+            })
+            .map(([src, targetSet]) => {
+                const sortedTargets = Array.from(targetSet).sort((tA, tB) => {
+                    const [ssA, aaA] = tA.split(':').map(Number);
+                    const [ssB, aaB] = tB.split(':').map(Number);
+                    return ssA !== ssB ? ssA - ssB : aaA - aaB;
+                });
+                return `${src}|${sortedTargets.join(',')}`;
+            })
+            .join('\n');
+
+        fs.writeFileSync(APP_DATA_PATH, appTxt, 'utf8');
+        console.log(`App data exported and sorted to: ${APP_DATA_PATH}`);
+
     } catch (e) {
-        console.error("Failed to write report:", e);
+        console.error("Failed to write report or app data:", e);
     }
 }
 
