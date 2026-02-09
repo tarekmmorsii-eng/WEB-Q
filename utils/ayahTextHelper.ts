@@ -94,47 +94,59 @@ export async function getAyahTexts(ayahRefs: Array<{ surahNumber: number; ayahNu
             }
         }
 
-        if (quranDataCache) {
-            ayahRefs.forEach(ref => {
-                const surah = quranDataCache.data?.surahs?.[ref.surahNumber - 1];
-                if (surah) {
-                    const ayah = surah.ayahs?.find((a: any) => a.numberInSurah === ref.ayahNumber);
-                    if (ayah && ayah.text) {
-                        let text = ayah.text;
-                        // Clean Basmalah from first ayah (except Fatiha)
-                        if (ref.surahNumber !== 1 && ref.ayahNumber === 1) {
-                            const basmalahs = [
-                                "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ",
-                                "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ"
-                            ];
-                            for (const b of basmalahs) {
-                                if (text.startsWith(b)) {
-                                    text = text.replace(b, "").trim();
-                                    break;
-                                }
-                            }
-                        }
-                        results.set(`${ref.surahNumber}-${ref.ayahNumber}`, text);
-                    }
+        if (quranDataCache && quranDataCache.data && quranDataCache.data.surahs) {
+            // Index cache for fast lookup
+            const surahLookup = new Map<number, Map<number, string>>();
+            quranDataCache.data.surahs.forEach((s: any) => {
+                const ayahMap = new Map<number, string>();
+                if (s.ayahs) {
+                    s.ayahs.forEach((a: any) => ayahMap.set(a.numberInSurah, a.text));
                 }
+                surahLookup.set(s.number, ayahMap);
             });
 
-            // If we got all texts, return
-            if (results.size === ayahRefs.length) {
-                return results;
+            // Fast lookup
+            for (const ref of ayahRefs) {
+                let text = surahLookup.get(ref.surahNumber)?.get(ref.ayahNumber);
+                if (text) {
+                    // Clean Basmalah from first ayah (except Fatiha)
+                    if (ref.surahNumber !== 1 && ref.ayahNumber === 1) {
+                        const basmalahs = [
+                            "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                            "بِسْم. اللهِ الرَّحْمَنِ الرَّحِيمِ",
+                            "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ"
+                        ];
+                        for (const b of basmalahs) {
+                            if (text.startsWith(b)) {
+                                text = text.replace(b, "").trim();
+                                break;
+                            }
+                        }
+                    }
+                    results.set(`${ref.surahNumber}-${ref.ayahNumber}`, text);
+                }
             }
         }
     } catch (error) {
-        console.warn('Batch load from cache failed, will try fallback');
+        console.warn('Batch load from cache failed:', error);
     }
 
-    // Fallback: fetch missing ones individually
-    for (const ref of ayahRefs) {
-        const key = `${ref.surahNumber}-${ref.ayahNumber}`;
-        if (!results.has(key)) {
-            const text = await getAyahText(ref.surahNumber, ref.ayahNumber);
-            results.set(key, text);
+    // Fallback: fetch missing ones in parallel if we don't have all results
+    const missingRefs = ayahRefs.filter(ref => !results.has(`${ref.surahNumber}-${ref.ayahNumber}`));
+
+    if (missingRefs.length > 0) {
+        // Process in chunks of 10 to avoid overwhelming the browser/API
+        const CHUNK_SIZE = 10;
+        for (let i = 0; i < missingRefs.length; i += CHUNK_SIZE) {
+            const chunk = missingRefs.slice(i, i + CHUNK_SIZE);
+            await Promise.all(chunk.map(async (ref) => {
+                try {
+                    const text = await getAyahText(ref.surahNumber, ref.ayahNumber);
+                    results.set(`${ref.surahNumber}-${ref.ayahNumber}`, text);
+                } catch (e) {
+                    console.error(`Failed to fetch ${ref.surahNumber}:${ref.ayahNumber}`, e);
+                }
+            }));
         }
     }
 

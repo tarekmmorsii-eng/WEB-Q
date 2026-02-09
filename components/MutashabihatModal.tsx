@@ -52,13 +52,13 @@ function MutashabihatIcon({
 /**
  * مكون لعرض النص مع تلوين الكلمات المتطابقة بناءً على القواعد
  */
-function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText, forceColor }: {
+const HighlightedText = React.memo(({ text, absoluteAyahNumber, manualRules, referenceText, forceColor }: {
     text: string,
     absoluteAyahNumber?: number,
     manualRules?: any[],
     referenceText?: string | string[],
     forceColor?: string
-}) {
+}) => {
     if (!text) return <>{text}</>;
 
     // --- STRICT CONTEXTUAL MATCHING: Only highlight what is shared with reference texts ---
@@ -126,6 +126,8 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText,
         return pa - pb;
     });
 
+    const normalizedRawWords = rawWords.map(w => quranNormalize(w));
+
     sortedRules.forEach(rule => {
         if (!rule.rule) return;
         const ruleNormalized = quranNormalize(rule.rule);
@@ -133,10 +135,10 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText,
         if (ruleWords.length === 0) return;
 
         const colors = {
-            'START': forceColor || '#10b981',
-            'END': forceColor || '#10b981',
-            'MIDDLE': forceColor || '#10b981',
-            'OTHER': forceColor || '#10b981'
+            'START': forceColor || '#10b981', // Green
+            'END': forceColor || '#ef4444',   // Red
+            'MIDDLE': forceColor || '#3b82f6', // Blue
+            'OTHER': forceColor || '#8b5cf6'  // Purple
         };
 
         for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {
@@ -144,14 +146,15 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText,
             let currentPrefixes = new Array(ruleWords.length).fill(0);
 
             for (let j = 0; j < ruleWords.length; j++) {
-                const res = quranStripConjunction(quranNormalize(rawWords[i + j]), ruleWords[j]);
-                const resRev = quranStripConjunction(ruleWords[j], quranNormalize(rawWords[i + j]));
+                const targetNorm = normalizedRawWords[i + j];
+                const res = quranStripConjunction(targetNorm, ruleWords[j]);
+                const resRev = quranStripConjunction(ruleWords[j], targetNorm);
 
                 if (res.match) {
                     currentPrefixes[j] = res.prefixLen;
                 } else if (resRev.match) {
                     currentPrefixes[j] = 0;
-                } else if (quranNormalize(rawWords[i + j]) === ruleWords[j]) {
+                } else if (targetNorm === ruleWords[j]) {
                     currentPrefixes[j] = 0;
                 } else {
                     match = false;
@@ -211,7 +214,6 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText,
 
                 if (info.prefixLen > 0) {
                     let splitIdx = info.prefixLen;
-                    const prefixPart = word.substring(0, splitIdx);
                     let extra = 0;
                     if (word.length > splitIdx && /[\u064B-\u0652]/.test(word[splitIdx])) extra = 1;
 
@@ -251,7 +253,7 @@ function HighlightedText({ text, absoluteAyahNumber, manualRules, referenceText,
             })}
         </div>
     );
-}
+});
 
 interface MutashabihatModalProps {
     isOpen: boolean;
@@ -280,12 +282,10 @@ export default function MutashabihatModal({
 }: MutashabihatModalProps) {
     // Combine Manual and Generated Data
     const enrichedData = React.useMemo(() => {
-        // If external data is provided, use it. Otherwise, fallback to the manual list.
         if (mutashabihatData && mutashabihatData.length > 0) return mutashabihatData;
         return MUTASHABIHAT_DATA_FULL;
     }, [mutashabihatData]);
 
-    // Find the current mutashabiha in the ENRICHED dataset to get all targets
     const currentEnrichedMutashabiha = React.useMemo(() => {
         if (!mutashabiha) return null;
         return enrichedData.find(m =>
@@ -295,16 +295,12 @@ export default function MutashabihatModal({
     }, [mutashabiha, enrichedData]);
 
     const activeMutashabiha = currentEnrichedMutashabiha;
-
     const [ayahTexts, setAyahTexts] = useState<Map<string, string>>(new Map());
     const [isLoading, setIsLoading] = useState(false);
-
-    // State for filtering tabs
     const [activeTab, setActiveTab] = useState<'all' | 'inside' | 'outside'>('inside');
 
     useEffect(() => {
         if (mutashabiha) {
-            // Check if there are matches inside the surah
             const hasInside = mutashabiha.similarAyahs.some(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber);
             if (!hasInside) setActiveTab('all');
             else setActiveTab('inside');
@@ -313,7 +309,6 @@ export default function MutashabihatModal({
 
     const isArabic = language === 'ar';
 
-    // Load ayah texts when modal opens
     useEffect(() => {
         if (!isOpen || !mutashabiha) {
             setAyahTexts(new Map());
@@ -345,8 +340,6 @@ export default function MutashabihatModal({
     const sourceSurahName = getSurahName(activeMutashabiha.sourceAyah.surahNumber);
     const sourceKey = `${activeMutashabiha.sourceAyah.surahNumber}-${activeMutashabiha.sourceAyah.ayahNumber}`;
     const sourceText = ayahTexts.get(sourceKey) || activeMutashabiha.sourceAyah.text || '';
-
-    // NO LONGER NEEDED: logic for allSimilarTexts as we use map now
 
     const handleBackdropClick = (e: React.MouseEvent) => {
         if (e.target === e.currentTarget) {
@@ -482,7 +475,6 @@ export default function MutashabihatModal({
                                 {mutashabiha.similarAyahs.filter(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber).length}
                             </span>
                         </div>
-                        {/* Green line indicator */}
                         <div className="w-12 h-1 rounded-full bg-green-500 opacity-80" />
                     </button>
                     <button
@@ -501,7 +493,6 @@ export default function MutashabihatModal({
                                 {mutashabiha.similarAyahs.filter(a => a.surahNumber !== mutashabiha.sourceAyah.surahNumber).length}
                             </span>
                         </div>
-                        {/* Red line indicator */}
                         <div className="w-12 h-1 rounded-full bg-red-500 opacity-80" />
                     </button>
                 </div>
@@ -514,38 +505,7 @@ export default function MutashabihatModal({
                         <span className="text-sm text-slate-500 dark:text-slate-400">({mutashabiha.similarAyahs.length})</span>
                     </h3>
 
-                    {/* Grouped by Rule */}
                     {(() => {
-                        // DIRECT FIX: Get rules from raw JSON data using shared map
-
-                        const groups = {
-                            'START': [] as typeof mutashabiha.similarAyahs,
-                            'END': [] as typeof mutashabiha.similarAyahs,
-                            'MIDDLE': [] as typeof mutashabiha.similarAyahs,
-                            'FREQ': [] as typeof mutashabiha.similarAyahs,
-                            'OTHER': [] as typeof mutashabiha.similarAyahs
-                        };
-
-                        mutashabiha.similarAyahs.forEach(a => {
-                            // Try to get primary rule from raw data map
-                            const directRules = a.absoluteAyahNumber ? (AYAH_RULE_MAP.get(a.absoluteAyahNumber) || []) : [];
-                            const primaryRule = directRules[0];
-
-                            // PRIORITY: 1. ruleType, 2. primaryRule.type, 3. 'OTHER'
-                            let effectiveType: keyof typeof groups = 'OTHER';
-
-                            if (a.ruleType && groups[a.ruleType as keyof typeof groups]) {
-                                effectiveType = a.ruleType as keyof typeof groups;
-                            } else if (primaryRule?.type && groups[primaryRule.type as keyof typeof groups]) {
-                                effectiveType = primaryRule.type as keyof typeof groups;
-                            }
-
-                            groups[effectiveType].push(a);
-                        });
-
-
-
-                        // Filter by tab and apply advanced sorting
                         const filteredSimilarAyahs = (mutashabiha?.similarAyahs || [])
                             .filter(a => {
                                 if (activeTab === 'inside') return a.surahNumber === mutashabiha?.sourceAyah.surahNumber;
@@ -553,7 +513,6 @@ export default function MutashabihatModal({
                                 return true;
                             })
                             .map(ayah => {
-                                // Calculate priority score for sorting
                                 const ruleText = ayah.rule || mutashabiha?.similarAyahs[0]?.rule || "";
                                 const ruleNormalized = quranNormalize(ruleText);
                                 const ruleWords = ruleNormalized.trim().split(/\s+/);
@@ -585,7 +544,6 @@ export default function MutashabihatModal({
                                     }
                                 }
 
-                                // Advanced sorting score: Head priority (weight 1.1), but Tail/Mid wins if >= 2*Head
                                 let priorityScore = headCount * 1.1;
                                 if ((tailCount + midCount) >= headCount * 2 && (tailCount + midCount) > 0) {
                                     priorityScore = (tailCount + midCount);
@@ -606,7 +564,6 @@ export default function MutashabihatModal({
                                     const similarSurahName = getSurahName(ayah.surahNumber);
                                     const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
                                     const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
-                                    const similarity = ayah.similarity;
 
                                     return (
                                         <div
@@ -629,7 +586,6 @@ export default function MutashabihatModal({
                                                     <button
                                                         onClick={() => onOpenInIndex?.(ayah.surahNumber, ayah.ayahNumber)}
                                                         className="text-[10px] bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 flex items-center gap-1"
-                                                        title={isArabic ? 'الذهاب لموضعه في فهرس المتشابهات' : 'Open in Mutashabihat Index'}
                                                     >
                                                         <MutashabihatIcon showGreenLine showRedLine size="w-3 h-3" />
                                                         {isArabic ? 'الفهرس' : 'Index'}
@@ -650,7 +606,6 @@ export default function MutashabihatModal({
                                                                 onDeleteSimilarAyah(activeMutashabiha.id, ayah.surahNumber, ayah.ayahNumber);
                                                             }}
                                                             className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
-                                                            title={isArabic ? 'حذف' : 'Delete'}
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -663,8 +618,9 @@ export default function MutashabihatModal({
                                                     <HighlightedText
                                                         text={ayahText}
                                                         absoluteAyahNumber={ayah.absoluteAyahNumber}
-                                                        referenceText={[sourceText]} // STRICT: Only compare with source source
-                                                        forceColor={ayah.surahNumber !== mutashabiha.sourceAyah.surahNumber ? '#ef4444' : undefined}
+                                                        manualRules={ayah.rule ? [{ rule: ayah.rule, type: ayah.ruleType || ayah.type }] : []}
+                                                        referenceText={[sourceText]}
+                                                        forceColor={activeTab === 'inside' ? '#10b981' : (activeTab === 'outside' ? '#ef4444' : undefined)}
                                                     />
                                                 </div>
                                             )}
@@ -676,7 +632,6 @@ export default function MutashabihatModal({
                     })()}
                 </div>
 
-                {/* Add New Mutashabiha Button - NOT in "All" tab */}
                 {onAddSimilarAyah && activeTab !== 'all' && (
                     <button
                         onClick={() => onAddSimilarAyah(activeMutashabiha.id, activeTab === 'inside')}
@@ -692,7 +647,6 @@ export default function MutashabihatModal({
                     </button>
                 )}
 
-                {/* Context Indicator */}
                 {mutashabiha.showContext && (
                     <div className="mt-5 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 rounded-xl">
                         <p className="text-sm text-blue-900 dark:text-blue-200 text-center font-medium">
@@ -703,7 +657,6 @@ export default function MutashabihatModal({
                     </div>
                 )}
 
-                {/* Close Button at Bottom */}
                 <button
                     onClick={onClose}
                     className="w-full mt-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white rounded-xl transition-all font-bold shadow-lg hover:shadow-xl active:scale-98"
@@ -714,4 +667,3 @@ export default function MutashabihatModal({
         </div>
     );
 }
-
