@@ -141,7 +141,8 @@ export function getMergedMutashabihaForAyah(
 ): Mutashabiha | null {
     const allMatches = findAllMutashabihatForAyah(surah, ayah, mutashabihat);
     if (allMatches.length === 0) return null;
-    if (allMatches.length === 1) return allMatches[0];
+    // We remove the single-match shortcut to ensure the source/target role is correctly swapped if needed
+
 
     // Identify our target ayah reference from existing data
     let targetRef: AyahReference | undefined;
