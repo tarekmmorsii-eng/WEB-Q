@@ -111,6 +111,10 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    const [selectedSurah, setSelectedSurah] = useState(1);
+    const [ayahInput, setAyahInput] = useState('');
+    // State to store the full Quran data in memory
+    const [quranData, setQuranData] = useState<any>(null);
 
     useEffect(() => {
         if (!isOpen) {
@@ -118,8 +122,28 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
             setTextInput('');
             setSearchResults([]);
             setHasSearched(false);
+            setAyahInput('');
+            setSelectedSurah(1);
         }
     }, [isOpen]);
+
+    // Load Quran data if not already loaded - needed for search and ayah navigation
+    useEffect(() => {
+        if (isOpen && !quranData) {
+            const loadData = async () => {
+                try {
+                    const response = await fetch('/quran.json');
+                    const json = await response.json();
+                    if (json.code === 200 && json.data) {
+                        setQuranData(json.data);
+                    }
+                } catch (err) {
+                    console.error("Auto-load quran.json failed", err);
+                }
+            };
+            loadData();
+        }
+    }, [isOpen, quranData]);
 
     const handlePageSearch = () => {
         const pageNum = parseInt(pageInput, 10);
@@ -129,8 +153,6 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
         }
     };
 
-    // State to store the full Quran data in memory
-    const [quranData, setQuranData] = useState<any>(null);
 
     const handleTextSearch = async () => {
         if (!textInput.trim()) return;
@@ -234,6 +256,27 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
         }
     };
 
+    const handleAyahSearch = () => {
+        const ayahNum = parseInt(ayahInput, 10);
+        if (isNaN(ayahNum)) return;
+
+        if (quranData && quranData.surahs) {
+            const surah = quranData.surahs.find((s: any) => s.number === selectedSurah);
+            if (surah) {
+                // Check if ayah exists
+                const ayah = surah.ayahs.find((a: any) => a.numberInSurah === ayahNum);
+                if (ayah) {
+                    if (onSelectResult) {
+                        onSelectResult(ayah.page, selectedSurah, ayahNum);
+                    } else {
+                        onSelectPage(ayah.page);
+                    }
+                    onClose();
+                }
+            }
+        }
+    };
+
     const handleResultClick = (result: SearchResult) => {
         // Use extended result with surahNumber if possible
         const surahNum = (result as any).surahNumber;
@@ -282,7 +325,14 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                 min="1"
                                 max={totalPages}
                                 value={pageInput}
-                                onChange={(e) => setPageInput(e.target.value)}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value, 10);
+                                    if (isNaN(val)) {
+                                        setPageInput('');
+                                    } else {
+                                        setPageInput(Math.min(val, totalPages).toString());
+                                    }
+                                }}
                                 onKeyDown={(e) => {
                                     e.stopPropagation();
                                     if (e.key === 'Enter') handlePageSearch();
@@ -303,6 +353,66 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                     {/* Divider */}
                     <hr className="border-t border-gray-100 dark:border-slate-800 my-2" />
 
+                    {/* Section 1.5: Ayah Search */}
+                    <div className="space-y-3">
+                        <h3 className="text-base font-bold text-gray-600 dark:text-slate-300 flex items-center gap-2">
+                            <span className="w-1 h-4 bg-amber-500 rounded-full"></span>
+                            {t.searchByAyah}
+                        </h3>
+                        <div className="flex flex-col gap-3">
+                            <select
+                                value={selectedSurah}
+                                onChange={(e) => {
+                                    setSelectedSurah(parseInt(e.target.value, 10));
+                                    setAyahInput(''); // Reset ayah input when surah changes
+                                }}
+                                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-lg transition-all"
+                                dir="rtl"
+                            >
+                                {t.surahNames.map((name: string, index: number) => (
+                                    <option key={index + 1} value={index + 1}>
+                                        {formatNum(index + 1)}. {name}
+                                    </option>
+                                ))}
+                            </select>
+                            {(() => {
+                                const currentSurah = quranData?.surahs?.find((s: any) => s.number === selectedSurah);
+                                const maxAyahs = currentSurah?.ayahs?.length || 0;
+                                return (
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max={maxAyahs}
+                                            value={ayahInput}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value, 10);
+                                                if (isNaN(val)) {
+                                                    setAyahInput('');
+                                                } else {
+                                                    setAyahInput(Math.min(val, maxAyahs).toString());
+                                                }
+                                            }}
+                                            onKeyDown={(e) => {
+                                                e.stopPropagation();
+                                                if (e.key === 'Enter') handleAyahSearch();
+                                            }}
+                                            className="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-lg placeholder-gray-400 transition-all font-sans"
+                                            placeholder={maxAyahs > 0 ? `${t.verse} (١ - ${formatNum(maxAyahs)})` : t.verse}
+                                        />
+                                        <button
+                                            onClick={handleAyahSearch}
+                                            disabled={!ayahInput}
+                                            className="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold text-lg shadow-sm active:scale-95"
+                                        >
+                                            {t.go}
+                                        </button>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+
                     {/* Section 2: Word Search */}
                     <div className="space-y-3">
                         <h3 className="text-base font-bold text-gray-600 dark:text-slate-300 flex items-center gap-2">
@@ -314,7 +424,11 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                 <input
                                     type="text"
                                     value={textInput}
-                                    onChange={(e) => setTextInput(e.target.value)}
+                                    onChange={(e) => {
+                                        // Remove any digits (0-9) and Arabic digits (٠-٩) from the input
+                                        const cleanValue = e.target.value.replace(/[0-9\u0660-\u0669]/g, '');
+                                        setTextInput(cleanValue);
+                                    }}
                                     onKeyDown={(e) => {
                                         e.stopPropagation();
                                         if (e.key === 'Enter') handleTextSearch();

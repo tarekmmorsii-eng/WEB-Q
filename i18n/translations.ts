@@ -207,6 +207,8 @@ export interface Translations {
     notificationBlocked: string;
     sendTestNotification: string;
     searchByPage: string;
+    searchByAyah: string;
+    selectSurah: string;
     enterPageNumber: string;
     go: string;
     searchByWord: string;
@@ -416,6 +418,8 @@ const en: Translations = {
     notificationBlocked: 'Blocked by browser settings ❌',
     sendTestNotification: 'Send test notification (Confirm now)',
     searchByPage: 'Search by Page Number',
+    searchByAyah: 'Search by Ayah Number',
+    selectSurah: 'Select Surah',
     enterPageNumber: 'Enter page number (1 - {max})',
     go: 'Go',
     searchByWord: 'Search in Quran',
@@ -641,6 +645,8 @@ export const translations: Record<Language, Translations> = {
         tinyUpdate: 'تحديث',
         basmallah: 'البسملة',
         searchByPage: 'البحث برقم الصفحة',
+        searchByAyah: 'البحث برقم الآية',
+        selectSurah: 'اختر السورة',
         enterPageNumber: 'أدخل رقم الصفحة (١ - {max})',
         go: 'انتقال',
         searchByWord: 'البحث في القرآن',
