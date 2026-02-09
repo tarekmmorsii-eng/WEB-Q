@@ -16,7 +16,7 @@ import { PAGE_DIVISIONS } from '../constants/pageDivisions';
 import { JUZ_SECTIONS } from '../constants';
 import { translations, Language } from '../i18n/translations';
 import { getMushafData, saveMushafData } from '../utils/db';
-import { findMutashabihatForAyah } from '../utils/mutashabihatProcessor';
+import { findMutashabihatForAyah, findAllMutashabihatForAyah } from '../utils/mutashabihatProcessor';
 
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
@@ -1224,17 +1224,33 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                         {word.isEnd ? (
                                             <span id="tour-ayah-number" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
                                                 {(() => {
-                                                    const hasMutashabihat = findMutashabihatForAyah(word.surah, word.ayah, mutashabihatData);
-
                                                     let mutType: 'none' | 'inside' | 'outside' | 'both' = 'none';
-                                                    if (showMutashabihatIndicators && hasMutashabihat) {
-                                                        const similarAyahs = hasMutashabihat.similarAyahs;
-                                                        const hasInside = similarAyahs.some(a => a.surahNumber === word.surah);
-                                                        const hasOutside = similarAyahs.some(a => a.surahNumber !== word.surah);
+                                                    if (showMutashabihatIndicators) {
+                                                        const allGroups = findAllMutashabihatForAyah(word.surah, word.ayah, mutashabihatData);
+                                                        if (allGroups.length > 0) {
+                                                            let hasInside = false;
+                                                            let hasOutside = false;
 
-                                                        if (hasInside && hasOutside) mutType = 'both';
-                                                        else if (hasInside) mutType = 'inside';
-                                                        else if (hasOutside) mutType = 'outside';
+                                                            allGroups.forEach(group => {
+                                                                // Check the source ayah of the group (if it's not the current verse)
+                                                                if (group.sourceAyah.surahNumber !== word.surah || group.sourceAyah.ayahNumber !== word.ayah) {
+                                                                    if (group.sourceAyah.surahNumber === word.surah) hasInside = true;
+                                                                    else hasOutside = true;
+                                                                }
+
+                                                                // Check all target ayahs in the group (excluding the current verse)
+                                                                group.similarAyahs.forEach(a => {
+                                                                    if (a.surahNumber === word.surah && a.ayahNumber === word.ayah) return;
+
+                                                                    if (a.surahNumber === word.surah) hasInside = true;
+                                                                    else hasOutside = true;
+                                                                });
+                                                            });
+
+                                                            if (hasInside && hasOutside) mutType = 'both';
+                                                            else if (hasInside) mutType = 'inside';
+                                                            else if (hasOutside) mutType = 'outside';
+                                                        }
                                                     }
 
                                                     return (

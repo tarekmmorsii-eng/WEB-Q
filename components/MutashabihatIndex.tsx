@@ -846,7 +846,8 @@ function MutashabihaCard({ item, onNavigateToAyah }: { item: { mut: Mutashabiha,
             <div className="p-4 bg-amber-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700">
                 <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-slate-900 px-2 py-1 rounded">
-                        آية {mut.sourceAyah.ayahNumber} {mut.sourceAyah.surahNumber !== mut.sourceAyah.surahNumber ? `(${SURAHS.find(s => s.number === mut.sourceAyah.surahNumber)?.name})` : ''}
+                        آية {mut.sourceAyah.ayahNumber}
+                        <span className="mx-1 opacity-60">[{targets.length} مواضع]</span>
                     </span>
                     <button
                         onClick={(e) => {
@@ -917,11 +918,9 @@ function MutashabihaCard({ item, onNavigateToAyah }: { item: { mut: Mutashabiha,
                                             <span className="text-xs font-bold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600 px-2 py-0.5 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700">
                                                 {SURAHS.find(s => s.number === target.surahNumber)?.name} : {target.ayahNumber}
                                             </span>
-                                            {target.similarity && (
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: target.similarity.color }}>
-                                                    {target.similarity.label}
-                                                </span>
-                                            )}
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded text-white bg-blue-500">
+                                                متشابهة
+                                            </span>
                                         </div>
                                         <button
                                             onClick={(e) => {

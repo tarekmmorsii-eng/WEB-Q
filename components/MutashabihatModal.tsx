@@ -425,8 +425,25 @@ export default function MutashabihatModal({
                             <HighlightedText
                                 text={sourceText}
                                 absoluteAyahNumber={mutashabiha.sourceAyah.absoluteAyahNumber}
-                                referenceText={mutashabiha.similarAyahs.map(a => a.text || '')}
-                                forceColor={activeTab === 'outside' ? '#ef4444' : undefined}
+                                manualRules={activeMutashabiha.similarAyahs
+                                    .filter(a => {
+                                        if (activeTab === 'inside') return a.surahNumber === activeMutashabiha.sourceAyah.surahNumber;
+                                        if (activeTab === 'outside') return a.surahNumber !== activeMutashabiha.sourceAyah.surahNumber;
+                                        return true;
+                                    })
+                                    .filter(a => a.rule)
+                                    .map(a => ({ rule: a.rule, type: a.ruleType || a.type }))
+                                }
+                                referenceText={activeMutashabiha.similarAyahs
+                                    .filter(a => {
+                                        if (activeTab === 'inside') return a.surahNumber === activeMutashabiha.sourceAyah.surahNumber;
+                                        if (activeTab === 'outside') return a.surahNumber !== activeMutashabiha.sourceAyah.surahNumber;
+                                        return true;
+                                    })
+                                    .map(a => ayahTexts.get(`${a.surahNumber}-${a.ayahNumber}`) || a.text || '')
+                                    .filter(t => t && t.length > 0)
+                                }
+                                forceColor={activeTab === 'outside' ? '#ef4444' : (activeTab === 'inside' ? '#10b981' : undefined)}
                             />
                         </div>
                     )}
