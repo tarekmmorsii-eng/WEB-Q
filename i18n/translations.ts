@@ -221,6 +221,7 @@ export interface Translations {
     cancelMode: string;
     prayerModeTitle: string;
     tinyUpdate: string;
+    basmallah: string;
     surahNames: string[];
 }
 
@@ -429,6 +430,7 @@ const en: Translations = {
     cancelMode: 'Cancel Mode',
     prayerModeTitle: 'Prayer Mode - Tap to reveal next word',
     tinyUpdate: 'Update',
+    basmallah: 'Basmallah',
     surahNames: [
         'Al-Fatihah', 'Al-Baqarah', 'Ali \'Imran', 'An-Nisa\'', 'Al-Ma\'idah', 'Al-An\'am', 'Al-A\'raf', 'Al-Anfal', 'At-Tawbah', 'Yunus',
         'Hud', 'Yusuf', 'Ar-Ra\'d', 'Ibrahim', 'Al-Hijr', 'An-Nahl', 'Al-Isra\'', 'Al-Kahf', 'Maryam', 'Ta-Ha',
@@ -637,6 +639,7 @@ export const translations: Record<Language, Translations> = {
         notificationBlocked: 'محجوب من إعدادات المتصفح ❌',
         sendTestNotification: 'إرسال إشعار تجريبي (تأكد الآن)',
         tinyUpdate: 'تحديث',
+        basmallah: 'البسملة',
         searchByPage: 'البحث برقم الصفحة',
         enterPageNumber: 'أدخل رقم الصفحة (١ - {max})',
         go: 'انتقال',

@@ -420,7 +420,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 } else {
                     // Standard: Header + Basmallah
                     finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNum });
-                    finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [] });
+                    finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [], surahNumber: sNum });
                 }
                 surahsInjected.add(sNum);
             }
@@ -962,9 +962,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         );
     };
 
-    const renderBasmallah = (line: Line) => (
+    const renderBasmallah = (line: Line, isHighlighted: boolean) => (
         <div
-            className={clsx("flex items-center justify-center w-full qpc-basmalah", isSpecialPage && "mb-4 md:mb-6")}
+            className={clsx(
+                "flex items-center justify-center w-full qpc-basmalah transition-colors duration-500",
+                isSpecialPage && "mb-4 md:mb-6",
+                isHighlighted && "bg-amber-100/60 dark:bg-amber-900/30 rounded-lg p-1"
+            )}
             style={{
                 height: deviceType === 'desktop' ? '1.9em' : '2.8em',
                 marginTop: deviceType === 'desktop' ? '0' : '0.5rem',
@@ -981,7 +985,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     justifyContent: 'center',
                     gap: isSpecialPage ? '0.4em' : '0.15em' // Reduced consistent spacing between words
                 }}
-                className="text-slate-800 dark:text-slate-200 qpc-v2-text"
+                className={clsx(
+                    "text-slate-800 dark:text-slate-200 qpc-v2-text",
+                    isHighlighted && "text-amber-800 dark:text-amber-400"
+                )}
             >
                 {/* Split glyphs for consistent spacing: Bism, Allah, ARrahman, ARrahim */}
                 <span>ﱁ</span>
@@ -1118,7 +1125,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                         }}
                     >
                         {line.lineType === 'surah_name' && renderSurahName(line)}
-                        {line.lineType === 'basmallah' && renderBasmallah(line)}
+                        {line.lineType === 'basmallah' && renderBasmallah(line, highlightedAyah?.ayah === 0 && highlightedAyah?.surah === line.surahNumber)}
                         {line.lineType === 'ayah' && line.words.map((word, wIdx) => {
                             const isHighlighted = highlightedAyah?.surah === word.surah && highlightedAyah?.ayah === word.ayah;
                             const shouldHide = isHidden(idx, wIdx) && !word.isEnd;

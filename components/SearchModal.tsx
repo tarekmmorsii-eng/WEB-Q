@@ -22,18 +22,22 @@ interface SearchModalProps {
 }
 
 // Utility to remove Tashkeel (Diacritics) for normalization and standardize letters
-const removeTashkeel = (text: string) => {
-    return text
+const removeTashkeel = (text: string, pure = false) => {
+    let normalized = text
         .normalize('NFD') // Decompose characters
-        // Remove Tashkeel (Fatha, Damma, Kasra, Sukun, Shadda, Tanween, etc.)
-        // Ranges: 0610-061A (Honorifics/Marks), 064B-065F (Tashkeel), 0670 (Superscript Aleph), 06D6-06DC (Small Marks), 06DF-06E8 (Small Marks), 06EA-06ED (Small Marks)
+        // Remove Tashkeel and Honorifics
         .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "")
         // Normalize Alephs (أ، إ، آ، ٱ -> ا)
         .replace(/[أإآٱ]/g, "ا")
-        // Normalize Ya/Aleph Maqsura (ى -> ي) - Optional but usually better for search
+        // Normalize Ya/Aleph Maqsura (ى -> ي)
         .replace(/ى/g, "ي")
-        // Normalize Ta Marbuta (ة -> ه) - Optional but helps finding "رحمة" via "رحمه"
+        // Normalize Ta Marbuta (ة -> ه)
         .replace(/ة/g, "ه");
+
+    if (pure) return normalized;
+
+    // Advanced: Handle "Li-" prefix (e.g., "Lil-Rahman" -> "Al-Rahman")
+    return normalized.replace(/(^|\s)لل/g, "$1ال");
 };
 
 // Helper: Highlight search term in text
@@ -46,7 +50,7 @@ const HighlightText = ({ text, highlight }: { text: string; highlight: string })
     const normalizedTextArray: { char: string, index: number }[] = [];
     for (let i = 0; i < text.length; i++) {
         const char = text[i];
-        const normalizedChar = removeTashkeel(char);
+        const normalizedChar = removeTashkeel(char, true);
         if (normalizedChar) {
             normalizedTextArray.push({ char: normalizedChar, index: i });
         }
@@ -193,7 +197,18 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
 
                     // 2. Search in Ayahs
                     surah.ayahs.forEach((ayah: any) => {
-                        const normalizedAyahText = removeTashkeel(ayah.text);
+                        let textToSearch = ayah.text;
+                        const isFirstAyah = ayah.numberInSurah === 1;
+                        const basmalahPrefix = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
+
+                        // Strip Basmalah for search/display in surahs 2-114 (excluding at-Tawba)
+                        if (isFirstAyah && surah.number !== 1 && surah.number !== 9 && textToSearch.includes(basmalahPrefix)) {
+                            textToSearch = textToSearch.replace(basmalahPrefix, '').trim();
+                        }
+
+                        if (!textToSearch) return;
+
+                        const normalizedAyahText = removeTashkeel(textToSearch);
                         const isMatch = keywords.every(keyword => normalizedAyahText.includes(keyword));
 
                         if (isMatch) {
@@ -201,7 +216,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                 page: ayah.page,
                                 surahName: surah.name,
                                 ayahNumber: ayah.numberInSurah,
-                                text: ayah.text,
+                                text: textToSearch,
                                 juz: ayah.juz,
                                 // @ts-ignore
                                 surahNumber: surah.number
@@ -354,7 +369,9 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                                 )}>
                                                     {result.isSurahResult
                                                         ? result.surahName
-                                                        : `${result.surahName} - ${t.verse} ${formatNum(result.ayahNumber)}`
+                                                        : result.ayahNumber === 0
+                                                            ? `${result.surahName} - ${t.basmallah || (language === 'ar' ? 'البسملة' : 'Basmalah')}`
+                                                            : `${result.surahName} - ${t.verse} ${formatNum(result.ayahNumber)}`
                                                     }
                                                 </div>
                                                 <div className="text-xs text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full font-bold">
