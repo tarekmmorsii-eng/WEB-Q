@@ -51,12 +51,13 @@ function MutashabihatIcon({
     );
 }
 
-function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRule, referenceText }: {
+function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRule, referenceText, isInsideSurah }: {
     text: string,
     absoluteAyahNumber?: number,
     rules?: any[],
     onlyRule?: string,
-    referenceText?: string | string[]
+    referenceText?: string | string[],
+    isInsideSurah?: boolean
 }) {
     if (!text) return <span className="text-gray-800 dark:text-gray-200">{text}</span>;
 
@@ -154,7 +155,9 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
         if (!rule.rule) return;
         const ruleNormalized = quranNormalize(rule.rule);
         const ruleWords = ruleNormalized.trim().split(/\s+/);
-        if (ruleWords.length < 2) return; // Enforce 2-word minimum consistently
+
+        // Logical condition for single words: Valid only if Inside Surah AND at Start/End
+        const isSingleWord = ruleWords.length === 1;
 
         const colors = {
             'START': '#10b981', // Green
@@ -214,6 +217,14 @@ function HighlightingText({ text, absoluteAyahNumber, rules: manualRules, onlyRu
                 if (isStart) effectiveType = 'START';
                 else if (isEnd) effectiveType = 'END';
                 else effectiveType = 'MIDDLE';
+
+                // Apply single-word restriction: 
+                // Color only if isInsideSurah is true AND it's either START or END
+                if (isSingleWord) {
+                    if (!isInsideSurah || (!isStart && !isEnd)) {
+                        return; // Skip coloring
+                    }
+                }
 
                 const effectiveColor = (colors as any)[effectiveType] || colors.OTHER;
 
@@ -451,7 +462,14 @@ export default function MutashabihatIndex({
                 insideGroup.push({ mut, targets: insideTargets });
             }
             if (outsideTargets.length > 0) {
-                outsideGroup.push({ mut, targets: outsideTargets });
+                // Merge if source already exists to avoid repetition in the UI
+                const existing = outsideGroup.find(g => g.mut.sourceAyah.absoluteAyahNumber === mut.sourceAyah.absoluteAyahNumber);
+                if (existing) {
+                    // Add only new targets
+                    existing.targets = [...existing.targets, ...outsideTargets.filter(ot => !existing.targets.some(et => et.absoluteAyahNumber === ot.absoluteAyahNumber))];
+                } else {
+                    outsideGroup.push({ mut, targets: outsideTargets });
+                }
             }
         });
 
@@ -845,6 +863,7 @@ function MutashabihaCard({ item, onNavigateToAyah }: { item: { mut: Mutashabiha,
                         text={mut.sourceAyah.text}
                         absoluteAyahNumber={mut.sourceAyah.absoluteAyahNumber}
                         referenceText={targets.map(t => t.text)}
+                        isInsideSurah={false} // Outside section
                     />
                 </div>
             </div>
@@ -919,6 +938,7 @@ function MutashabihaCard({ item, onNavigateToAyah }: { item: { mut: Mutashabiha,
                                             text={target.text}
                                             absoluteAyahNumber={target.absoluteAyahNumber}
                                             referenceText={mut.sourceAyah.text}
+                                            isInsideSurah={false} // Outside section
                                         />
                                     </div>
                                 </div>
@@ -974,6 +994,7 @@ function InternalGroupSection({ group, onNavigateToAyah }: { group: any, onNavig
                                 absoluteAyahNumber={ayah.absoluteAyahNumber}
                                 onlyRule={rule}
                                 referenceText={ayahs.map((a: any) => a.text)}
+                                isInsideSurah={true} // Inside section
                             />
                             <div className="flex items-center gap-1 mt-1 justify-end">
                                 <button
