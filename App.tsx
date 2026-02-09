@@ -1857,6 +1857,7 @@ export default function App() {
         isOpen={isMutashabihatModalOpen}
         onClose={() => setIsMutashabihatModalOpen(false)}
         mutashabiha={currentMutashabiha}
+        mutashabihatData={mutashabihatData}
         language={settings.language}
         onNavigateToAyah={async (surah, ayah) => {
           const page = await getAyahPage(surah, ayah);

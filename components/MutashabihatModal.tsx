@@ -257,20 +257,21 @@ interface MutashabihatModalProps {
     isOpen: boolean;
     onClose: () => void;
     mutashabiha: Mutashabiha | null;
-    language: string;
+    mutashabihatData?: Mutashabiha[]; // Added to allow external data passing
+    language?: string;
     onNavigateToAyah?: (surahNumber: number, ayahNumber: number) => void;
-    onOpenInIndex?: (surahNumber: number, ayahNumber?: number) => void;
-    onDeleteSimilarAyah?: (mutashabihaId: string, surahNumber: number, ayahNumber: number) => void;
-    onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
+    onOpenInIndex?: (surahNumber: number, ayahNumber: number) => void;
+    onDeleteSimilarAyah?: (mutId: string, surah: number, ayah: number) => void;
+    onAddSimilarAyah?: (mutId: string, isInsideSurah: boolean) => void;
 }
 
 import { parseMutashabihatText } from '../utils/mutashabihatProcessor';
-import MUTASHABIHAT_GENERATED_FULL from '../src/data/custom_mutashabihat/full_quran_generated.txt?raw';
 
 export default function MutashabihatModal({
     isOpen,
     onClose,
     mutashabiha,
+    mutashabihatData,
     language,
     onNavigateToAyah,
     onOpenInIndex,
@@ -279,10 +280,10 @@ export default function MutashabihatModal({
 }: MutashabihatModalProps) {
     // Combine Manual and Generated Data
     const enrichedData = React.useMemo(() => {
-        const manual = MUTASHABIHAT_DATA_FULL;
-        const { processed: generated } = parseMutashabihatText(MUTASHABIHAT_GENERATED_FULL, 'full_quran', 0);
-        return [...manual, ...generated];
-    }, []);
+        // If external data is provided, use it. Otherwise, fallback to the manual list.
+        if (mutashabihatData && mutashabihatData.length > 0) return mutashabihatData;
+        return MUTASHABIHAT_DATA_FULL;
+    }, [mutashabihatData]);
 
     // Find the current mutashabiha in the ENRICHED dataset to get all targets
     const currentEnrichedMutashabiha = React.useMemo(() => {

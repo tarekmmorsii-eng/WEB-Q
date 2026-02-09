@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { Mutashabiha, Surah } from '../types';
 import { SURAHS } from '../constants/surahData';
 import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihatData';
-import MUTASHABIHAT_GENERATED_FULL from '../src/data/custom_mutashabihat/full_quran_generated.txt?raw';
+
 import { getAyahText } from '../utils/ayahTextHelper';
 
 import { getMatchingWords } from '../utils/similarityCalculator';
