@@ -262,19 +262,18 @@ export default function App() {
       const { calculateMutashabihatSimilarity } = await import('./utils/similarityCalculator');
       const targetText = await getAyahText(surah, ayah);
 
+      let updatedMut: Mutashabiha | null = null;
+
       setMutashabihatData(prev => {
         const newData = [...prev];
         let mutIndex = newData.findIndex(m => m.id === activeMutashabihaId);
 
-        // التعامل مع المعرفات المدمجة "merged_surah_ayah"
         if (mutIndex === -1 && activeMutashabihaId?.startsWith('merged_')) {
           const [_, sNum, aNum] = activeMutashabihaId.split('_').map(Number);
-          // ابحث عن سجل مخصص موجود بالفعل لهذه الآية
           const customId = `custom_${sNum}_${aNum}`;
           mutIndex = newData.findIndex(m => m.id === customId);
 
           if (mutIndex === -1) {
-            // إنشاء سجل مخصص جديد
             const newMut: Mutashabiha = {
               id: customId,
               sourceAyah: {
@@ -307,20 +306,8 @@ export default function App() {
               },
               isCustom: true
             });
-
             newData[mutIndex] = mut;
-
-            // تحديث العرض الحالي
-            if (currentMutashabiha && (currentMutashabiha.id === activeMutashabihaId || currentMutashabiha.id === mut.id)) {
-              // إذا كان العرض مدمجاً، نحتاج لإعادة إنتاج الدمج لرؤية التغيير
-              if (currentMutashabiha.id.startsWith('merged_')) {
-                const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
-                const updatedMerged = getMergedMutashabihaForAyah(s, a, newData);
-                if (updatedMerged) setCurrentMutashabiha(updatedMerged);
-              } else {
-                setCurrentMutashabiha(mut);
-              }
-            }
+            updatedMut = mut;
           }
         }
 
@@ -331,6 +318,20 @@ export default function App() {
         localStorage.setItem('custom_mutashabihat', JSON.stringify(customOnly));
         return newData;
       });
+
+      // Update current view after state update
+      if (currentMutashabiha) {
+        setTimeout(() => {
+          if (currentMutashabiha.id.startsWith('merged_')) {
+            const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
+            const updatedMerged = getMergedMutashabihaForAyah(s, a, mutashabihatData);
+            if (updatedMerged) setCurrentMutashabiha(updatedMerged);
+          } else if (updatedMut) {
+            setCurrentMutashabiha(updatedMut);
+          }
+        }, 0);
+      }
+
     } catch (err) {
       console.error("Failed to add mutashabiha:", err);
     }
@@ -342,8 +343,6 @@ export default function App() {
   const handleDeleteSimilarAyah = (mutId: string, surah: number, ayah: number) => {
     setMutashabihatData(prev => {
       const newData = [...prev];
-
-      // إذا كان المعرف مدمجاً، قد نحتاج لحذف الآية من عدة سجلات
       const isMerged = mutId.startsWith('merged_');
       let affected = false;
 
@@ -367,18 +366,6 @@ export default function App() {
       });
 
       if (affected) {
-        // تحديث العرض الحالي
-        if (currentMutashabiha) {
-          if (currentMutashabiha.id.startsWith('merged_')) {
-            const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
-            const updatedMerged = getMergedMutashabihaForAyah(s, a, newData);
-            setCurrentMutashabiha(updatedMerged);
-          } else if (currentMutashabiha.id === mutId) {
-            const updated = newData.find(m => m.id === mutId);
-            setCurrentMutashabiha(updated || null);
-          }
-        }
-
         const customOnly = newData.filter(m =>
           m.id.startsWith('custom_') ||
           m.similarAyahs.some(a => (a as any).isCustom)
@@ -389,17 +376,42 @@ export default function App() {
     });
   };
 
+  // Sync current selection with potentially updated data list to show changes instantly
+  useEffect(() => {
+    if (isMutashabihatModalOpen && currentMutashabiha) {
+      if (currentMutashabiha.id.startsWith('merged_')) {
+        const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
+        const updated = getMergedMutashabihaForAyah(s, a, mutashabihatData);
+        if (updated) {
+          const currentJson = JSON.stringify(currentMutashabiha.similarAyahs);
+          const updatedJson = JSON.stringify(updated.similarAyahs);
+          if (currentJson !== updatedJson) {
+            setCurrentMutashabiha(updated);
+          }
+        }
+      } else {
+        const updated = mutashabihatData.find(m => m.id === currentMutashabiha.id);
+        if (updated) {
+          const currentJson = JSON.stringify(currentMutashabiha.similarAyahs);
+          const updatedJson = JSON.stringify(updated.similarAyahs);
+          if (currentJson !== updatedJson) {
+            setCurrentMutashabiha(updated);
+          }
+        }
+      }
+    }
+  }, [mutashabihatData, isMutashabihatModalOpen]);
+
   const handleOpenMutashabihat = useCallback((surah: number, ayah: number) => {
     let merged = getMergedMutashabihaForAyah(surah, ayah, mutashabihatData);
 
     if (!merged) {
-      // إنشاء كائن فارغ ليتمكن المستخدم من الإضافة
       merged = {
         id: `merged_${surah}_${ayah}`,
         sourceAyah: {
           surahNumber: surah,
           ayahNumber: ayah,
-          text: "" // سيقوم المكون بجلب النص إذا كان فارغاً
+          text: ""
         },
         similarAyahs: []
       };

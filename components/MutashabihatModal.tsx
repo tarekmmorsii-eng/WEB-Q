@@ -506,17 +506,17 @@ export default function MutashabihatModal({
                     </h3>
 
                     {(() => {
-                        const filteredSimilarAyahs = (mutashabiha?.similarAyahs || [])
+                        const filteredSimilarAyahs = (activeMutashabiha?.similarAyahs || [])
                             .filter(a => {
-                                if (activeTab === 'inside') return a.surahNumber === mutashabiha?.sourceAyah.surahNumber;
-                                if (activeTab === 'outside') return a.surahNumber !== mutashabiha?.sourceAyah.surahNumber;
+                                if (activeTab === 'inside') return a.surahNumber === activeMutashabiha?.sourceAyah.surahNumber;
+                                if (activeTab === 'outside') return a.surahNumber !== activeMutashabiha?.sourceAyah.surahNumber;
                                 return true;
                             })
                             .map(ayah => {
-                                const ruleText = ayah.rule || mutashabiha?.similarAyahs[0]?.rule || "";
+                                const ruleText = ayah.rule || activeMutashabiha?.similarAyahs[0]?.rule || "";
                                 const ruleNormalized = quranNormalize(ruleText);
                                 const ruleWords = ruleNormalized.trim().split(/\s+/);
-                                const targetText = ayahTexts.get(`${ayah.surahNumber}-${ayah.ayahNumber}`) || "";
+                                const targetText = ayahTexts.get(`${ayah.surahNumber}-${ayah.ayahNumber}`) || ayah.text || "";
                                 const targetRawWords = targetText.trim().split(/\s+/).filter(w => w.length > 0);
 
                                 let headCount = 0;
