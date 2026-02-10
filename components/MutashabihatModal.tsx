@@ -280,21 +280,8 @@ export default function MutashabihatModal({
     onDeleteSimilarAyah,
     onAddSimilarAyah
 }: MutashabihatModalProps) {
-    // Combine Manual and Generated Data
-    const enrichedData = React.useMemo(() => {
-        if (mutashabihatData && mutashabihatData.length > 0) return mutashabihatData;
-        return MUTASHABIHAT_DATA_FULL;
-    }, [mutashabihatData]);
-
-    const currentEnrichedMutashabiha = React.useMemo(() => {
-        if (!mutashabiha) return null;
-        return enrichedData.find(m =>
-            m.sourceAyah.surahNumber === mutashabiha.sourceAyah.surahNumber &&
-            m.sourceAyah.ayahNumber === mutashabiha.sourceAyah.ayahNumber
-        ) || mutashabiha;
-    }, [mutashabiha, enrichedData]);
-
-    const activeMutashabiha = currentEnrichedMutashabiha;
+    // Use the prop directly since it is already merged and managed by the parent (App.tsx)
+    const activeMutashabiha = mutashabiha;
     const [ayahTexts, setAyahTexts] = useState<Map<string, string>>(new Map());
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'all' | 'inside' | 'outside'>('inside');
@@ -442,78 +429,84 @@ export default function MutashabihatModal({
                     )}
                 </div>
 
-                {/* Tab Switcher */}
-                <div className="flex bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl mb-6 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
-                    <button
-                        onClick={() => setActiveTab('all')}
-                        className={clsx(
-                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
-                            activeTab === 'all'
-                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
-                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
-                        )}
-                    >
-                        <span>🔗</span>
-                        {isArabic ? 'الكل' : 'All'}
-                        <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
-                            {mutashabiha.similarAyahs.length}
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('inside')}
-                        className={clsx(
-                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
-                            activeTab === 'inside'
-                                ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
-                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
-                        )}
-                    >
-                        <div className="flex items-center gap-2">
-                            <MutashabihatIcon showGreenLine size="w-6 h-6" />
-                            {isArabic ? 'داخل السورة' : 'Inside Surah'}
-                            <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
-                                {mutashabiha.similarAyahs.filter(a => a.surahNumber === mutashabiha.sourceAyah.surahNumber).length}
-                            </span>
+                {/* Header Tabs */}
+                {(() => {
+                    const displayMutashabiha = activeMutashabiha || mutashabiha;
+                    return (
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl mb-6 shadow-inner">
+                            <button
+                                onClick={() => setActiveTab('all')}
+                                className={clsx(
+                                    "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                                    activeTab === 'all'
+                                        ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
+                                        : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                                )}
+                            >
+                                <span>🔗</span>
+                                {isArabic ? 'الكل' : 'All'}
+                                <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                    {displayMutashabiha.similarAyahs.length}
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('inside')}
+                                className={clsx(
+                                    "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
+                                    activeTab === 'inside'
+                                        ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
+                                        : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <MutashabihatIcon showGreenLine size="w-6 h-6" />
+                                    {isArabic ? 'داخل السورة' : 'Inside Surah'}
+                                    <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                        {displayMutashabiha.similarAyahs.filter(a => a.surahNumber === displayMutashabiha.sourceAyah.surahNumber).length}
+                                    </span>
+                                </div>
+                                <div className="w-12 h-1 rounded-full bg-green-500 opacity-80" />
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('outside')}
+                                className={clsx(
+                                    "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
+                                    activeTab === 'outside'
+                                        ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
+                                        : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <MutashabihatIcon showRedLine size="w-6 h-6" />
+                                    {isArabic ? 'خارج السورة' : 'Outside Surah'}
+                                    <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                        {displayMutashabiha.similarAyahs.filter(a => a.surahNumber !== displayMutashabiha.sourceAyah.surahNumber).length}
+                                    </span>
+                                </div>
+                                <div className="w-12 h-1 rounded-full bg-red-500 opacity-80" />
+                            </button>
                         </div>
-                        <div className="w-12 h-1 rounded-full bg-green-500 opacity-80" />
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('outside')}
-                        className={clsx(
-                            "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
-                            activeTab === 'outside'
-                                ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
-                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
-                        )}
-                    >
-                        <div className="flex items-center gap-2">
-                            <MutashabihatIcon showRedLine size="w-6 h-6" />
-                            {isArabic ? 'خارج السورة' : 'Outside Surah'}
-                            <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
-                                {mutashabiha.similarAyahs.filter(a => a.surahNumber !== mutashabiha.sourceAyah.surahNumber).length}
-                            </span>
-                        </div>
-                        <div className="w-12 h-1 rounded-full bg-red-500 opacity-80" />
-                    </button>
-                </div>
+                    );
+                })()}
 
                 {/* Similar Ayahs */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
                         <MutashabihatIcon showGreenLine showRedLine size="w-7 h-7" />
                         {isArabic ? 'الآيات المتشابهة:' : 'Similar Verses:'}
-                        <span className="text-sm text-slate-500 dark:text-slate-400">({mutashabiha.similarAyahs.length})</span>
+                        <span className="text-sm text-slate-500 dark:text-slate-400">({(activeMutashabiha || mutashabiha).similarAyahs.length})</span>
                     </h3>
 
                     {(() => {
-                        const filteredSimilarAyahs = (activeMutashabiha?.similarAyahs || [])
+                        const displayData = activeMutashabiha || mutashabiha;
+                        const filteredData = (displayData?.similarAyahs || [])
                             .filter(a => {
-                                if (activeTab === 'inside') return a.surahNumber === activeMutashabiha?.sourceAyah.surahNumber;
-                                if (activeTab === 'outside') return a.surahNumber !== activeMutashabiha?.sourceAyah.surahNumber;
+                                if (activeTab === 'inside') return a.surahNumber === displayData?.sourceAyah.surahNumber;
+                                if (activeTab === 'outside') return a.surahNumber !== displayData?.sourceAyah.surahNumber;
                                 return true;
                             })
                             .map(ayah => {
-                                const ruleText = ayah.rule || activeMutashabiha?.similarAyahs[0]?.rule || "";
+                                const ruleText = ayah.rule || displayData?.similarAyahs[0]?.rule || "";
                                 const ruleNormalized = quranNormalize(ruleText);
                                 const ruleWords = ruleNormalized.trim().split(/\s+/);
                                 const targetText = ayahTexts.get(`${ayah.surahNumber}-${ayah.ayahNumber}`) || ayah.text || "";
@@ -523,6 +516,7 @@ export default function MutashabihatModal({
                                 let tailCount = 0;
                                 let midCount = 0;
 
+                                // Logic to calculate matching score for sorting (unchanged)
                                 if (targetRawWords.length > 0 && ruleWords.length > 0) {
                                     for (let i = 0; i <= targetRawWords.length - ruleWords.length; i++) {
                                         let match = true;
@@ -549,21 +543,24 @@ export default function MutashabihatModal({
                                     priorityScore = (tailCount + midCount);
                                 }
 
-                                return { ...ayah, priorityScore };
+                                return { ...ayah, priorityScore, text: targetText };
                             })
                             .sort((a, b) => {
                                 if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
                                 return a.ayahNumber - b.ayahNumber;
                             });
 
-                        if (filteredSimilarAyahs.length === 0) return null;
+                        if (filteredData.length === 0) return (
+                            <div className="text-center py-8 text-slate-400 dark:text-slate-500 italic">
+                                {isArabic ? 'لا توجد آيات مطابقة لهذا التصنيف' : 'No matching verses found'}
+                            </div>
+                        );
 
                         return (
                             <div className="space-y-4">
-                                {filteredSimilarAyahs.map((ayah, globalIdx) => {
+                                {filteredData.map((ayah, globalIdx) => {
                                     const similarSurahName = getSurahName(ayah.surahNumber);
-                                    const ayahKey = `${ayah.surahNumber}-${ayah.ayahNumber}`;
-                                    const ayahText = ayahTexts.get(ayahKey) || ayah.text || '';
+                                    const ayahText = ayah.text || '';
 
                                     return (
                                         <div
@@ -634,7 +631,7 @@ export default function MutashabihatModal({
 
                 {onAddSimilarAyah && activeTab !== 'all' && (
                     <button
-                        onClick={() => onAddSimilarAyah(activeMutashabiha.id, activeTab === 'inside')}
+                        onClick={() => onAddSimilarAyah((activeMutashabiha || mutashabiha).id, activeTab === 'inside')}
                         className="w-full mt-4 p-4 border-2 border-dashed border-amber-300 dark:border-slate-600 rounded-xl flex items-center justify-center gap-2 text-amber-800 dark:text-slate-400 hover:border-amber-500 hover:text-amber-900 dark:hover:text-slate-200 transition-all group"
                     >
                         <Plus size={20} className="group-hover:scale-110 transition-transform" />
