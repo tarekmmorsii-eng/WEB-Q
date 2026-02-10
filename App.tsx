@@ -1753,6 +1753,7 @@ export default function App() {
         onClose={() => setIsMemorizationStatsOpen(false)}
         ratings={memorizationRatings}
         onNavigateToSurah={handleNavigateToSurah}
+        onRateSurah={handleRateSurah}
         onClearAll={handleClearAllRatings}
         t={t}
       />
