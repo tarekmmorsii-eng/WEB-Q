@@ -3,17 +3,30 @@ import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Upload } from 'luci
 import clsx from 'clsx';
 import { NotificationItem } from '../types';
 import { SURAHS } from '../constants/surahData';
+import { getAyahPage, getPageAyahRange, getSurahsForPages } from '../services/quranService';
 
 interface NotificationManagerProps {
     isOpen: boolean;
     onClose: () => void;
     notifications: NotificationItem[];
     onSave: (notifications: NotificationItem[]) => void;
+    onNavigate?: (page: number, ayahNumber?: number, surahNumber?: number) => void;
     t: any;
     language: string;
 }
 
-export default function NotificationManager({ isOpen, onClose, notifications, onSave, t, language }: NotificationManagerProps) {
+function SurahListSummary({ startPage, endPage, language }: { startPage: number, endPage: number, language: string }) {
+    const [summary, setSummary] = React.useState<string>('');
+
+    React.useEffect(() => {
+        getSurahsForPages(startPage, endPage, language).then(setSummary);
+    }, [startPage, endPage, language]);
+
+    if (!summary) return null;
+    return <span className="block italic text-[10px] opacity-70 mt-0.5">({summary})</span>;
+}
+
+export default function NotificationManager({ isOpen, onClose, notifications, onSave, onNavigate, t, language }: NotificationManagerProps) {
     const isArabic = language === 'ar';
     const DAYS = [t.sunday, t.monday, t.tuesday, t.wednesday, t.thursday, t.friday, t.saturday];
     const PRESET_SOUNDS = [
@@ -47,6 +60,26 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [formEndPage, setFormEndPage] = useState<number>(1);
     const [formStartAyah, setFormStartAyah] = useState<number>(1);
     const [formEndAyah, setFormEndAyah] = useState<number>(7); // Default Fatiha
+
+    // Unified handle helpers to avoid loops
+    const updatePagesFromAyahs = async (surah: number, startA: number, endA: number) => {
+        try {
+            const startP = await getAyahPage(surah, startA);
+            const endP = await getAyahPage(surah, endA);
+            setFormStartPage(startP);
+            setFormEndPage(endP);
+        } catch (e) { console.error(e); }
+    };
+
+    const updateAyahsFromPages = async (surah: number, startP: number, endP: number) => {
+        try {
+            const startR = await getPageAyahRange(surah, startP);
+            const endR = await getPageAyahRange(surah, endP);
+            if (startR) setFormStartAyah(startR.start);
+            if (endR) setFormEndAyah(endR.end);
+        } catch (e) { console.error(e); }
+    };
+
 
     const resetForm = () => {
         setFormName('');
@@ -221,26 +254,42 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                     notifications.map(notification => (
                                         <div
                                             key={notification.id}
-                                            className="bg-amber-50 dark:bg-slate-800 rounded-lg p-4 border border-amber-200 dark:border-slate-700"
+                                            className="bg-amber-50 dark:bg-slate-800 rounded-lg p-4 border border-amber-200 dark:border-slate-700 transition-all"
                                         >
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex-1">
-                                                    <h3 className="font-bold text-amber-900 dark:text-amber-100 mb-1">
+                                                    <h3
+                                                        onClick={() => {
+                                                            if (onNavigate && notification.metadata) {
+                                                                const page = notification.metadata.startPage || notification.metadata.page || 1;
+                                                                const ayah = notification.metadata.startAyah;
+                                                                const surah = notification.metadata.surahNumber;
+                                                                onNavigate(page, ayah, surah);
+                                                                onClose();
+                                                            }
+                                                        }}
+                                                        className={clsx(
+                                                            "font-bold text-amber-900 dark:text-amber-100 mb-1 transition-all inline-block",
+                                                            onNavigate && "cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
+                                                        )}
+                                                    >
                                                         {notification.name}
                                                     </h3>
                                                     <p className="text-sm text-slate-600 dark:text-slate-400">
                                                         {notification.category === 'surah' && notification.metadata ? (
                                                             <span className="block text-amber-700 dark:text-amber-300 mb-1">
                                                                 {notification.metadata.startAyah && notification.metadata.endAyah ?
-                                                                    `من آية ${notification.metadata.startAyah} إلى آية ${notification.metadata.endAyah}` : ''}
+                                                                    `${isArabic ? 'من آية' : 'Ayah'} ${notification.metadata.startAyah} ${isArabic ? 'إلى آية' : 'to'} ${notification.metadata.endAyah}` : ''}
                                                                 {notification.metadata.startPage && notification.metadata.endPage ?
-                                                                    ` (صفحة ${notification.metadata.startPage} - ${notification.metadata.endPage})` : ''}
+                                                                    ` (${isArabic ? 'صفحة' : 'Page'} ${notification.metadata.startPage} - ${notification.metadata.endPage})` : ''}
                                                             </span>
                                                         ) : notification.category === 'page' && notification.metadata ? (
                                                             <span className="block text-amber-700 dark:text-amber-300 mb-1">
-                                                                {notification.metadata.startPage === notification.metadata.endPage ?
-                                                                    `صفحة ${notification.metadata.startPage}` :
-                                                                    `من صفحة ${notification.metadata.startPage} إلى ${notification.metadata.endPage}`}
+                                                                <SurahListSummary startPage={notification.metadata.startPage!} endPage={notification.metadata.endPage!} language={language} />
+                                                            </span>
+                                                        ) : notification.category === 'quran_part' && notification.metadata ? (
+                                                            <span className="block text-amber-700 dark:text-amber-300 mb-1">
+                                                                {isArabic ? 'جزء' : 'Juz'} {notification.metadata.juz}، {isArabic ? 'حزب' : 'Hizb'} {notification.metadata.hizb}، {isArabic ? 'ربع' : 'Quarter'} {notification.metadata.rub}
                                                             </span>
                                                         ) : null}
                                                         {notification.type === 'daily' ? t.daily :
@@ -398,7 +447,10 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     // Get Surah details
                                                     const surah = SURAHS.find(s => s.number === sNum);
                                                     if (surah) {
-                                                        setFormName(`سورة ${surah.name}`);
+                                                        const sName = isArabic ? surah.name : (t.surahNames ? t.surahNames[sNum - 1] : surah.name);
+                                                        setFormName(`${isArabic ? 'سورة' : ''} ${sName} ${!isArabic ? 'Surah' : ''}`);
+
+                                                        // Important: Update dependent fields immediately to avoid stale state in UI
                                                         setFormStartAyah(1);
                                                         setFormEndAyah(surah.ayahCount);
                                                         setFormStartPage(surah.startPage);
@@ -406,7 +458,6 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         // Calculate end page
                                                         const nextSurah = SURAHS.find(s => s.number === sNum + 1);
                                                         const endP = nextSurah ? nextSurah.startPage - (nextSurah.startPage > surah.startPage ? 1 : 0) : 604;
-                                                        // Adjust if next surah starts on same page (unlikely for most, but just in case of edge cases)
                                                         const actualEndPage = endP < surah.startPage ? surah.startPage : endP;
                                                         setFormEndPage(actualEndPage);
                                                     }
@@ -444,6 +495,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         onChange={(e) => {
                                                             const val = parseInt(e.target.value) || 0;
                                                             setFormStartPage(val);
+                                                            updateAyahsFromPages(formSurahNumber, val, formEndPage);
                                                         }}
                                                         onBlur={() => {
                                                             const s = SURAHS.find(s => s.number === formSurahNumber);
@@ -473,6 +525,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             onChange={(e) => {
                                                                 const val = parseInt(e.target.value) || 0;
                                                                 setFormEndPage(val);
+                                                                updateAyahsFromPages(formSurahNumber, formStartPage, val);
                                                             }}
                                                             onBlur={() => {
                                                                 const s = SURAHS.find(s => s.number === formSurahNumber);
@@ -517,6 +570,13 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         onChange={(e) => {
                                                             const val = parseInt(e.target.value) || 0;
                                                             setFormStartAyah(val);
+                                                            updatePagesFromAyahs(formSurahNumber, val, formEndAyah);
+                                                            // Auto-update name
+                                                            const surah = SURAHS.find(s => s.number === formSurahNumber);
+                                                            if (surah) {
+                                                                const sName = isArabic ? surah.name : (t.surahNames ? t.surahNames[surah.number - 1] : surah.name);
+                                                                setFormName(`${isArabic ? 'سورة' : ''} ${sName} (${val}-${formEndAyah})`);
+                                                            }
                                                         }}
                                                         onBlur={() => {
                                                             const s = SURAHS.find(s => s.number === formSurahNumber);
@@ -540,6 +600,13 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             onChange={(e) => {
                                                                 const val = parseInt(e.target.value) || 0;
                                                                 setFormEndAyah(val);
+                                                                updatePagesFromAyahs(formSurahNumber, formStartAyah, val);
+                                                                // Auto-update name
+                                                                const surah = SURAHS.find(s => s.number === formSurahNumber);
+                                                                if (surah) {
+                                                                    const sName = isArabic ? surah.name : (t.surahNames ? t.surahNames[surah.number - 1] : surah.name);
+                                                                    setFormName(`${isArabic ? 'سورة' : ''} ${sName} (${formStartAyah}-${val})`);
+                                                                }
                                                             }}
                                                             onBlur={() => {
                                                                 const s = SURAHS.find(s => s.number === formSurahNumber);
@@ -581,7 +648,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onChange={(e) => {
                                                         const val = parseInt(e.target.value);
                                                         setFormJuz(val);
-                                                        setFormName(`الجزء ${val}`);
+                                                        // Sync Hizb and Rub
+                                                        const newHizb = (val - 1) * 2 + 1;
+                                                        const newRub = (newHizb - 1) * 4 + 1;
+                                                        setFormHizb(newHizb);
+                                                        setFormRub(newRub);
+                                                        setFormName(`${t.juz} ${val}`);
                                                     }}
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
@@ -597,7 +669,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onChange={(e) => {
                                                         const val = parseInt(e.target.value);
                                                         setFormHizb(val);
-                                                        setFormName(`الحزب ${val}`);
+                                                        // Sync Juz and Rub
+                                                        const newJuz = Math.ceil(val / 2);
+                                                        const newRub = (val - 1) * 4 + 1;
+                                                        setFormJuz(newJuz);
+                                                        setFormRub(newRub);
+                                                        setFormName(`${t.hizb || 'الحزب'} ${val}`);
                                                     }}
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
@@ -613,7 +690,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onChange={(e) => {
                                                         const val = parseInt(e.target.value);
                                                         setFormRub(val);
-                                                        setFormName(`الربع ${val}`);
+                                                        // Sync Juz and Hizb
+                                                        const newHizb = Math.ceil(val / 4);
+                                                        const newJuz = Math.ceil(newHizb / 2);
+                                                        setFormJuz(newJuz);
+                                                        setFormHizb(newHizb);
+                                                        setFormName(`${t.rub || 'الربع'} ${val}`);
                                                     }}
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >

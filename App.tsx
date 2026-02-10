@@ -1744,6 +1744,15 @@ export default function App() {
         onClose={() => setIsNotificationOpen(false)}
         notifications={notifications}
         onSave={saveNotifications}
+        onNavigate={(page, ayah, surah) => {
+          setCurrentPage(page);
+          if (ayah !== undefined && surah !== undefined) {
+            setHighlightedAyah({ surah, ayah });
+          } else {
+            setHighlightedAyah(null);
+          }
+          setIsNotificationOpen(false);
+        }}
         t={t}
         language={settings.language}
       />

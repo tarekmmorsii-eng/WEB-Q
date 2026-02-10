@@ -44,6 +44,57 @@ export const getAyahPage = async (surahNumber: number, ayahNumber: number): Prom
   return getSurahStartPage(surahNumber);
 };
 
+/**
+ * Get the ayah range for a specific surah on a specific page
+ */
+export const getPageAyahRange = async (surahNumber: number, pageNumber: number): Promise<{ start: number, end: number } | null> => {
+  if (!fullQuranData) {
+    await loadQuranData();
+  }
+
+  const surah = fullQuranData?.surahs?.[surahNumber - 1];
+  if (!surah) return null;
+
+  const ayahsOnPage = surah.ayahs.filter(a => a.page === pageNumber);
+  if (ayahsOnPage.length === 0) return null;
+
+  return {
+    start: ayahsOnPage[0].numberInSurah,
+    end: ayahsOnPage[ayahsOnPage.length - 1].numberInSurah
+  };
+};
+
+/**
+ * Get a summary of surahs covered in a page range
+ */
+export const getSurahsForPages = async (startPage: number, endPage: number, language: string = 'ar'): Promise<string> => {
+  if (!fullQuranData) {
+    await loadQuranData();
+  }
+
+  const surahNumbers = new Set<number>();
+  for (let p = startPage; p <= endPage; p++) {
+    const pageAyahs = ayahsByPage?.[p];
+    if (pageAyahs) {
+      pageAyahs.forEach(a => {
+        if (a.surah) surahNumbers.add(a.surah.number);
+      });
+    }
+  }
+
+  if (surahNumbers.size === 0) return '';
+
+  const sortedNumbers = Array.from(surahNumbers).sort((a, b) => a - b);
+  const names = sortedNumbers.map(n => {
+    const s = fullQuranData?.surahs?.[n - 1];
+    if (!s) return '';
+    return language === 'ar' ? s.name : s.englishName;
+  }).filter(name => name !== '');
+
+  if (names.length <= 3) return names.join('، ');
+  return `${names.slice(0, 3).join('، ')} ... ${names[names.length - 1]}`;
+};
+
 const loadQuranData = async () => {
   if (fullQuranData) return;
 

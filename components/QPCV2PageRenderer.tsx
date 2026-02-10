@@ -924,9 +924,16 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     // Handle Space Key for Sequential Reveal (Always Active)
     useEffect(() => {
-        // Remove dependency on isPrayerMode so it works automatically
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.code === 'Space') {
+                // Prevent interception if an input field is focused
+                const activeElement = document.activeElement;
+                const isInput = activeElement?.tagName === 'INPUT' ||
+                    activeElement?.tagName === 'TEXTAREA' ||
+                    (activeElement as HTMLElement)?.isContentEditable;
+
+                if (isInput) return;
+
                 e.preventDefault(); // Prevent scrolling
                 revealNextHidden();
             }
