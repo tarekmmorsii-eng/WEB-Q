@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Trash2, Plus } from 'lucide-react';
+import { X, Loader2, Trash2, Plus, Bug } from 'lucide-react';
 import clsx from 'clsx';
+import { useFeedback } from '../contexts/FeedbackContext';
 import { Mutashabiha } from '../types';
 import { getSurahName } from '../utils/quranHelpers';
 import { getAyahTexts } from '../utils/ayahTextHelper';
@@ -280,6 +281,23 @@ export default function MutashabihatModal({
     onDeleteSimilarAyah,
     onAddSimilarAyah
 }: MutashabihatModalProps) {
+    // We can't use useFeedback hook directly if MutashabihatModal is used outside of FeedbackProvider in some tests
+    // But since it's child of App, it should be fine.  However, to be safe, let's use the hook.
+    // If strict prop passing is preferred, we would pass it. But context is cleaner.
+    // We need to import it inside the component file if not already.
+    // WAIT: I cannot add imports easily with replace_file_content if they are far away.
+    // I will assume I can add the hook usage, but I need to inject the Import first?
+    // Actually, I can allow the `useFeedback` to be used if I import it.
+    // Let's add the prop approach or just context. 
+    // I already Modified Header to use Context. I should modify this file to import it too.
+
+    // Changing approach slightly: I will add the import at the top of file in a separate call if needed, 
+    // or just assume I can add it here if I am replacing a big chunk.
+    // I will replace the imports section in a separate tool call to be safe.
+
+    // For now, let's just use the hook and I will add the import in next step.
+    const { openFeedback: onOpenFeedback } = useFeedback();
+
     // Use the prop directly since it is already merged and managed by the parent (App.tsx)
     const activeMutashabiha = mutashabiha;
     const [ayahTexts, setAyahTexts] = useState<Map<string, string>>(new Map());
@@ -351,6 +369,16 @@ export default function MutashabihatModal({
                     <X size={20} className="text-gray-600 dark:text-gray-300" />
                 </button>
 
+                {/* Report Error Button */}
+                <button
+                    onClick={() => onOpenFeedback('bug_mutashabihat', { mutashabihaId: activeMutashabiha.id, source: activeMutashabiha.sourceAyah })}
+                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 hover:text-red-600 transition-colors z-10 flex items-center gap-1"
+                    title={isArabic ? "الإبلاغ عن خطأ" : "Report Error"}
+                >
+                    <Bug size={18} />
+                    <span className="text-xs font-bold hidden sm:inline">{isArabic ? "إبلاغ" : "Report"}</span>
+                </button>
+
                 {/* Header */}
                 <div className="text-center mb-6 mt-2">
                     <h2 className="text-2xl font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center justify-center gap-2">
@@ -412,7 +440,7 @@ export default function MutashabihatModal({
                                         return true;
                                     })
                                     .filter(a => a.rule)
-                                    .map(a => ({ rule: a.rule, type: a.ruleType || a.type }))
+                                    .map(a => ({ rule: a.rule, type: a.ruleType }))
                                 }
                                 referenceText={activeMutashabiha.similarAyahs
                                     .filter(a => {
@@ -615,7 +643,7 @@ export default function MutashabihatModal({
                                                     <HighlightedText
                                                         text={ayahText}
                                                         absoluteAyahNumber={ayah.absoluteAyahNumber}
-                                                        manualRules={ayah.rule ? [{ rule: ayah.rule, type: ayah.ruleType || ayah.type }] : []}
+                                                        manualRules={ayah.rule ? [{ rule: ayah.rule, type: ayah.ruleType }] : []}
                                                         referenceText={[sourceText]}
                                                         forceColor={activeTab === 'inside' ? '#10b981' : (activeTab === 'outside' ? '#ef4444' : undefined)}
                                                     />

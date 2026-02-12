@@ -31,6 +31,14 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
             style={{ opacity }}
         >
             {/* Main Logo: Absolutely Centered */}
+            {/* Top Label: Trial Version */}
+            <div className="absolute top-[15%] left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
+                <div className="bg-amber-500/10 backdrop-blur-md border border-amber-500/30 px-5 py-1.5 rounded-full shadow-lg shadow-amber-900/20">
+                    <span className="text-amber-500 font-bold text-sm tracking-widest drop-shadow-sm">نسخة تجريبية</span>
+                </div>
+            </div>
+
+            {/* Main Logo: Absolutely Centered */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-in fade-in zoom-in duration-1000">
                 <img
                     src="/logo_splash.png?v=6"

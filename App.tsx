@@ -32,6 +32,12 @@ import { translations, Language } from './i18n/translations';
 import { THEMES, getThemeById } from './constants/themes';
 import { startTour } from './utils/TourManager';
 
+// Integrations
+import { FeedbackProvider } from './contexts/FeedbackContext';
+import FeedbackModal from './components/FeedbackModal';
+import BetaBadge from './components/BetaBadge';
+import BottomBarFeedbackButton from './components/BottomBarFeedbackButton';
+
 const DEFAULT_SETTINGS: AppSettings = {
   language: 'ar',
   theme: 'calm-night',
@@ -1449,534 +1455,541 @@ export default function App() {
   }, [handleUiInteraction]);
 
   return (
-    <div
-      className="h-[100dvh] lg:h-screen w-full flex flex-col relative overflow-auto transition-colors duration-300"
-      style={{
-        backgroundColor: currentTheme.colors.background,
-        color: currentTheme.colors.text,
-      }}
-    >
-      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+    <FeedbackProvider>
+      <div
+        className="h-[100dvh] lg:h-screen w-full flex flex-col relative overflow-auto transition-colors duration-300"
+        style={{
+          backgroundColor: currentTheme.colors.background,
+          color: currentTheme.colors.text,
+        }}
+      >
+        <FeedbackModal />
 
-      {/* Main Content hidden while splash is showing to prevent flash? Optional. 
+        {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+
+        {/* Main Content hidden while splash is showing to prevent flash? Optional. 
           For now we overlay it. */}
 
-      <Header
-        currentMode={viewMode}
-        setMode={handleSetMode}
-        toggleState={toggleState}
-        isVisible={showUi}  // Ø±Ø¨Ø· Ù…Ø¹ showUi Ù„ÙŠØ®ØªÙÙŠ Ù…Ø¹ Ø§Ù„Ø¨Ø§Ø± Ø§Ù„Ø³ÙÙ„ÙŠ Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„/ØªØ§Ø¨Ù„Øª
-        onInteraction={handleUiInteraction}
-        onMouseEnter={handleMouseEnterUi}
-        onMouseLeave={handleMouseLeaveUi}
-        t={t}
-      />
+        <Header
+          currentMode={viewMode}
+          setMode={handleSetMode}
+          toggleState={toggleState}
+          isVisible={showUi}  // Ø±Ø¨Ø· Ù…Ø¹ showUi Ù„ÙŠØ®ØªÙÙŠ Ù…Ø¹ Ø§Ù„Ø¨Ø§Ø± Ø§Ù„Ø³ÙÙ„ÙŠ Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„/ØªØ§Ø¨Ù„Øª
+          onInteraction={handleUiInteraction}
+          onMouseEnter={handleMouseEnterUi}
+          onMouseLeave={handleMouseLeaveUi}
+          t={t}
+        />
 
-      <main
-        ref={mainRef}
-        className={clsx(
-          "flex-1 w-full overflow-auto relative transition-all duration-500 ease-in-out flex flex-col", // Allow scrolling
-          showUi ? "pt-24" : "pt-0"
-        )}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onClick={handleContentTap}
-      >
-        <div className="flex-1 flex flex-col relative items-center w-full">
-          <div className="w-full flex-1 flex flex-col">
-            {loading ? (
-              <div className="fixed inset-0 flex flex-col items-center justify-center bg-transparent z-[5] pointer-events-none">
-                <div className="bg-white/10 dark:bg-black/10 backdrop-blur-[2px] p-8 rounded-2xl flex flex-col items-center">
-                  <div className="w-10 h-10 border-2 border-amber-600/20 border-t-amber-600 rounded-full animate-spin mb-4" />
-                  <p className="text-amber-800 dark:text-amber-500 font-bold text-xs tracking-widest uppercase opacity-40">{t.loading}</p>
+        <main
+          ref={mainRef}
+          className={clsx(
+            "flex-1 w-full overflow-auto relative transition-all duration-500 ease-in-out flex flex-col", // Allow scrolling
+            showUi ? "pt-24" : "pt-0"
+          )}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleContentTap}
+        >
+          <div className="flex-1 flex flex-col relative items-center w-full">
+            <div className="w-full flex-1 flex flex-col">
+              {loading ? (
+                <div className="fixed inset-0 flex flex-col items-center justify-center bg-transparent z-[5] pointer-events-none">
+                  <div className="bg-white/10 dark:bg-black/10 backdrop-blur-[2px] p-8 rounded-2xl flex flex-col items-center">
+                    <div className="w-10 h-10 border-2 border-amber-600/20 border-t-amber-600 rounded-full animate-spin mb-4" />
+                    <p className="text-amber-800 dark:text-amber-500 font-bold text-xs tracking-widest uppercase opacity-40">{t.loading}</p>
+                  </div>
                 </div>
-              </div>
-            ) : error ? (
-              <div className="text-center text-red-600 mt-20 bg-white dark:bg-slate-800 dark:text-red-400 p-6 rounded shadow border border-red-100 dark:border-red-900/30 mx-4">
-                <p>{error}</p>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setCurrentPage(currentPage); }}
-                  className="mt-4 px-6 py-2 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors shadow-sm"
+              ) : error ? (
+                <div className="text-center text-red-600 mt-20 bg-white dark:bg-slate-800 dark:text-red-400 p-6 rounded shadow border border-red-100 dark:border-red-900/30 mx-4">
+                  <p>{error}</p>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCurrentPage(currentPage); }}
+                    className="mt-4 px-6 py-2 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors shadow-sm"
+                  >
+                    {t.retry}
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className={clsx(
+                    "min-h-full flex flex-col flex-1 transition-all duration-500",
+                    pageFlipDirection === 'next' && "page-flip-next",
+                    pageFlipDirection === 'prev' && "page-flip-prev"
+                  )}
                 >
-                  {t.retry}
-                </button>
-              </div>
-            ) : (
-              <div
-                className={clsx(
-                  "min-h-full flex flex-col flex-1 transition-all duration-500",
-                  pageFlipDirection === 'next' && "page-flip-next",
-                  pageFlipDirection === 'prev' && "page-flip-prev"
-                )}
-              >
-                {/* Force V2 Renderer */}
-                <QPCV2PageRenderer
-                  pageNumber={currentPage}
-                  fontSize={settings.defaultFontSize as any}
-                  isDarkMode={currentTheme.isDark}
-                  className={showUi ? "!pb-28" : "!pb-0"}
-                  mode={viewMode}
-                  toggleState={toggleState}
-                  memorizationRatings={memorizationRatings}
-                  surahRatings={surahRatings}
-                  onRateAyah={handleRateAyah}
-                  onRateSurah={handleRateSurah}
-                  verseBookmarks={verseBookmarks}
-                  colorStopSigns={settings.colorStopSigns}
-                  accentColor={currentTheme.colors.accent}
-                  highlightedAyah={highlightedAyah}
-                  isPrayerMode={settings.prayerMode}
-                  language={settings.language}
-                  mutashabihatData={mutashabihatData}
-                  showMutashabihatIndicators={settings.showMutashabihatIndicators}
-                  onOpenMutashabihat={(mutOrSurah, optAyah) => {
-                    if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
-                      setCurrentMutashabiha(mutOrSurah);
-                      setIsMutashabihatModalOpen(true);
-                    } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
-                      handleOpenMutashabihat(mutOrSurah, optAyah);
-                    }
-                  }}
-                  onDeleteSimilarAyah={handleDeleteSimilarAyah}
-                  onAddSimilarAyah={handleAddSimilarAyah}
-                />
-              </div>
-            )}
+                  {/* Force V2 Renderer */}
+                  <QPCV2PageRenderer
+                    pageNumber={currentPage}
+                    fontSize={settings.defaultFontSize as any}
+                    isDarkMode={currentTheme.isDark}
+                    className={showUi ? "!pb-28" : "!pb-0"}
+                    mode={viewMode}
+                    toggleState={toggleState}
+                    memorizationRatings={memorizationRatings}
+                    surahRatings={surahRatings}
+                    onRateAyah={handleRateAyah}
+                    onRateSurah={handleRateSurah}
+                    verseBookmarks={verseBookmarks}
+                    colorStopSigns={settings.colorStopSigns}
+                    accentColor={currentTheme.colors.accent}
+                    highlightedAyah={highlightedAyah}
+                    isPrayerMode={settings.prayerMode}
+                    language={settings.language}
+                    mutashabihatData={mutashabihatData}
+                    showMutashabihatIndicators={settings.showMutashabihatIndicators}
+                    onOpenMutashabihat={(mutOrSurah, optAyah) => {
+                      if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+                        setCurrentMutashabiha(mutOrSurah);
+                        setIsMutashabihatModalOpen(true);
+                      } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
+                        handleOpenMutashabihat(mutOrSurah, optAyah);
+                      }
+                    }}
+                    onDeleteSimilarAyah={handleDeleteSimilarAyah}
+                    onAddSimilarAyah={handleAddSimilarAyah}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
 
 
-      <div
-        id="navigation-bar"
-        className={clsx(
-          "fixed bottom-0 left-0 right-0 lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-20 border-t lg:border-t-0 lg:border-l p-3 flex lg:flex-col items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] lg:shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)] z-[60] transition-all duration-500 ease-in-out",
-          "lg:!right-0 lg:!left-auto",
-          settings.bottomBar.showPageNavigation ? "justify-between lg:justify-center" : "justify-center",
-          showUi
-            ? "translate-y-0 opacity-100 lg:translate-x-0"
-            : "translate-y-full opacity-0 lg:translate-y-0 lg:translate-x-full lg:opacity-0 pointer-events-none"
-        )}
-        style={{
-          backgroundColor: currentTheme.colors.cardBg,
-          borderColor: currentTheme.colors.border
-        }}
-        onTouchStart={handleUiInteraction}
-        onClick={handleUiInteraction}
-        onMouseEnter={handleMouseEnterUi}
-        onMouseLeave={handleMouseLeaveUi}
-      >
-        {settings.bottomBar.showPageNavigation && (
-          <button
-            onClick={handlePrevPage}
-            disabled={currentPage <= 1}
-            className="p-2 rounded-full bg-amber-100 dark:bg-slate-800 text-amber-800 dark:text-amber-500 disabled:opacity-50 transition-colors lg:hidden"
-          >
-            <ChevronRight size={24} />
-          </button>
-        )}
-
-        <div className="flex lg:flex-col gap-3 sm:gap-6 lg:gap-6 items-center">
-          {settings.bottomBar.showIndex && (
-            <button
-              onClick={() => setIsIndexOpen(true)}
-              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-            >
-              <Menu size={20} />
-              <span className="text-[10px]">{t.index}</span>
-            </button>
+        <div
+          id="navigation-bar"
+          className={clsx(
+            "fixed bottom-0 left-0 right-0 lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-20 border-t lg:border-t-0 lg:border-l p-3 flex lg:flex-col items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] lg:shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)] z-[60] transition-all duration-500 ease-in-out",
+            "lg:!right-0 lg:!left-auto",
+            settings.bottomBar.showPageNavigation ? "justify-between lg:justify-center" : "justify-center",
+            showUi
+              ? "translate-y-0 opacity-100 lg:translate-x-0"
+              : "translate-y-full opacity-0 lg:translate-y-0 lg:translate-x-full lg:opacity-0 pointer-events-none"
           )}
-
-          {settings.bottomBar.showSearch && (
+          style={{
+            backgroundColor: currentTheme.colors.cardBg,
+            borderColor: currentTheme.colors.border
+          }}
+          onTouchStart={handleUiInteraction}
+          onClick={handleUiInteraction}
+          onMouseEnter={handleMouseEnterUi}
+          onMouseLeave={handleMouseLeaveUi}
+        >
+          {settings.bottomBar.showPageNavigation && (
             <button
-              onClick={() => setIsSearchOpen(true)}
-              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-            >
-              <Search size={20} />
-              <span className="text-[10px]">{t.search}</span>
-            </button>
-          )}
-
-          {settings.bottomBar.showMemorization && (
-            <button
-              onClick={() => setIsMemorizationStatsOpen(true)}
-              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-            >
-              <BarChart3 size={20} />
-              <span className="text-[10px]">{t.memorizationStats}</span>
-            </button>
-          )}
-
-          {settings.bottomBar.showNotifications && (
-            <button
-              onClick={() => setIsNotificationOpen(true)}
-              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-            >
-              <Bell size={20} />
-              <span className="text-[10px]">{t.notifications}</span>
-            </button>
-          )}
-
-          {settings.bottomBar.showDarkMode && (
-            <button
-              onClick={toggleDarkMode}
-              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-            >
-              {currentTheme.isDark ? <Sun size={20} /> : <Moon size={20} />}
-              <span className="text-[10px]">{currentTheme.isDark ? t.lightMode : t.darkMode}</span>
-            </button>
-          )}
-
-
-          {settings.bottomBar.showBookmark && (
-            <button
-              onClick={togglePageBookmark}
-              className={clsx(
-                "flex flex-col items-center transition-colors",
-                isPageBookmarked ? "text-amber-600 dark:text-amber-500" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
-              )}
-            >
-              <Bookmark size={20} fill={isPageBookmarked ? "currentColor" : "none"} />
-              <span className="text-[10px]">{t.bookmark}</span>
-            </button>
-          )}
-
-          {settings.bottomBar.showPrayerMode && (
-            <button
-              onClick={() => setSettings(prev => ({ ...prev, prayerMode: !prev.prayerMode }))}
-              className={clsx(
-                "flex flex-col items-center transition-colors",
-                settings.prayerMode ? "text-amber-600 dark:text-amber-500" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
-              )}
-            >
-              <MousePointer2 size={20} fill={settings.prayerMode ? "currentColor" : "none"} />
-              <span className="text-[10px]">{t.prayerMode}</span>
-            </button>
-          )}
-
-          {settings.bottomBar.showFullscreen && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
-            <button
-              onClick={toggleFullScreen}
-              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-              title={isFullscreen ? t.exitFullscreen : t.fullscreen}
-            >
-              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-              <span className="text-[10px]">{isFullscreen ? t.minimize : t.fullscreen}</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors relative"
-          >
-            {hasAppUpdate && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 animate-pulse z-10" />
-            )}
-            <SettingsIcon size={20} />
-            <span className="text-[10px]">{t.settings}</span>
-          </button>
-        </div>
-
-        {settings.bottomBar.showPageNavigation && (
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage >= TOTAL_PAGES}
-            className="p-2 rounded-full bg-amber-100 dark:bg-slate-800 text-amber-800 dark:text-amber-500 disabled:opacity-50 transition-colors lg:hidden"
-          >
-            <ChevronLeft size={24} />
-          </button>
-        )}
-      </div>
-
-      {
-        !isTouchDevice && (
-          <>
-            <button
-              id="prev-page-btn"
               onClick={handlePrevPage}
               disabled={currentPage <= 1}
-              className="hidden lg:flex fixed right-24 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0"
+              className="p-2 rounded-full bg-amber-100 dark:bg-slate-800 text-amber-800 dark:text-amber-500 disabled:opacity-50 transition-colors lg:hidden"
             >
-              <ChevronRight size={32} />
+              <ChevronRight size={24} />
             </button>
+          )}
 
+          <div className="flex lg:flex-col gap-3 sm:gap-6 lg:gap-6 items-center">
+            {settings.bottomBar.showIndex && (
+              <button
+                onClick={() => setIsIndexOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <Menu size={20} />
+                <span className="text-[10px]">{t.index}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showSearch && (
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <Search size={20} />
+                <span className="text-[10px]">{t.search}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showMemorization && (
+              <button
+                onClick={() => setIsMemorizationStatsOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <BarChart3 size={20} />
+                <span className="text-[10px]">{t.memorizationStats}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showNotifications && (
+              <button
+                onClick={() => setIsNotificationOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <Bell size={20} />
+                <span className="text-[10px]">{t.notifications}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showDarkMode && (
+              <button
+                onClick={toggleDarkMode}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                {currentTheme.isDark ? <Sun size={20} /> : <Moon size={20} />}
+                <span className="text-[10px]">{currentTheme.isDark ? t.lightMode : t.darkMode}</span>
+              </button>
+            )}
+
+
+            {settings.bottomBar.showBookmark && (
+              <button
+                onClick={togglePageBookmark}
+                className={clsx(
+                  "flex flex-col items-center transition-colors",
+                  isPageBookmarked ? "text-amber-600 dark:text-amber-500" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
+                )}
+              >
+                <Bookmark size={20} fill={isPageBookmarked ? "currentColor" : "none"} />
+                <span className="text-[10px]">{t.bookmark}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showPrayerMode && (
+              <button
+                onClick={() => setSettings(prev => ({ ...prev, prayerMode: !prev.prayerMode }))}
+                className={clsx(
+                  "flex flex-col items-center transition-colors",
+                  settings.prayerMode ? "text-amber-600 dark:text-amber-500" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
+                )}
+              >
+                <MousePointer2 size={20} fill={settings.prayerMode ? "currentColor" : "none"} />
+                <span className="text-[10px]">{t.prayerMode}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showFullscreen && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
+              <button
+                onClick={toggleFullScreen}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                title={isFullscreen ? t.exitFullscreen : t.fullscreen}
+              >
+                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                <span className="text-[10px]">{isFullscreen ? t.minimize : t.fullscreen}</span>
+              </button>
+            )}
+
+            <BottomBarFeedbackButton />
+
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors relative"
+            >
+              {hasAppUpdate && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 animate-pulse z-10" />
+              )}
+              <SettingsIcon size={20} />
+              <span className="text-[10px]">{t.settings}</span>
+
+            </button>
+          </div>
+
+          {settings.bottomBar.showPageNavigation && (
             <button
               onClick={handleNextPage}
               disabled={currentPage >= TOTAL_PAGES}
-              className="hidden lg:flex fixed left-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0"
+              className="p-2 rounded-full bg-amber-100 dark:bg-slate-800 text-amber-800 dark:text-amber-500 disabled:opacity-50 transition-colors lg:hidden"
             >
-              <ChevronLeft size={32} />
+              <ChevronLeft size={24} />
             </button>
-          </>
-        )
-      }
-
-      <SurahIndex
-        isOpen={isIndexOpen}
-        onClose={() => setIsIndexOpen(false)}
-        onSelectPage={(p) => setCurrentPage(p)}
-        pageBookmarks={pageBookmarks}
-        verseBookmarks={verseBookmarks}
-        history={history}
-        onRemovePageBookmark={(page) => savePageBookmarks(pageBookmarks.filter(b => b.page !== page))}
-        onRemoveVerseBookmark={(id) => saveVerseBookmarks(verseBookmarks.filter(b => b.id !== id))}
-        t={t}
-        language={settings.language}
-        currentPage={currentPage}
-      />
-
-      <SearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSelectPage={(page) => {
-          setCurrentPage(page);
-          setIsSearchOpen(false);
-        }}
-        onSelectResult={handleSearchResultSelect}
-        totalPages={TOTAL_PAGES}
-        language={settings.language}
-        t={t}
-      />
-
-      <NotificationManager
-        isOpen={isNotificationOpen}
-        onClose={() => setIsNotificationOpen(false)}
-        notifications={notifications}
-        onSave={saveNotifications}
-        onNavigate={(page, ayah, surah) => {
-          setCurrentPage(page);
-          if (ayah !== undefined && surah !== undefined) {
-            setHighlightedAyah({ surah, ayah });
-          } else {
-            setHighlightedAyah(null);
-          }
-          setIsNotificationOpen(false);
-        }}
-        t={t}
-        language={settings.language}
-      />
-
-      <MemorizationStats
-        isOpen={isMemorizationStatsOpen}
-        onClose={() => setIsMemorizationStatsOpen(false)}
-        ratings={memorizationRatings}
-        onNavigateToSurah={handleNavigateToSurah}
-        onRateSurah={handleRateSurah}
-        onClearAll={handleClearAllRatings}
-        t={t}
-      />
-
-      <Settings
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        onSave={(newSettings) => {
-          setSettings(newSettings);
-          localStorage.setItem('quran_app_settings', JSON.stringify(newSettings));
-        }}
-        currentLanguage={settings.language as Language}
-        onOpenIndex={() => { setIsSettingsOpen(false); setIsIndexOpen(true); }}
-        onOpenSearch={() => { setIsSettingsOpen(false); setIsSearchOpen(true); }}
-        onOpenMemorization={() => { setIsSettingsOpen(false); setIsMemorizationStatsOpen(true); }}
-        onOpenNotifications={() => { setIsSettingsOpen(false); setIsNotificationOpen(true); }}
-        onOpenMutashabihat={() => { setIsSettingsOpen(false); setIsMutashabihatIndexOpen(true); }}
-        onOpenColorPicker={() => { setIsSettingsOpen(false); setIsColorPickerOpen(true); }}
-        onTogglePageBookmark={togglePageBookmark}
-        isPageBookmarked={isPageBookmarked}
-        hasUpdate={hasAppUpdate}
-        onUpdateApp={handleUpdateApp}
-        memorizationRatings={memorizationRatings}
-      />
-
-
-
-      {
-        ratingModalData && (
-          <AyahOptionsModal
-            isOpen={!!ratingModalData}
-            onClose={() => setRatingModalData(null)}
-            surahNumber={ratingModalData.surah}
-            ayahNumber={ratingModalData.ayah}
-            currentRating={getAyahRating(ratingModalData.surah, ratingModalData.ayah)}
-            onRate={(r) => handleSaveRating(r)}
-            onBookmark={() => {
-              if (pageData) {
-                // Find the ayah in pageData.ayahs
-                // We need to cast 'a' or assert surah property exists because Types definition might be missing it for 'Ayah' interface
-                const foundAyah = pageData.ayahs.find((a: any) =>
-                  a.numberInSurah === ratingModalData.ayah &&
-                  (a.surah?.number === ratingModalData.surah)
-                );
-
-                if (foundAyah) {
-                  toggleVerseBookmark(foundAyah);
-                } else {
-                  // Fallback: Construct a minimal Ayah object if not found in current page data
-                  const ayahObj: any = {
-                    number: ratingModalData.ayah, // Global number unknown
-                    text: "...",
-                    numberInSurah: ratingModalData.ayah,
-                    juz: pageData.ayahs[0]?.juz || 1,
-                    page: currentPage,
-                    surah: { number: ratingModalData.surah, name: "", englishName: "", englishNameTranslation: "", revelationType: "" }
-                  };
-                  toggleVerseBookmark(ayahObj);
-                }
-              }
-            }}
-            isBookmarked={verseBookmarks.some(vb => vb.id === `${currentPage}-${ratingModalData.surah}-${ratingModalData.ayah}`)}
-            language={settings.language}
-            hasMutashabihat={!!findMutashabihatForAyah(ratingModalData.surah, ratingModalData.ayah, mutashabihatData)}
-            onOpenMutashabihat={() => {
-              handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
-            }}
-          />
-        )
-      }
-
-      {
-        surahRatingModalData && (
-          <SurahRatingModal
-            isOpen={!!surahRatingModalData}
-            onClose={() => setSurahRatingModalData(null)}
-            surahNumber={surahRatingModalData}
-            currentRating={getSurahRating(surahRatingModalData)}
-            onRate={(rating) => handleSaveSurahRating(surahRatingModalData, rating)}
-            onRateAyah={handleSaveAyahRatingDirect}
-            ayahCount={SURAHS.find(s => s.number === surahRatingModalData)?.ayahCount || 1}
-            language={settings.language}
-          />
-        )
-      }
-
-      <ColorPickerModal
-        isOpen={isColorPickerOpen}
-        onClose={() => setIsColorPickerOpen(false)}
-        currentThemeId={settings.theme}
-        onSelectTheme={(themeId) => {
-          setSettings(prev => ({ ...prev, theme: themeId }));
-        }}
-        t={t}
-      />
-
-      <MutashabihatIndex
-        isOpen={isMutashabihatIndexOpen}
-        onClose={() => setIsMutashabihatIndexOpen(false)}
-        mutashabihatData={mutashabihatData}
-        isDarkMode={currentTheme.isDark}
-        initialSurahId={mutashabihatIndexSurah}
-        initialAyahId={mutashabihatIndexAyah}
-        onNavigateToAyah={async (surah, ayah) => {
-          const page = await getAyahPage(surah, ayah);
-          setCurrentPage(page);
-          setHighlightedAyah({ surah, ayah });
-          setIsMutashabihatIndexOpen(false);
-        }}
-      />
-
-      <MutashabihatModal
-        isOpen={isMutashabihatModalOpen}
-        onClose={() => setIsMutashabihatModalOpen(false)}
-        mutashabiha={currentMutashabiha}
-        mutashabihatData={mutashabihatData}
-        language={settings.language}
-        onNavigateToAyah={async (surah, ayah) => {
-          const page = await getAyahPage(surah, ayah);
-          setCurrentPage(page);
-          setHighlightedAyah({ surah, ayah });
-          setIsMutashabihatModalOpen(false);
-        }}
-        onOpenInIndex={(surah, ayah) => {
-          setMutashabihatIndexSurah(surah);
-          setMutashabihatIndexAyah(ayah);
-          setIsMutashabihatModalOpen(false);
-          setIsMutashabihatIndexOpen(true);
-        }}
-        onDeleteSimilarAyah={handleDeleteSimilarAyah}
-        onAddSimilarAyah={handleAddSimilarAyah}
-      />
-
-      <MutashabihatSelectorModal
-        isOpen={isSelectorOpen}
-        onClose={() => setIsSelectorOpen(false)}
-        onSelect={handleSelectSimilarAyah}
-        language={settings.language}
-        lockedSurah={selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
-        excludedSurah={!selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
-      />
-
-      {toastMessage && (
-        <Toast
-          message={toastMessage}
-          onClose={() => setToastMessage(null)}
-          action={toastAction}
-        />
-      )}
-
-      {/* Alarm Dismiss Overlay */}
-      {activeAlarm && (
-        <div className="fixed inset-0 z-[99999] bg-red-600/90 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
-          <div className="relative mb-8">
-            <div className="absolute inset-0 bg-white/20 rounded-full animate-ping scale-150" />
-            <div className="relative bg-white p-8 rounded-full shadow-2xl">
-              <Bell size={64} className="text-red-600 animate-bounce" />
-            </div>
-          </div>
-
-          <h2 className="text-3xl font-bold mb-2 text-center px-4">{activeAlarm.name}</h2>
-          <p className="text-xl opacity-90 mb-12 text-center">{t.alarmMessage}</p>
-
-          <button
-            onClick={() => {
-              if (alarmAudioRef.current) {
-                alarmAudioRef.current.pause();
-                alarmAudioRef.current.currentTime = 0;
-              }
-              setActiveAlarm(null);
-            }}
-            className="bg-white text-red-600 px-12 py-4 rounded-full text-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-transform"
-          >
-            {t.stopAlarm}
-          </button>
+          )}
         </div>
-      )}
 
-      {/* Prayer Mode Overlay Button (only when enabled and fullscreen is not blocking logic, though it can overlay fullscreen) */}
-      {/* Prayer Mode Overlay Button - Hide when overlays are open */}
-      {
-        settings.prayerMode && !isIndexOpen && !isSettingsOpen && !isSearchOpen && !isMemorizationStatsOpen && !isNotificationOpen && (
-          <PrayerModeButton
-            t={t}
-            onDismiss={() => {
-              const newSettings = { ...settings, prayerMode: false };
-              setSettings(newSettings);
-              localStorage.setItem('quran_settings', JSON.stringify(newSettings));
-            }}
+        {
+          !isTouchDevice && (
+            <>
+              <button
+                id="prev-page-btn"
+                onClick={handlePrevPage}
+                disabled={currentPage <= 1}
+                className="hidden lg:flex fixed right-24 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0"
+              >
+                <ChevronRight size={32} />
+              </button>
+
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage >= TOTAL_PAGES}
+                className="hidden lg:flex fixed left-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0"
+              >
+                <ChevronLeft size={32} />
+              </button>
+            </>
+          )
+        }
+
+        <SurahIndex
+          isOpen={isIndexOpen}
+          onClose={() => setIsIndexOpen(false)}
+          onSelectPage={(p) => setCurrentPage(p)}
+          pageBookmarks={pageBookmarks}
+          verseBookmarks={verseBookmarks}
+          history={history}
+          onRemovePageBookmark={(page) => savePageBookmarks(pageBookmarks.filter(b => b.page !== page))}
+          onRemoveVerseBookmark={(id) => saveVerseBookmarks(verseBookmarks.filter(b => b.id !== id))}
+          t={t}
+          language={settings.language}
+          currentPage={currentPage}
+        />
+
+        <SearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          onSelectPage={(page) => {
+            setCurrentPage(page);
+            setIsSearchOpen(false);
+          }}
+          onSelectResult={handleSearchResultSelect}
+          totalPages={TOTAL_PAGES}
+          language={settings.language}
+          t={t}
+        />
+
+        <NotificationManager
+          isOpen={isNotificationOpen}
+          onClose={() => setIsNotificationOpen(false)}
+          notifications={notifications}
+          onSave={saveNotifications}
+          onNavigate={(page, ayah, surah) => {
+            setCurrentPage(page);
+            if (ayah !== undefined && surah !== undefined) {
+              setHighlightedAyah({ surah, ayah });
+            } else {
+              setHighlightedAyah(null);
+            }
+            setIsNotificationOpen(false);
+          }}
+          t={t}
+          language={settings.language}
+        />
+
+        <MemorizationStats
+          isOpen={isMemorizationStatsOpen}
+          onClose={() => setIsMemorizationStatsOpen(false)}
+          ratings={memorizationRatings}
+          onNavigateToSurah={handleNavigateToSurah}
+          onRateSurah={handleRateSurah}
+          onClearAll={handleClearAllRatings}
+          t={t}
+        />
+
+        <Settings
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          settings={settings}
+          onSave={(newSettings) => {
+            setSettings(newSettings);
+            localStorage.setItem('quran_app_settings', JSON.stringify(newSettings));
+          }}
+          currentLanguage={settings.language as Language}
+          onOpenIndex={() => { setIsSettingsOpen(false); setIsIndexOpen(true); }}
+          onOpenSearch={() => { setIsSettingsOpen(false); setIsSearchOpen(true); }}
+          onOpenMemorization={() => { setIsSettingsOpen(false); setIsMemorizationStatsOpen(true); }}
+          onOpenNotifications={() => { setIsSettingsOpen(false); setIsNotificationOpen(true); }}
+          onOpenMutashabihat={() => { setIsSettingsOpen(false); setIsMutashabihatIndexOpen(true); }}
+          onOpenColorPicker={() => { setIsSettingsOpen(false); setIsColorPickerOpen(true); }}
+          onTogglePageBookmark={togglePageBookmark}
+          isPageBookmarked={isPageBookmarked}
+          hasUpdate={hasAppUpdate}
+          onUpdateApp={handleUpdateApp}
+          memorizationRatings={memorizationRatings}
+        />
+
+
+
+        {
+          ratingModalData && (
+            <AyahOptionsModal
+              isOpen={!!ratingModalData}
+              onClose={() => setRatingModalData(null)}
+              surahNumber={ratingModalData.surah}
+              ayahNumber={ratingModalData.ayah}
+              currentRating={getAyahRating(ratingModalData.surah, ratingModalData.ayah)}
+              onRate={(r) => handleSaveRating(r)}
+              onBookmark={() => {
+                if (pageData) {
+                  // Find the ayah in pageData.ayahs
+                  // We need to cast 'a' or assert surah property exists because Types definition might be missing it for 'Ayah' interface
+                  const foundAyah = pageData.ayahs.find((a: any) =>
+                    a.numberInSurah === ratingModalData.ayah &&
+                    (a.surah?.number === ratingModalData.surah)
+                  );
+
+                  if (foundAyah) {
+                    toggleVerseBookmark(foundAyah);
+                  } else {
+                    // Fallback: Construct a minimal Ayah object if not found in current page data
+                    const ayahObj: any = {
+                      number: ratingModalData.ayah, // Global number unknown
+                      text: "...",
+                      numberInSurah: ratingModalData.ayah,
+                      juz: pageData.ayahs[0]?.juz || 1,
+                      page: currentPage,
+                      surah: { number: ratingModalData.surah, name: "", englishName: "", englishNameTranslation: "", revelationType: "" }
+                    };
+                    toggleVerseBookmark(ayahObj);
+                  }
+                }
+              }}
+              isBookmarked={verseBookmarks.some(vb => vb.id === `${currentPage}-${ratingModalData.surah}-${ratingModalData.ayah}`)}
+              language={settings.language}
+              hasMutashabihat={!!findMutashabihatForAyah(ratingModalData.surah, ratingModalData.ayah, mutashabihatData)}
+              onOpenMutashabihat={() => {
+                handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
+              }}
+            />
+          )
+        }
+
+        {
+          surahRatingModalData && (
+            <SurahRatingModal
+              isOpen={!!surahRatingModalData}
+              onClose={() => setSurahRatingModalData(null)}
+              surahNumber={surahRatingModalData}
+              currentRating={getSurahRating(surahRatingModalData)}
+              onRate={(rating) => handleSaveSurahRating(surahRatingModalData, rating)}
+              onRateAyah={handleSaveAyahRatingDirect}
+              ayahCount={SURAHS.find(s => s.number === surahRatingModalData)?.ayahCount || 1}
+              language={settings.language}
+            />
+          )
+        }
+
+        <ColorPickerModal
+          isOpen={isColorPickerOpen}
+          onClose={() => setIsColorPickerOpen(false)}
+          currentThemeId={settings.theme}
+          onSelectTheme={(themeId) => {
+            setSettings(prev => ({ ...prev, theme: themeId }));
+          }}
+          t={t}
+        />
+
+        <MutashabihatIndex
+          isOpen={isMutashabihatIndexOpen}
+          onClose={() => setIsMutashabihatIndexOpen(false)}
+          mutashabihatData={mutashabihatData}
+          isDarkMode={currentTheme.isDark}
+          initialSurahId={mutashabihatIndexSurah}
+          initialAyahId={mutashabihatIndexAyah}
+          onNavigateToAyah={async (surah, ayah) => {
+            const page = await getAyahPage(surah, ayah);
+            setCurrentPage(page);
+            setHighlightedAyah({ surah, ayah });
+            setIsMutashabihatIndexOpen(false);
+          }}
+        />
+
+        <MutashabihatModal
+          isOpen={isMutashabihatModalOpen}
+          onClose={() => setIsMutashabihatModalOpen(false)}
+          mutashabiha={currentMutashabiha}
+          mutashabihatData={mutashabihatData}
+          language={settings.language}
+          onNavigateToAyah={async (surah, ayah) => {
+            const page = await getAyahPage(surah, ayah);
+            setCurrentPage(page);
+            setHighlightedAyah({ surah, ayah });
+            setIsMutashabihatModalOpen(false);
+          }}
+          onOpenInIndex={(surah, ayah) => {
+            setMutashabihatIndexSurah(surah);
+            setMutashabihatIndexAyah(ayah);
+            setIsMutashabihatModalOpen(false);
+            setIsMutashabihatIndexOpen(true);
+          }}
+          onDeleteSimilarAyah={handleDeleteSimilarAyah}
+          onAddSimilarAyah={handleAddSimilarAyah}
+        />
+
+        <MutashabihatSelectorModal
+          isOpen={isSelectorOpen}
+          onClose={() => setIsSelectorOpen(false)}
+          onSelect={handleSelectSimilarAyah}
+          language={settings.language}
+          lockedSurah={selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
+          excludedSurah={!selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
+        />
+
+        {toastMessage && (
+          <Toast
+            message={toastMessage}
+            onClose={() => setToastMessage(null)}
+            action={toastAction}
           />
-        )
-      }
+        )}
 
-      {/* Fullscreen Exit Button - Hide when overlays are open */}
-      {
-        isFullscreen && !isIndexOpen && !isSettingsOpen && !isSearchOpen && !isMemorizationStatsOpen && !isNotificationOpen && (
-          <FullscreenExitButton
-            onDismiss={toggleFullScreen}
-            currentPage={currentPage}
-            t={t}
-          />
-        )
-      }
-      <TourWelcomeModal
-        isOpen={showTourWelcome}
-        onStart={handleStartTour}
-        onClose={handleCloseTourWelcome}
-      />
+        {/* Alarm Dismiss Overlay */}
+        {activeAlarm && (
+          <div className="fixed inset-0 z-[99999] bg-red-600/90 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-white/20 rounded-full animate-ping scale-150" />
+              <div className="relative bg-white p-8 rounded-full shadow-2xl">
+                <Bell size={64} className="text-red-600 animate-bounce" />
+              </div>
+            </div>
 
-      <TourClickOverlay
-        isOpen={showTourClickOverlay}
-        onComplete={handleClickTutorialComplete}
-      />
-    </div >
+            <h2 className="text-3xl font-bold mb-2 text-center px-4">{activeAlarm.name}</h2>
+            <p className="text-xl opacity-90 mb-12 text-center">{t.alarmMessage}</p>
+
+            <button
+              onClick={() => {
+                if (alarmAudioRef.current) {
+                  alarmAudioRef.current.pause();
+                  alarmAudioRef.current.currentTime = 0;
+                }
+                setActiveAlarm(null);
+              }}
+              className="bg-white text-red-600 px-12 py-4 rounded-full text-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-transform"
+            >
+              {t.stopAlarm}
+            </button>
+          </div>
+        )}
+
+        {/* Prayer Mode Overlay Button (only when enabled and fullscreen is not blocking logic, though it can overlay fullscreen) */}
+        {/* Prayer Mode Overlay Button - Hide when overlays are open */}
+        {
+          settings.prayerMode && !isIndexOpen && !isSettingsOpen && !isSearchOpen && !isMemorizationStatsOpen && !isNotificationOpen && (
+            <PrayerModeButton
+              t={t}
+              onDismiss={() => {
+                const newSettings = { ...settings, prayerMode: false };
+                setSettings(newSettings);
+                localStorage.setItem('quran_settings', JSON.stringify(newSettings));
+              }}
+            />
+          )
+        }
+
+        {/* Fullscreen Exit Button - Hide when overlays are open */}
+        {
+          isFullscreen && !isIndexOpen && !isSettingsOpen && !isSearchOpen && !isMemorizationStatsOpen && !isNotificationOpen && (
+            <FullscreenExitButton
+              onDismiss={toggleFullScreen}
+              currentPage={currentPage}
+              t={t}
+            />
+          )
+        }
+        <TourWelcomeModal
+          isOpen={showTourWelcome}
+          onStart={handleStartTour}
+          onClose={handleCloseTourWelcome}
+        />
+
+        <TourClickOverlay
+          isOpen={showTourClickOverlay}
+          onComplete={handleClickTutorialComplete}
+        />
+      </div >
+    </FeedbackProvider>
   );
 }

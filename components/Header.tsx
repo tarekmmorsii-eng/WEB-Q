@@ -21,6 +21,9 @@ import {
   WholeWord
 } from 'lucide-react';
 
+import { useFeedback } from '../contexts/FeedbackContext';
+import BetaBadge from './BetaBadge';
+
 interface HeaderProps {
   currentMode: ViewMode;
   setMode: (mode: ViewMode, state?: number) => void;
@@ -35,6 +38,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVisible, onInteraction, onMouseEnter, onMouseLeave, t }) => {
   const [openDropdown, setOpenDropdown] = useState<ViewMode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { openFeedback } = useFeedback();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -135,6 +139,16 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
       onMouseLeave={onMouseLeave}
     >
       <div className="grid grid-cols-6 gap-1 p-2 max-w-4xl mx-auto">
+        {/* Beta Badge - Absolute Left on Desktop, Relative on Mobile */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden lg:block">
+          <BetaBadge onClick={() => openFeedback('bug_tech')} />
+        </div>
+
+        {/* Mobile Beta Badge (Small) */}
+        <div className="lg:hidden absolute left-2 top-2 z-50">
+          <BetaBadge className="scale-75 origin-top-left" onClick={() => openFeedback('bug_tech')} />
+        </div>
+
         {BUTTON_CONFIGS.map((config) => {
           const isActive = currentMode === config.mode;
           const isOpen = openDropdown === config.mode;

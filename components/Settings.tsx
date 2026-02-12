@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator } from 'lucide-react';
+import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare } from 'lucide-react';
+import { useFeedback } from '../contexts/FeedbackContext';
 
 import clsx from 'clsx';
 import { AppSettings, BottomBarSettings } from '../types';
@@ -45,6 +46,7 @@ export default function Settings({
     const [showHelpModal, setShowHelpModal] = useState(false);
 
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
+    const { openFeedback } = useFeedback();
 
 
     // ---------------------------
@@ -274,6 +276,12 @@ export default function Settings({
                             )}
                         </h2>
                     </div>
+
+                    {/* Middle: Trial Version Label */}
+                    <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] px-3 py-1 rounded-full border border-amber-200 dark:border-amber-700/50 shadow-sm animate-in fade-in zoom-in duration-500 delay-100">
+                        نسخة تجريبية
+                    </div>
+
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
@@ -281,6 +289,7 @@ export default function Settings({
                         <X size={24} className="text-gray-600 dark:text-gray-400" />
                     </button>
                 </div>
+
 
                 {/* Scrollable Content wrapper */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-8 min-h-0">
@@ -725,12 +734,25 @@ export default function Settings({
 
                 {/* Footer - Always visible and pinned to bottom */}
                 <div className="p-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex gap-3 justify-end items-center shrink-0 z-10 backdrop-blur-sm">
+                    {/* Feedback Button - First */}
+                    <button
+                        onClick={() => {
+                            onClose();
+                            openFeedback('settings_notes');
+                        }}
+                        className="flex-1 mx-2 flex items-center justify-center gap-2 px-4 py-2.5 border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all font-medium text-sm active:scale-95"
+                    >
+                        <MessageSquare size={18} />
+                        <span>ملاحظات</span>
+                    </button>
+
                     <button
                         onClick={onClose}
                         className="px-5 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-800 transition-all font-medium text-sm active:scale-95"
                     >
                         {t.cancel}
                     </button>
+
                     <button
                         onClick={handleSave}
                         className="px-8 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-lg shadow-amber-600/20 transition-all font-bold text-sm active:scale-95"
@@ -750,7 +772,7 @@ export default function Settings({
                 currentLanguage={currentLanguage}
                 memorizationRatings={memorizationRatings}
             />
-        </div>
+        </div >
 
     );
 }
