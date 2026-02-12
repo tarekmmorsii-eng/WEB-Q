@@ -484,7 +484,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                                     {result.isSurahResult
                                                         ? result.surahName
                                                         : result.ayahNumber === 0
-                                                            ? `${result.surahName} - ${t.basmallah || (language === 'ar' ? 'البسملة' : 'Basmalah')}`
+                                                            ? `${result.surahName} - ${t.basmallah}`
                                                             : `${result.surahName} - ${t.verse} ${formatNum(result.ayahNumber)}`
                                                     }
                                                 </div>
@@ -502,7 +502,9 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                             {/* For Surah Result, maybe show some metadata or just the highlight if matched */}
                                             {result.isSurahResult && (
                                                 <div className="text-right text-amber-800/70 dark:text-amber-200/50 text-sm">
-                                                    {t.surah} رقم {formatNum((result as any).surahNumber)}
+                                                    <span className="bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-700/50">
+                                                        {t.surah} {formatNum((result as any).surahNumber)}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>

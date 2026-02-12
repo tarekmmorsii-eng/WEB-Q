@@ -17,6 +17,7 @@ import { JUZ_SECTIONS } from '../constants';
 import { translations, Language } from '../i18n/translations';
 import { getMushafData, saveMushafData } from '../utils/db';
 import { findMutashabihatForAyah, findAllMutashabihatForAyah } from '../utils/mutashabihatProcessor';
+import { formatNumber } from '../utils/quranUtils';
 
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
@@ -86,7 +87,7 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({
     mutashabihatType = 'none', onMutashabihatClick
 }) => {
     // ... (rest of the component logic)
-    const arabicNumber = language === 'ar' ? ayahNumber.toLocaleString('ar-EG') : ayahNumber.toString();
+    const arabicNumber = formatNumber(ayahNumber, language);
     const digitCount = ayahNumber.toString().length;
 
     const ratingColors = {
@@ -1071,7 +1072,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                         const sIndex = currentSurahNum - 1;
                         const surahName = t.surahNames[sIndex] || '...';
                         const surahDisplay = language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`;
-                        const pageNumDisplay = language === 'ar' ? pageNumber.toLocaleString('ar-EG') : pageNumber.toString();
+                        const pageNumDisplay = formatNumber(pageNumber, language);
 
                         return (
                             <>
@@ -1084,9 +1085,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                         const div = PAGE_DIVISIONS[pageNumber];
                                         if (!div) return null;
 
-                                        const juzNum = language === 'ar' ? div.juz.toLocaleString('ar-EG') : div.juz.toString();
-                                        const hizbNum = language === 'ar' ? Math.ceil(div.hizbQuarter / 4).toLocaleString('ar-EG') : Math.ceil(div.hizbQuarter / 4).toString();
-                                        const rubNum = language === 'ar' ? (((div.hizbQuarter - 1) % 4) + 1).toLocaleString('ar-EG') : (((div.hizbQuarter - 1) % 4) + 1).toString();
+                                        const juzNum = formatNumber(div.juz, language);
+                                        const hizbNum = formatNumber(Math.ceil(div.hizbQuarter / 4), language);
+                                        const rubNum = formatNumber((((div.hizbQuarter - 1) % 4) + 1), language);
 
                                         return (
                                             <div className="flex items-center gap-2 text-[0.75rem] md:text-[0.85rem] whitespace-nowrap">
@@ -1372,7 +1373,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     const sIndex = currentSurahNum - 1;
                     const surahName = t.surahNames[sIndex] || '...';
                     const surahDisplay = language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`;
-                    const pageNumDisplay = language === 'ar' ? pageNumber.toLocaleString('ar-EG') : pageNumber.toString();
+                    const pageNumDisplay = formatNumber(pageNumber, language);
 
                     return (
                         <>
@@ -1385,9 +1386,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                     const div = PAGE_DIVISIONS[pageNumber];
                                     if (!div) return null;
 
-                                    const juzNum = language === 'ar' ? div.juz.toLocaleString('ar-EG') : div.juz.toString();
-                                    const hizbNum = language === 'ar' ? Math.ceil(div.hizbQuarter / 4).toLocaleString('ar-EG') : Math.ceil(div.hizbQuarter / 4).toString();
-                                    const rubNum = language === 'ar' ? (((div.hizbQuarter - 1) % 4) + 1).toLocaleString('ar-EG') : (((div.hizbQuarter - 1) % 4) + 1).toString();
+                                    const juzNum = formatNumber(div.juz, language);
+                                    const hizbNum = formatNumber(Math.ceil(div.hizbQuarter / 4), language);
+                                    const rubNum = formatNumber((((div.hizbQuarter - 1) % 4) + 1), language);
 
                                     return (
                                         <div className="flex items-center gap-2 text-[0.75rem] md:text-[0.85rem] whitespace-nowrap">

@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { AppSettings, BottomBarSettings } from '../types';
 import { THEMES, Theme } from '../constants/themes';
 import { translations, LANGUAGE_NAMES, Language } from '../i18n/translations';
-import { loadQPCV1Data, SURAH_NAMES } from './QPCV1PageRenderer';
+import { loadQPCV1Data } from './QPCV1PageRenderer';
 import HelpModal from './HelpModal';
 import VerseCalculatorModal from './VerseCalculatorModal';
 
@@ -172,7 +172,8 @@ export default function Settings({
                                 const word = line.words[w];
                                 // الشرط: الكلمة تملك رقم سورة ورقم آية
                                 if (word.surah && word.ayah) {
-                                    lastSurahName = SURAH_NAMES[word.surah] || "";
+                                    const t = translations[currentLanguage] || translations.ar;
+                                    lastSurahName = t.surahNames[word.surah - 1] || "";
                                     lastAyahNumber = word.ayah;
                                     break;
                                 }
@@ -248,8 +249,8 @@ export default function Settings({
         { icon: Search, label: t.search, onClick: onOpenSearch },
         { icon: BarChart3, label: t.memorizationStats, onClick: onOpenMemorization },
         { icon: Bell, label: t.notifications, onClick: onOpenNotifications },
-        { icon: FileWarning, label: currentLanguage === 'ar' ? 'المتشابهات' : 'Similar Verses', onClick: onOpenMutashabihat },
-        { icon: Calculator, label: currentLanguage === 'ar' ? 'حساب الآيات' : 'Verse Calc', onClick: () => setShowVerseCalculator(true), keepOpen: true },
+        { icon: FileWarning, label: t.similarVersesAlert, onClick: onOpenMutashabihat },
+        { icon: Calculator, label: t.verseCalculatorTitle, onClick: () => setShowVerseCalculator(true), keepOpen: true },
     ];
 
 
@@ -279,7 +280,7 @@ export default function Settings({
 
                     {/* Middle: Trial Version Label */}
                     <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] px-3 py-1 rounded-full border border-amber-200 dark:border-amber-700/50 shadow-sm animate-in fade-in zoom-in duration-500 delay-100">
-                        نسخة تجريبية
+                        {currentLanguage === 'ar' ? 'نسخة تجريبية' : 'Beta Version'}
                     </div>
 
                     <button
@@ -479,10 +480,10 @@ export default function Settings({
                                     <div className="flex items-center gap-4">
                                         <div className="flex flex-col">
                                             <span className="text-gray-900 dark:text-white font-medium">
-                                                {currentLanguage === 'ar' ? 'إظهار علامات المتشابهات' : 'Show Mutashabihat Indicators'}
+                                                {currentLanguage === 'ar' ? t.showSimilarVersesIndicators : 'Show Mutashabihat Indicators'}
                                             </span>
                                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                {currentLanguage === 'ar' ? 'الخطوط الملونة تحت أرقام الآيات' : 'Colored lines under ayah numbers'}
+                                                {currentLanguage === 'ar' ? t.similarVersesIndicatorsDesc : 'Colored lines under ayah numbers'}
                                             </span>
                                         </div>
 
@@ -653,48 +654,6 @@ export default function Settings({
                                 </div>
                             </section>
 
-                            {/* Contact Section */}
-                            <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <Mail size={20} />
-                                    {t.contact || 'للتواصل'}
-                                </h3>
-                                <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center gap-2 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                                    <a
-                                        href="mailto:Tarek.morsii@gmail.com"
-                                        className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted underline-offset-4"
-                                    >
-                                        Tarek.morsii@gmail.com
-                                    </a>
-                                </div>
-                            </section>
-
-                            {/* Developer Tools */}
-                            <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <FileSpreadsheet size={20} />
-                                    {t.developerTools}
-                                </h3>
-                                <button
-                                    onClick={handleExportReviewData}
-                                    disabled={isExporting}
-                                    className="w-full flex items-center justify-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-                                >
-                                    {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
-                                    <span>{t.exportReviewData}</span>
-                                </button>
-
-                                {/* Clear All Data Button */}
-                                <button
-                                    onClick={handleClearAllData}
-                                    className="w-full flex items-center justify-center gap-2 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors mt-3"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                    </svg>
-                                    <span>{t.clearAllData}</span>
-                                </button>
-                            </section>
 
                             {/* Help Section */}
                             <section>
@@ -743,7 +702,7 @@ export default function Settings({
                         className="flex-1 mx-2 flex items-center justify-center gap-2 px-4 py-2.5 border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all font-medium text-sm active:scale-95"
                     >
                         <MessageSquare size={18} />
-                        <span>ملاحظات</span>
+                        <span>{t.feedback}</span>
                     </button>
 
                     <button
@@ -762,7 +721,7 @@ export default function Settings({
                 </div>
             </div>
 
-            <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
+            <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} language={currentLanguage} />
             <VerseCalculatorModal
                 isOpen={showVerseCalculator}
                 onClose={() => {

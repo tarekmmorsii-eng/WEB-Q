@@ -163,6 +163,7 @@ export interface Translations {
     surahPrefix: string;
     pageNotAvailable: string;
     fontNotLoaded: string;
+    offlineLoadNotice: string;
     moreSettings: string;
     hideDetailedSettings: string;
     pageNavigation: string;
@@ -224,6 +225,126 @@ export interface Translations {
     prayerModeTitle: string;
     tinyUpdate: string;
     basmallah: string;
+
+    // Mutashabihat
+    similarVersesAlert: string;
+    similarVersesDescription: string;
+    sourceVerse: string;
+    openInIndex: string;
+    goToVerse: string;
+    all: string;
+    insideSurah: string;
+    outsideSurah: string;
+    similarVersesLabel: string;
+    noMatchingVerses: string;
+    reportError: string;
+    report: string;
+    addSimilarAyah: string;
+
+    // Verse Calculator
+    verseCalculatorTitle: string;
+    startPoint: string;
+    endPoint: string;
+    calculate: string;
+    verseCount: string;
+    invalidRange: string;
+    modeRange: string;
+    modeStructure: string;
+    selectStructure: string;
+    juzType: string;
+    hizbType: string;
+    rubType: string;
+    strong: string;
+
+    // Surah Rating
+    rateSurah: string;
+    rateRange: string;
+    fromAyah: string;
+    toAyah: string;
+    applyRating: string;
+    pleaseSelectRating: string;
+    ayahNumberBetween: string;
+    startMustBeLess: string;
+
+    // Help Slides
+    helpSlide1Title: string;
+    helpSlide1Desc: string;
+    helpSlide2Title: string;
+    helpSlide2Desc: string;
+    helpSlide3Title: string;
+    helpSlide3Desc: string;
+    helpSlide4Title: string;
+    helpSlide4Desc: string;
+
+    showSimilarVersesIndicators: string;
+    similarVersesIndicatorsDesc: string;
+
+    // Feedback
+    feedback: string;
+    sendFeedback: string;
+    feedbackInterfaceNotes: string;
+    feedbackSettingsNotes: string;
+    feedbackBugTech: string;
+    feedbackSuggestion: string;
+    feedbackSentSuccessfully: string;
+    feedbackThanks: string;
+    feedbackTargetItem: string;
+    feedbackSelectTarget: string;
+    feedbackTargetSetting: string;
+    feedbackSelectSetting: string;
+    feedbackDetails: string;
+    feedbackPlaceholder: string;
+    feedbackSending: string;
+    feedbackAttachedData: string;
+    feedbackErrorSending: string;
+
+    // Mutashabihat Index
+    mutashabihatIndex: string;
+    searchMutashabihatPlaceholder: string;
+    mutashabihatLocations: string;
+    loadingTexts: string;
+    insideSurahTitle: string;
+    noInternalMutashabihat: string;
+    showMoreInternal: string;
+    outsideSurahTitle: string;
+    allSurahs: string;
+    noExternalMutashabihat: string;
+    showMoreExternal: string;
+    ayahWithPositions: string;
+    goAction: string;
+    similarBadge: string;
+    allPositions: string;
+    matchedCount: string;
+    startRuleDesc: string;
+    endRuleDesc: string;
+    middleRuleDesc: string;
+    addInternalMutashabiha: string;
+    addExternalMutashabiha: string;
+    mutashabihatContextTip: string;
+    searchSurah: string;
+    ayahNumber: string;
+    ayahRangeError: string;
+    add: string;
+
+    // Notification Manager additions
+    notificationCategory: string;
+    notificationSurahName: string;
+    notificationJuzHizb: string;
+    notificationPageNumber: string;
+    notificationSelectSurah: string;
+    pageNumbersRange: string;
+    ayahNumbersRange: string;
+    startPagePlaceholder: string;
+    invalidRangeError: string;
+    fromPage: string;
+    toPage: string;
+    notificationAlert: string;
+    notificationNameLabel: string;
+    juzHizbRub: string;
+    maxPageLabel: string;
+    addNotificationAction: string;
+    saveChangesAction: string;
+
     surahNames: string[];
 }
 
@@ -374,6 +495,7 @@ const en: Translations = {
     surahPrefix: 'Surah',
     pageNotAvailable: 'Page not available',
     fontNotLoaded: 'The font for page {page} was not loaded, and there is no internet connection.',
+    offlineLoadNotice: 'Please connect to the internet once to load the page.',
     moreSettings: 'More Settings',
     hideDetailedSettings: 'Hide Detailed Settings',
     pageNavigation: 'Navigation Buttons',
@@ -435,6 +557,126 @@ const en: Translations = {
     prayerModeTitle: 'Prayer Mode - Tap to reveal next word',
     tinyUpdate: 'Update',
     basmallah: 'Basmallah',
+
+    // Mutashabihat
+    similarVersesAlert: 'Similar Verses Alert',
+    similarVersesDescription: 'This verse has similar verses, be careful not to confuse them while memorizing',
+    sourceVerse: 'Source Verse',
+    openInIndex: 'Open in Index',
+    goToVerse: 'Go to Verse →',
+    all: 'All',
+    insideSurah: 'Inside Surah',
+    outsideSurah: 'Outside Surah',
+    similarVersesLabel: 'Similar Verses:',
+    noMatchingVerses: 'No matching verses found',
+    reportError: 'Report Error',
+    report: 'Report',
+    addSimilarAyah: 'Add Similar Ayah',
+
+    // Verse Calculator
+    verseCalculatorTitle: 'Verse Calculator',
+    startPoint: 'Start Point',
+    endPoint: 'End Point',
+    calculate: 'Calculate',
+    verseCount: 'Verse Count:',
+    invalidRange: 'Invalid Range',
+    modeRange: 'Custom Range',
+    modeStructure: 'Quran Structure',
+    selectStructure: 'Select:',
+    juzType: 'Juz',
+    hizbType: 'Hizb',
+    rubType: 'Rub',
+    strong: 'Strong',
+
+    // Surah Rating
+    rateSurah: 'Rate Surah',
+    rateRange: 'Rate Range',
+    fromAyah: 'From Ayah',
+    toAyah: 'To Ayah',
+    applyRating: 'Apply Rating to Range',
+    pleaseSelectRating: 'Please select a rating',
+    ayahNumberBetween: 'Ayah number must be between 1 and {count}',
+    startMustBeLess: 'From must be less than or equal to To',
+
+    // Help Slides
+    helpSlide1Title: "Welcome to My Quran",
+    helpSlide1Desc: "Your comprehensive tool for memorizing and reviewing the Holy Quran with modern interactive features.",
+    helpSlide2Title: "Interact with Verses & Words",
+    helpSlide2Desc: "Tap any word to hide it and test your memory. You can hide random verses or use Prayer Mode for recitation.",
+    helpSlide3Title: "Complete Customization",
+    helpSlide3Desc: "Control font size, colors, brightness, and daily reading notifications from settings to suit your needs.",
+    helpSlide4Title: "Ready to Start?",
+    helpSlide4Desc: "Explore more features yourself. We are here to help you in your journey with the Holy Quran.",
+
+    showSimilarVersesIndicators: 'Show Mutashabihat Indicators',
+    similarVersesIndicatorsDesc: 'Colored lines under ayah numbers',
+
+    // Feedback
+    feedback: 'Feedback',
+    sendFeedback: 'Send Feedback',
+    feedbackInterfaceNotes: 'Interface Notes',
+    feedbackSettingsNotes: 'Settings Notes',
+    feedbackBugTech: 'Technical Bug',
+    feedbackSuggestion: 'Suggestion / Improvement',
+    feedbackSentSuccessfully: 'Sent Successfully!',
+    feedbackThanks: 'Thank you for your contribution to improving the app.',
+    feedbackTargetItem: 'What is the item that has notes?',
+    feedbackSelectTarget: 'Select item...',
+    feedbackTargetSetting: 'What is the setting causing the problem?',
+    feedbackSelectSetting: 'Select setting...',
+    feedbackDetails: 'Feedback Details',
+    feedbackPlaceholder: 'Explain the problem or suggestion in detail...',
+    feedbackSending: 'Sending...',
+    feedbackAttachedData: 'Attached Data:',
+    feedbackErrorSending: 'An error occurred while sending the feedback. Please try again.',
+
+    // Mutashabihat Index
+    mutashabihatIndex: 'Mutashabihat Index',
+    searchMutashabihatPlaceholder: 'Search in Surah or Mutashabihat...',
+    mutashabihatLocations: '{count} Mutashabihat locations',
+    loadingTexts: 'Loading texts...',
+    insideSurahTitle: 'Mutashabihat inside Surah {surah}',
+    noInternalMutashabihat: 'No internal mutashabihat recorded',
+    showMoreInternal: 'Show more internal mutashabihat (+{count})',
+    outsideSurahTitle: 'Mutashabihat with other Surahs',
+    allSurahs: 'All Surahs',
+    noExternalMutashabihat: 'No external mutashabihat recorded',
+    showMoreExternal: 'Show more external mutashabihat (+{count})',
+    ayahWithPositions: 'Ayah {number} [{count} positions]',
+    goAction: 'Go',
+    similarBadge: 'Similar',
+    allPositions: 'positions',
+    matchedCount: 'matches',
+    startRuleDesc: 'Green indicates similarity at the beginning of ayahs',
+    endRuleDesc: 'Red indicates similarity at the end of ayahs',
+    middleRuleDesc: 'Blue indicates similarity in the middle of ayahs',
+    addInternalMutashabiha: 'Add internal mutashabiha',
+    addExternalMutashabiha: 'Add external mutashabiha',
+    mutashabihatContextTip: 'Long press hidden word to reveal sequence up to next stop sign.',
+    searchSurah: 'Search surah...',
+    ayahNumber: 'Ayah Number',
+    ayahRangeError: 'Ayah must be between 1 and {max}',
+    add: 'Add',
+
+    // Notification Manager Additions
+    notificationCategory: 'Notification Type',
+    notificationSurahName: 'Surah Name',
+    notificationJuzHizb: 'Juz & Hizb',
+    notificationPageNumber: 'Page Number',
+    notificationSelectSurah: 'Select Surah',
+    pageNumbersRange: 'Page Numbers (from - to)',
+    ayahNumbersRange: 'Ayah Numbers (from - to)',
+    startPagePlaceholder: 'Start',
+    invalidRangeError: 'Invalid',
+    fromPage: 'From Page',
+    toPage: 'To Page',
+    notificationAlert: 'Alert',
+    notificationNameLabel: 'Notification Name',
+    juzHizbRub: 'Juz / Hizb / Quarter',
+    maxPageLabel: 'Page Numbers (604 max)',
+    addNotificationAction: 'Add Notification',
+    saveChangesAction: 'Save Changes',
+
     surahNames: [
         'Al-Fatihah', 'Al-Baqarah', 'Ali \'Imran', 'An-Nisa\'', 'Al-Ma\'idah', 'Al-An\'am', 'Al-A\'raf', 'Al-Anfal', 'At-Tawbah', 'Yunus',
         'Hud', 'Yusuf', 'Ar-Ra\'d', 'Ibrahim', 'Al-Hijr', 'An-Nahl', 'Al-Isra\'', 'Al-Kahf', 'Maryam', 'Ta-Ha',
@@ -599,6 +841,7 @@ export const translations: Record<Language, Translations> = {
         surahPrefix: 'سورة',
         pageNotAvailable: 'الصفحة غير متوفرة',
         fontNotLoaded: 'لم يتم تحميل خط صفحة {page} مسبقاً، ولا يوجد اتصال بالإنترنت حالياً.',
+        offlineLoadNotice: 'يرجى الاتصال بالإنترنت لمرة واحدة لتحميل الصفحة.',
         moreSettings: 'المزيد من الإعدادات',
         hideDetailedSettings: 'إخفاء باقي الإعدادات',
         pageNavigation: 'أزرار التصفح',
@@ -660,6 +903,124 @@ export const translations: Record<Language, Translations> = {
         confirmYes: 'نعم، امسح الكل',
         cancelMode: 'إلغاء الوضع',
         prayerModeTitle: 'وضع الصلاة - اضغط لكشف الكلمة التالية',
+
+        // Mutashabihat
+        similarVersesAlert: 'تنبيه: متشابهات',
+        similarVersesDescription: 'هذه الآية لها آيات متشابهة معها، احذر من الخلط بينها عند الحفظ',
+        sourceVerse: 'الآية المصدر',
+        openInIndex: 'فتح في الفهرس',
+        goToVerse: 'الذهاب للآية →',
+        all: 'الكل',
+        insideSurah: 'داخل السورة',
+        outsideSurah: 'خارج السورة',
+        similarVersesLabel: 'الآيات المتشابهة:',
+        noMatchingVerses: 'لا توجد آيات مطابقة لهذا التصنيف',
+        reportError: 'الإبلاغ عن خطأ',
+        report: 'إبلاغ',
+        addSimilarAyah: 'إضافة آية متشابهة',
+        searchSurah: 'بحث عن سورة...',
+        ayahNumber: 'رقم الآية',
+        ayahRangeError: 'رقم الآية يجب أن يكون بين ١ و {max}',
+        add: 'إضافة',
+
+        // Feedback
+        feedback: 'ملاحظات',
+        sendFeedback: 'إرسال ملاحظة',
+        feedbackInterfaceNotes: 'ملاحظات في الواجهة',
+        feedbackSettingsNotes: 'ملاحظات في الإعدادات',
+        feedbackBugTech: 'مشكلة تقنية',
+        feedbackSuggestion: 'اقتراح / تحسين',
+        feedbackSentSuccessfully: 'تم الإرسال بنجاح!',
+        feedbackThanks: 'شكرًا لمساهمتك في تحسين التطبيق.',
+        feedbackTargetItem: 'ما هو العنصر الذي عليه ملاحظة؟',
+        feedbackSelectTarget: 'اختر العنصر...',
+        feedbackTargetSetting: 'ما هو الإعداد الذي فيه المشكلة؟',
+        feedbackSelectSetting: 'اختر الإعداد...',
+        feedbackDetails: 'تفاصيل الملاحظة',
+        feedbackPlaceholder: 'اشرح المشكلة أو الاقتراح بالتفصيل...',
+        feedbackSending: 'جاري الإرسال...',
+        feedbackAttachedData: 'بيانات مرفقة:',
+        feedbackErrorSending: 'حدث خطأ أثناء إرسال الملاحظة. يرجى المحاولة مرة أخرى.',
+
+        // Mutashabihat Index
+        mutashabihatIndex: 'فهرس المتشابهات',
+        searchMutashabihatPlaceholder: 'بحث في السورة أو المتشابهات...',
+        mutashabihatLocations: '{count} موضع للمتشابهات',
+        loadingTexts: 'جاري تحميل النصوص...',
+        insideSurahTitle: 'متشابهات داخل سورة {surah}',
+        noInternalMutashabihat: 'لا توجد متشابهات داخلية مسجلة',
+        showMoreInternal: 'إظهار المزيد من المتشابهات الداخلية (+{count})',
+        outsideSurahTitle: 'متشابهات مع سور أخرى',
+        allSurahs: 'كل السور',
+        noExternalMutashabihat: 'لا توجد متشابهات خارجية مسجلة',
+        showMoreExternal: 'إظهار المزيد من المتشابهات الخارجية (+{count})',
+        ayahWithPositions: 'آية {number} [{count} مواضع]',
+        goAction: 'اذهب',
+        similarBadge: 'متشابهة',
+        allPositions: 'مواضع',
+        matchedCount: 'نتيجة',
+        startRuleDesc: 'اللون الأخضر للمتشابه في بداية الآيات',
+        endRuleDesc: 'اللون الأحمر للمتشابه في نهاية الآيات',
+        middleRuleDesc: 'اللون الأزرق للمتشابه في وسط الآيات',
+        addInternalMutashabiha: 'إضافة متشابهة داخل السورة',
+        addExternalMutashabiha: 'إضافة متشابهة من خارج السورة',
+        mutashabihatContextTip: 'اضغط طويلاً على الكلمة المخفية لإظهار السياق حتى علامة الوقف التالية.',
+
+        // Notification Manager Additions
+        notificationCategory: 'نوع الإشعار',
+        notificationSurahName: 'اسم السورة',
+        notificationJuzHizb: 'الجزء والحزب',
+        notificationPageNumber: 'رقم الصفحة',
+        notificationSelectSurah: 'اختر السورة',
+        pageNumbersRange: 'أرقام الصفحات (من - إلى)',
+        ayahNumbersRange: 'أرقام الآيات (من - إلى)',
+        startPagePlaceholder: 'البداية',
+        invalidRangeError: 'غير صحيح',
+        fromPage: 'من صفحة',
+        toPage: 'إلى صفحة',
+        notificationAlert: 'تنبيه',
+        notificationNameLabel: 'اسم التنبيه',
+        juzHizbRub: 'الجزء / الحزب / الربع',
+        maxPageLabel: 'أرقام الصفحات (٦٠٤ صفحة كحد أقصى)',
+        addNotificationAction: 'إضافة التنبيه',
+        saveChangesAction: 'حفظ التغييرات',
+
+        // Verse Calculator
+        verseCalculatorTitle: 'حاسبة الآيات',
+        startPoint: 'بداية النطاق',
+        endPoint: 'نهاية النطاق',
+        calculate: 'حساب',
+        verseCount: 'عدد الآيات:',
+        invalidRange: 'تأكد من تركيب النطاق الصحيح',
+        modeRange: 'نطاق حر',
+        modeStructure: 'أجزاء وأحزاب',
+        selectStructure: 'اختر:',
+        juzType: 'جزء',
+        hizbType: 'حزب',
+        rubType: 'ربع',
+        strong: 'ممتاز',
+
+        // Surah Rating
+        rateSurah: 'تقييم السورة',
+        rateRange: 'تقييم نطاق',
+        fromAyah: 'من آية',
+        toAyah: 'إلى آية',
+        applyRating: 'تطبيق التقييم على النطاق',
+        pleaseSelectRating: 'يرجى اختيار تقييم',
+        ayahNumberBetween: 'رقم الآية يجب أن يكون بين 1 و {count}',
+        startMustBeLess: 'رقم البداية يجب أن يكون أقل من أو يساوي رقم النهاية',
+
+        // Help Slides
+        helpSlide1Title: "مرحباً بك في مصحفي (My Quran)",
+        helpSlide1Desc: "تطبيقك الشامل لحفظ ومراجعة القرآن الكريم بمميزات تفاعلية حديثة وتصميم مريح للعين.",
+        helpSlide2Title: "تفاعل مع الآيات والكلمات",
+        helpSlide2Desc: "اضغط على أي كلمة لإخفائها واختبار حفظك. يمكنك إخفاء الآيات عشوائياً أو استخدام وضع الصلاة للتسميع.",
+        helpSlide3Title: "تخصيص كامل",
+        helpSlide3Desc: "تحكم في حجم الخط، الألوان، الإضاءة، وإشعارات الورد اليومي من الإعدادات لتناسب احتياجاتك.",
+        helpSlide4Title: "جاهز للبدء؟",
+        helpSlide4Desc: "استكشف المزيد من المميزات بنفسك. نحن هنا لمساعدتك في رحلتك مع القرآن الكريم.",
+        showSimilarVersesIndicators: 'إظهار علامات المتشابھات',
+        similarVersesIndicatorsDesc: 'الخطوط الملونة تحت أرقام الآيات',
         surahNames: [
             'الفاتحة', 'البقرة', 'آل عمران', 'النساء', 'المائدة', 'الأنعام', 'الأعراف', 'الأنفال', 'التوبة', 'يونس',
             'هود', 'يوسف', 'الرعد', 'إبراهيم', 'الحجر', 'النحل', 'الإسراء', 'الكهف', 'مريم', 'طه',
@@ -812,6 +1173,7 @@ export const translations: Record<Language, Translations> = {
         help: 'Bantuan',
         howToUse: 'Cara Menggunakan',
         surahPrefix: 'Surah',
+        offlineLoadNotice: 'Please connect to the internet once to load the page.',
     },
     ms: {
         ...en,
@@ -947,6 +1309,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Rub',
         dataError: 'Ralat memuatkan data',
         surahPrefix: 'Surah',
+        offlineLoadNotice: 'Please connect to the internet once to load the page.',
     },
     ur: {
         ...en,
@@ -1072,6 +1435,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'ربع',
         dataError: 'ڈیٹا لوڈ کرنے میں خرابی',
         surahPrefix: 'سورۃ',
+        offlineLoadNotice: 'انٹرنیٹ سے ایک بار منسلک ہو کر صفحہ لوڈ کریں۔',
     },
     bn: {
         ...en,
@@ -1197,6 +1561,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'রুব',
         dataError: 'ডেটা লোড করতে ত্রুটি',
         surahPrefix: 'সূরা',
+        offlineLoadNotice: 'পেজটি লোড করার জন্য দয়া করে একবার ইন্টারনেটে সংযুক্ত হন।',
     },
     tr: {
         ...en,
@@ -1322,6 +1687,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Rub',
         dataError: 'Veri yükleme hatası',
         surahPrefix: 'Sure',
+        offlineLoadNotice: 'Sayfayı yüklemek için lütfen bir kez internete bağlanın.',
     },
     fa: {
         ...en,
@@ -1448,6 +1814,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'ربع',
         dataError: 'خطا در بارگذاری داده‌ها',
         surahPrefix: 'سوره',
+        offlineLoadNotice: 'لطفاً برای بارگذاری صفحه یک بار به اینترنت متصل شوید.',
     },
     // Adding remaining languages with English fallback for now
     ha: {
@@ -1575,6 +1942,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Rub',
         dataError: 'Kuskure wajen loda bayanai',
         surahPrefix: 'Surah',
+        offlineLoadNotice: 'Please connect to the internet once to load the page.',
     },
     fr: {
         ...en,
@@ -1701,6 +2069,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Rub',
         dataError: 'Erreur lors du chargement des données',
         surahPrefix: 'Sourate',
+        offlineLoadNotice: 'Veuillez vous connecter à Internet une fois pour charger la page.',
     },
     es: {
         ...en,
@@ -1710,6 +2079,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Cuarta',
         dataError: 'Error al cargar los datos',
         surahPrefix: 'Sura',
+        offlineLoadNotice: 'Please connect to the internet once to load the page.',
     },
     de: {
         ...en,
@@ -1719,6 +2089,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Viertel',
         dataError: 'Fehler beim Laden der Daten',
         surahPrefix: 'Sure',
+        offlineLoadNotice: 'Sayfayı yüklemek için lütfen bir kez internete bağlanın.',
     },
     ru: {
         ...en,
@@ -1737,6 +2108,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Rubu',
         dataError: 'Hitilafu ya kupakia data',
         surahPrefix: 'Surah',
+        offlineLoadNotice: 'Please connect to the internet once to load the page.',
     },
     zh: {
         ...en,
@@ -1863,6 +2235,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'Rub',
         dataError: '数据加载错误',
         surahPrefix: '章',
+        offlineLoadNotice: '请连接网络以加载页面。',
     },
     ko: {
         ...en,

@@ -58,19 +58,19 @@ export default function SurahRatingModal({
     const handleApplyRangeRating = () => {
         // Validation
         if (!rangeRating) {
-            setErrorMessage(isArabic ? 'يرجى اختيار تقييم' : 'Please select a rating');
+            setErrorMessage(t.pleaseSelectRating);
             return;
         }
         if (fromAyah < 1 || fromAyah > ayahCount) {
-            setErrorMessage(isArabic ? `رقم الآية يجب أن يكون بين 1 و ${ayahCount}` : `Ayah number must be between 1 and ${ayahCount}`);
+            setErrorMessage(t.ayahNumberBetween.replace('{count}', ayahCount.toString()));
             return;
         }
         if (toAyah < 1 || toAyah > ayahCount) {
-            setErrorMessage(isArabic ? `رقم الآية يجب أن يكون بين 1 و ${ayahCount}` : `Ayah number must be between 1 and ${ayahCount}`);
+            setErrorMessage(t.ayahNumberBetween.replace('{count}', ayahCount.toString()));
             return;
         }
         if (fromAyah > toAyah) {
-            setErrorMessage(isArabic ? 'رقم البداية يجب أن يكون أقل من أو يساوي رقم النهاية' : 'From must be less than or equal to To');
+            setErrorMessage(t.startMustBeLess);
             return;
         }
 
@@ -100,7 +100,7 @@ export default function SurahRatingModal({
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-                        {isArabic ? `تقييم سورة ${surahName}` : `Rate ${surahName}`}
+                        {t.rateSurah} {surahName}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">
                         {isArabic ? 'قيّم مستوى حفظك للسورة بالكامل' : 'Rate your memorization of the entire Surah'}
@@ -186,7 +186,7 @@ export default function SurahRatingModal({
                 {/* Ayah Range Rating Section */}
                 <div className="mb-6">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3 text-center">
-                        {isArabic ? 'تقييم نطاق من الآيات' : 'Rate Range of Ayahs'}
+                        {t.rateRange}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-xs mb-4 text-center">
                         {isArabic ? 'قيّم مجموعة من الآيات بنفس التقييم' : 'Rate multiple ayahs with the same rating'}
@@ -195,7 +195,7 @@ export default function SurahRatingModal({
                     {/* Input Fields */}
                     <div className="flex gap-3 mb-4 justify-center items-center">
                         <div className="flex flex-col items-center">
-                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1">{isArabic ? 'من آية' : 'From'}</label>
+                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1">{t.fromAyah}</label>
                             <input
                                 type="number"
                                 min="1"
@@ -208,7 +208,7 @@ export default function SurahRatingModal({
                         </div>
                         <span className="text-slate-400 mt-5">←</span>
                         <div className="flex flex-col items-center">
-                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1">{isArabic ? 'إلى آية' : 'To'}</label>
+                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1">{t.toAyah}</label>
                             <input
                                 type="number"
                                 min="1"
@@ -269,7 +269,7 @@ export default function SurahRatingModal({
                                 : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed"
                         )}
                     >
-                        {isArabic ? 'تطبيق التقييم' : 'Apply Rating'}
+                        {t.applyRating}
                     </button>
 
                     {/* Error Message */}

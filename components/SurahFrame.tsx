@@ -13,7 +13,7 @@ interface SurahFrameProps {
 const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onClick, currentRating, isUnified }) => {
     const isArabic = language === 'ar';
     const info = SURAHS.find(s => s.number === surahNumber);
-    const surahName = isArabic ? (info ? info.name : 'غير معروفة') : (t.surahNames[surahNumber - 1] || 'Unknown');
+    const surahName = t.surahNames[surahNumber - 1] || (info ? info.name : 'Unknown');
 
     // Determine rating color
     const getRatingColor = () => {
@@ -106,7 +106,7 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
                         }}
                         className="text-slate-800 dark:text-slate-200 text-[clamp(18px,6vw,28px)] sm:text-[clamp(28px,5vw,40px)] md:text-[50px] lg:text-[58px]"
                     >
-                        {isArabic ? `سُورَةُ ${surahName}` : `${surahName} ${t.surah}`}
+                        {language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`}
                     </span>
 
                     {/* Rating Indicator Circle - Left of name for Arabic */}

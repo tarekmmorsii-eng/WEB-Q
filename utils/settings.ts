@@ -14,11 +14,16 @@ export const DEFAULT_SETTINGS: AppSettings = {
         showDarkMode: true,
         showFontSize: false,
         showBookmark: true,
+        showPrayerMode: false,
+        showFullscreen: true,
+        showPageNavigation: false,
     },
     defaultFontSize: 'small',
     lineSpacing: 1.8,
     pageMargins: 0,
-    colorStopSigns: true
+    colorStopSigns: true,
+    prayerMode: false,
+    showMutashabihatIndicators: true
 };
 
 export const loadSettings = (): AppSettings => {

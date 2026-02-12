@@ -245,7 +245,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-amber-200 dark:border-slate-700">
-                    <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100">إدارة التنبيهات والإشعارات</h2>
+                    <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100">{t.notificationManagerTitle}</h2>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-amber-100 dark:hover:bg-slate-800 rounded-full transition-colors"
@@ -293,9 +293,9 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         {notification.category === 'surah' && notification.metadata ? (
                                                             <span className="block text-amber-700 dark:text-amber-300 mb-1">
                                                                 {notification.metadata.startAyah && notification.metadata.endAyah ?
-                                                                    `${isArabic ? 'من آية' : 'Ayah'} ${notification.metadata.startAyah} ${isArabic ? 'إلى آية' : 'to'} ${notification.metadata.endAyah}` : ''}
+                                                                    `${t.fromAyah} ${notification.metadata.startAyah} ${t.toAyah} ${notification.metadata.endAyah}` : ''}
                                                                 {notification.metadata.startPage && notification.metadata.endPage ?
-                                                                    ` (${isArabic ? 'صفحة' : 'Page'} ${notification.metadata.startPage} - ${notification.metadata.endPage})` : ''}
+                                                                    ` (${t.page} ${notification.metadata.startPage} - ${notification.metadata.endPage})` : ''}
                                                             </span>
                                                         ) : notification.category === 'page' && notification.metadata ? (
                                                             <span className="block text-amber-700 dark:text-amber-300 mb-1">
@@ -303,13 +303,13 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             </span>
                                                         ) : notification.category === 'quran_part' && notification.metadata ? (
                                                             <span className="block text-amber-700 dark:text-amber-300 mb-1">
-                                                                {notification.name.includes(isArabic ? 'جزء' : 'Juz') ? (
+                                                                {notification.name.includes(t.juz) ? (
                                                                     <>
-                                                                        {isArabic ? 'الحزب' : 'Hizb'} {notification.metadata.hizb}، {isArabic ? 'سورة' : 'Surah'} {JUZ_SECTIONS[(notification.metadata.hizb - 1) * 4].subtitle.split('،')[0]}
+                                                                        {t.hizb} {notification.metadata.hizb}، {t.surah} {t.surahNames[JUZ_SECTIONS[(notification.metadata.hizb - 1) * 4].surahNum - 1]}
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        {isArabic ? 'الجزء' : 'Juz'} {notification.metadata.juz}، {isArabic ? 'سورة' : 'Surah'} {SURAHS.find(s => s.number === JUZ_SECTIONS[(notification.metadata.juz - 1) * 8].surahNum)?.name}
+                                                                        {t.juz} {notification.metadata.juz}، {t.surah} {t.surahNames[JUZ_SECTIONS[(notification.metadata.juz - 1) * 8].surahNum - 1]}
                                                                     </>
                                                                 )}
                                                             </span>
@@ -388,7 +388,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             {/* Category Selection */}
                             <div className="bg-amber-50 dark:bg-slate-800/50 p-3 rounded-lg border border-amber-200 dark:border-slate-700">
                                 <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
-                                    نوع الإشعار
+                                    {t.notificationCategory}
                                 </label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     <button
@@ -400,7 +400,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
                                         )}
                                     >
-                                        تنبيه
+                                        {t.notificationAlert}
                                     </button>
                                     <button
                                         onClick={() => setFormCategory('surah')}
@@ -411,7 +411,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
                                         )}
                                     >
-                                        اسم السورة
+                                        {t.notificationSurahName}
                                     </button>
                                     <button
                                         onClick={() => setFormCategory('quran_part')}
@@ -422,7 +422,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
                                         )}
                                     >
-                                        الجزء والحزب
+                                        {t.notificationJuzHizb}
                                     </button>
                                     <button
                                         onClick={() => setFormCategory('page')}
@@ -433,7 +433,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
                                         )}
                                     >
-                                        رقم الصفحة
+                                        {t.notificationPageNumber}
                                     </button>
                                 </div>
                             </div>
@@ -443,7 +443,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 {formCategory === 'text' && (
                                     <div>
                                         <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
-                                            اسم التنبيه
+                                            {t.notificationNameLabel}
                                         </label>
                                         <input
                                             type="text"
@@ -459,7 +459,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
-                                                اختر السورة
+                                                {t.notificationSelectSurah}
                                             </label>
                                             <select
                                                 value={formSurahNumber}
@@ -469,8 +469,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     // Get Surah details
                                                     const surah = SURAHS.find(s => s.number === sNum);
                                                     if (surah) {
-                                                        const sName = isArabic ? surah.name : (t.surahNames ? t.surahNames[sNum - 1] : surah.name);
-                                                        setFormName(`${isArabic ? 'سورة' : ''} ${sName} ${!isArabic ? 'Surah' : ''}`);
+                                                        const sName = t.surahNames[sNum - 1];
+                                                        setFormName(`${t.surahPrefix} ${sName}`);
 
                                                         // Important: Update dependent fields immediately to avoid stale state in UI
                                                         setFormStartAyah(1);
@@ -488,7 +488,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             >
                                                 {SURAHS.map(surah => (
                                                     <option key={surah.number} value={surah.number}>
-                                                        {surah.number}. {surah.name}
+                                                        {surah.number}. {t.surahNames[surah.number - 1]}
                                                     </option>
                                                 ))}
                                             </select>
@@ -498,7 +498,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             {/* Page Range */}
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
-                                                    أرقام الصفحات (من - إلى)
+                                                    {t.pageNumbersRange}
                                                 </label>
                                                 <div className="flex items-center gap-2">
                                                     <input
@@ -567,7 +567,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         {formEndPage < formStartPage && (
                                                             <div className="absolute -bottom-5 left-0 right-0 text-center">
                                                                 <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
-                                                                    غير صحيح
+                                                                    {t.invalidRangeError}
                                                                 </span>
                                                             </div>
                                                         )}
@@ -578,7 +578,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             {/* Ayah Range */}
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
-                                                    أرقام الآيات (من - إلى)
+                                                    {t.ayahNumbersRange}
                                                 </label>
                                                 <div className="flex items-center gap-2">
                                                     <input
@@ -596,8 +596,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             // Auto-update name
                                                             const surah = SURAHS.find(s => s.number === formSurahNumber);
                                                             if (surah) {
-                                                                const sName = isArabic ? surah.name : (t.surahNames ? t.surahNames[surah.number - 1] : surah.name);
-                                                                setFormName(`${isArabic ? 'سورة' : ''} ${sName} (${val}-${formEndAyah})`);
+                                                                const sName = t.surahNames[surah.number - 1];
+                                                                setFormName(`${t.surahPrefix} ${sName} (${val}-${formEndAyah})`);
                                                             }
                                                         }}
                                                         onBlur={() => {
@@ -626,8 +626,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                                 // Auto-update name
                                                                 const surah = SURAHS.find(s => s.number === formSurahNumber);
                                                                 if (surah) {
-                                                                    const sName = isArabic ? surah.name : (t.surahNames ? t.surahNames[surah.number - 1] : surah.name);
-                                                                    setFormName(`${isArabic ? 'سورة' : ''} ${sName} (${formStartAyah}-${val})`);
+                                                                    const sName = t.surahNames[surah.number - 1];
+                                                                    setFormName(`${t.surahPrefix} ${sName} (${formStartAyah}-${val})`);
                                                                 }
                                                             }}
                                                             onBlur={() => {
@@ -646,7 +646,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         {formEndAyah < formStartAyah && (
                                                             <div className="absolute -bottom-5 left-0 right-0 text-center">
                                                                 <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
-                                                                    غير صحيح
+                                                                    {t.invalidRangeError}
                                                                 </span>
                                                             </div>
                                                         )}
@@ -660,11 +660,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 {formCategory === 'quran_part' && (
                                     <div>
                                         <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
-                                            الجزء / الحزب / الربع
+                                            {t.juzHizbRub}
                                         </label>
                                         <div className="grid grid-cols-3 gap-2">
                                             <div>
-                                                <label className="text-xs text-slate-500 mb-1 block">الجزء</label>
+                                                <label className="text-xs text-slate-500 mb-1 block">{t.juzType}</label>
                                                 <select
                                                     value={formJuz}
                                                     onChange={(e) => {
@@ -673,7 +673,6 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         // Sync Hizb and Rub
                                                         const newHizb = (val - 1) * 2 + 1;
                                                         const newRub = (newHizb - 1) * 4 + 1;
-                                                        setFormHizb(newHizb);
                                                         setFormHizb(newHizb);
                                                         setFormRub(newRub);
                                                         const sect = JUZ_SECTIONS[(val - 1) * 8];
@@ -691,11 +690,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     ))}
                                                 </select>
                                                 <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
-                                                    {isArabic ? JUZ_SECTIONS[(formJuz - 1) * 8]?.subtitle.split('،')[0] : JUZ_SECTIONS[(formJuz - 1) * 8]?.subtitle}
+                                                    {t.surahPrefix} {t.surahNames[JUZ_SECTIONS[(formJuz - 1) * 8]?.surahNum - 1]}
                                                 </span>
                                             </div>
                                             <div>
-                                                <label className="text-xs text-slate-500 mb-1 block">الحزب</label>
+                                                <label className="text-xs text-slate-500 mb-1 block">{t.hizbType}</label>
                                                 <select
                                                     value={formHizb}
                                                     onChange={(e) => {
@@ -708,7 +707,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         setFormRub(newRub);
                                                         const sect = JUZ_SECTIONS[(val - 1) * 4];
                                                         if (sect) {
-                                                            setFormName(`${t.hizb || 'الحزب'} ${val} (${sect.text})`);
+                                                            setFormName(`${t.hizb} ${val} - ${t.juz} ${newJuz} (${sect.text})`);
                                                             setFormSurahNumber(sect.surahNum || 1);
                                                             setFormStartAyah(sect.ayahNum || 1);
                                                             getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
@@ -725,7 +724,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 </span>
                                             </div>
                                             <div>
-                                                <label className="text-xs text-slate-500 mb-1 block">الربع</label>
+                                                <label className="text-xs text-slate-500 mb-1 block">{t.rubType}</label>
                                                 <select
                                                     value={(formRub - 1) % 4 + 1}
                                                     onChange={(e) => {
@@ -734,7 +733,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         setFormRub(absoluteRub);
                                                         const sect = JUZ_SECTIONS[absoluteRub - 1];
                                                         if (sect) {
-                                                            setFormName(`${t.rub || 'الربع'} ${valWithinHizb} - ${t.hizb || 'الحزب'} ${formHizb} (${sect.text})`);
+                                                            setFormName(`${t.rub} ${valWithinHizb} - ${t.hizb} ${formHizb} (${sect.text})`);
                                                             setFormSurahNumber(sect.surahNum || 1);
                                                             setFormStartAyah(sect.ayahNum || 1);
                                                             getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
@@ -757,11 +756,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 {formCategory === 'page' && (
                                     <div>
                                         <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
-                                            أرقام الصفحات (604 صفحة كحد أقصى)
+                                            {t.maxPageLabel}
                                         </label>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-xs text-slate-500 mb-1 block">من صفحة</label>
+                                                <label className="text-xs text-slate-500 mb-1 block">{t.fromPage}</label>
                                                 <input
                                                     type="number"
                                                     min="1"
@@ -783,11 +782,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         }
                                                     }}
                                                     className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                                    placeholder="البداية"
+                                                    placeholder={t.startPagePlaceholder}
                                                 />
                                             </div>
                                             <div className="relative">
-                                                <label className="text-xs text-slate-500 mb-1 block">إلى صفحة</label>
+                                                <label className="text-xs text-slate-500 mb-1 block">{t.toPage}</label>
                                                 <input
                                                     type="number"
                                                     min={formStartPage}
@@ -800,7 +799,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onBlur={() => {
                                                         const val = Math.min(604, Math.max(formStartPage, formEndPage || formStartPage));
                                                         setFormEndPage(val);
-                                                        setFormName(`من صفحة ${formStartPage} إلى ${val}`);
+                                                        setFormName(`${t.fromPage} ${formStartPage} ${t.toPage} ${val}`);
                                                     }}
                                                     className={clsx(
                                                         "w-full px-4 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500",
@@ -808,7 +807,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             ? "border-red-500 ring-1 ring-red-500"
                                                             : "border-amber-300 dark:border-slate-600"
                                                     )}
-                                                    placeholder="النهاية"
+                                                    placeholder={t.toPage}
                                                 />
                                                 {formEndPage < formStartPage && (
                                                     <div className="absolute -bottom-5 left-0 right-0 text-center">
@@ -1058,7 +1057,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                     disabled={!formName.trim() || formTimes.length === 0 || (formType === 'weekly' && formDays.length === 0)}
                                     className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg font-bold transition-colors disabled:cursor-not-allowed"
                                 >
-                                    {t.save}
+                                    {editingId ? t.saveChangesAction : t.addNotificationAction}
                                 </button>
                                 <button
                                     onClick={resetForm}

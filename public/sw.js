@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-01-31-V11-FIX'; // Forced update to fix blank pages
+const CACHE_VERSION = 'v2026-02-12-V12-REV'; // User requested forced update for latest edits
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 

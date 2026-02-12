@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import { X, Send, Bug, FileText, Smartphone, MessageSquare, Settings } from 'lucide-react';
 import clsx from 'clsx';
 import { useFeedback } from '../contexts/FeedbackContext';
+import { translations, Language } from '../i18n/translations';
 
-const FEEDBACK_TYPES = [
-    { id: 'interface_notes', label: 'ملاحظات في الواجهة', icon: Smartphone, color: 'text-purple-500 bg-purple-50' },
-    { id: 'settings_notes', label: 'ملاحظات في الإعدادات', icon: Settings, color: 'text-amber-500 bg-amber-50' },
-    { id: 'bug_tech', label: 'مشكلة تقنية', icon: Bug, color: 'text-blue-500 bg-blue-50' },
-    { id: 'suggestion', label: 'اقتراح / تحسين', icon: MessageSquare, color: 'text-green-500 bg-green-50' },
+const getFeedbackTypes = (t: any) => [
+    { id: 'interface_notes', label: t.feedbackInterfaceNotes, icon: Smartphone, color: 'text-purple-500 bg-purple-50' },
+    { id: 'settings_notes', label: t.feedbackSettingsNotes, icon: Settings, color: 'text-amber-500 bg-amber-50' },
+    { id: 'bug_tech', label: t.feedbackBugTech, icon: Bug, color: 'text-blue-500 bg-blue-50' },
+    { id: 'suggestion', label: t.feedbackSuggestion, icon: MessageSquare, color: 'text-green-500 bg-green-50' },
 ];
 
 const FeedbackModal = () => {
-    const { isOpen, closeFeedback, initialType, contextData } = useFeedback();
+    const { isOpen, closeFeedback, initialType, contextData, language } = useFeedback();
+    const t = translations[language as Language] || translations['ar'];
+    const FEEDBACK_TYPES = getFeedbackTypes(t);
     const [selectedType, setSelectedType] = useState(initialType);
     const [subType, setSubType] = useState(''); // Store selected sub-option value
     const [subTypeLabel, setSubTypeLabel] = useState(''); // Store selected sub-option label/text
@@ -72,7 +75,7 @@ const FeedbackModal = () => {
             }, 3000);
         } catch (error) {
             console.error('Feedback Error:', error);
-            alert('حدث خطأ أثناء إرسال الملاحظة. يرجى المحاولة مرة أخرى.');
+            alert(t.feedbackErrorSending);
             setIsSubmitting(false);
         }
     };
@@ -83,13 +86,13 @@ const FeedbackModal = () => {
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div
                 className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform scale-100 transition-all"
-                dir="rtl"
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
             >
                 {/* Header */}
                 <div className="bg-gradient-to-l from-amber-50 to-white dark:from-slate-800 dark:to-slate-900 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                         <MessageSquare size={20} className="text-amber-600" />
-                        إرسال ملاحظة
+                        {t.sendFeedback}
                     </h3>
                     <button onClick={closeFeedback} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500">
                         <X size={20} />
@@ -103,8 +106,8 @@ const FeedbackModal = () => {
                             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
                                 <Send size={32} />
                             </div>
-                            <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">تم الإرسال بنجاح!</h4>
-                            <p className="text-slate-500 dark:text-slate-400">شكرًا لمساهمتك في تحسين التطبيق.</p>
+                            <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">{t.feedbackSentSuccessfully}</h4>
+                            <p className="text-slate-500 dark:text-slate-400">{t.feedbackThanks}</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -138,7 +141,7 @@ const FeedbackModal = () => {
                             {selectedType === 'interface_notes' && (
                                 <div className="space-y-2 animate-in slide-in-from-top-4 duration-300">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        ما هو العنصر الذي عليه ملاحظة؟
+                                        {t.feedbackTargetItem}
                                     </label>
                                     <select
                                         className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -150,20 +153,20 @@ const FeedbackModal = () => {
                                             setSubTypeLabel(e.target.options[index].text);
                                         }}
                                     >
-                                        <option value="">اختر العنصر...</option>
-                                        <option value="زر الإظهار">1. زر الإظهار</option>
-                                        <option value="زر إخفاء الآيات">2. زر إخفاء الآيات</option>
-                                        <option value="زر إخفاء الآيات عشوائي">3. زر إخفاء الآيات عشوائي</option>
-                                        <option value="زر إخفاء الكلمات">4. زر إخفاء الكلمات</option>
-                                        <option value="زر إخفاء أول كلمة">5. زر إخفاء أول كلمة</option>
-                                        <option value="زر إخفاء آخر كلمة">6. زر إخفاء آخر كلمة</option>
-                                        <option value="القائمة السفلية">7. القائمة السفلية</option>
-                                        <option value="ملاحظة في آية">8. ملاحظة في آية</option>
-                                        <option value="عند النقر على رقم الآية">9. عند النقر على رقم الآية</option>
-                                        <option value="الخط">10. الخط</option>
-                                        <option value="اسم السورة">11. اسم السورة</option>
-                                        <option value="رقم الصفحة">12. رقم الصفحة</option>
-                                        <option value="أخرى">13. أخرى</option>
+                                        <option value="">{t.feedbackSelectTarget}</option>
+                                        <option value="Show Button">{language === 'ar' ? '1. زر الإظهار' : '1. Show Button'}</option>
+                                        <option value="Hide Ayahs">{language === 'ar' ? '2. زر إخفاء الآيات' : '2. Hide Ayahs'}</option>
+                                        <option value="Random Hide Ayahs">{language === 'ar' ? '3. زر إخفاء الآيات عشوائي' : '3. Random Hide Ayahs'}</option>
+                                        <option value="Hide Words">{language === 'ar' ? '4. زر إخفاء الكلمات' : '4. Hide Words'}</option>
+                                        <option value="Hide First Word">{language === 'ar' ? '5. زر إخفاء أول كلمة' : '5. Hide First Word'}</option>
+                                        <option value="Hide Last Word">{language === 'ar' ? '6. زر إخفاء آخر كلمة' : '6. Hide Last Word'}</option>
+                                        <option value="Bottom Bar">{language === 'ar' ? '7. القائمة السفلية' : '7. Bottom Bar'}</option>
+                                        <option value="Verse Note">{language === 'ar' ? '8. ملاحظة في آية' : '8. Verse Note'}</option>
+                                        <option value="Ayah Number Click">{language === 'ar' ? '9. عند النقر على رقم الآية' : '9. Ayah Number Click'}</option>
+                                        <option value="Font">{language === 'ar' ? '10. الخط' : '10. Font'}</option>
+                                        <option value="Surah Name">{language === 'ar' ? '11. اسم السورة' : '11. Surah Name'}</option>
+                                        <option value="Page Number">{language === 'ar' ? '12. رقم الصفحة' : '12. Page Number'}</option>
+                                        <option value="Other">{language === 'ar' ? '13. أخرى' : '13. Other'}</option>
                                     </select>
                                 </div>
                             )}
@@ -171,7 +174,7 @@ const FeedbackModal = () => {
                             {selectedType === 'settings_notes' && (
                                 <div className="space-y-2 animate-in slide-in-from-top-4 duration-300">
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        ما هو الإعداد الذي فيه المشكلة؟
+                                        {t.feedbackTargetSetting}
                                     </label>
                                     <select
                                         className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -182,26 +185,26 @@ const FeedbackModal = () => {
                                             setSubTypeLabel(e.target.options[index].text);
                                         }}
                                     >
-                                        <option value="">اختر الإعداد...</option>
-                                        <option value="الفهرس">1. الفهرس</option>
-                                        <option value="البحث">2. البحث</option>
-                                        <option value="قوة الحفظ">3. قوة الحفظ</option>
-                                        <option value="الإشعارات">4. الإشعارات</option>
-                                        <option value="فهرس المتشابهات">5. فهرس المتشابهات</option>
-                                        <option value="حساب الآيات">6. حساب الآيات</option>
-                                        <option value="الإضاءة (ليلي/نهاري)">7. الإضاءة (ليلي/نهاري)</option>
-                                        <option value="وضع الصلاة">8. وضع الصلاة</option>
-                                        <option value="المرجعية">9. المرجعية</option>
-                                        <option value="ملء الشاشة">10. ملء الشاشة</option>
-                                        <option value="اللغة">11. اللغة</option>
-                                        <option value="الألوان والسمات">12. الألوان والسمات</option>
-                                        <option value="تلوين علامات الوقف">13. تلوين علامات الوقف</option>
-                                        <option value="إظهار علامات المتشابهات">14. إظهار علامات المتشابهات</option>
-                                        <option value="إعدادات الصوت">15. إعدادات الصوت</option>
-                                        <option value="تخصيص القائمة السفلية">16. تخصيص القائمة السفلية</option>
-                                        <option value="العمل بدون إنترنت">17. العمل بدون إنترنت</option>
-                                        <option value="التواصل">18. التواصل</option>
-                                        <option value="أخرى">19. أخرى</option>
+                                        <option value="">{t.feedbackSelectSetting}</option>
+                                        <option value="Index">{language === 'ar' ? '1. الفهرس' : '1. Index'}</option>
+                                        <option value="Search">{language === 'ar' ? '2. البحث' : '2. Search'}</option>
+                                        <option value="Memorization Strength">{language === 'ar' ? '3. قوة الحفظ' : '3. Memorization Strength'}</option>
+                                        <option value="Notifications">{language === 'ar' ? '4. الإشعارات' : '4. Notifications'}</option>
+                                        <option value="Mutashabihat Index">{language === 'ar' ? '5. فهرس المتشابهات' : '5. Mutashabihat Index'}</option>
+                                        <option value="Verse Calculator">{language === 'ar' ? '6. حساب الآيات' : '6. Verse Calculator'}</option>
+                                        <option value="Lighting (Day/Night)">{language === 'ar' ? '7. الإضاءة (ليلي/نهاري)' : '7. Lighting (Day/Night)'}</option>
+                                        <option value="Prayer Mode">{language === 'ar' ? '8. وضع الصلاة' : '8. Prayer Mode'}</option>
+                                        <option value="Bookmark">{language === 'ar' ? '9. المرجعية' : '9. Bookmark'}</option>
+                                        <option value="Fullscreen">{language === 'ar' ? '10. ملء الشاشة' : '10. Fullscreen'}</option>
+                                        <option value="Language">{language === 'ar' ? '11. اللغة' : '11. Language'}</option>
+                                        <option value="Themes">{language === 'ar' ? '12. الألوان والسمات' : '12. Themes'}</option>
+                                        <option value="Stop Signs Color">{language === 'ar' ? '13. تلوين علامات الوقف' : '13. Stop Signs Color'}</option>
+                                        <option value="Mutashabihat Indicators">{language === 'ar' ? '14. إظهار علامات المتشابهات' : '14. Mutashabihat Indicators'}</option>
+                                        <option value="Sound Settings">{language === 'ar' ? '15. إعدادات الصوت' : '15. Sound Settings'}</option>
+                                        <option value="Bottom Bar Customization">{language === 'ar' ? '16. تخصيص القائمة السفلية' : '16. Bottom Bar Customization'}</option>
+                                        <option value="Offline Work">{language === 'ar' ? '17. العمل بدون إنترنت' : '17. Offline Work'}</option>
+                                        <option value="Contact">{language === 'ar' ? '18. التواصل' : '18. Contact'}</option>
+                                        <option value="Other">{language === 'ar' ? '19. أخرى' : '19. Other'}</option>
                                     </select>
                                 </div>
                             )}
@@ -211,7 +214,7 @@ const FeedbackModal = () => {
                                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
                                     <Bug size={14} className="mt-0.5 shrink-0" />
                                     <div>
-                                        <span className="font-bold block mb-1">بيانات مرفقة:</span>
+                                        <span className="font-bold block mb-1">{t.feedbackAttachedData}</span>
                                         <code className="block font-mono bg-white/50 dark:bg-black/20 p-1 rounded">
                                             {JSON.stringify(contextData, null, 2)}
                                         </code>
@@ -222,13 +225,13 @@ const FeedbackModal = () => {
                             {/* Message Input */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    تفاصيل الملاحظة
+                                    {t.feedbackDetails}
                                 </label>
                                 <textarea
                                     required
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
-                                    placeholder="اشرح المشكلة أو الاقتراح بالتفصيل..."
+                                    placeholder={t.feedbackPlaceholder}
                                     className="w-full h-32 p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none transition-all"
                                 />
                             </div>
@@ -247,12 +250,12 @@ const FeedbackModal = () => {
                                 {isSubmitting ? (
                                     <>
                                         <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        جاري الإرسال...
+                                        {t.feedbackSending}
                                     </>
                                 ) : (
                                     <>
                                         <Send size={18} className="rtl:rotate-180" />
-                                        إرسال الملاحظة
+                                        {t.sendFeedback}
                                     </>
                                 )}
                             </button>

@@ -2,6 +2,16 @@
  * Quranic Text Processing Utilities
  */
 
+/**
+ * Formats a number according to the language (Arabic vs others)
+ */
+export const formatNumber = (num: number | string, language: string) => {
+    if (language === 'ar') {
+        return num.toLocaleString('ar-EG');
+    }
+    return num.toString();
+};
+
 export const quranNormalize = (t: string) => {
     if (!t) return "";
     return t.replace(/[\u064B-\u065F\u0670\u0671\u06D6-\u06DC\u06DE-\u06E8\u06EA-\u06ED]/g, "") // Diacritics & Quranic marks

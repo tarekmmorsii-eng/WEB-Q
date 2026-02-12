@@ -1455,7 +1455,7 @@ export default function App() {
   }, [handleUiInteraction]);
 
   return (
-    <FeedbackProvider>
+    <FeedbackProvider language={settings.language}>
       <div
         className="h-[100dvh] lg:h-screen w-full flex flex-col relative overflow-auto transition-colors duration-300"
         style={{
@@ -1675,7 +1675,7 @@ export default function App() {
               </button>
             )}
 
-            <BottomBarFeedbackButton />
+            <BottomBarFeedbackButton t={t} />
 
             <button
               onClick={() => setIsSettingsOpen(true)}
@@ -1885,6 +1885,8 @@ export default function App() {
             setHighlightedAyah({ surah, ayah });
             setIsMutashabihatIndexOpen(false);
           }}
+          t={t}
+          language={settings.language}
         />
 
         <MutashabihatModal

@@ -2,7 +2,9 @@ import React from 'react';
 import { MessageSquare } from 'lucide-react';
 import { useFeedback } from '../contexts/FeedbackContext';
 
-export default function BottomBarFeedbackButton() {
+import { Translations } from '../i18n/translations';
+
+export default function BottomBarFeedbackButton({ t }: { t: Translations }) {
     const { openFeedback } = useFeedback();
 
     return (
@@ -16,7 +18,7 @@ export default function BottomBarFeedbackButton() {
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping" />
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-white dark:border-slate-800" />
             </div>
-            <span className="text-[10px] whitespace-nowrap">ملاحظات</span>
+            <span className="text-[10px] whitespace-nowrap">{t.feedback}</span>
         </button>
     );
 }

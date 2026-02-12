@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SURAH_NAMES, JUZ_SECTIONS, JUZ_START_PAGES } from '../constants';
+import { JUZ_SECTIONS, JUZ_START_PAGES } from '../constants';
 import { SURAHS } from '../constants/surahData';
 import { getSurahStartPage, getJuzForPage } from '../services/quranService';
 import { LocationData, VerseBookmark } from '../types';
@@ -56,8 +56,8 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
 
   const fullSurahList = Array.from({ length: 114 }, (_, i) => {
     const num = i + 1;
-    const found = SURAH_NAMES.find(s => s.number === num);
-    return found || { number: num, name: `${t.surah} ${num}` };
+    const name = t.surahNames[i] || `${t.surah} ${num}`;
+    return { number: num, name };
   });
 
   const HizbIcon = ({ type }: { type: string }) => {
@@ -159,8 +159,8 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                   <div className="flex-1 text-right px-4">
                     <div className="text-slate-800 dark:text-slate-200 font-amiri text-lg font-bold mb-0.5 group-hover:text-amber-800 dark:group-hover:text-amber-400">
                       {(() => {
-                        const sName = isArabic ? surah.name : t.surahNames[surah.number - 1];
-                        return isArabic ? `${t.surahPrefix} ${sName}` : `${sName} ${t.surah}`;
+                        const sName = t.surahNames[surah.number - 1];
+                        return language === 'ar' ? `${t.surahPrefix} ${sName}` : `${sName} ${t.surah}`;
                       })()}
                     </div>
                     <div className="text-slate-500 dark:text-slate-500 text-xs font-sans">
@@ -227,10 +227,8 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                       </div>
                       <div className="text-slate-500 dark:text-slate-500 text-xs font-sans">
                         {(() => {
-                          const sName = isArabic
-                            ? (SURAH_NAMES.find(s => s.number === section.surahNum)?.name || section.surahNum)
-                            : (t.surahNames[section.surahNum - 1] || section.surahNum);
-                          return `${isArabic ? t.surahPrefix : ''} ${sName}${!isArabic ? ' ' + t.surah : ''}، ${t.verse} ${toArabic(section.ayahNum)}`;
+                          const sName = t.surahNames[section.surahNum - 1] || section.surahNum;
+                          return `${language === 'ar' ? t.surahPrefix : ''} ${sName}${language !== 'ar' ? ' ' + t.surah : ''}، ${t.verse} ${toArabic(section.ayahNum)}`;
                         })()}
                       </div>
                     </div>

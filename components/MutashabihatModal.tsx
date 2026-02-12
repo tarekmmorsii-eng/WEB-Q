@@ -8,17 +8,22 @@ import { getAyahTexts } from '../utils/ayahTextHelper';
 import { getMatchingWords } from '../utils/similarityCalculator';
 import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihatData';
 import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
+import { translations, Language } from '../i18n/translations';
+
+import { formatNumber } from '../utils/quranUtils';
 
 function MutashabihatIcon({
     showGreenLine = false,
     showRedLine = false,
     size = "w-10 h-10",
-    number = "١"
+    number = "1",
+    language = "ar"
 }: {
     showGreenLine?: boolean,
     showRedLine?: boolean,
     size?: string,
-    number?: string
+    number?: string,
+    language?: string
 }) {
     const goldColor = "#d97706"; // Premium Gold
 
@@ -29,7 +34,7 @@ function MutashabihatIcon({
                     <path d="M50,12 C65,12 85,22 88,48 C91,74 72,88 50,88 C28,88 10,72 12,48 C14,24 35,12 50,12 Z" />
                 </g>
                 <text x="50" y="55" fill={goldColor} fontSize="40" fontWeight="bold" textAnchor="middle" dominantBaseline="central">
-                    {number}
+                    {formatNumber(number, language)}
                 </text>
 
                 {/* Underline Logic: Full width if single color, half each if dual */}
@@ -313,6 +318,7 @@ export default function MutashabihatModal({
     }, [mutashabiha?.id]);
 
     const isArabic = language === 'ar';
+    const t = translations[language as Language] || translations['ar'];
 
     useEffect(() => {
         if (!isOpen || !mutashabiha) {
@@ -342,7 +348,7 @@ export default function MutashabihatModal({
 
     if (!isOpen || !activeMutashabiha) return null;
 
-    const sourceSurahName = getSurahName(activeMutashabiha.sourceAyah.surahNumber);
+    const sourceSurahName = t.surahNames[activeMutashabiha.sourceAyah.surahNumber - 1];
     const sourceKey = `${activeMutashabiha.sourceAyah.surahNumber}-${activeMutashabiha.sourceAyah.ayahNumber}`;
     const sourceText = ayahTexts.get(sourceKey) || activeMutashabiha.sourceAyah.text || '';
 
@@ -373,22 +379,20 @@ export default function MutashabihatModal({
                 <button
                     onClick={() => onOpenFeedback('bug_mutashabihat', { mutashabihaId: activeMutashabiha.id, source: activeMutashabiha.sourceAyah })}
                     className="absolute top-4 right-4 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 hover:text-red-600 transition-colors z-10 flex items-center gap-1"
-                    title={isArabic ? "الإبلاغ عن خطأ" : "Report Error"}
+                    title={t.reportError}
                 >
                     <Bug size={18} />
-                    <span className="text-xs font-bold hidden sm:inline">{isArabic ? "إبلاغ" : "Report"}</span>
+                    <span className="text-xs font-bold hidden sm:inline">{t.report}</span>
                 </button>
 
                 {/* Header */}
                 <div className="text-center mb-6 mt-2">
                     <h2 className="text-2xl font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center justify-center gap-2">
                         <span className="text-3xl">⚠️</span>
-                        {isArabic ? 'تنبيه: متشابهات' : 'Similar Verses Alert'}
+                        {t.similarVersesAlert}
                     </h2>
                     <p className="text-slate-600 dark:text-slate-300 text-sm">
-                        {isArabic
-                            ? 'هذه الآية لها آيات متشابهة معها، احذر من الخلط بينها عند الحفظ'
-                            : 'This verse has similar verses, be careful not to confuse them while memorizing'}
+                        {t.similarVersesDescription}
                     </p>
                 </div>
 
@@ -396,15 +400,15 @@ export default function MutashabihatModal({
                 <div className="mb-6 p-5 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-slate-700 dark:to-slate-800 border-2 border-amber-400 dark:border-amber-600 rounded-2xl shadow-md">
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-amber-900 dark:text-amber-300 bg-amber-200 dark:bg-amber-900 px-3 py-1 rounded-full">
-                            {isArabic ? '📍 الآية المصدر' : '📍 Source Verse'}
+                            📍 {t.sourceVerse}
                         </span>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => onOpenInIndex?.(mutashabiha.sourceAyah.surahNumber, mutashabiha.sourceAyah.ayahNumber)}
                                 className="text-[10px] bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-full transition-all border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95 flex items-center gap-1.5"
                             >
-                                <MutashabihatIcon showGreenLine showRedLine size="w-4 h-4" />
-                                {isArabic ? 'فتح في الفهرس' : 'Open in Index'}
+                                <MutashabihatIcon showGreenLine showRedLine size="w-4 h-4" language={language} />
+                                {t.openInIndex}
                             </button>
                             <button
                                 onClick={() => onNavigateToAyah?.(
@@ -413,14 +417,14 @@ export default function MutashabihatModal({
                                 )}
                                 className="text-xs bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full transition-all shadow-md hover:shadow-lg active:scale-95"
                             >
-                                {isArabic ? 'الذهاب للآية →' : 'Go to Verse →'}
+                                {t.goToVerse}
                             </button>
                         </div>
                     </div>
 
                     <div className="text-center mb-2">
                         <p className="text-base font-bold text-slate-800 dark:text-slate-200">
-                            {sourceSurahName} - {isArabic ? 'آية' : 'Ayah'} {mutashabiha.sourceAyah.ayahNumber}
+                            {sourceSurahName} - {t.verse} {mutashabiha.sourceAyah.ayahNumber}
                         </p>
                     </div>
 
@@ -472,7 +476,7 @@ export default function MutashabihatModal({
                                 )}
                             >
                                 <span>🔗</span>
-                                {isArabic ? 'الكل' : 'All'}
+                                {t.all}
                                 <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
                                     {displayMutashabiha.similarAyahs.length}
                                 </span>
@@ -487,8 +491,8 @@ export default function MutashabihatModal({
                                 )}
                             >
                                 <div className="flex items-center gap-2">
-                                    <MutashabihatIcon showGreenLine size="w-6 h-6" />
-                                    {isArabic ? 'داخل السورة' : 'Inside Surah'}
+                                    <MutashabihatIcon showGreenLine size="w-6 h-6" language={language} />
+                                    {t.insideSurah}
                                     <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
                                         {displayMutashabiha.similarAyahs.filter(a => a.surahNumber === displayMutashabiha.sourceAyah.surahNumber).length}
                                     </span>
@@ -505,8 +509,8 @@ export default function MutashabihatModal({
                                 )}
                             >
                                 <div className="flex items-center gap-2">
-                                    <MutashabihatIcon showRedLine size="w-6 h-6" />
-                                    {isArabic ? 'خارج السورة' : 'Outside Surah'}
+                                    <MutashabihatIcon showRedLine size="w-6 h-6" language={language} />
+                                    {t.outsideSurah}
                                     <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
                                         {displayMutashabiha.similarAyahs.filter(a => a.surahNumber !== displayMutashabiha.sourceAyah.surahNumber).length}
                                     </span>
@@ -520,8 +524,8 @@ export default function MutashabihatModal({
                 {/* Similar Ayahs */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
-                        <MutashabihatIcon showGreenLine showRedLine size="w-7 h-7" />
-                        {isArabic ? 'الآيات المتشابهة:' : 'Similar Verses:'}
+                        <MutashabihatIcon showGreenLine showRedLine size="w-7 h-7" language={language} />
+                        {t.similarVersesLabel}
                         <span className="text-sm text-slate-500 dark:text-slate-400">({(activeMutashabiha || mutashabiha).similarAyahs.length})</span>
                     </h3>
 
@@ -580,14 +584,14 @@ export default function MutashabihatModal({
 
                         if (filteredData.length === 0) return (
                             <div className="text-center py-8 text-slate-400 dark:text-slate-500 italic">
-                                {isArabic ? 'لا توجد آيات مطابقة لهذا التصنيف' : 'No matching verses found'}
+                                {t.noMatchingVerses}
                             </div>
                         );
 
                         return (
                             <div className="space-y-4">
                                 {filteredData.map((ayah, globalIdx) => {
-                                    const similarSurahName = getSurahName(ayah.surahNumber);
+                                    const similarSurahName = t.surahNames[ayah.surahNumber - 1];
                                     const ayahText = ayah.text || '';
 
                                     return (
@@ -605,21 +609,21 @@ export default function MutashabihatModal({
                                                     </span>
 
                                                     <p className="font-bold text-slate-700 dark:text-slate-200" dir="rtl">
-                                                        {similarSurahName} - {isArabic ? 'آية' : 'Ayah'} {ayah.ayahNumber}
+                                                        {similarSurahName} - {t.verse} {ayah.ayahNumber}
                                                     </p>
 
                                                     <button
                                                         onClick={() => onOpenInIndex?.(ayah.surahNumber, ayah.ayahNumber)}
                                                         className="text-[10px] bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 flex items-center gap-1"
                                                     >
-                                                        <MutashabihatIcon showGreenLine showRedLine size="w-3 h-3" />
-                                                        {isArabic ? 'الفهرس' : 'Index'}
+                                                        <MutashabihatIcon showGreenLine showRedLine size="w-3 h-3" language={language} />
+                                                        {t.indexTitle}
                                                     </button>
                                                     <button
                                                         onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
                                                         className="text-xs bg-white hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-900/40 text-slate-700 dark:text-amber-600 dark:text-slate-300 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95"
                                                     >
-                                                        {isArabic ? 'اذهب' : 'Go'}
+                                                        {t.goAction}
                                                     </button>
                                                 </div>
 
@@ -664,10 +668,7 @@ export default function MutashabihatModal({
                     >
                         <Plus size={20} className="group-hover:scale-110 transition-transform" />
                         <span className="font-bold">
-                            {activeTab === 'inside'
-                                ? (isArabic ? 'إضافة متشابهة داخل السورة' : 'Add within surah')
-                                : (isArabic ? 'إضافة متشابهة من خارج السورة' : 'Add from outside surah')
-                            }
+                            {activeTab === 'inside' ? t.addInternalMutashabiha : t.addExternalMutashabiha}
                         </span>
                     </button>
                 )}
@@ -675,9 +676,7 @@ export default function MutashabihatModal({
                 {mutashabiha.showContext && (
                     <div className="mt-5 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 rounded-xl">
                         <p className="text-sm text-blue-900 dark:text-blue-200 text-center font-medium">
-                            💡 {isArabic
-                                ? 'تنبيه: يُنصح بقراءة الآية التالية للسياق والتمييز'
-                                : 'Tip: Read the next verse for context and distinction'}
+                            💡 {t.mutashabihatContextTip}
                         </p>
                     </div>
                 )}
@@ -686,7 +685,7 @@ export default function MutashabihatModal({
                     onClick={onClose}
                     className="w-full mt-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white rounded-xl transition-all font-bold shadow-lg hover:shadow-xl active:scale-98"
                 >
-                    {isArabic ? 'إغلاق' : 'Close'}
+                    {t.close}
                 </button>
             </div>
         </div>

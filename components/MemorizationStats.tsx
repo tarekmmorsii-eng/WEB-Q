@@ -121,7 +121,7 @@ export default function MemorizationStats({ isOpen, onClose, ratings, onNavigate
                                         <button
                                             onClick={() => onRateSurah(surah.number)}
                                             className="flex items-center gap-4 text-xs font-bold bg-gray-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-gray-100 dark:border-slate-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-200 transition-all cursor-pointer"
-                                            title={isArabic ? 'تقييم السورة' : 'Rate Surah'}
+                                            title={t.rateSurah}
                                         >
                                             <span className="text-green-600">{toLocale(surah.good)}</span>
                                             <span className="text-gray-300">|</span>
@@ -138,7 +138,7 @@ export default function MemorizationStats({ isOpen, onClose, ratings, onNavigate
                                 <div
                                     onClick={() => onRateSurah(surah.number)}
                                     className="h-2.5 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden flex cursor-pointer hover:ring-2 hover:ring-amber-500/30 transition-all"
-                                    title={isArabic ? 'تقييم السورة' : 'Rate Surah'}
+                                    title={t.rateSurah}
                                 >
                                     {/* Weak (Red) */}
                                     <div style={{ width: `${(surah.weak / surah.ayahCount) * 100}%` }} className="h-full bg-red-500" />

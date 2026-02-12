@@ -9,6 +9,7 @@ import { ViewMode, MemorizationRating, VerseBookmark } from '../types';
 import { Bookmark, WifiOff } from 'lucide-react';
 import { STOP_SIGNS } from '../src/generated/stopSigns';
 import { translations, Language } from '../i18n/translations';
+import { formatNumber } from '../utils/quranUtils';
 
 // أنواع البيانات
 interface Word {
@@ -43,33 +44,6 @@ interface MushafData {
     pages: Page[];
 }
 
-// أسماء السور (للعرض)
-export const SURAH_NAMES: { [key: number]: string } = {
-    1: 'الفَاتِحَة', 2: 'البَقَرَة', 3: 'آل عِمرَان', 4: 'النِّسَاء', 5: 'المَائِدَة',
-    6: 'الأَنعَام', 7: 'الأَعرَاف', 8: 'الأَنفَال', 9: 'التَّوبَة', 10: 'يُونُس',
-    11: 'هُود', 12: 'يُوسُف', 13: 'الرَّعد', 14: 'إِبرَاهِيم', 15: 'الحِجر',
-    16: 'النَّحل', 17: 'الإِسرَاء', 18: 'الكَهف', 19: 'مَريَم', 20: 'طه',
-    21: 'الأَنبِيَاء', 22: 'الحَجّ', 23: 'المُؤمِنُون', 24: 'النُّور', 25: 'الفُرقَان',
-    26: 'الشُّعَرَاء', 27: 'النَّمل', 28: 'القَصَص', 29: 'العَنكَبُوت', 30: 'الرُّوم',
-    31: 'لُقمَان', 32: 'السَّجدَة', 33: 'الأَحزَاب', 34: 'سَبَأ', 35: 'فَاطِر',
-    36: 'يس', 37: 'الصَّافَّات', 38: 'ص', 39: 'الزُّمَر', 40: 'غَافِر',
-    41: 'فُصِّلَت', 42: 'الشُّورَى', 43: 'الزُّخرُف', 44: 'الدُّخَان', 45: 'الجَاثِيَة',
-    46: 'الأَحقَاف', 47: 'مُحَمَّد', 48: 'الفَتح', 49: 'الحُجُرَات', 50: 'ق',
-    51: 'الذَّارِيَات', 52: 'الطُّور', 53: 'النَّجم', 54: 'القَمَر', 55: 'الرَّحمَٰن',
-    56: 'الوَاقِعَة', 57: 'الحَدِيد', 58: 'المُجَادِلَة', 59: 'الحَشر', 60: 'المُمتَحَنَة',
-    61: 'الصَّفّ', 62: 'الجُمُعَة', 63: 'المُنَافِقُون', 64: 'التَّغَابُن', 65: 'الطَّلَاق',
-    66: 'التَّحرِيم', 67: 'المُلك', 68: 'القَلَم', 69: 'الحَاقَّة', 70: 'المَعَارِج',
-    71: 'نُوح', 72: 'الجِنّ', 73: 'المُزَّمِّل', 74: 'المُدَّثِّر', 75: 'القِيَامَة',
-    76: 'الإِنسَان', 77: 'المُرسَلَات', 78: 'النَّبَأ', 79: 'النَّازِعَات', 80: 'عَبَسَ',
-    81: 'التَّكوِير', 82: 'الاِنفِطَار', 83: 'المُطَفِّفِين', 84: 'الاِنشِقَاق', 85: 'البُرُوج',
-    86: 'الطَّارِق', 87: 'الأَعلَى', 88: 'الغَاشِيَة', 89: 'الفَجر', 90: 'البَلَد',
-    91: 'الشَّمس', 92: 'اللَّيل', 93: 'الضُّحَى', 94: 'الشَّرح', 95: 'التِّين',
-    96: 'العَلَق', 97: 'القَدر', 98: 'البَيِّنَة', 99: 'الزَّلزَلَة', 100: 'العَادِيَات',
-    101: 'القَارِعَة', 102: 'التَّكَاثُر', 103: 'العَصر', 104: 'الهُمَزَة', 105: 'الفِيل',
-    106: 'قُرَيش', 107: 'المَاعُون', 108: 'الكَوثَر', 109: 'الكَافِرُون', 110: 'النَّصر',
-    111: 'المَسَد', 112: 'الإِخلَاص', 113: 'الفَلَق', 114: 'النَّاس'
-};
-
 // مكوّن فاصلة الآية (Ayah Separator) - زخرفة SVG مع رقم الآية
 interface AyahSeparatorProps {
     ayahNumber: number;
@@ -81,7 +55,7 @@ interface AyahSeparatorProps {
 
 const AyahSeparator: React.FC<AyahSeparatorProps> = ({ ayahNumber, accentColor, rating, deviceType = 'desktop', language = 'ar' }) => {
     // تحويل رقم الآية للأرقام العربية الشرقية فقط إذا كانت اللغة عربية
-    const arabicNumber = language === 'ar' ? ayahNumber.toLocaleString('ar-EG') : ayahNumber.toString();
+    const arabicNumber = formatNumber(ayahNumber, language);
 
     // ضبط حجم الخط بناءً على عدد الخانات
     const digitCount = ayahNumber.toString().length;
@@ -713,7 +687,7 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
 
     // تقديم اسم السورة - تصميم جديد مضغوط (سطر واحد)
     const renderSurahName = (line: Line) => {
-        const surahName = SURAH_NAMES[line.surahNumber || 1] || 'غير معروفة';
+        const surahName = t.surahNames[(line.surahNumber || 1) - 1];
         const borderColor = accentColor;
 
         // حساب الحجم بالنسبة للخط الأساسي
@@ -764,7 +738,7 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
                                 transform: 'translateY(-0.1em)' // رفع طفيف لمحاذاة الخط الكوفي/الثلث
                             }}
                         >
-                            سُورَةُ {surahName}
+                            {language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`}
                         </span>
                     </div>
 
@@ -1123,10 +1097,10 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
                         {t.pageNotAvailable}
                     </h3>
                     <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                        {t.fontNotLoaded.replace('{page}', pageNumber.toString())}
+                        {t.fontNotLoaded.replace('{page}', formatNumber(pageNumber, language))}
                     </p>
                     <div className="text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-4">
-                        {language === 'ar' ? 'يرجى الاتصال بالإنترنت لمرة واحدة لتحميل الصفحة.' : 'Please connect to the internet once to load the page.'}
+                        {t.offlineLoadNotice}
                     </div>
                 </div>
             </div>
@@ -1184,14 +1158,14 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
                         const getSurahName = (): string => {
                             for (const line of pageData.lines) {
                                 if (line.surahNumber) {
-                                    const surahName = SURAH_NAMES[line.surahNumber];
-                                    return surahName ? `${t.surahPrefix} ${surahName}` : t.surahPrefix;
+                                    const surahName = t.surahNames[line.surahNumber - 1];
+                                    return surahName ? (language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`) : t.surahPrefix;
                                 }
                                 if (line.words && line.words.length > 0) {
                                     const firstWord = line.words[0];
                                     if (firstWord.surah) {
-                                        const surahName = SURAH_NAMES[firstWord.surah];
-                                        return surahName ? `${t.surahPrefix} ${surahName}` : t.surahPrefix;
+                                        const surahName = t.surahNames[firstWord.surah - 1];
+                                        return surahName ? (language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`) : t.surahPrefix;
                                     }
                                 }
                             }
@@ -1203,10 +1177,10 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
                         const quarter = getQuarterNumber(pageNumber);
                         const surahName = getSurahName();
 
-                        const juzNum = language === 'ar' ? juz.toLocaleString('ar-EG') : juz.toString();
-                        const hizbNum = language === 'ar' ? hizb.toLocaleString('ar-EG') : hizb.toString();
-                        const quarterNum = language === 'ar' ? quarter.toLocaleString('ar-EG') : quarter.toString();
-                        const pageNumDisplay = language === 'ar' ? pageNumber.toLocaleString('ar-EG') : pageNumber.toString();
+                        const juzNum = formatNumber(juz, language);
+                        const hizbNum = formatNumber(hizb, language);
+                        const quarterNum = formatNumber(quarter, language);
+                        const pageNumDisplay = formatNumber(pageNumber, language);
 
                         const separator = <span style={{ color: '#8B0000', margin: '0 0.3rem' }}>|</span>;
                         const centerContent = (
@@ -1306,14 +1280,14 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
                     const getSurahName = (): string => {
                         for (const line of pageData.lines) {
                             if (line.surahNumber) {
-                                const surahName = SURAH_NAMES[line.surahNumber];
-                                return surahName ? `${t.surahPrefix} ${surahName}` : t.surahPrefix;
+                                const surahName = t.surahNames[line.surahNumber - 1];
+                                return surahName ? (language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`) : t.surahPrefix;
                             }
                             if (line.words && line.words.length > 0) {
                                 const firstWord = line.words[0];
                                 if (firstWord.surah) {
-                                    const surahName = SURAH_NAMES[firstWord.surah];
-                                    return surahName ? `${t.surahPrefix} ${surahName}` : t.surahPrefix;
+                                    const surahName = t.surahNames[firstWord.surah - 1];
+                                    return surahName ? (language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`) : t.surahPrefix;
                                 }
                             }
                         }
@@ -1325,10 +1299,10 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
                     const quarter = getQuarterNumber(pageNumber);
                     const surahName = getSurahName();
 
-                    const juzNum = language === 'ar' ? juz.toLocaleString('ar-EG') : juz.toString();
-                    const hizbNum = language === 'ar' ? hizb.toLocaleString('ar-EG') : hizb.toString();
-                    const quarterNum = language === 'ar' ? quarter.toLocaleString('ar-EG') : quarter.toString();
-                    const pageNumDisplay = language === 'ar' ? pageNumber.toLocaleString('ar-EG') : pageNumber.toString();
+                    const juzNum = formatNumber(juz, language);
+                    const hizbNum = formatNumber(hizb, language);
+                    const quarterNum = formatNumber(quarter, language);
+                    const pageNumDisplay = formatNumber(pageNumber, language);
 
                     const separator = <span style={{ color: '#8B0000', margin: '0 0.3rem' }}>|</span>;
                     const centerContent = (
@@ -1390,7 +1364,7 @@ export default QPCV1PageRenderer;
 export async function loadQPCV1Data(): Promise<MushafData> {
     const response = await fetch('/qpc_v1_mushaf.json');
     if (!response.ok) {
-        throw new Error('فشل في تحميل بيانات المصحف');
+        throw new Error('Failed to load Mushaf data / فشل في تحميل بيانات المصحف');
     }
     return response.json();
 }

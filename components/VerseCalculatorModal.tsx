@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { SURAHS } from '../constants/surahData';
 import { JUZ_BOUNDARIES, HIZB_BOUNDARIES, RUB_BOUNDARIES } from '../constants/structureBoundaries';
 import { MemorizationRating } from '../types';
+import { translations, Language } from '../i18n/translations';
 
 interface VerseCalculatorModalProps {
     isOpen: boolean;
@@ -25,27 +26,29 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
 
 
 
+    const trans = translations[currentLanguage as Language] || translations['ar'];
+
     const t = {
-        title: currentLanguage === 'ar' ? 'حاسبة الآيات' : 'Verse Calculator',
-        startPoint: currentLanguage === 'ar' ? 'بداية النطاق' : 'Start Point',
-        endPoint: currentLanguage === 'ar' ? 'نهاية النطاق' : 'End Point',
-        calculate: currentLanguage === 'ar' ? 'حساب' : 'Calculate',
-        result: currentLanguage === 'ar' ? 'عدد الآيات:' : 'Verse Count:',
-        surah: currentLanguage === 'ar' ? 'السورة' : 'Surah',
-        ayah: currentLanguage === 'ar' ? 'الآية' : 'Ayah',
-        close: currentLanguage === 'ar' ? 'إغلاق' : 'Close',
-        error: currentLanguage === 'ar' ? 'تأكد من ترتيب النطاق الصحيح' : 'Invalid Range',
-        modeRange: currentLanguage === 'ar' ? 'نطاق حر' : 'Custom Range',
-        modeStructure: currentLanguage === 'ar' ? 'أجزاء وأحزاب' : 'Quran Structure',
-        typeJuz: currentLanguage === 'ar' ? 'جزء' : 'Juz',
-        typeHizb: currentLanguage === 'ar' ? 'حزب' : 'Hizb',
-        typeRub: currentLanguage === 'ar' ? 'ربع' : 'Rub',
-        selectStructure: currentLanguage === 'ar' ? 'اختر:' : 'Select:',
-        statsTitle: currentLanguage === 'ar' ? 'إحصائيات الحفظ' : 'Memorization Stats',
-        good: currentLanguage === 'ar' ? 'ممتاز' : 'Strong',
-        medium: currentLanguage === 'ar' ? 'متوسط' : 'Medium',
-        weak: currentLanguage === 'ar' ? 'ضعيف' : 'Weak',
-        unrated: currentLanguage === 'ar' ? 'غير مقيم' : 'Not Rated',
+        title: trans.verseCalculatorTitle,
+        startPoint: trans.startPoint,
+        endPoint: trans.endPoint,
+        calculate: trans.calculate,
+        result: trans.verseCount,
+        surah: trans.surah,
+        ayah: trans.verse,
+        close: trans.close,
+        error: trans.invalidRange,
+        modeRange: trans.modeRange,
+        modeStructure: trans.modeStructure,
+        typeJuz: trans.juzType,
+        typeHizb: trans.hizbType,
+        typeRub: trans.rubType,
+        selectStructure: trans.selectStructure,
+        statsTitle: trans.memorizationStatsTitle,
+        good: trans.strong,
+        medium: trans.medium,
+        weak: trans.weak,
+        unrated: trans.notRated,
     };
 
     // Helper to get boundary for selected structure

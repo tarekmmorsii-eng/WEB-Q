@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type FeedbackType = 'interface_notes' | 'settings_notes' | 'bug_tech' | 'suggestion' | 'other';
+type FeedbackType = 'interface_notes' | 'settings_notes' | 'bug_tech' | 'bug_mutashabihat' | 'suggestion' | 'other';
 
 interface FeedbackContextType {
     isOpen: boolean;
@@ -8,11 +8,12 @@ interface FeedbackContextType {
     closeFeedback: () => void;
     initialType: FeedbackType;
     contextData: any;
+    language: string;
 }
 
 const FeedbackContext = createContext<FeedbackContextType | undefined>(undefined);
 
-export const FeedbackProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const FeedbackProvider: React.FC<{ children: ReactNode, language: string }> = ({ children, language }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [initialType, setInitialType] = useState<FeedbackType>('interface_notes');
     const [contextData, setContextData] = useState<any>(null);
@@ -29,7 +30,7 @@ export const FeedbackProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
 
     return (
-        <FeedbackContext.Provider value={{ isOpen, openFeedback, closeFeedback, initialType, contextData }}>
+        <FeedbackContext.Provider value={{ isOpen, openFeedback, closeFeedback, initialType, contextData, language }}>
             {children}
         </FeedbackContext.Provider>
     );

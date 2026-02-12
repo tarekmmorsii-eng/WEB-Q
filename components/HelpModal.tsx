@@ -9,48 +9,51 @@ import clsx from 'clsx';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { translations, Language } from '../i18n/translations';
 
 interface HelpModalProps {
     isOpen: boolean;
     onClose: () => void;
+    language: string;
 }
 
-const slides = [
-    {
-        id: 1,
-        title: "مرحباً بك في مصحفي (My Quran)",
-        description: "تطبيقك الشامل لحفظ ومراجعة القرآن الكريم بمميزات تفاعلية حديثة وتصميم مريح للعين.",
-        icon: BookOpen,
-        color: "bg-emerald-500",
-        image: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&q=80&w=1000"
-    },
-    {
-        id: 2,
-        title: "تفاعل مع الآيات والكلمات",
-        description: "اضغط على أي كلمة لإخفائها واختبار حفظك. يمكنك إخفاء الآيات عشوائياً أو استخدام وضع الصلاة للتسميع.",
-        icon: Zap,
-        color: "bg-amber-500",
-        image: "https://images.unsplash.com/photo-1584286595398-a590219ec743?auto=format&fit=crop&q=80&w=1000"
-    },
-    {
-        id: 3,
-        title: "تخصيص كامل",
-        description: "تحكم في حجم الخط، الألوان، الإضاءة، وإشعارات الورد اليومي من الإعدادات لتناسب احتياجاتك.",
-        icon: Settings,
-        color: "bg-blue-500",
-        image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=1000"
-    },
-    {
-        id: 4,
-        title: "جاهز للبدء؟",
-        description: "استكشف المزيد من المميزات بنفسك. نحن هنا لمساعدتك في رحلتك مع القرآن الكريم.",
-        icon: HelpCircle,
-        color: "bg-purple-500",
-        image: "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&q=80&w=1000"
-    }
-];
+export default function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
+    const t = translations[language as Language] || translations['ar'];
 
-export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
+    const slides = [
+        {
+            id: 1,
+            title: t.helpSlide1Title,
+            description: t.helpSlide1Desc,
+            icon: BookOpen,
+            color: "bg-emerald-500",
+            image: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+            id: 2,
+            title: t.helpSlide2Title,
+            description: t.helpSlide2Desc,
+            icon: Zap,
+            color: "bg-amber-500",
+            image: "https://images.unsplash.com/photo-1584286595398-a590219ec743?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+            id: 3,
+            title: t.helpSlide3Title,
+            description: t.helpSlide3Desc,
+            icon: Settings,
+            color: "bg-blue-500",
+            image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+            id: 4,
+            title: t.helpSlide4Title,
+            description: t.helpSlide4Desc,
+            icon: HelpCircle,
+            color: "bg-purple-500",
+            image: "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&q=80&w=1000"
+        }
+    ];
     const swiperRef = useRef<SwiperType>(null);
 
     // Close on Escape key

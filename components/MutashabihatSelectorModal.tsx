@@ -3,6 +3,8 @@ import { X, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { SURAHS } from '../constants/surahData';
 import { getSurahName } from '../utils/quranHelpers';
+import { translations, Language } from '../i18n/translations';
+import { formatNumber } from '../utils/quranUtils';
 
 interface MutashabihatSelectorModalProps {
     isOpen: boolean;
@@ -30,6 +32,7 @@ export default function MutashabihatSelectorModal({
         if (lockedSurah) setSelectedSurah(lockedSurah);
     }, [lockedSurah]);
 
+    const t = translations[language as Language] || translations.ar;
     const isArabic = language === 'ar';
 
     if (!isOpen) return null;
@@ -51,7 +54,7 @@ export default function MutashabihatSelectorModal({
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 border-amber-400">
                 <div className="p-4 bg-amber-500 text-white flex justify-between items-center">
-                    <h3 className="font-bold text-lg">{isArabic ? 'إضافة آية متشابهة' : 'Add Similar Ayah'}</h3>
+                    <h3 className="font-bold text-lg">{t.addSimilarAyah}</h3>
                     <button onClick={onClose} className="p-1 hover:bg-amber-600 rounded-full transition-colors">
                         <X size={20} />
                     </button>
@@ -61,7 +64,7 @@ export default function MutashabihatSelectorModal({
                     {/* Surah Selection */}
                     <div className="mb-4">
                         <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                            {isArabic ? 'اختر السورة' : 'Select Surah'}
+                            {t.selectSurah}
                         </label>
                         <div className="relative mb-2">
                             <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -69,7 +72,7 @@ export default function MutashabihatSelectorModal({
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={isArabic ? 'بحث عن سورة...' : 'Search surah...'}
+                                placeholder={t.searchSurah}
                                 className="w-full pr-10 pl-4 py-2 bg-slate-100 dark:bg-slate-700 border-2 border-transparent focus:border-amber-500 rounded-xl outline-none transition-all text-sm"
                             />
                         </div>
@@ -79,12 +82,12 @@ export default function MutashabihatSelectorModal({
                                 setSelectedSurah(Number(e.target.value));
                                 setSelectedAyah(1);
                             }}
-                            className="w-full p-3 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none border-2 border-transparent focus:border-amber-500 transition-all"
+                            className="w-full p-3 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none border-2 border-transparent focus:border-amber-500 transition-all font-sans"
                             size={5}
                         >
                             {filteredSurahs.map(s => (
                                 <option key={s.number} value={s.number}>
-                                    {s.number}. {s.name}
+                                    {formatNumber(s.number, language)}. {t.surahNames[s.number - 1]}
                                 </option>
                             ))}
                         </select>
@@ -93,7 +96,7 @@ export default function MutashabihatSelectorModal({
                     {/* Ayah Selection */}
                     <div className="mb-6">
                         <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                            {isArabic ? 'رقم الآية' : 'Ayah Number'} (1-{ayahCount})
+                            {t.ayahNumber} ({formatNumber(1, language)}-{formatNumber(ayahCount, language)})
                         </label>
                         <input
                             type="number"
@@ -111,7 +114,7 @@ export default function MutashabihatSelectorModal({
                         />
                         {(selectedAyah > ayahCount || selectedAyah < 1) && (
                             <p className="text-red-500 text-xs mt-1 px-1">
-                                {isArabic ? `رقم الآية يجب أن يكون بين ١ و ${ayahCount}` : `Ayah must be between 1 and ${ayahCount}`}
+                                {t.ayahRangeError.replace('{max}', formatNumber(ayahCount, language))}
                             </p>
                         )}
                     </div>
@@ -130,7 +133,7 @@ export default function MutashabihatSelectorModal({
                                 : "bg-amber-500 hover:bg-amber-600 text-white hover:-translate-y-1"
                         )}
                     >
-                        {isArabic ? 'إضافة' : 'Add'}
+                        {t.add}
                     </button>
                 </div>
             </div>
