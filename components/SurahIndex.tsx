@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SURAH_NAMES, JUZ_SECTIONS } from '../constants';
+import { SURAH_NAMES, JUZ_SECTIONS, JUZ_START_PAGES } from '../constants';
 import { SURAHS } from '../constants/surahData';
 import { getSurahStartPage, getJuzForPage } from '../services/quranService';
 import { LocationData, VerseBookmark } from '../types';
@@ -81,12 +81,6 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
   const renderContent = () => {
     switch (activeTab) {
       case 'surah':
-        // Juz start pages (approximate - juz 1 starts at page 1, juz 2 at page 22, etc.)
-        const JUZ_START_PAGES = [
-          1, 22, 42, 62, 82, 102, 121, 142, 162, 182,
-          201, 222, 242, 262, 282, 302, 322, 342, 362, 382,
-          402, 422, 442, 462, 482, 502, 522, 542, 562, 582
-        ];
 
         // Build a list that includes juz headers interleaved with surahs
         const surahsWithJuz: Array<{ type: 'juz' | 'surah'; juz?: number; surah?: typeof SURAHS[0]; page?: number }> = [];
