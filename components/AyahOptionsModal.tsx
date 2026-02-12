@@ -62,15 +62,14 @@ export default function AyahOptionsModal({
             style={{ fontFamily: "'Almarai', sans-serif" }} // Enforce Almarai font
         >
             <div
-                className="w-full max-w-sm rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 relative animate-in zoom-in-95 duration-200"
-                style={{ backgroundColor: '#f8f9fa' }} // Fixed light background as requested
+                className="w-full max-w-sm rounded-2xl shadow-xl border border-gray-200 dark:border-slate-800 p-6 relative animate-in zoom-in-95 duration-200 bg-[#f8f9fa] dark:bg-slate-900"
             >
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
                         {t.ayahOptions.replace('{ayah}', language === 'ar' ? ayahNumber.toLocaleString('ar-EG') : ayahNumber.toString())}
                     </h2>
-                    <p className="text-slate-500 text-sm">{t.rateMemorization}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">{t.rateMemorization}</p>
                 </div>
 
                 {/* Rating Buttons */}
@@ -83,7 +82,7 @@ export default function AyahOptionsModal({
                                 "w-14 h-14 rounded-full flex items-center justify-center transition-all border-2",
                                 currentRating === 'weak'
                                     ? "bg-red-600 border-red-400 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] scale-110"
-                                    : "bg-white border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400"
+                                    : "bg-white dark:bg-slate-800 border-red-200 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-400"
                             )}
                         >
                             <WeakIcon
@@ -96,7 +95,7 @@ export default function AyahOptionsModal({
                                 fill="currentColor"
                             />
                         </button>
-                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'weak' ? "text-red-500" : "text-gray-500")}>
+                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'weak' ? "text-red-500" : "text-gray-500 dark:text-slate-400")}>
                             {t.weak}
                         </span>
                     </div>
@@ -109,12 +108,12 @@ export default function AyahOptionsModal({
                                 "w-14 h-14 rounded-full flex items-center justify-center transition-all border-2",
                                 currentRating === 'medium'
                                     ? "bg-yellow-500 border-yellow-300 text-white shadow-[0_0_20px_rgba(234,179,8,0.4)] scale-110"
-                                    : "bg-white border-yellow-200 text-yellow-500 hover:bg-yellow-50 hover:border-yellow-400"
+                                    : "bg-white dark:bg-slate-800 border-yellow-200 dark:border-yellow-900/30 text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-950/30 hover:border-yellow-400"
                             )}
                         >
                             <span className={clsx("text-2xl transition-transform grayscale-0", currentRating === 'medium' && "scale-110")}>👌</span>
                         </button>
-                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'medium' ? "text-yellow-600" : "text-gray-500")}>
+                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'medium' ? "text-yellow-600" : "text-gray-500 dark:text-slate-400")}>
                             {t.medium}
                         </span>
                     </div>
@@ -127,7 +126,7 @@ export default function AyahOptionsModal({
                                 "w-14 h-14 rounded-full flex items-center justify-center transition-all border-2",
                                 currentRating === 'good'
                                     ? "bg-green-600 border-green-400 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)] scale-110"
-                                    : "bg-white border-green-200 text-green-500 hover:bg-green-50 hover:border-green-400"
+                                    : "bg-white dark:bg-slate-800 border-green-200 dark:border-green-900/30 text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-400"
                             )}
                         >
                             <GoodIcon
@@ -140,13 +139,13 @@ export default function AyahOptionsModal({
                                 fill="currentColor"
                             />
                         </button>
-                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'good' ? "text-green-600" : "text-gray-500")}>
+                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'good' ? "text-green-600" : "text-gray-500 dark:text-slate-400")}>
                             {t.good}
                         </span>
                     </div>
                 </div>
 
-                <div className="w-full h-px bg-gray-200 mb-6" />
+                <div className="w-full h-px bg-gray-200 dark:bg-slate-800 mb-6" />
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-3 mb-6">
@@ -168,7 +167,7 @@ export default function AyahOptionsModal({
                     {/* Bookmark Button */}
                     <button
                         onClick={handleBookmark}
-                        className="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white py-4 rounded-xl flex items-center justify-center gap-3 transition-colors font-medium shadow-md"
+                        className="w-full bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 active:bg-slate-900 text-white py-4 rounded-xl flex items-center justify-center gap-3 transition-colors font-medium shadow-md"
                     >
                         <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} className={isBookmarked ? "text-amber-400" : ""} />
                         {isBookmarked ? t.removeBookmark : t.addBookmark}
@@ -178,7 +177,7 @@ export default function AyahOptionsModal({
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="w-full text-gray-500 hover:text-slate-800 py-2 transition-colors text-sm font-medium"
+                    className="w-full text-gray-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 py-2 transition-colors text-sm font-medium"
                 >
                     {t.close}
                 </button>
