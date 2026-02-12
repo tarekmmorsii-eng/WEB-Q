@@ -3,6 +3,7 @@ import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Upload } from 'luci
 import clsx from 'clsx';
 import { NotificationItem } from '../types';
 import { SURAHS } from '../constants/surahData';
+import { JUZ_SECTIONS } from '../constants';
 import { getAyahPage, getPageAyahRange, getSurahsForPages } from '../services/quranService';
 
 interface NotificationManagerProps {
@@ -78,6 +79,19 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             if (startR) setFormStartAyah(startR.start);
             if (endR) setFormEndAyah(endR.end);
         } catch (e) { console.error(e); }
+    };
+
+    const getSectionText = (type: 'juz' | 'hizb' | 'rub', val: number) => {
+        let idx = 0;
+        if (type === 'juz') idx = (val - 1) * 8;
+        else if (type === 'hizb') idx = (val - 1) * 4;
+        else idx = val - 1;
+
+        const section = JUZ_SECTIONS[idx];
+        if (!section) return '';
+
+        // Return the verse snippet (matla')
+        return section.text;
     };
 
 
@@ -289,7 +303,15 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             </span>
                                                         ) : notification.category === 'quran_part' && notification.metadata ? (
                                                             <span className="block text-amber-700 dark:text-amber-300 mb-1">
-                                                                {isArabic ? 'جزء' : 'Juz'} {notification.metadata.juz}، {isArabic ? 'حزب' : 'Hizb'} {notification.metadata.hizb}، {isArabic ? 'ربع' : 'Quarter'} {notification.metadata.rub}
+                                                                {notification.name.includes(isArabic ? 'جزء' : 'Juz') ? (
+                                                                    <>
+                                                                        {isArabic ? 'الحزب' : 'Hizb'} {notification.metadata.hizb}، {isArabic ? 'سورة' : 'Surah'} {JUZ_SECTIONS[(notification.metadata.hizb - 1) * 4].subtitle.split('،')[0]}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        {isArabic ? 'الجزء' : 'Juz'} {notification.metadata.juz}، {isArabic ? 'سورة' : 'Surah'} {SURAHS.find(s => s.number === JUZ_SECTIONS[(notification.metadata.juz - 1) * 8].surahNum)?.name}
+                                                                    </>
+                                                                )}
                                                             </span>
                                                         ) : null}
                                                         {notification.type === 'daily' ? t.daily :
@@ -652,8 +674,15 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         const newHizb = (val - 1) * 2 + 1;
                                                         const newRub = (newHizb - 1) * 4 + 1;
                                                         setFormHizb(newHizb);
+                                                        setFormHizb(newHizb);
                                                         setFormRub(newRub);
-                                                        setFormName(`${t.juz} ${val}`);
+                                                        const sect = JUZ_SECTIONS[(val - 1) * 8];
+                                                        if (sect) {
+                                                            setFormName(`${t.juz} ${val} (${sect.text})`);
+                                                            setFormSurahNumber(sect.surahNum || 1);
+                                                            setFormStartAyah(sect.ayahNum || 1);
+                                                            getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
+                                                        }
                                                     }}
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
@@ -661,6 +690,9 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         <option key={i} value={i + 1}>{i + 1}</option>
                                                     ))}
                                                 </select>
+                                                <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
+                                                    {isArabic ? JUZ_SECTIONS[(formJuz - 1) * 8]?.subtitle.split('،')[0] : JUZ_SECTIONS[(formJuz - 1) * 8]?.subtitle}
+                                                </span>
                                             </div>
                                             <div>
                                                 <label className="text-xs text-slate-500 mb-1 block">الحزب</label>
@@ -674,7 +706,13 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         const newRub = (val - 1) * 4 + 1;
                                                         setFormJuz(newJuz);
                                                         setFormRub(newRub);
-                                                        setFormName(`${t.hizb || 'الحزب'} ${val}`);
+                                                        const sect = JUZ_SECTIONS[(val - 1) * 4];
+                                                        if (sect) {
+                                                            setFormName(`${t.hizb || 'الحزب'} ${val} (${sect.text})`);
+                                                            setFormSurahNumber(sect.surahNum || 1);
+                                                            setFormStartAyah(sect.ayahNum || 1);
+                                                            getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
+                                                        }
                                                     }}
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
@@ -682,27 +720,35 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         <option key={i} value={i + 1}>{i + 1}</option>
                                                     ))}
                                                 </select>
+                                                <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
+                                                    {getSectionText('hizb', formHizb)}
+                                                </span>
                                             </div>
                                             <div>
                                                 <label className="text-xs text-slate-500 mb-1 block">الربع</label>
                                                 <select
-                                                    value={formRub}
+                                                    value={(formRub - 1) % 4 + 1}
                                                     onChange={(e) => {
-                                                        const val = parseInt(e.target.value);
-                                                        setFormRub(val);
-                                                        // Sync Juz and Hizb
-                                                        const newHizb = Math.ceil(val / 4);
-                                                        const newJuz = Math.ceil(newHizb / 2);
-                                                        setFormJuz(newJuz);
-                                                        setFormHizb(newHizb);
-                                                        setFormName(`${t.rub || 'الربع'} ${val}`);
+                                                        const valWithinHizb = parseInt(e.target.value);
+                                                        const absoluteRub = (formHizb - 1) * 4 + valWithinHizb;
+                                                        setFormRub(absoluteRub);
+                                                        const sect = JUZ_SECTIONS[absoluteRub - 1];
+                                                        if (sect) {
+                                                            setFormName(`${t.rub || 'الربع'} ${valWithinHizb} - ${t.hizb || 'الحزب'} ${formHizb} (${sect.text})`);
+                                                            setFormSurahNumber(sect.surahNum || 1);
+                                                            setFormStartAyah(sect.ayahNum || 1);
+                                                            getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
+                                                        }
                                                     }}
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
-                                                    {[...Array(240)].map((_, i) => (
-                                                        <option key={i} value={i + 1}>{i + 1}</option>
+                                                    {[1, 2, 3, 4].map(v => (
+                                                        <option key={v} value={v}>{v}</option>
                                                     ))}
                                                 </select>
+                                                <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
+                                                    {getSectionText('rub', formRub)}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
