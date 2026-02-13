@@ -729,14 +729,21 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         if (surah && ayah && mode === ViewMode.HIDE_ALL_AYAHS) {
             const info = ayahWordMap.get(`${surah}-${ayah}`);
             if (info) {
-                const wordIndex = info.revealKeys.indexOf(id);
-                if (wordIndex !== -1) {
-                    const stops = info.stopIndices || [];
-                    const prevStop = stops.filter((s: number) => s < wordIndex).pop();
-                    const start = (prevStop !== undefined) ? prevStop + 1 : 0;
-                    const nextStop = stops.find((s: number) => s >= wordIndex);
-                    const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
-                    idsToReveal = info.revealKeys.slice(start, end + 1);
+                const currentState = Number(toggleState);
+                if (currentState === 0) {
+                    // الزرار الأول (الآيات): يكشف الآية كاملة بضغطة واحدة
+                    idsToReveal = info.revealKeys;
+                } else if (currentState === 1) {
+                    // الزرار الثاني (علامات الوقف): يكشف المقطع الحالي فقط (بين علامتين وقف)
+                    const wordIndex = info.revealKeys.indexOf(id);
+                    if (wordIndex !== -1) {
+                        const stops = info.stopIndices || [];
+                        const prevStop = stops.filter((s: number) => s < wordIndex).pop();
+                        const start = (prevStop !== undefined) ? prevStop + 1 : 0;
+                        const nextStop = stops.find((s: number) => s >= wordIndex);
+                        const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
+                        idsToReveal = info.revealKeys.slice(start, end + 1);
+                    }
                 }
             }
         } else if (surah && ayah && mode === ViewMode.HIDE_RANDOM_AYAHS) {
@@ -760,7 +767,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             idsToReveal.forEach(i => next.add(i));
             return next;
         });
-    }, [mode, ayahWordMap, setRevealedIndices]);
+    }, [mode, toggleState, ayahWordMap, setRevealedIndices]);
 
     const isHidden = useCallback((lineIdx: number, wordIdx: number) => {
         const id = getId(lineIdx, wordIdx);

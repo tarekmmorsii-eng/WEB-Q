@@ -472,12 +472,12 @@ const QPCV1PageRenderer: React.FC<QPCV1PageRendererProps> = ({
             const ayahInfo = ayahWordMap.get(key);
 
             if (ayahInfo) {
-                if (toggleState === 0) {
-                    // Reveal Whole Ayah
+                const currentState = Number(toggleState);
+                if (currentState === 0) {
+                    // الزرار الأول (الآيات): يكشف الآية كاملة
                     idsToReveal = ayahInfo.revealKeys;
-                } else if (toggleState === 1) {
-                    // Reveal Segment
-                    // 1. Find index of clicked word in the ayah
+                } else if (currentState === 1) {
+                    // الزرار الثاني (علامات الوقف): يكشف المقطع الحالي فقط (بين علامتين وقف)
                     const wordIndexInAyah = ayahInfo.revealKeys.indexOf(id);
                     if (wordIndexInAyah !== -1) {
                         const stops = STOP_SIGNS[key] || [];
