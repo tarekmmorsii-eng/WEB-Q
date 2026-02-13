@@ -96,6 +96,20 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
                 }
             },
             {
+                element: '#tour-surah-name',
+                popover: {
+                    title: 'اسم السورة',
+                    description: `انقر على اسم السورة للوصول إلى ميزات متقدمة:
+• قيّم مستوى حفظك للسورة بالكامل
+• قيّم مجموعة من الآيات في السورة بنفس التقييم مرة واحدة`,
+                    side: "bottom",
+                    align: 'start',
+                    showButtons: ['next', 'previous', 'close'],
+                    nextBtnText: 'التالي',
+                    prevBtnText: 'السابق',
+                }
+            },
+            {
                 element: '#tour-ayah-number',
                 popover: {
                     title: 'رقم الآية',
@@ -104,7 +118,8 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
   🔴 ضعيف
   🟡 متوسط
   🟢 جيد
-• إضافة علامة مرجعية للآية`,
+• إضافة علامة مرجعية للآية
+• عرض المتشابهات مع الآية`,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
