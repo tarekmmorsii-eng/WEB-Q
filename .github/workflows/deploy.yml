@@ -25,6 +25,7 @@ jobs:
       run: npm run build
       env:
         CI: false
+
     - name: 5. Deploy to Hostinger via FTP
       uses: SamKirkland/FTP-Deploy-Action@4.3.0
       with:
