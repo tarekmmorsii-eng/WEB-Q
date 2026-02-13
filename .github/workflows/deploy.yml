@@ -34,6 +34,6 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./dist/
         server-dir: ./public_html/
+        # الإعدادات المحدثة والمتوافقة مع Hostinger
         protocol: ftp
         port: 21
-        force-pasv: true
