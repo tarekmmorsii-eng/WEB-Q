@@ -690,7 +690,15 @@ export default function Settings({
                             </section>
 
                             {/* Visitor Counter - Inside More Settings */}
-                            <VisitorCounter t={t} language={currentLanguage} />
+                            <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
+                                <VisitorCounter t={t} language={currentLanguage} />
+
+                                <div className="mt-6 pb-2 text-center">
+                                    <p className="text-[10px] text-gray-400 dark:text-slate-500 font-mono opacity-50">
+                                        Version 1.2.1 • 2026.02.15 • Stable
+                                    </p>
+                                </div>
+                            </div>
                         </>
                     )}
                 </div>
