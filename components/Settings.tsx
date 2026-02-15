@@ -7,8 +7,9 @@ import { AppSettings, BottomBarSettings } from '../types';
 import { THEMES, Theme } from '../constants/themes';
 import { translations, LANGUAGE_NAMES, Language } from '../i18n/translations';
 import { loadQPCV1Data } from './QPCV1PageRenderer';
-import HelpModal from './HelpModal';
+import HowToUseGuide from './HowToUseGuide';
 import VerseCalculatorModal from './VerseCalculatorModal';
+import VisitorCounter from './VisitorCounter';
 
 
 interface SettingsProps {
@@ -687,6 +688,9 @@ export default function Settings({
                                     </a>
                                 </div>
                             </section>
+
+                            {/* Visitor Counter - Inside More Settings */}
+                            <VisitorCounter t={t} language={currentLanguage} />
                         </>
                     )}
                 </div>
@@ -721,7 +725,7 @@ export default function Settings({
                 </div>
             </div>
 
-            <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} language={currentLanguage} />
+            <HowToUseGuide isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} language={currentLanguage} />
             <VerseCalculatorModal
                 isOpen={showVerseCalculator}
                 onClose={() => {

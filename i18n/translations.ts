@@ -276,6 +276,26 @@ export interface Translations {
     helpSlide4Title: string;
     helpSlide4Desc: string;
 
+    interfaceTab: string;
+    settingsTab: string;
+    clickToZoom: string;
+    closeGuide: string;
+    next: string;
+    previous: string;
+    guideStart: string;
+    guideVerseVisibility: string;
+    guideWordVisibility: string;
+    guideQuranUI: string;
+    guideSettingsTools: string;
+    guideIndex: string;
+    guideSearch: string;
+    guideMemorizationStats: string;
+    guideNotifications: string;
+    guideMutashabihat: string;
+    guideVerseCalculator: string;
+    guidePrayerMode: string;
+    guideNotes: string;
+
     showSimilarVersesIndicators: string;
     similarVersesIndicatorsDesc: string;
 
@@ -288,6 +308,12 @@ export interface Translations {
     feedbackSuggestion: string;
     feedbackSentSuccessfully: string;
     feedbackThanks: string;
+    visitorCounter: string;
+    visitorDetails: string;
+    visitorsFrom: string;
+    totalVisitors: string;
+    visitorActiveNow: string;
+    visitorTopCountries: string;
     feedbackTargetItem: string;
     feedbackSelectTarget: string;
     feedbackTargetSetting: string;
@@ -606,7 +632,27 @@ const en: Translations = {
     helpSlide3Title: "Complete Customization",
     helpSlide3Desc: "Control font size, colors, brightness, and daily reading notifications from settings to suit your needs.",
     helpSlide4Title: "Ready to Start?",
-    helpSlide4Desc: "Explore more features yourself. We are here to help you in your journey with the Holy Quran.",
+    helpSlide4Desc: 'Explore more features yourself. We are here to help you in your journey with the Holy Quran.',
+
+    interfaceTab: 'Interface Guide',
+    settingsTab: 'Settings Guide',
+    clickToZoom: 'Tap image to enlarge',
+    closeGuide: 'Close Guide',
+    next: 'Next',
+    previous: 'Previous',
+    guideStart: 'Getting Started',
+    guideVerseVisibility: 'Verse Visibility Controls',
+    guideWordVisibility: 'Word Visibility Controls',
+    guideQuranUI: 'Mutashabihat and Rating Buttons',
+    guideSettingsTools: 'Settings & Tools',
+    guideIndex: 'Index',
+    guideSearch: 'Search in Mushaf',
+    guideMemorizationStats: 'Memorization Strength Stats',
+    guideNotifications: 'Notifications & Alerts',
+    guideMutashabihat: 'Mutashabihat Guide',
+    guideVerseCalculator: 'Verse Calculator',
+    guidePrayerMode: 'Prayer Mode',
+    guideNotes: 'Notes',
 
     showSimilarVersesIndicators: 'Show Mutashabihat Indicators',
     similarVersesIndicatorsDesc: 'Colored lines under ayah numbers',
@@ -620,6 +666,12 @@ const en: Translations = {
     feedbackSuggestion: 'Suggestion / Improvement',
     feedbackSentSuccessfully: 'Sent Successfully!',
     feedbackThanks: 'Thank you for your contribution to improving the app.',
+    visitorCounter: 'Visitor Counter',
+    visitorDetails: 'Visitor Details',
+    visitorsFrom: 'Visitors from',
+    totalVisitors: 'Total Visitors',
+    visitorActiveNow: 'Active Now',
+    visitorTopCountries: 'Top Countries',
     feedbackTargetItem: 'What is the item that has notes?',
     feedbackSelectTarget: 'Select item...',
     feedbackTargetSetting: 'What is the setting causing the problem?',
@@ -1019,8 +1071,34 @@ export const translations: Record<Language, Translations> = {
         helpSlide3Desc: "تحكم في حجم الخط، الألوان، الإضاءة، وإشعارات الورد اليومي من الإعدادات لتناسب احتياجاتك.",
         helpSlide4Title: "جاهز للبدء؟",
         helpSlide4Desc: "استكشف المزيد من المميزات بنفسك. نحن هنا لمساعدتك في رحلتك مع القرآن الكريم.",
+
+        interfaceTab: 'شرح الواجهة',
+        settingsTab: 'دليل الإعدادات',
+        clickToZoom: 'اضغط على الصورة للتكبير',
+        closeGuide: 'إغلاق الدليل',
+        next: 'التالي',
+        previous: 'السابق',
+        guideStart: 'البداية',
+        guideVerseVisibility: 'أزرار إخفاء وإظهار الآيات',
+        guideWordVisibility: 'أزرار إخفاء وإظهار الكلمات',
+        guideQuranUI: 'أزرار المتشابهات والتقييم',
+        guideSettingsTools: 'قائمة الإعدادات والأدوات',
+        guideIndex: 'الفهرس',
+        guideSearch: 'البحث في المصحف',
+        guideMemorizationStats: 'إحصائيات قوة الحفظ',
+        guideNotifications: 'الإشعارات والتنبيهات',
+        guideMutashabihat: 'دليل المتشابهات',
+        guideVerseCalculator: 'حاسبة الآيات',
+        guidePrayerMode: 'وضع الصلاة',
+        guideNotes: 'الملاحظات',
         showSimilarVersesIndicators: 'إظهار علامات المتشابھات',
         similarVersesIndicatorsDesc: 'الخطوط الملونة تحت أرقام الآيات',
+        visitorCounter: 'عداد الزوار',
+        visitorDetails: 'تفاصيل الزوار',
+        visitorsFrom: 'زوار من',
+        totalVisitors: 'إجمالي الزوار',
+        visitorActiveNow: 'نشط الآن',
+        visitorTopCountries: 'أكثر الدول زيارة',
         surahNames: [
             'الفاتحة', 'البقرة', 'آل عمران', 'النساء', 'المائدة', 'الأنعام', 'الأعراف', 'الأنفال', 'التوبة', 'يونس',
             'هود', 'يوسف', 'الرعد', 'إبراهيم', 'الحجر', 'النحل', 'الإسراء', 'الكهف', 'مريم', 'طه',
