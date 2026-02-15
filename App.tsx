@@ -783,14 +783,18 @@ export default function App() {
         if (reg) {
           const showUpdateToast = () => {
             setHasAppUpdate(true);
-            // We no longer show the floating toast as per user request
-            /*
-            setToastMessage('يتوفر تحديث جديد للمصحف 🚀');
+            setToastMessage('🚀 يتوفر تحديث جديد للمصحف');
             setToastAction({
               label: 'تحديث الآن',
-              onClick: handleUpdateApp
+              onClick: () => {
+                if (reg?.waiting) {
+                  reg.waiting.postMessage('SKIP_WAITING');
+                  window.location.reload();
+                } else {
+                  window.location.reload();
+                }
+              }
             });
-            */
           };
 
           if (reg.waiting) showUpdateToast();
