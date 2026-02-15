@@ -681,10 +681,10 @@ export default function Settings({
                                 </h3>
                                 <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center gap-2 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                                     <a
-                                        href="mailto:Tarek.morsii@gmail.com"
+                                        href="mailto:tarek.m.morsii@gmail.com"
                                         className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted underline-offset-4"
                                     >
-                                        Tarek.morsii@gmail.com
+                                        tarek.m.morsii@gmail.com
                                     </a>
                                 </div>
                             </section>
@@ -695,7 +695,7 @@ export default function Settings({
 
                                 <div className="mt-6 pb-2 text-center">
                                     <p className="text-[10px] text-gray-400 dark:text-slate-500 font-mono opacity-50">
-                                        Version 1.2.1 • 2026.02.15 • Stable
+                                        Version 1.2.2 • 2026.02.15 • Stable
                                     </p>
                                 </div>
                             </div>
