@@ -75,9 +75,11 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
             // For settings, we subtract 29 to start from 1 again (30 becomes 1, etc.)
             const displayId = isInterface ? i : i - 29;
 
+            // Force cache refresh by adding a timestamp version
+            const version = "2026.02.15.v2";
             images.push({
                 id: i,
-                url: `/guide/${i}.${getExt(i)}`,
+                url: `/guide/${i}.${getExt(i)}?v=${version}`,
                 title: `${titlePrefix} - ${displayId}`,
                 category
             });

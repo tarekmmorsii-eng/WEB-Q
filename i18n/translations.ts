@@ -957,7 +957,7 @@ export const translations: Record<Language, Translations> = {
         prayerModeTitle: 'وضع الصلاة - اضغط لكشف الكلمة التالية',
 
         // Mutashabihat
-        similarVersesAlert: 'دليل المتشابهات',
+        similarVersesAlert: 'دليل المتشابهات ',
         similarVersesDescription: 'هذه الآية لها آيات متشابهة معها، احذر من الخلط بينها عند الحفظ',
         sourceVerse: 'الآية المصدر',
         openInIndex: 'فتح في الفهرس',
