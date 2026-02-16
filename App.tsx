@@ -1682,6 +1682,7 @@ export default function App() {
             <BottomBarFeedbackButton t={t} />
 
             <button
+              id="tour-settings-btn"
               onClick={() => setIsSettingsOpen(true)}
               className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors relative"
             >

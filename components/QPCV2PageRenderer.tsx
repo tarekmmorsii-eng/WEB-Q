@@ -126,15 +126,16 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({
                 }}
             >
                 {rating && (
-                    <circle cx="50" cy="50" r="42" fill={fillColor} fillOpacity="0.2" stroke={activeColor} strokeWidth="3" />
+                    <circle className="ayah-rating-circle" cx="50" cy="50" r="42" fill={fillColor} fillOpacity="0.2" stroke={activeColor} strokeWidth="3" />
                 )}
 
-                <g fill="none" stroke={activeColor} strokeLinecap="round" strokeLinejoin="round">
+                <g className="ayah-border-group" fill="none" stroke={activeColor} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M50,12 C65,12 85,22 88,48 C91,74 72,88 50,88 C28,88 10,72 12,48 C14,24 35,12 50,12 Z" strokeWidth="3" />
                     <path d="M45,15 C60,13 82,25 85,50 C88,75 70,85 48,85 C26,85 15,75 14,52 C13,29 30,17 45,15" opacity="0.8" strokeWidth="2" />
                     <path d="M55,18 C70,20 80,30 82,52 C84,74 75,82 55,82 C35,82 20,74 22,50 C24,26 40,16 55,18" opacity="0.6" strokeWidth="1.5" />
                 </g>
                 <text
+                    className="ayah-text"
                     x="50"
                     y="55"
                     fill={activeColor}
@@ -1244,7 +1245,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                         )}
 
                                         {word.isEnd ? (
-                                            <span id="tour-ayah-number" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                                            <span
+                                                id={word.surah === 1 && word.ayah === 1 ? "tour-ayah-number" : undefined}
+                                                className="ayah-number-wrapper"
+                                                data-surah={word.surah}
+                                                data-ayah={word.ayah}
+                                                style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+                                            >
                                                 {(() => {
                                                     let mutType: 'none' | 'inside' | 'outside' | 'both' = 'none';
                                                     if (showMutashabihatIndicators) {
