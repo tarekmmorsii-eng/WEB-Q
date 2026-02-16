@@ -64,7 +64,9 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
     // Actual image mapping from public/guide
     const guideImages = useMemo<GuideImage[]>(() => {
         const images: GuideImage[] = [];
-        const getExt = (id: number) => [28, 29, 47, 48].includes(id) ? 'png' : 'jpg';
+
+        // IDs of images replaced with "a" version (28a.jpg, etc.)
+        const replacedIds = [28, 29, 30, 47, 48];
 
         for (let i = 1; i <= 51; i++) {
             const isInterface = i <= 29;
@@ -76,10 +78,16 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
             const displayId = isInterface ? i : i - 29;
 
             // Force cache refresh by adding a timestamp version
-            const version = "2026.02.15.v2";
+            const version = "2026.02.16.v3";
+
+            let filename = `${i}.jpg`;
+            if (replacedIds.includes(i)) {
+                filename = `${i}a.jpg`;
+            }
+
             images.push({
                 id: i,
-                url: `/guide/${i}.${getExt(i)}?v=${version}`,
+                url: `/guide/${filename}?v=${version}`,
                 title: `${titlePrefix} - ${displayId}`,
                 category
             });
