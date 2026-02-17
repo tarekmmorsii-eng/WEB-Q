@@ -256,7 +256,16 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
                                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{t.startPoint}</label>
                                 <select
                                     value={startSurah}
-                                    onChange={(e) => { setStartSurah(Number(e.target.value)); setStartAyah(1); }}
+                                    onChange={(e) => {
+                                        const newStart = Number(e.target.value);
+                                        setStartSurah(newStart);
+                                        setStartAyah(1);
+                                        // Auto-correct End Surah if it becomes invalid
+                                        if (newStart > endSurah) {
+                                            setEndSurah(newStart);
+                                            setEndAyah(1); // Reset end ayah to 1 to be safe
+                                        }
+                                    }}
                                     className="w-full p-2 rounded-lg border bg-white dark:bg-slate-800 text-xs truncate"
                                 >
                                     {SURAHS.map(s => (
@@ -288,7 +297,8 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
                                     onChange={(e) => { setEndSurah(Number(e.target.value)); setEndAyah(1); }}
                                     className="w-full p-2 rounded-lg border bg-white dark:bg-slate-800 text-xs truncate"
                                 >
-                                    {SURAHS.map(s => (
+                                    {/* Only show Surahs starting from current Start Surah */}
+                                    {SURAHS.slice(startSurah - 1).map(s => (
                                         <option key={s.number} value={s.number}>
                                             {currentLanguage === 'ar' ? `${s.number}. ${s.name}` : `${s.number}. ${s.name}`}
                                         </option>
