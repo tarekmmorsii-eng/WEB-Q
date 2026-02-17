@@ -668,9 +668,35 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // --- Interaction Logic (V1) ---
 
     // --- Visibility Logic (V1 Port) - Placed after ayahWordMap ---
+
+    // 1. Reset/Load Logic: Load from global cache if available, otherwise reset
+    useEffect(() => {
+        // Initialize global cache if it doesn't exist
+        if (!(window as any).revealedCache) {
+            (window as any).revealedCache = {};
+        }
+
+        const cacheKey = `${pageNumber}-${mode}-${toggleState}`;
+        const cachedSet = (window as any).revealedCache[cacheKey];
+
+        if (cachedSet) {
+            setRevealedIndices(new Set(cachedSet));
+        } else {
+            setRevealedIndices(new Set());
+        }
+    }, [mode, pageNumber, toggleState]);
+
+    // 1.5. Save to Cache Logic: Update global cache whenever revealed indices change
+    useEffect(() => {
+        if (!(window as any).revealedCache) return;
+
+        const cacheKey = `${pageNumber}-${mode}-${toggleState}`;
+        (window as any).revealedCache[cacheKey] = revealedIndices;
+    }, [revealedIndices, pageNumber, mode, toggleState]);
+
+    // 2. Mask Calculation Logic: Updates masks including when ratings change
     useEffect(() => {
         const newMasks = new Set<string>();
-        setRevealedIndices(new Set()); // Reset reveals when mode changes
 
         if (!pageData) return;
 
