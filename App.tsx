@@ -76,8 +76,19 @@ export default function App() {
     };
 
     checkTouch();
+    checkTouch();
     window.addEventListener('resize', checkTouch);
-    return () => window.removeEventListener('resize', checkTouch);
+
+    // Disable Context Menu (Right Click) globally for Native feeling
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      window.removeEventListener('resize', checkTouch);
+      window.removeEventListener('contextmenu', handleContextMenu);
+    };
   }, []);
 
   const [settings, setSettings] = useState<AppSettings>(() => {
