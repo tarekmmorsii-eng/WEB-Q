@@ -1,11 +1,11 @@
 {
-    "name": "مصحف المدينة - القرآن الكريم",
+    "name": "مصحف المراجعة - القرآن الكريم",
     "short_name": "المصحف",
     "description": "تطبيق القرآن الكريم للحفظ والتلاوة - مطابق لمصحف المدينة النبوية",
     "start_url": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
-    "background_color": "#fdfbf7",
+    "background_color": "#000000",
     "theme_color": "#b45309",
     "dir": "rtl",
     "lang": "ar",

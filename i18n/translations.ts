@@ -889,7 +889,7 @@ export const translations: Record<Language, Translations> = {
         rub: 'الربع',
         dataError: 'خطأ في تحميل البيانات',
         help: 'المساعدة والتعليمات',
-        howToUse: 'كيفية استخدام التطبيق',
+        howToUse: 'كيفية استخدام مصحف المراجعة',
         surahPrefix: 'سورة',
         pageNotAvailable: 'الصفحة غير متوفرة',
         fontNotLoaded: 'لم يتم تحميل خط صفحة {page} مسبقاً، ولا يوجد اتصال بالإنترنت حالياً.',
