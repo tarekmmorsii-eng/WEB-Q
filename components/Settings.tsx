@@ -776,7 +776,7 @@ export default function Settings({
 
                                 <div className="mt-6 pb-2 text-center">
                                     <p className="text-[10px] text-gray-400 dark:text-slate-500 font-mono opacity-50">
-                                        Version 1.2.2 • 2026.02.15 • Stable
+                                        Version 1.2.3 • 2026.02.22 • Stable
                                     </p>
                                 </div>
                             </div>
