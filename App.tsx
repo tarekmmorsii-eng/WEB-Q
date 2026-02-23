@@ -14,6 +14,7 @@ import SurahRatingModal from './components/SurahRatingModal';
 import MutashabihatModal from './components/MutashabihatModal';
 import MutashabihatIndex from './components/MutashabihatIndex';
 import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
+import HowToUseGuide from './components/HowToUseGuide';
 
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
 import { Mutashabiha } from './types';
@@ -229,6 +230,7 @@ export default function App() {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [activeMutashabihaId, setActiveMutashabihaId] = useState<string | null>(null);
   const [selectorIsInsideSurah, setSelectorIsInsideSurah] = useState<boolean>(false);
+  const [isHowToUseOpen, setIsHowToUseOpen] = useState(false);
 
   // Load mutashabihat data on mount with custom user data
   useEffect(() => {
@@ -262,6 +264,17 @@ export default function App() {
       }
     };
     loadData();
+  }, []);
+
+  // Handle URL parameters for direct linking (e.g. ?guide=1)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('guide') === '1') {
+      setIsHowToUseOpen(true);
+      // Clean up URL without refreshing
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
   }, []);
 
   const handleAddSimilarAyah = (mutashabihaId: string, isInsideSurah: boolean) => {
@@ -1988,6 +2001,12 @@ export default function App() {
         <TourClickOverlay
           isOpen={showTourClickOverlay}
           onComplete={handleClickTutorialComplete}
+        />
+
+        <HowToUseGuide
+          isOpen={isHowToUseOpen}
+          onClose={() => setIsHowToUseOpen(false)}
+          language={settings.language as Language}
         />
       </div >
     </FeedbackProvider>
