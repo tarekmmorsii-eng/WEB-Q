@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { AppSettings, BottomBarSettings } from '../types';
 import { THEMES, Theme } from '../constants/themes';
 import { translations, LANGUAGE_NAMES, Language } from '../i18n/translations';
-import { loadQPCV1Data } from './QPCV1PageRenderer';
+import { fetchPage } from '../services/quranService';
 import HowToUseGuide from './HowToUseGuide';
 import VerseCalculatorModal from './VerseCalculatorModal';
 import VisitorCounter from './VisitorCounter';
@@ -177,42 +177,27 @@ export default function Settings({
     const handleExportReviewData = async () => {
         setIsExporting(true);
         try {
-            const data = await loadQPCV1Data();
             let csvContent = "\uFEFF" + (currentLanguage === 'ar' ? "رقم الجزء,رقم الصفحة,اسم آخر سورة,رقم آخر آية" : "Juz,Page,Last Surah,Last Ayah") + "\n";
-
             for (let i = 1; i <= 604; i++) {
-                const pageNum = i;
-                const page = data.pages[i - 1];
+                const pageData = await fetchPage(i);
 
                 // حساب الجزء تقريبي (نفس المستخدم في التذييل)
-                const juz = Math.ceil((pageNum * 30) / 604);
+                const juz = Math.ceil((i * 30) / 604);
 
                 let lastSurahName = "غير معروف";
                 let lastAyahNumber = 0;
 
-                // البحث العكسي عن آخر آية في الصفحة
-                if (page && page.lines) {
-                    // نبحث من آخر سطر صعوداً
-                    for (let l = page.lines.length - 1; l >= 0; l--) {
-                        const line = page.lines[l];
-                        if (line.words) {
-                            // نبحث من آخر كلمة في السطر يساراً
-                            for (let w = line.words.length - 1; w >= 0; w--) {
-                                const word = line.words[w];
-                                // الشرط: الكلمة تملك رقم سورة ورقم آية
-                                if (word.surah && word.ayah) {
-                                    const t = translations[currentLanguage] || translations.ar;
-                                    lastSurahName = t.surahNames[word.surah - 1] || "";
-                                    lastAyahNumber = word.ayah;
-                                    break;
-                                }
-                            }
-                        }
-                        if (lastAyahNumber !== 0) break;
+                if (pageData && pageData.ayahs && pageData.ayahs.length > 0) {
+                    const lastAyah = pageData.ayahs[pageData.ayahs.length - 1];
+                    const t = translations[currentLanguage] || translations.ar;
+
+                    if (lastAyah.surah) {
+                        lastSurahName = t.surahNames[lastAyah.surah.number - 1] || "";
+                        lastAyahNumber = lastAyah.numberInSurah;
                     }
                 }
 
-                csvContent += `${juz},${pageNum},${lastSurahName},${lastAyahNumber}\n`;
+                csvContent += `${juz},${i},${lastSurahName},${lastAyahNumber}\n`;
             }
 
             // تحميل الملف
@@ -228,7 +213,7 @@ export default function Settings({
 
         } catch (error) {
             console.error(error);
-            alert(t.error);
+            alert(translations[currentLanguage]?.error || translations.ar.error);
         } finally {
             setIsExporting(false);
         }

@@ -542,14 +542,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             fullData = (window as any).qpcV2Cache; // Update fullData reference
                         }
                     } catch (err) {
-                        console.warn("Failed to fetch individual page, trying legacy global cache...");
-                        // Fallback to global cache if available (from a previous session or fully downloaded)
-                        const cachedData = await getMushafData();
-                        if (cachedData && cachedData[pageNumber.toString()]) {
-                            rawPage = cachedData[pageNumber.toString()];
-                            (window as any).qpcV2Cache = cachedData;
-                            fullData = cachedData; // Update fullData reference
-                        }
+                        console.error("Failed to fetch page data / فشل في تحميل بيانات الصفحة", err);
                     }
                 }
 

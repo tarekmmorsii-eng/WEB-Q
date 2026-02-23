@@ -2,7 +2,6 @@
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
 import clsx from 'clsx';
 import Header from './components/Header';
-import QPCV1PageRenderer, { loadQPCV1Data, getPageData } from './components/QPCV1PageRenderer';
 import QPCV2PageRenderer from './components/QPCV2PageRenderer';
 import SurahIndex from './components/SurahIndex';
 import SearchModal from './components/SearchModal';
@@ -716,12 +715,6 @@ export default function App() {
     }, 3000);
   };
 
-  const [useQPCV1, setUseQPCV1] = useState<boolean>(() => {
-    // Force V2 for debugging font size issues - ignore local storage for now
-    return false;
-  });
-  const [qpcMushafData, setQpcMushafData] = useState<any>(null);
-
   const mainRef = useRef<HTMLDivElement>(null);
 
   const handleUiInteraction = useCallback(() => {
@@ -794,7 +787,7 @@ export default function App() {
         if (reg) {
           const showUpdateToast = () => {
             setHasAppUpdate(true);
-            setToastMessage('🚀 يتوفر تحديث جديد للمصحف');
+            setToastMessage('🚀 يتوفر تحديث جديد للمصحف بدون إنترنت');
             setToastAction({
               label: 'تحديث الآن',
               onClick: () => {
@@ -942,17 +935,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // ØªØ­Ù…ÙŠÙ„ Ø¨ÙŠØ§Ù†Ø§Øª QPC V1
-    const initQPC = async () => {
-      try {
-        const data = await loadQPCV1Data();
-        setQpcMushafData(data);
-      } catch (err) {
-        console.error("Failed to load QPC V1 data", err);
-      }
-    };
-    initQPC();
-
     try {
       const savedPageBookmarks = localStorage.getItem('quran_page_bookmarks');
       const savedVerseBookmarks = localStorage.getItem('quran_verse_bookmarks');

@@ -79,8 +79,8 @@ async function cacheAllDataSafely(reportProgress = false) {
 
         if (!reportProgress) {
             const fontKeys = await fontCache.keys();
-            if (fontKeys.length > 1200) {
-                console.log('[SW] ✅ Data appears to be cached. Skipping background download.');
+            if (fontKeys.length > 610) {
+                console.log('[SW] ✅ V2 Fonts appear to be cached. Skipping background download.');
                 return;
             }
         } else {
@@ -134,13 +134,7 @@ async function cacheAllDataSafely(reportProgress = false) {
             await new Promise(r => setTimeout(r, 20));
         }
 
-        const mushafJson = '/qpc_v2_mushaf.json';
-        const hasMushaf = await coreCache.match(mushafJson);
-        if (!hasMushaf) {
-            fetch(mushafJson).then(res => {
-                if (res.status === 200) coreCache.put(mushafJson, res);
-            }).catch(() => { });
-        }
+
 
         if (reportProgress) sendMessageToClients({ type: 'DOWNLOAD_COMPLETE' });
         console.log('[SW] 🎉 Full background download finished!');
@@ -231,24 +225,7 @@ self.addEventListener('fetch', (event) => {
             return;
         }
 
-        // SPECIAL CASE: Large Mushaf JSON -> Always Cache First to prevent 28MB download lag
-        if (url.pathname.includes('qpc_v2_mushaf.json')) {
-            event.respondWith(
-                caches.open(CORE_CACHE).then(async (cache) => {
-                    const cachedResponse = await cache.match(event.request);
-                    if (cachedResponse) return cachedResponse;
 
-                    // Not in cache, fetch and store
-                    return fetch(event.request).then((networkResponse) => {
-                        if (networkResponse && networkResponse.status === 200) {
-                            cache.put(event.request, networkResponse.clone());
-                        }
-                        return networkResponse;
-                    });
-                })
-            );
-            return;
-        }
 
         // Standard App Core Strategy: Network First
         event.respondWith(

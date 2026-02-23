@@ -112,22 +112,6 @@ div[data-atlas] {
   font-display: swap;
 }
 
-/* خط QPC V1 الموحد */
-@font-face {
-  font-family: 'QPC_V1_Full';
-  src: url('/fonts/QPC V1 Font.woff2.bz2');
-  font-display: block;
-}
-
-/* خط البسملة (من الصفحة 1) - V1 */
-@font-face {
-  font-family: 'QPC_Page_1';
-  src: url('/fonts/QPC_V1.woff2/p1.woff2') format('woff2');
-  font-display: block;
-  font-weight: normal;
-  font-style: normal;
-}
-
 /* خط البسملة V2 (من الصفحة 1 V2) */
 @font-face {
   font-family: 'QPC_V2_Basmalah';
