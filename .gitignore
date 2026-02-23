@@ -38,6 +38,7 @@ temp_*.txt
 # Production builds
 hostinger-upload/
 hostinger-upload.zip
+.ftp-deploy-sync-state.json
 
 # Environment
 .env

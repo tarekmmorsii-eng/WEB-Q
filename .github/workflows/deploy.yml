@@ -37,10 +37,11 @@ jobs:
         protocol: ftp
         port: 21
         security: loose
-        # Prevent timeout by only uploading changed files
-        # and excluding unnecessary system files
+        # Clean the server but ignore specific folders that cause issues
         exclude: |
           **/.git*
           **/.git*/**
           **/node_modules/**
           **/fonts/**
+          **/mutashabihat_source/**
+          .ftp-deploy-sync-state.json
