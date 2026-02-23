@@ -34,10 +34,10 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./dist/
         server-dir: ./
-        protocol: ftp
+        protocol: ftps
         port: 21
-        security: loose
-        # Clean the server but ignore specific folders that cause issues
+        timeout: 120000 # Increased to 2 minutes
+        # Sync only changed files to prevent timeout
         exclude: |
           **/.git*
           **/.git*/**
@@ -45,3 +45,4 @@ jobs:
           **/fonts/**
           **/mutashabihat_source/**
           .ftp-deploy-sync-state.json
+          .htaccess
