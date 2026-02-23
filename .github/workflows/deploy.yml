@@ -33,7 +33,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./dist/
-        server-dir: public_html/
+        server-dir: ./public_html
         protocol: ftp
         port: 21
         security: loose
@@ -43,4 +43,3 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
-          **/fonts/**
