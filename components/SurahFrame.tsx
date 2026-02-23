@@ -29,7 +29,8 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
     return (
         <div
             id="tour-surah-name"
-            className="w-full my-0 relative select-none"
+            className="w-full my-0 relative select-none notranslate"
+            translate="no"
             onClick={onClick}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
         >

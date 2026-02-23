@@ -86,7 +86,6 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({
     ayahNumber, accentColor, rating, deviceType = 'desktop', orientation = 'portrait', language = 'ar',
     mutashabihatType = 'none', onMutashabihatClick
 }) => {
-    // ... (rest of the component logic)
     const arabicNumber = formatNumber(ayahNumber, language);
     const digitCount = ayahNumber.toString().length;
 
@@ -101,8 +100,7 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({
     const isTabletLandscape = deviceType === 'tablet' && orientation === 'landscape';
 
     return (
-        <span
-            className="ayah-separator-container"
+        <span translate="no" className="notranslate ayah-separator-container"
             onClick={onMutashabihatClick}
             style={{
                 display: 'inline-flex',
@@ -1000,10 +998,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     const renderBasmallah = (line: Line, isHighlighted: boolean) => (
         <div
             className={clsx(
-                "flex items-center justify-center w-full qpc-basmalah transition-colors duration-500",
+                "flex items-center justify-center w-full qpc-basmalah transition-colors duration-500 notranslate",
                 isSpecialPage && "mb-4 md:mb-6",
                 isHighlighted && "bg-amber-100/60 dark:bg-amber-900/30 rounded-lg p-1"
             )}
+            translate="no"
             style={{
                 height: deviceType === 'desktop' ? '1.9em' : '2.8em',
                 marginTop: deviceType === 'desktop' ? '0' : '0.5rem',
@@ -1053,8 +1052,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         <div
             data-device-type={deviceType}
             data-orientation={orientation}
+            translate="no"
             className={clsx(
-                "mushaf-page-qpc w-full mx-auto flex flex-col justify-between p-2 shadow-lg my-4 rounded-sm relative",
+                "mushaf-page-qpc w-full mx-auto flex flex-col justify-between p-2 shadow-lg my-4 rounded-sm relative notranslate",
                 isSpecialPage && "special-page-frame",
                 className
             )}
