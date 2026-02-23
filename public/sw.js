@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-02-22-V1'; // Major update for offline data caching
+const CACHE_VERSION = 'v2026-02-23-V1'; // Latest optimized version (V2 fonts only)
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
@@ -94,8 +94,8 @@ async function cacheAllDataSafely(reportProgress = false) {
             const batchPromises = [];
 
             for (let p = i; p <= end; p++) {
-                // 1. Fonts (V1 and V2)
-                const fonts = [`/fonts/p${p}.woff2`, `/fonts/v2/p${p}.woff2`];
+                // 1. Fonts (V2 Only - Reduced size for faster offline availability)
+                const fonts = [`/fonts/v2/p${p}.woff2`];
                 fonts.forEach(url => {
                     batchPromises.push(
                         fontCache.match(url).then(match => {
