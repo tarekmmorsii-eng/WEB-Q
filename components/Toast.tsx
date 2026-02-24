@@ -6,21 +6,22 @@ interface ToastProps {
     message: string | null;
     onClose: () => void;
     duration?: number;
-    action?: {
+    actions?: {
         label: string;
         onClick: () => void;
-    };
+        variant?: 'primary' | 'secondary';
+    }[];
 }
 
-export default function Toast({ message, onClose, duration = 2000, action }: ToastProps) {
+export default function Toast({ message, onClose, duration = 2000, actions }: ToastProps) {
     useEffect(() => {
-        if (message && !action) { // Only auto-close if no action is required
+        if (message && (!actions || actions.length === 0)) { // Only auto-close if no action is required
             const timer = setTimeout(() => {
                 onClose();
             }, duration);
             return () => clearTimeout(timer);
         }
-    }, [message, duration, onClose, action]);
+    }, [message, duration, onClose, actions]);
 
     if (!message) return null;
 
@@ -31,14 +32,20 @@ export default function Toast({ message, onClose, duration = 2000, action }: Toa
                     <span className="flex-1 text-center">{message}</span>
                 </div>
 
-                {action && (
+                {actions && actions.map((action, idx) => (
                     <button
+                        key={idx}
                         onClick={action.onClick}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-900/20"
+                        className={clsx(
+                            "px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-lg",
+                            action.variant === 'secondary'
+                                ? "bg-slate-700 hover:bg-slate-600 text-slate-200"
+                                : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20"
+                        )}
                     >
                         {action.label}
                     </button>
-                )}
+                ))}
 
                 <button
                     onClick={onClose}

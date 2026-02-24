@@ -171,6 +171,7 @@ export interface Translations {
     updateAvailable: string;
     updateDescription: string;
     updateNow: string;
+    updateLater: string;
     installApp: string;
     downloadMushaf: string;
     downloadMushafDescription: string;
@@ -529,6 +530,7 @@ const en: Translations = {
     updateAvailable: 'New update available 🚀',
     updateDescription: 'Includes important improvements and fixes.',
     updateNow: 'Update Now',
+    updateLater: 'Update Later',
     installApp: 'Install app on your device',
     downloadMushaf: 'Update/Save complete Mushaf',
     downloadMushafDescription: 'Includes latest edits and layouts (~150MB)',
@@ -901,6 +903,7 @@ export const translations: Record<Language, Translations> = {
         updateAvailable: 'يتوفر تحديث جديد للمصحف بدون إنترنت 🚀',
         updateDescription: 'يتضمن تحسينات هامة وإصلاح المشاكل فقط.',
         updateNow: 'تحديث الآن',
+        updateLater: 'التحديث لاحقاً',
         installApp: 'تثبيت الموقع على جهازك',
         downloadMushaf: 'تحديث/حفظ المصحف كاملاً',
         downloadMushafDescription: 'يتضمن آخر التعديلات والتنسيقات (~150MB)',

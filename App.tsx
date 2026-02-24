@@ -451,7 +451,7 @@ export default function App() {
   }, [mutashabihatData]);
 
   // 1. Manual Update Logic (Top Level)
-  const [toastAction, setToastAction] = useState<{ label: string, onClick: () => void } | undefined>(undefined);
+  const [toastActions, setToastActions] = useState<{ label: string, onClick: () => void, variant?: 'primary' | 'secondary' }[] | undefined>(undefined);
 
   // 2. Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -799,19 +799,32 @@ export default function App() {
       navigator.serviceWorker.getRegistration().then(reg => {
         if (reg) {
           const showUpdateToast = () => {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+            if (!isStandalone) return;
+
             setHasAppUpdate(true);
-            setToastMessage('🚀 يتوفر تحديث جديد للمصحف بدون إنترنت');
-            setToastAction({
-              label: 'تحديث الآن',
-              onClick: () => {
-                if (reg?.waiting) {
-                  reg.waiting.postMessage('SKIP_WAITING');
-                  window.location.reload();
-                } else {
-                  window.location.reload();
+            setToastMessage(t.updateAvailable);
+            setToastActions([
+              {
+                label: t.updateNow,
+                onClick: () => {
+                  if (reg?.waiting) {
+                    reg.waiting.postMessage('SKIP_WAITING');
+                    window.location.reload();
+                  } else {
+                    window.location.reload();
+                  }
+                }
+              },
+              {
+                label: t.updateLater,
+                variant: 'secondary',
+                onClick: () => {
+                  setToastMessage(null);
+                  setToastActions(undefined);
                 }
               }
-            });
+            ]);
           };
 
           if (reg.waiting) showUpdateToast();
@@ -1934,8 +1947,11 @@ export default function App() {
         {toastMessage && (
           <Toast
             message={toastMessage}
-            onClose={() => setToastMessage(null)}
-            action={toastAction}
+            onClose={() => {
+              setToastMessage(null);
+              setToastActions(undefined);
+            }}
+            actions={toastActions}
           />
         )}
 
