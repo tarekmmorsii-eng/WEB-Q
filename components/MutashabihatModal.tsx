@@ -617,7 +617,7 @@ export default function MutashabihatModal({
                                                         className="text-[10px] bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 flex items-center gap-1"
                                                     >
                                                         <MutashabihatIcon showGreenLine showRedLine size="w-3 h-3" language={language} />
-                                                        {t.guideAction}
+                                                        {t.openInIndex}
                                                     </button>
                                                     <button
                                                         onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}

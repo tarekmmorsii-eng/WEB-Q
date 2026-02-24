@@ -9,22 +9,23 @@ const VisitorCounter = ({ t, language }: { t: any, language: string }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch Visitor Count (Simulated logic or simple counter API)
         const fetchCount = async () => {
             try {
-                // Use a stable dummy count for preview, incremented by a real hit if possible
+                // Fetch real global count using a free counter API
+                // mushafalmurajaa.com as namespace
+                const response = await fetch('https://api.counterapi.dev/v1/mushafalmurajaa/visits/up');
+                const data = await response.json();
+
+                if (data && data.count) {
+                    // Start from the current base but add real hits from the API
+                    const baseCount = 12450;
+                    setCount(baseCount + data.count);
+                }
+            } catch (error) {
+                console.error('Real count fetch failed, using local storage fallback');
                 const savedCount = localStorage.getItem('visitor_count_cache');
                 const initialCount = savedCount ? parseInt(savedCount) : 12450;
-
-                // Simulate real-time increment for session
-                const sessionIncr = sessionStorage.getItem('v_session') ? 0 : 1;
-                if (sessionIncr) sessionStorage.setItem('v_session', '1');
-
-                const newCount = initialCount + sessionIncr;
-                setCount(newCount);
-                localStorage.setItem('visitor_count_cache', newCount.toString());
-            } catch (error) {
-                console.error('Count fetch failed');
+                setCount(initialCount);
             }
         };
 

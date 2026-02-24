@@ -281,7 +281,7 @@ export default function Settings({
                 <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 p-4 flex justify-between items-center shrink-0 z-10">
                     <div className="flex items-center gap-3">
                         <img
-                            src="/final_logo.png"
+                            src="https://mushafalmurajaa.com/mushaf_logo_v2.png"
                             alt="Logo"
                             className="w-10 h-10 rounded-full border border-amber-500/30"
                         />
@@ -739,7 +739,7 @@ export default function Settings({
                                     className="w-full flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800"
                                 >
                                     <span className="font-medium text-emerald-800 dark:text-emerald-200">
-                                        {t.howToUse || 'كيفية استخدام التطبيق'}
+                                        {t.guideAction}
                                     </span>
                                     <HelpCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
                                 </button>
@@ -753,10 +753,10 @@ export default function Settings({
                                 </h3>
                                 <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center gap-2 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                                     <a
-                                        href="mailto:tarek.m.morsii@gmail.com"
+                                        href="mailto:Info@mushafalmurahaa.com"
                                         className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted underline-offset-4"
                                     >
-                                        tarek.m.morsii@gmail.com
+                                        Info@mushafalmurahaa.com
                                     </a>
                                 </div>
                             </section>

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, HelpCircle, BookOpen, Settings, Zap } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, HelpCircle, BookOpen, Settings, Zap, PlayCircle } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, A11y, Autoplay } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
@@ -21,6 +21,16 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
     const t = translations[language as Language] || translations['ar'];
 
     const slides = [
+        {
+            id: 0,
+            title: language === 'ar' ? "فيديو تعليمي (الجزء الأول)" : "Tutorial Video (Part 1)",
+            description: language === 'ar' ? "شاهد فيديو توضيحي لكيفية استخدام أهم مميزات مصحف المراجعة." : "Watch a video demonstrating how to use the most important features of My Quran.",
+            icon: PlayCircle,
+            color: "bg-red-600",
+            image: "/logo_splash.png",
+            video: "/مصحف المراجعة ج1.mp4",
+            isVideo: true
+        },
         {
             id: 1,
             title: t.helpSlide1Title,
@@ -117,12 +127,21 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
                                     {/* Left Side: Image (Top on mobile) */}
                                     <div className="w-full md:w-1/2 h-64 md:h-full relative overflow-hidden group">
                                         <div className={clsx("absolute inset-0 opacity-20 dark:opacity-30 mix-blend-overlay", slide.color)}></div>
-                                        <img
-                                            src={slide.image}
-                                            alt={slide.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:bg-gradient-to-r md:from-black/40 md:to-transparent"></div>
+                                        {(slide as any).isVideo ? (
+                                            <video
+                                                src={(slide as any).video}
+                                                controls
+                                                className="w-full h-full object-cover"
+                                                poster={slide.image}
+                                            />
+                                        ) : (
+                                            <img
+                                                src={slide.image}
+                                                alt={slide.title}
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:bg-gradient-to-r md:from-black/40 md:to-transparent pointer-events-none"></div>
 
                                         {/* Icon Badge */}
                                         <div className={clsx(
