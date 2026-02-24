@@ -1066,7 +1066,7 @@ export const translations: Record<Language, Translations> = {
         startMustBeLess: 'رقم البداية يجب أن يكون أقل من أو يساوي رقم النهاية',
 
         // Help Slides
-        helpSlide1Title: "مرحباً بك في مصحفي (My Quran)",
+        helpSlide1Title: "مرحباً بك في موقعي (My Quran)",
         helpSlide1Desc: "موقعك الشامل لحفظ ومراجعة القرآن الكريم بمميزات تفاعلية حديثة وتصميم مريح للعين.",
         helpSlide2Title: "تفاعل مع الآيات والكلمات",
         helpSlide2Desc: "اضغط على أي كلمة لإخفائها واختبار حفظك. يمكنك إخفاء الآيات عشوائياً أو استخدام وضع الصلاة للتسميع.",
