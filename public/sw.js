@@ -21,18 +21,26 @@ self.addEventListener('install', (event) => {
 // ---------------------------
 // 4. Message Event
 // ---------------------------
+let currentDownloadPromise = null;
+
 self.addEventListener('message', (event) => {
     if (event.data === 'SKIP_WAITING') {
         console.log('[SW] Skipping waiting...');
         self.skipWaiting();
+        return;
     }
 
-    // Silent background check (existing logic)
-    cacheAllDataSafely(false);
-
-    // Explicit user request with Progress Reporting
-    console.log('[SW] 📥 Starting MANUAL full data download...');
-    cacheAllDataSafely(true);
+    if (event.data === 'CACHE_ALL_FONTS') {
+        console.log('[SW] 📥 Received manual download request');
+        // Prevent multiple concurrent downloads
+        if (currentDownloadPromise) {
+            console.log('[SW] ⏳ Download already in progress, ignoring duplicate request.');
+            return;
+        }
+        currentDownloadPromise = cacheAllDataSafely(true).finally(() => {
+            currentDownloadPromise = null;
+        });
+    }
 });
 
 // ---------------------------
@@ -42,14 +50,10 @@ self.addEventListener('activate', (event) => {
     console.log('[SW] Activating...');
     event.waitUntil(
         Promise.all([
-            // Take control of all clients immediately
             self.clients.claim(),
-
-            // Clean up old caches
             caches.keys().then((keys) => {
                 return Promise.all(
                     keys.map((key) => {
-                        // Delete any cache that doesn't match current version
                         if (key !== FONTS_CACHE && key !== CORE_CACHE) {
                             console.log('[SW] Deleting old cache:', key);
                             return caches.delete(key);
@@ -58,94 +62,117 @@ self.addEventListener('activate', (event) => {
                 );
             })
         ]).then(() => {
-            // 🚀 Start Logic: Download ALL data (fonts + pages) in background
-            // This ensures full offline availability eventually
-            cacheAllDataSafely(false);
+            // Background silent download check on activation
+            if (!currentDownloadPromise) {
+                currentDownloadPromise = cacheAllDataSafely(false).finally(() => {
+                    currentDownloadPromise = null;
+                });
+            }
         })
     );
 });
 
 // ---------------------------
-// Helper: Cache All Data Safely (Sequential with Batches)
+// Helper: Cache All Data Safely (Pool-based with Timeouts)
 // ---------------------------
 async function cacheAllDataSafely(reportProgress = false) {
-    console.log(`[SW] 📥 Starting full data download (Progress: ${reportProgress})...`);
+    console.log(`[SW] 📥 Starting data download process (Manual: ${reportProgress})...`);
+
     try {
         const fontCache = await caches.open(FONTS_CACHE);
         const coreCache = await caches.open(CORE_CACHE);
         const totalPages = 604;
 
-        // Items to download: 604 pages (Fonts V1 & V2) + 604 Page JSONs
-
         if (!reportProgress) {
             const fontKeys = await fontCache.keys();
-            if (fontKeys.length > 610) {
-                console.log('[SW] ✅ V2 Fonts appear to be cached. Skipping background download.');
+            if (fontKeys.length > 600) {
+                console.log('[SW] ✅ Data appears to be cached. Skipping background download.');
                 return;
             }
         } else {
             sendMessageToClients({ type: 'DOWNLOAD_START', total: totalPages });
         }
 
-        const batchSize = 5;
-
-        for (let i = 1; i <= totalPages; i += batchSize) {
-            const end = Math.min(i + batchSize - 1, totalPages);
-            const batchPromises = [];
-
-            for (let p = i; p <= end; p++) {
-                // 1. Fonts (V2 Only - Reduced size for faster offline availability)
-                const fonts = [`/fonts/v2/p${p}.woff2`];
-                fonts.forEach(url => {
-                    batchPromises.push(
-                        fontCache.match(url).then(match => {
-                            if (!match) {
-                                return fetch(url)
-                                    .then(res => {
-                                        if (res.status === 200) return fontCache.put(url, res);
-                                    })
-                                    .catch(() => { });
-                            }
-                        })
-                    );
-                });
-
-                // 2. Page JSON Data
-                const jsonUrl = `/data/v2/pages/${p}.json`;
-                batchPromises.push(
-                    coreCache.match(jsonUrl).then(match => {
-                        if (!match) {
-                            return fetch(jsonUrl)
-                                .then(res => {
-                                    if (res.status === 200) return coreCache.put(jsonUrl, res);
-                                })
-                                .catch(() => { });
-                        }
-                    })
-                );
-            }
-
-            await Promise.all(batchPromises);
-
-            if (reportProgress) {
-                sendMessageToClients({ type: 'DOWNLOAD_PROGRESS', count: end, total: totalPages });
-            }
-
-            await new Promise(r => setTimeout(r, 20));
+        // Preparation: Create a queue of tasks
+        const queue = [];
+        for (let p = 1; p <= totalPages; p++) {
+            // Task 1: Page JSON
+            queue.push({
+                url: `/data/v2/pages/${p}.json`,
+                cache: coreCache,
+                page: p
+            });
+            // Task 2: Page Font
+            queue.push({
+                url: `/fonts/v2/p${p}.woff2`,
+                cache: fontCache,
+                page: p
+            });
         }
 
+        const totalTasks = queue.length;
+        let completedTasks = 0;
+        let lastReportedPage = 0;
 
+        // Concurrent Worker Pool (Max 3 parallel requests to stay safe on shared hosting)
+        const CONCURRENCY = 3;
+        const workers = Array(CONCURRENCY).fill(0).map(async () => {
+            while (queue.length > 0) {
+                const task = queue.shift();
+                if (!task) break;
 
-        if (reportProgress) sendMessageToClients({ type: 'DOWNLOAD_COMPLETE' });
-        console.log('[SW] 🎉 Full background download finished!');
+                try {
+                    const match = await task.cache.match(task.url);
+                    if (!match) {
+                        // Use a timeout for fetch to prevent infinite hanging
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                        const res = await fetch(task.url, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+
+                        if (res.status === 200) {
+                            await task.cache.put(task.url, res);
+                        }
+                    }
+                } catch (err) {
+                    console.warn(`[SW] Failed to fetch ${task.url}:`, err);
+                    // Silently continue to next task
+                } finally {
+                    completedTasks++;
+                    // Report progress per page completion roughly
+                    if (reportProgress) {
+                        const currentPage = Math.floor((completedTasks / totalTasks) * totalPages);
+                        if (currentPage > lastReportedPage) {
+                            lastReportedPage = currentPage;
+                            sendMessageToClients({
+                                type: 'DOWNLOAD_PROGRESS',
+                                count: currentPage,
+                                total: totalPages
+                            });
+                        }
+                    }
+                }
+            }
+        });
+
+        await Promise.all(workers);
+
+        if (reportProgress) {
+            sendMessageToClients({ type: 'DOWNLOAD_PROGRESS', count: totalPages, total: totalPages });
+            sendMessageToClients({ type: 'DOWNLOAD_COMPLETE' });
+        }
+        console.log('[SW] 🎉 Full download finished successfully!');
+
     } catch (e) {
-        console.error('[SW] Error in caching:', e);
+        console.error('[SW] Fatal error in caching:', e);
+        if (reportProgress) sendMessageToClients({ type: 'DOWNLOAD_ERROR', error: e.message });
     }
 }
 
 async function sendMessageToClients(msg) {
-    const allClients = await self.clients.matchAll();
-    allClients.forEach(client => client.postMessage(msg));
+    const clients = await self.clients.matchAll({ includeUncontrolled: true });
+    clients.forEach(client => client.postMessage(msg));
 }
 
 // ---------------------------

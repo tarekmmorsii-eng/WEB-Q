@@ -44,5 +44,4 @@ jobs:
           **/node_modules/**
           **/fonts/**
           **/mutashabihat_source/**
-          .ftp-deploy-sync-state.json
           .htaccess

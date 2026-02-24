@@ -95,6 +95,12 @@ export default function Settings({
                 setIsDownloading(false);
                 setDownloadProgress(100);
                 setTimeout(() => setDownloadProgress(null), 3000); // Hide after 3s
+            } else if (data.type === 'DOWNLOAD_ERROR') {
+                setIsDownloading(false);
+                setDownloadProgress(null);
+                alert(currentLanguage === 'ar'
+                    ? `⚠️ حدث خطأ أثناء التحميل: ${data.error}. يرجى المحاولة مرة أخرى.`
+                    : `⚠️ Download error: ${data.error}. Please try again.`);
             }
         };
 
