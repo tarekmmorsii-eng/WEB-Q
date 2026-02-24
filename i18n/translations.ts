@@ -98,6 +98,7 @@ export interface Translations {
     noVerseBookmarks: string;
     delete: string;
     indexTitle: string;
+    guideAction: string;
 
     // Memorization Stats
     memorizationStatsTitle: string;
@@ -458,6 +459,7 @@ const en: Translations = {
     noVerseBookmarks: 'No verse bookmarks',
     delete: 'Delete',
     indexTitle: 'Index',
+    guideAction: 'Guide',
 
     // Memorization Stats
     memorizationStatsTitle: 'Memorization Stats',
@@ -830,6 +832,7 @@ export const translations: Record<Language, Translations> = {
         noVerseBookmarks: 'لا يوجد آيات محفوظة',
         delete: 'حذف',
         indexTitle: 'الفهرس',
+        guideAction: 'الدليل',
 
         // Memorization Stats
         memorizationStatsTitle: 'إحصائيات قوة الحفظ',
@@ -963,8 +966,8 @@ export const translations: Record<Language, Translations> = {
         similarVersesAlert: 'دليل المتشابهات',
         similarVersesDescription: 'هذه الآية لها آيات متشابهة معها، احذر من الخلط بينها عند الحفظ',
         sourceVerse: 'الآية المصدر',
-        openInIndex: 'فتح في الفهرس',
-        goToVerse: 'الذهاب للآية →',
+        openInIndex: 'فتح في الدليل',
+        goToVerse: 'الذهاب للآية ←',
         all: 'الكل',
         insideSurah: 'داخل السورة',
         outsideSurah: 'خارج السورة',

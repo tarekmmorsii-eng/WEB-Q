@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Trash2, Plus, Bug } from 'lucide-react';
+import { X, Loader2, Plus, Bug } from 'lucide-react';
 import clsx from 'clsx';
 import { useFeedback } from '../contexts/FeedbackContext';
 import { Mutashabiha } from '../types';
@@ -617,7 +617,7 @@ export default function MutashabihatModal({
                                                         className="text-[10px] bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 flex items-center gap-1"
                                                     >
                                                         <MutashabihatIcon showGreenLine showRedLine size="w-3 h-3" language={language} />
-                                                        {t.indexTitle}
+                                                        {t.guideAction}
                                                     </button>
                                                     <button
                                                         onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
@@ -636,7 +636,7 @@ export default function MutashabihatModal({
                                                             }}
                                                             className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
                                                         >
-                                                            <Trash2 size={16} />
+                                                            <X size={16} />
                                                         </button>
                                                     )}
                                                 </div>
