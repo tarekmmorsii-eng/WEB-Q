@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-02-24-V1'; // Latest optimized version (V2 fonts only)
+const CACHE_VERSION = 'v2026-02-25-V1'; // Latest optimized version
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
@@ -104,7 +104,7 @@ async function cacheAllDataSafely(reportProgress = false) {
             });
             // Task 2: Page Font
             queue.push({
-                url: `/fonts/v2/p${p}.woff2`,
+                url: `/fonts/p${p}.woff2`,
                 cache: fontCache,
                 page: p
             });

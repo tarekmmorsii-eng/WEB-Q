@@ -36,12 +36,11 @@ jobs:
         server-dir: ./
         protocol: ftps
         port: 21
-        timeout: 120000 # Increased to 2 minutes
         # Sync only changed files to prevent timeout
         exclude: |
           **/.git*
           **/.git*/**
           **/node_modules/**
+          **/fonts/**
           **/mutashabihat_source/**
-          .ftp-deploy-sync-state.json
           .htaccess
