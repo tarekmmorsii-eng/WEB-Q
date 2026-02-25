@@ -744,7 +744,7 @@ export default function Settings({
                                     <HelpCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
                                 </button>
                                 <a
-                                    href="https://youtu.be/t-oQKcEHSpA?si=jeoQwSi4CaksMG2S"
+                                    href="https://youtu.be/t-oQKcEHSpA?si=eZEPZOHSJ8UL1OA4"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-100 dark:border-blue-800 mt-3"

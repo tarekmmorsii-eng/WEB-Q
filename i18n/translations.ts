@@ -461,7 +461,7 @@ const en: Translations = {
     delete: 'Delete',
     indexTitle: 'Index',
     guideAction: 'How to use the app (Images)',
-    watchVideo: 'Watch Video Tutorial',
+    watchVideo: 'Watch Mushaf Video Tutorial',
 
     // Memorization Stats
     memorizationStatsTitle: 'Memorization Stats',
@@ -835,7 +835,7 @@ export const translations: Record<Language, Translations> = {
         delete: 'حذف',
         indexTitle: 'الفهرس',
         guideAction: 'شرح استخدام المصحف (بالصور)',
-        watchVideo: 'فيديو شرح التطبيق',
+        watchVideo: 'فيديو شرح المصحف',
 
         // Memorization Stats
         memorizationStatsTitle: 'إحصائيات قوة الحفظ',
