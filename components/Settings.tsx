@@ -743,6 +743,19 @@ export default function Settings({
                                     </span>
                                     <HelpCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
                                 </button>
+                                <a
+                                    href="https://youtube.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-100 dark:border-blue-800 mt-3"
+                                >
+                                    <span className="font-medium text-blue-800 dark:text-blue-200">
+                                        {t.watchVideo}
+                                    </span>
+                                    <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg">
+                                        <div className="w-0 h-0 border-t-4 border-t-transparent border-l-8 border-l-white border-b-4 border-b-transparent ml-1" />
+                                    </div>
+                                </a>
                             </section>
 
                             {/* Contact Section */}
@@ -753,10 +766,10 @@ export default function Settings({
                                 </h3>
                                 <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center gap-2 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                                     <a
-                                        href="mailto:Info@mushafalmurahaa.com"
+                                        href="mailto:Info@mushafalmurajaa.com"
                                         className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted underline-offset-4"
                                     >
-                                        Info@mushafalmurahaa.com
+                                        Info@mushafalmurajaa.com
                                     </a>
                                 </div>
                             </section>

@@ -99,6 +99,7 @@ export interface Translations {
     delete: string;
     indexTitle: string;
     guideAction: string;
+    watchVideo: string;
 
     // Memorization Stats
     memorizationStatsTitle: string;
@@ -459,7 +460,8 @@ const en: Translations = {
     noVerseBookmarks: 'No verse bookmarks',
     delete: 'Delete',
     indexTitle: 'Index',
-    guideAction: 'Guide',
+    guideAction: 'How to use the app (Images)',
+    watchVideo: 'Watch Video Tutorial',
 
     // Memorization Stats
     memorizationStatsTitle: 'Memorization Stats',
@@ -832,7 +834,8 @@ export const translations: Record<Language, Translations> = {
         noVerseBookmarks: 'لا يوجد آيات محفوظة',
         delete: 'حذف',
         indexTitle: 'الفهرس',
-        guideAction: 'الدليل',
+        guideAction: 'شرح استخدام المصحف (بالصور)',
+        watchVideo: 'فيديو شرح التطبيق',
 
         // Memorization Stats
         memorizationStatsTitle: 'إحصائيات قوة الحفظ',

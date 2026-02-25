@@ -60,6 +60,14 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
     const t = translations[language as Language] || translations['ar'];
     const [activeTab, setActiveTab] = useState<'interface' | 'settings'>('interface');
     const [selectedImage, setSelectedImage] = useState<GuideImage | null>(null);
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+    // Scroll to top when tab changes
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({ top: 0, behavior: 'instant' });
+        }
+    }, [activeTab]);
 
     // Actual image mapping from public/guide
     const guideImages = useMemo<GuideImage[]>(() => {
@@ -267,7 +275,10 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
             </header>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 custom-scrollbar relative">
+            <main
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 custom-scrollbar relative"
+            >
                 {/* Mobile Tabs */}
                 <div className="flex md:hidden items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6 sticky top-0 z-30">
                     <button
