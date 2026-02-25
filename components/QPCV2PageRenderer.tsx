@@ -943,8 +943,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     const fontSizeClass = useMemo(() => {
         if (deviceType === 'desktop') return 'clamp(1.6rem, 2.2vw, 2.22rem)';
-        if (deviceType === 'mobile') return isMobileLandscape ? '40px' : 'min(2.8vh, 5.2vw)'; // Maximized font size
-        if (deviceType === 'tablet') return isTabletLandscape ? '56px' : '21px';
+        if (deviceType === 'mobile') return isMobileLandscape ? '25px' : 'min(2.8vh, 5.2vw)'; // Maximized font size
+        if (deviceType === 'tablet') return isTabletLandscape ? '34px' : '21px';
         return '21px';
     }, [deviceType, isMobileLandscape, isTabletLandscape]);
 
