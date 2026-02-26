@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-02-26-V3'; // Latest optimized version
+const CACHE_VERSION = 'v2026-02-26-V4'; // Fix background termination issues
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
@@ -40,6 +40,8 @@ self.addEventListener('message', (event) => {
         currentDownloadPromise = cacheAllDataSafely(true).finally(() => {
             currentDownloadPromise = null;
         });
+        // Wrap with event.waitUntil to prevent the browser from terminating the SW midway
+        event.waitUntil(currentDownloadPromise);
     }
 });
 

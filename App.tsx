@@ -808,9 +808,10 @@ export default function App() {
               {
                 label: t.updateNow,
                 onClick: () => {
+                  setToastMessage(null);
+                  setToastActions(undefined);
                   if (reg?.waiting) {
                     reg.waiting.postMessage('SKIP_WAITING');
-                    window.location.reload();
                   } else {
                     window.location.reload();
                   }

@@ -137,11 +137,33 @@ export default function Settings({
         });
     };
 
+    const [hasOfflineData, setHasOfflineData] = useState(false);
+
+    React.useEffect(() => {
+        const checkCaches = async () => {
+            try {
+                const keys = await caches.keys();
+                const fontCache = keys.find(k => k.includes('quran-fonts'));
+                if (fontCache) {
+                    const cache = await caches.open(fontCache);
+                    const reqs = await cache.keys();
+                    if (reqs.length > 600) {
+                        setHasOfflineData(true);
+                    }
+                }
+            } catch (e) { }
+        };
+        // Check on mount and also after downloading finishes
+        if (!isDownloading) {
+            checkCaches();
+        }
+    }, [isDownloading]);
+
     const handleDownloadAllData = () => {
         if (navigator.serviceWorker && navigator.serviceWorker.controller) {
             setIsDownloading(true);
             setDownloadProgress(0);
-            navigator.serviceWorker.controller.postMessage('CACHE_ALL_FONTS'); // Still using same message but SW now handles more
+            navigator.serviceWorker.controller.postMessage('CACHE_ALL_FONTS');
         } else {
             alert(currentLanguage === 'ar' ? 'Service Worker غير نشط. يرجى تحديث الصفحة والمحاولة مرة أخرى.' : 'Service Worker is inactive. Please refresh the page and try again.');
         }
@@ -682,27 +704,31 @@ export default function Settings({
                                         {/* Download/Update Mushaf Button */}
                                         <button
                                             onClick={handleDownloadAllData}
-                                            disabled={isDownloading}
+                                            disabled={isDownloading || hasOfflineData}
                                             className={clsx(
                                                 "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
                                                 isDownloading
                                                     ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
-                                                    : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
+                                                    : hasOfflineData
+                                                        ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 cursor-default"
+                                                        : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
                                             )}
                                         >
-                                            <div className="flex flex-col items-start">
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {isDownloading ? t.updatingMushaf : t.downloadMushaf}
+                                            <div className="flex flex-col items-start text-right">
+                                                <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
+                                                    {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
                                                 </span>
-                                                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
                                                     {isDownloading
                                                         ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
-                                                        : t.downloadMushafDescription
+                                                        : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
                                                     }
                                                 </span>
                                             </div>
                                             {isDownloading ? (
                                                 <Loader2 size={24} className="animate-spin text-blue-600" />
+                                            ) : hasOfflineData ? (
+                                                <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
                                             ) : (
                                                 <Download size={24} className="text-blue-600 dark:text-blue-400" />
                                             )}
