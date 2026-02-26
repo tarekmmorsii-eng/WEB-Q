@@ -852,14 +852,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     // --- Font Injection (V2) ---
     useEffect(() => {
-        setIsFontLoaded(false); // Reset load state on page change
-
         // Create dynamic font face for the current page
         const fontName = `p${pageNumber}-v2`;
         const fontPath = `/fonts/v2/p${pageNumber}.woff2`;
 
         const styleId = `font-v2-p${pageNumber}`;
         if (!document.getElementById(styleId)) {
+            setIsFontLoaded(false); // Only reset if font is not yet added
             const style = document.createElement('style');
             style.id = styleId;
             style.textContent = `
@@ -870,21 +869,18 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 }
             `;
             document.head.appendChild(style);
+
+            // Wait for font to fully load before showing text
+            document.fonts.load(`1em "${fontName}"`).then(() => {
+                setIsFontLoaded(true);
+            });
+        } else {
+            // Font already loaded previously, no delay needed
+            setIsFontLoaded(true);
         }
 
-        // Wait for font to fully load before showing text
-        document.fonts.load(`1em "${fontName}"`).then(() => {
-            setIsFontLoaded(true);
-        });
-
-        // CLEANUP: Remove the font style when leaving the page or changing pages
-        // This prevents DOM bloat and keeps page flipping fast
-        return () => {
-            const existingStyle = document.getElementById(styleId);
-            if (existingStyle) {
-                existingStyle.remove();
-            }
-        };
+        // We intentionally DO NOT remove the style element on cleanup.
+        // Keeping it prevents DOM thrashing and makes returning to this page instantaneous.
     }, [pageNumber]);
 
     // --- Styling Helpers ---

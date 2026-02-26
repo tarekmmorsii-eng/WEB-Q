@@ -63,10 +63,15 @@ self.addEventListener('activate', (event) => {
             })
         ]).then(() => {
             // Background silent download check on activation
+            // Delayed by 15 seconds to prevent network clogging on initial load
             if (!currentDownloadPromise) {
-                currentDownloadPromise = cacheAllDataSafely(false).finally(() => {
-                    currentDownloadPromise = null;
-                });
+                setTimeout(() => {
+                    if (!currentDownloadPromise) {
+                        currentDownloadPromise = cacheAllDataSafely(false).finally(() => {
+                            currentDownloadPromise = null;
+                        });
+                    }
+                }, 15000);
             }
         })
     );
