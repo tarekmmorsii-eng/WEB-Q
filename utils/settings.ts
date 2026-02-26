@@ -14,7 +14,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
         showDarkMode: true,
         showFontSize: false,
         showBookmark: true,
-        showPrayerMode: false,
+        showPrayerMode: true,
         showFullscreen: true,
         showPageNavigation: false,
     },
