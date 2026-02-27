@@ -926,6 +926,31 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                         if (isCurrentlyHidden) {
                             // FOUND IT! Reveal this one and stop.
                             toggleReveal(wordId, word.surah, word.ayah);
+
+                            // Scroll into view if the bottom of the ayah is outside the visible area
+                            setTimeout(() => {
+                                let targetElement: HTMLElement | null = null;
+
+                                if (word.surah !== undefined && word.ayah !== undefined) {
+                                    const allWordsOfAyah = Array.from(document.querySelectorAll(`[data-word-surah="${word.surah}"][data-word-ayah="${word.ayah}"]`)) as HTMLElement[];
+                                    if (allWordsOfAyah.length > 0) {
+                                        targetElement = allWordsOfAyah[allWordsOfAyah.length - 1];
+                                    }
+                                }
+
+                                if (targetElement) {
+                                    const rect = targetElement.getBoundingClientRect();
+                                    const isVisible = (
+                                        rect.top >= 0 &&
+                                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+                                    );
+
+                                    if (!isVisible) {
+                                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                }
+                            }, 50);
+
                             return;
                         }
                     }
