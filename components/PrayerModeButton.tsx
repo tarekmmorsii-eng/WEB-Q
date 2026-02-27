@@ -4,10 +4,11 @@ import clsx from 'clsx';
 
 interface PrayerModeButtonProps {
     onDismiss: () => void;
+    onNextPage?: () => void;
     t: any;
 }
 
-export default function PrayerModeButton({ onDismiss, t }: PrayerModeButtonProps) {
+export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerModeButtonProps) {
     const [position, setPosition] = useState({
         x: window.innerWidth - 80, // Bottom Right X
         y: window.innerHeight - 130 // Bottom Right Y (Between lines approx)
@@ -93,13 +94,42 @@ export default function PrayerModeButton({ onDismiss, t }: PrayerModeButtonProps
             return;
         }
 
-        // Logic to reveal next word
         // Logic to reveal next word - Updated for V2
         const firstHidden = document.querySelector('.text-transparent') as HTMLElement;
-        if (firstHidden) {
+
+        // If no hidden elements remain -> Turn to next page
+        if (!firstHidden) {
+            if (onNextPage) {
+                onNextPage();
+            }
+        } else {
+            const surah = firstHidden.getAttribute('data-word-surah');
+            const ayah = firstHidden.getAttribute('data-word-ayah');
+
+            // Otherwise, reveal the hidden element
             firstHidden.click();
 
-            // Haptic feedback removed
+            // Scroll into view if the bottom of the ayah is outside the visible area
+            setTimeout(() => {
+                let targetElement = firstHidden;
+
+                if (surah && ayah) {
+                    const allWordsOfAyah = Array.from(document.querySelectorAll(`[data-word-surah="${surah}"][data-word-ayah="${ayah}"]`)) as HTMLElement[];
+                    if (allWordsOfAyah.length > 0) {
+                        targetElement = allWordsOfAyah[allWordsOfAyah.length - 1];
+                    }
+                }
+
+                const rect = targetElement.getBoundingClientRect();
+                const isVisible = (
+                    rect.top >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+                );
+
+                if (!isVisible) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 50); // Small timeout to allow the element to render if needed
         }
     };
 

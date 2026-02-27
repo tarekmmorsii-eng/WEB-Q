@@ -1165,6 +1165,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             return (
                                 <React.Fragment key={wIdx}>
                                     <span
+                                        data-word-surah={word.surah}
+                                        data-word-ayah={word.ayah}
                                         className={clsx(
                                             `qpc-v2-text cursor-pointer transition-colors duration-300 relative`,
                                             isHighlighted && "bg-amber-100 dark:bg-amber-900/40 rounded px-1",

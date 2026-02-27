@@ -1990,6 +1990,7 @@ export default function App() {
           settings.prayerMode && !isIndexOpen && !isSettingsOpen && !isSearchOpen && !isMemorizationStatsOpen && !isNotificationOpen && (
             <PrayerModeButton
               t={t}
+              onNextPage={handleNextPage}
               onDismiss={() => {
                 const newSettings = { ...settings, prayerMode: false };
                 setSettings(newSettings);
