@@ -18,6 +18,7 @@ import { translations, Language } from '../i18n/translations';
 import { getMushafData, saveMushafData } from '../utils/db';
 import { findMutashabihatForAyah, findAllMutashabihatForAyah } from '../utils/mutashabihatProcessor';
 import { formatNumber } from '../utils/quranUtils';
+import { useWordByWordAudio } from '../hooks/useWordByWordAudio';
 
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
@@ -226,6 +227,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     const [error, setError] = useState(false);
 
     // Feature States
+    const { activeWord, playWordAudio } = useWordByWordAudio();
     const [revealedIndices, setRevealedIndices] = useState<Set<string>>(new Set());
     const [randomMasks, setRandomMasks] = useState<Set<string>>(new Set());
     const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>(() => {
@@ -1195,6 +1197,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                         className={clsx(
                                             `qpc-v2-text cursor-pointer transition-colors duration-300 relative`,
                                             isHighlighted && "bg-amber-100 dark:bg-amber-900/40 rounded px-1",
+                                            (activeWord?.surah === word.surah && activeWord?.ayah === word.ayah && activeWord?.word === word.word) && "bg-amber-300 dark:bg-amber-700/80 rounded px-1",
                                             shouldHide
                                                 ? "text-transparent bg-slate-800 rounded-[4px]"
                                                 : "hover:text-amber-600"
@@ -1211,40 +1214,41 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                             longPressTimerRef.current = setTimeout(() => {
                                                 isLongPressRef.current = true;
                                                 // --- LONG PRESS ACTION ---
-                                                const isHiddenMode =
-                                                    (mode === ViewMode.HIDE_RANDOM_WORDS && shouldHide) ||
-                                                    (mode === ViewMode.TOGGLE_FIRST_WORD && shouldHide) ||
-                                                    (mode === ViewMode.TOGGLE_LAST_WORD && shouldHide); // Enable for Toggle Last Word (Reference Mode)
+                                                if (shouldHide) {
+                                                    const isHiddenMode =
+                                                        (mode === ViewMode.HIDE_RANDOM_WORDS) ||
+                                                        (mode === ViewMode.TOGGLE_FIRST_WORD) ||
+                                                        (mode === ViewMode.TOGGLE_LAST_WORD);
 
-                                                if (isHiddenMode) {
-                                                    // Reveal sequence up to next stop
-                                                    if (word.surah && word.ayah) {
-                                                        const info = ayahWordMap.get(`${word.surah}-${word.ayah}`);
-                                                        if (info) {
-                                                            // Find current word index in the ayah's list
-                                                            const currentIdx = info.revealKeys.indexOf(wordId);
-                                                            if (currentIdx !== -1) {
-                                                                const stops = info.stopIndices || [];
-                                                                // Find next stop (inclusive)
-                                                                const nextStop = stops.find((s: number) => s >= currentIdx);
-                                                                const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
-
-                                                                // Get all IDs from current up to end of segment
-                                                                const idsToReveal = info.revealKeys.slice(currentIdx, end + 1);
-
-                                                                setRevealedIndices(prev => {
-                                                                    const next = new Set(prev);
-                                                                    idsToReveal.forEach(i => next.add(i));
-                                                                    return next;
-                                                                });
-
-                                                                // Haptic feedback if available (optional polishes for mobile)
-                                                                if (navigator.vibrate) navigator.vibrate(50);
+                                                    if (isHiddenMode) {
+                                                        // Reveal sequence up to next stop
+                                                        if (word.surah && word.ayah) {
+                                                            const info = ayahWordMap.get(`${word.surah}-${word.ayah}`);
+                                                            if (info) {
+                                                                const currentIdx = info.revealKeys.indexOf(wordId);
+                                                                if (currentIdx !== -1) {
+                                                                    const stops = info.stopIndices || [];
+                                                                    const nextStop = stops.find((s: number) => s >= currentIdx);
+                                                                    const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
+                                                                    const idsToReveal = info.revealKeys.slice(currentIdx, end + 1);
+                                                                    setRevealedIndices(prev => {
+                                                                        const next = new Set(prev);
+                                                                        idsToReveal.forEach(i => next.add(i));
+                                                                        return next;
+                                                                    });
+                                                                    if (navigator.vibrate) navigator.vibrate(50);
+                                                                }
                                                             }
                                                         }
                                                     }
+                                                } else {
+                                                    // Word is visible -> Long press plays audio
+                                                    if (word.surah && word.ayah && word.word) {
+                                                        playWordAudio(word.surah, word.ayah, word.word);
+                                                        if (navigator.vibrate) navigator.vibrate(50);
+                                                    }
                                                 }
-                                            }, 500); // 500ms threshold
+                                            }, 350); // 350ms threshold
                                         }}
                                         onPointerUp={() => {
                                             if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
@@ -1253,9 +1257,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                             if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
                                         }}
                                         onClick={(e) => {
-                                            // If it was a long press, ignore the click event to prevent double handling or incorrect logic
+                                            // If it was a long press, ignore the click event and prevent bubbling
                                             if (isLongPressRef.current) {
                                                 isLongPressRef.current = false;
+                                                e.stopPropagation();
                                                 return;
                                             }
 
@@ -1276,7 +1281,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                 e.stopPropagation();
                                                 toggleReveal(wordId, word.surah, word.ayah);
                                             } else {
-                                                console.log('Clicked', word);
+                                                // Normal short click on a visible word
+                                                // Do not play audio here, just let it bubble to toggle menus
                                             }
                                         }}
                                     >
