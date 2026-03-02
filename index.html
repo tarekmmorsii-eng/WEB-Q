@@ -33,14 +33,22 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="https://mushafalmurajaa.com/mushaf_logo_v2.png?v=2">
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@700&display=swap" rel="stylesheet">
+  <!-- Fonts: preconnect FIRST, then async load to avoid render-blocking -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Amiri+Quran&display=swap"
-    rel="stylesheet">
+  <!-- Preload first 2 page fonts for instant render -->
+  <link rel="preload" href="/fonts/v2/p1.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/v2/p2.woff2" as="font" type="font/woff2" crossorigin>
+
+  <!-- Async Google Fonts (non-render-blocking) -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Almarai:wght@700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Amiri+Quran&display=swap"
+    media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Almarai:wght@700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Amiri+Quran&display=swap">
+  </noscript>
 
   <script>
     window.addEventListener('error', function (event) {

@@ -76,7 +76,6 @@ export default function App() {
     };
 
     checkTouch();
-    checkTouch();
     window.addEventListener('resize', checkTouch);
 
     // Disable Context Menu (Right Click) globally for Native feeling
@@ -729,6 +728,7 @@ export default function App() {
   };
 
   const mainRef = useRef<HTMLDivElement>(null);
+  const flipAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleUiInteraction = useCallback(() => {
     setShowUi(true);
@@ -778,9 +778,14 @@ export default function App() {
   const playPageFlipSound = () => {
     if (!settings.soundEnabled) return;
     try {
-      const audio = new Audio('/paper-slide.wav');
-      audio.volume = 0.5;
-      audio.play().catch(() => console.log('Audio playback failed'));
+      // Reuse the same Audio object instead of creating new one each time
+      if (!flipAudioRef.current) {
+        flipAudioRef.current = new Audio('/paper-slide.wav');
+        flipAudioRef.current.volume = 0.5;
+      }
+      // Reset and replay
+      flipAudioRef.current.currentTime = 0;
+      flipAudioRef.current.play().catch(() => console.log('Audio playback failed'));
     } catch (error) {
       console.log('Audio not supported');
     }

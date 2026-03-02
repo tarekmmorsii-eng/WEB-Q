@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-02-26-V4'; // Fix background termination issues
+const CACHE_VERSION = 'v2026-03-01-V5'; // Cache First strategy for fonts & page JSONs
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
@@ -202,52 +202,34 @@ self.addEventListener('fetch', (event) => {
     // Ignore non-http (e.g., chrome-extension)
     if (!url.protocol.startsWith('http')) return;
 
-    // A. Fonts Strategy: Stale-While-Revalidate
-    // (Search Cache -> Return Immediate -> Fetch Network -> Update Cache)
+    // A. Fonts Strategy: Cache First (instant after first visit)
     if (url.pathname.match(/\.(woff2|ttf|otf)$/)) {
         event.respondWith(
             caches.open(FONTS_CACHE).then(async (cache) => {
-                // 1. Check Cache
                 const cachedResponse = await cache.match(event.request);
-
-                // 2. Network Fetch (always runs to update cache)
-                const networkFetch = fetch(event.request).then((networkResponse) => {
-                    // Only cache valid responses
+                if (cachedResponse) return cachedResponse;
+                return fetch(event.request).then((networkResponse) => {
                     if (networkResponse && networkResponse.status === 200) {
                         cache.put(event.request, networkResponse.clone());
                     }
                     return networkResponse;
-                }).catch(() => {
-                    // Network failed - acceptable if we have cache
-                    return null;
                 });
-
-                // 3. Logic: Return Cached if available, else wait for Network
-                if (cachedResponse) {
-                    // Update in background (keep SW alive)
-                    event.waitUntil(networkFetch);
-                    return cachedResponse;
-                }
-
-                // No cache? We must wait for network
-                return networkFetch;
             })
         );
         return;
     }
 
-    // B. App Core - Logic based on file size/type
+    // B. App Core
     if (
         url.pathname.match(/\.(html|js|css|json|png|jpg|svg|ico|mp3|wav)$/) ||
         event.request.mode === 'navigate'
     ) {
-        // SPECIAL CASE: Individual Page JSONs (Fast chunks)
+        // Page JSONs: Cache First for instant page flipping
         if (url.pathname.includes('/data/v2/pages/')) {
             event.respondWith(
                 caches.open(CORE_CACHE).then(async (cache) => {
                     const cachedResponse = await cache.match(event.request);
                     if (cachedResponse) return cachedResponse;
-
                     return fetch(event.request).then((networkResponse) => {
                         if (networkResponse && networkResponse.status === 200) {
                             cache.put(event.request, networkResponse.clone());
@@ -259,24 +241,39 @@ self.addEventListener('fetch', (event) => {
             return;
         }
 
-
-
-        // Standard App Core Strategy: Network First
-        event.respondWith(
-            fetch(event.request)
-                .then(async (networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
+        // HTML/JS/CSS: Network First (to always get updates)
+        if (event.request.mode === 'navigate' || url.pathname.match(/\.(html|js|css)$/)) {
+            event.respondWith(
+                fetch(event.request)
+                    .then(async (networkResponse) => {
+                        if (networkResponse && networkResponse.status === 200) {
+                            const cache = await caches.open(CORE_CACHE);
+                            cache.put(event.request, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    })
+                    .catch(async () => {
                         const cache = await caches.open(CORE_CACHE);
+                        const cachedResponse = await cache.match(event.request);
+                        if (cachedResponse) return cachedResponse;
+                        throw new Error('Offline and no cache available');
+                    })
+            );
+            return;
+        }
+
+        // Static assets (images, audio, quran.json): Cache First
+        event.respondWith(
+            caches.open(CORE_CACHE).then(async (cache) => {
+                const cachedResponse = await cache.match(event.request);
+                if (cachedResponse) return cachedResponse;
+                return fetch(event.request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
                         cache.put(event.request, networkResponse.clone());
                     }
                     return networkResponse;
-                })
-                .catch(async () => {
-                    const cache = await caches.open(CORE_CACHE);
-                    const cachedResponse = await cache.match(event.request);
-                    if (cachedResponse) return cachedResponse;
-                    throw new Error('Offline and no cache available');
-                })
+                });
+            })
         );
         return;
     }

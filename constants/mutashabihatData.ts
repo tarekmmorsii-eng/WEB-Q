@@ -3,93 +3,93 @@
 // البيانات مبنية على عمل القارئ إدريس العاصم (رحمه الله)
 
 // Last updated: 2026-01-30 17:15 - with AYAH_RULE_MAP optimization
-import mutashabihatData from './mutashabiha_data_full.json';
+// Note: JSON loaded dynamically in getProcessedMutashabihat() to reduce initial bundle size
 
-// Type definition to avoid circular dependency if possible, or use 'any' for now since we know the structure
-// We just need to extract rules once.
+// Type definition
 interface RawMutItem {
     ayah: number | number[];
     rule?: string;
 }
 
-export const MUTASHABIHAT_DATA_FULL = mutashabihatData;
+// Lazy-loaded data — populated on first call to getProcessedMutashabihat()
+export let MUTASHABIHAT_DATA_FULL: any[] = [];
 
 /**
  * A centralized map of absolute ayah number -> Array of rules ({rule, type, color})
- * Generated once at startup to avoid re-parsing large JSON in components.
+ * Built lazily after data is loaded.
  */
 export const AYAH_RULE_MAP = new Map<number, any[]>();
 
-try {
-    // Helper to add a rule to the map without duplicates
-    const addRuleToMap = (ayahNum: number, ruleObj: any) => {
-        if (typeof ayahNum !== 'number') return;
-        if (!AYAH_RULE_MAP.has(ayahNum)) AYAH_RULE_MAP.set(ayahNum, []);
-        const rules = AYAH_RULE_MAP.get(ayahNum)!;
-        const exists = rules.find(r => r.rule === ruleObj.rule);
-        if (!exists) rules.push(ruleObj);
-    };
+export function buildAyahRuleMap(data: any[]): void {
+    if (AYAH_RULE_MAP.size > 0) return; // Already built
 
-    // Populate the map from the flat JSON data structure
-    if (Array.isArray(MUTASHABIHAT_DATA_FULL)) {
-        MUTASHABIHAT_DATA_FULL.forEach((entry: any) => {
-            if (!entry || !entry.sourceAyah) return;
+    try {
+        const addRuleToMap = (ayahNum: number, ruleObj: any) => {
+            if (typeof ayahNum !== 'number') return;
+            if (!AYAH_RULE_MAP.has(ayahNum)) AYAH_RULE_MAP.set(ayahNum, []);
+            const rules = AYAH_RULE_MAP.get(ayahNum)!;
+            const exists = rules.find(r => r.rule === ruleObj.rule);
+            if (!exists) rules.push(ruleObj);
+        };
 
-            const srcAbs = entry.sourceAyah.absoluteAyahNumber;
+        if (Array.isArray(data)) {
+            data.forEach((entry: any) => {
+                if (!entry || !entry.sourceAyah) return;
 
-            if (entry.similarAyahs && Array.isArray(entry.similarAyahs)) {
-                entry.similarAyahs.forEach((mut: any) => {
-                    if (!mut) return;
-                    const mutAbs = mut.absoluteAyahNumber;
+                const srcAbs = entry.sourceAyah.absoluteAyahNumber;
 
-                    // Rule info
-                    const ruleInfo = {
-                        rule: mut.rule,
-                        type: mut.ruleType || mut.type,
-                        color: mut.color || mut.ruleColor
-                    };
+                if (entry.similarAyahs && Array.isArray(entry.similarAyahs)) {
+                    entry.similarAyahs.forEach((mut: any) => {
+                        if (!mut) return;
+                        const mutAbs = mut.absoluteAyahNumber;
 
-                    // Standardize colors based on type
-                    const colors: any = {
-                        'START': '#10b981',
-                        'END': '#ef4444',
-                        'MIDDLE': '#3b82f6',
-                        'OTHER': '#d97706'
-                    };
-                    if (colors[ruleInfo.type]) {
-                        ruleInfo.color = colors[ruleInfo.type];
-                    }
+                        const ruleInfo = {
+                            rule: mut.rule,
+                            type: mut.ruleType || mut.type,
+                            color: mut.color || mut.ruleColor
+                        };
 
-                    if (ruleInfo.rule) {
-                        if (srcAbs) addRuleToMap(srcAbs, ruleInfo);
-                        if (mutAbs) addRuleToMap(mutAbs, ruleInfo);
-                    }
-                });
-            }
-        });
-    }
-    // 🚀 Expert Supplementary Rules (User Feedback Corrections)
-    // Absolute numbers: Baqarah 48 -> 55, Baqarah 123 -> 130 (including 7 Fatiha ayahs)
-    const SUPPLEMENTARY_RULES = [
-        {
-            ayahs: [55, 130],
-            rule: "لَّا تَجْزِي نَفْسٌ عَن نَّفْسٍ شَيْئًا وَلَا يُقْبَلُ مِنْهَا",
-            type: "MIDDLE",
-            color: "#3b82f6" // Blue
-        },
-        {
-            ayahs: [55, 130],
-            rule: "وَلَا هُمْ يُنصَرُونَ",
-            type: "END",
-            color: "#ef4444" // Red
+                        const colors: any = {
+                            'START': '#10b981',
+                            'END': '#ef4444',
+                            'MIDDLE': '#3b82f6',
+                            'OTHER': '#d97706'
+                        };
+                        if (colors[ruleInfo.type]) {
+                            ruleInfo.color = colors[ruleInfo.type];
+                        }
+
+                        if (ruleInfo.rule) {
+                            if (srcAbs) addRuleToMap(srcAbs, ruleInfo);
+                            if (mutAbs) addRuleToMap(mutAbs, ruleInfo);
+                        }
+                    });
+                }
+            });
         }
-    ];
 
-    SUPPLEMENTARY_RULES.forEach(supp => {
-        supp.ayahs.forEach(a => addRuleToMap(a, { rule: supp.rule, type: supp.type, color: supp.color }));
-    });
+        // Expert Supplementary Rules
+        const SUPPLEMENTARY_RULES = [
+            {
+                ayahs: [55, 130],
+                rule: "لَّا تَجْزِي نَفْسٌ عَن نَّفْسٍ شَيْئًا وَلَا يُقْبَلُ مِنْهَا",
+                type: "MIDDLE",
+                color: "#3b82f6"
+            },
+            {
+                ayahs: [55, 130],
+                rule: "وَلَا هُمْ يُنصَرُونَ",
+                type: "END",
+                color: "#ef4444"
+            }
+        ];
 
-    console.log(`[MutashabihatData] Map initialized with ${AYAH_RULE_MAP.size} ayahs + ${SUPPLEMENTARY_RULES.length} manual additions.`);
-} catch (error) {
-    console.error("[MutashabihatData] Failed to initialize AYAH_RULE_MAP:", error);
+        SUPPLEMENTARY_RULES.forEach(supp => {
+            supp.ayahs.forEach(a => addRuleToMap(a, { rule: supp.rule, type: supp.type, color: supp.color }));
+        });
+
+        console.log(`[MutashabihatData] Map initialized with ${AYAH_RULE_MAP.size} ayahs.`);
+    } catch (error) {
+        console.error("[MutashabihatData] Failed to initialize AYAH_RULE_MAP:", error);
+    }
 }

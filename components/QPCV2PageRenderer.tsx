@@ -561,7 +561,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     setLoading(false);
                 }
 
-                // 2. Inject and Load Font (Now in background to avoid blocking UI)
+                // 2. Inject and Load Font using FontFace API (faster than <style> injection)
                 const fontName = `p${pageNumber}-v2`;
                 const fontPath = `/fonts/v2/p${pageNumber}.woff2`;
                 const styleId = `font-v2-p${pageNumber}`;
@@ -569,31 +569,42 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 if (!document.getElementById(styleId)) {
                     const style = document.createElement('style');
                     style.id = styleId;
-                    style.textContent = `
-                        @font-face {
-                            font-family: '${fontName}';
-                            src: url('${fontPath}') format('woff2');
-                            font-display: swap; 
-                        }
-                    `;
+                    style.textContent = `@font-face { font-family: '${fontName}'; src: url('${fontPath}') format('woff2'); font-display: swap; }`;
                     document.head.appendChild(style);
-                    // Load in background
-                    document.fonts.load(`1em "${fontName}"`).catch(() => { });
+                    // Force immediate font load for current page
+                    new FontFace(fontName, `url('${fontPath}')`).load().catch(() => { });
                 }
 
-                // 4. Pre-load Neighboring Fonts (Improve swipe experience)
-                [pageNumber - 1, pageNumber + 1].forEach(p => {
-                    if (p > 0 && p <= 604) {
-                        const neighborStyleId = `font-v2-p${p}`;
-                        if (!document.getElementById(neighborStyleId)) {
-                            const nStyle = document.createElement('style');
-                            nStyle.id = neighborStyleId;
-                            nStyle.textContent = `@font-face { font-family: 'p${p}-v2'; src: url('/fonts/v2/p${p}.woff2') format('woff2'); font-display: block; }`;
-                            document.head.appendChild(nStyle);
-                            document.fonts.load(`1em "p${p}-v2"`).catch(() => { });
+                // 3. Prefetch neighboring pages (JSON data + fonts) in background
+                // Use setTimeout to not block current page render
+                setTimeout(() => {
+                    [pageNumber - 1, pageNumber + 1, pageNumber + 2].forEach(p => {
+                        if (p > 0 && p <= 604) {
+                            // Prefetch JSON data
+                            if (!(window as any).qpcV2Cache?.[p.toString()]) {
+                                fetch(`/data/v2/pages/${p}.json`, { priority: 'low' } as any)
+                                    .then(r => r.ok ? r.json() : null)
+                                    .then(data => {
+                                        if (data) {
+                                            if (!(window as any).qpcV2Cache) (window as any).qpcV2Cache = {};
+                                            (window as any).qpcV2Cache[p.toString()] = data;
+                                        }
+                                    })
+                                    .catch(() => { });
+                            }
+
+                            // Prefetch font
+                            const neighborStyleId = `font-v2-p${p}`;
+                            if (!document.getElementById(neighborStyleId)) {
+                                const nStyle = document.createElement('style');
+                                nStyle.id = neighborStyleId;
+                                nStyle.textContent = `@font-face { font-family: 'p${p}-v2'; src: url('/fonts/v2/p${p}.woff2') format('woff2'); font-display: block; }`;
+                                document.head.appendChild(nStyle);
+                                new FontFace(`p${p}-v2`, `url('/fonts/v2/p${p}.woff2')`).load().catch(() => { });
+                            }
                         }
-                    }
-                });
+                    });
+                }, 300); // 300ms delay — after current page render
 
             } catch (err) {
                 if (isMounted) {

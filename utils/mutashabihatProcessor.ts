@@ -1,6 +1,6 @@
 import { absoluteToSurahAyah, surahAyahToAbsolute } from '../utils/quranHelpers';
 import { Mutashabiha, MutashabihaRaw, AyahReference } from '../types';
-import { MUTASHABIHAT_DATA_FULL } from '../constants/mutashabihatData';
+import { MUTASHABIHAT_DATA_FULL, buildAyahRuleMap } from '../constants/mutashabihatData';
 import { calculateMutashabihatSimilarity, getHighestSimilarity, sortBySimilarity } from './similarityCalculator';
 import { getAyahText } from './ayahTextHelper';
 
@@ -288,40 +288,36 @@ export async function getProcessedMutashabihat(): Promise<Mutashabiha[]> {
     if (cachedProcessedMutashabihat && cachedProcessedMutashabihat.length > 0) return cachedProcessedMutashabihat;
 
     let allMutashabihat: Mutashabiha[] = [];
-    let idCounter = 0;
 
     console.log("⏳ Loading mutashabihat...");
 
     try {
-        // 1. Load Core Data (Juz 1-30)
-        const corePromises = Array.from({ length: 30 }, (_, i) => i + 1).map(async (juz) => {
-            try {
-                const response = await fetch(`/data/txts/${juz}.txt`);
-                if (!response.ok) return [];
-                const text = await response.text();
-                const { processed } = parseMutashabihatText(text, `core_${juz}`, 0); // IDs will be unique via prefix
-                return processed;
-            } catch (e) {
-                return [];
-            }
-        });
-
-        // 2. Load Custom Data (Dynamically from src/data/custom_mutashabihat/*.txt)
+        // 1. Load Custom Data (Dynamically from src/data/custom_mutashabihat/*.txt)
         const customModules = import.meta.glob('/src/data/custom_mutashabihat/*.txt', { as: 'raw', eager: true });
         const customData: Mutashabiha[] = [];
 
         Object.entries(customModules).forEach(([path, content]) => {
-            if (path.includes('README')) return; // Ignore README files
+            if (path.includes('README')) return;
             console.log(`📂 Loading custom file: ${path}`);
             const { processed } = parseMutashabihatText(content as string, `custom_${path.split('/').pop()}`, 0);
             customData.push(...processed);
         });
 
-        // 3. Load Generated JSON Data (Restored as primary source)
+        // 2. Load Generated JSON Data via dynamic import (not in initial bundle)
         console.log("📂 Processing JSON mutashabihat data...");
+        const { default: jsonRaw } = await import('../constants/mutashabiha_data_full.json');
+
+        // Populate the exported mutable reference so AYAH_RULE_MAP can be built
+        MUTASHABIHAT_DATA_FULL.length = 0;
+        if (Array.isArray(jsonRaw)) {
+            MUTASHABIHAT_DATA_FULL.push(...jsonRaw);
+        }
+
+        // Build AYAH_RULE_MAP lazily now that data is available
+        buildAyahRuleMap(MUTASHABIHAT_DATA_FULL);
+
         const jsonData = await processMutashabihatData(MUTASHABIHAT_DATA_FULL as any);
 
-        // const coreResults = await Promise.all(corePromises); // Files are missing
         allMutashabihat = [...jsonData, ...customData];
 
         console.log(`✅ Loaded ${allMutashabihat.length} total associations.`);
