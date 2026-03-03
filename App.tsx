@@ -64,7 +64,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     showDarkMode: true,
     showFontSize: false,  // Ø­Ø°Ù Ø²Ø± ØªØ¨Ø¯ÙŠÙ„ Ø§Ù„Ø®Ø· - Ø§Ù„ØªØ­Ø¬ÙŠÙ… ØªÙ„Ù‚Ø§Ø¦ÙŠ
     showBookmark: true,
-    showPrayerMode: false,
+    showPrayerMode: true,
     showFullscreen: true,
     showPageNavigation: false,
   },
@@ -113,13 +113,22 @@ export default function App() {
 
       if (saved) {
         const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        // Merge bottomBar with defaults (in case new keys were added)
+        parsed.bottomBar = { ...DEFAULT_SETTINGS.bottomBar, ...parsed.bottomBar };
+
         // Validate theme - if old theme doesn't exist, use default
         const themeExists = THEMES.some(t => t.id === parsed.theme);
         if (!themeExists) {
           parsed.theme = 'calm-night';
-          // Save corrected settings immediately
-          localStorage.setItem('quran_app_settings', JSON.stringify(parsed));
         }
+
+        // Migration: Enable prayer mode for existing users (one-time)
+        if (!localStorage.getItem('prayer_mode_migrated')) {
+          parsed.bottomBar.showPrayerMode = true;
+          localStorage.setItem('prayer_mode_migrated', '1');
+        }
+
+        localStorage.setItem('quran_app_settings', JSON.stringify(parsed));
         finalSettings = parsed;
       }
 
