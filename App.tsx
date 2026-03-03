@@ -1552,7 +1552,7 @@ export default function App() {
           ref={mainRef}
           className={clsx(
             "flex-1 w-full overflow-auto relative transition-all duration-500 ease-in-out flex flex-col",
-            showUi ? "pt-24" : "pt-0"
+            "pt-0"
           )}
           onClick={handleContentTap}
         >
@@ -1591,7 +1591,7 @@ export default function App() {
                           pageNumber={slidePages[0]}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
-                          className={showUi ? '!pb-28 w-full' : '!pb-0 w-full'}
+                          className="!pb-0 w-full"
                           mode={viewMode}
                           toggleState={toggleState}
                           memorizationRatings={memorizationRatings}
@@ -1625,7 +1625,7 @@ export default function App() {
                           pageNumber={slidePages[1]}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
-                          className={showUi ? '!pb-28 w-full' : '!pb-0 w-full'}
+                          className="!pb-0 w-full"
                           mode={viewMode}
                           toggleState={toggleState}
                           memorizationRatings={memorizationRatings}
@@ -1659,7 +1659,7 @@ export default function App() {
                           pageNumber={slidePages[2]}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
-                          className={showUi ? '!pb-28 w-full' : '!pb-0 w-full'}
+                          className="!pb-0 w-full"
                           mode={viewMode}
                           toggleState={toggleState}
                           memorizationRatings={memorizationRatings}
