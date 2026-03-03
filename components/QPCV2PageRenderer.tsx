@@ -1047,7 +1047,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const isUnified = surahRatings?.find(r => r.surahNumber === (line.surahNumber || 1))?.isUnified || false;
 
         return (
-            <div className={clsx("w-full", isSpecialPage && "mb-8 md:mb-12")}>
+            <div className={clsx("w-full flex items-center justify-center", isSpecialPage ? "mb-8 md:mb-12 h-auto" : "h-full")}>
                 <SurahFrame
                     surahNumber={line.surahNumber || 1}
                     t={t}
@@ -1069,9 +1069,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             )}
             translate="no"
             style={{
-                height: deviceType === 'desktop' ? '1.9em' : '2.8em',
-                marginTop: deviceType === 'desktop' ? '0' : '0.5rem',
-                marginBottom: deviceType === 'desktop' ? '0' : '0.5rem'
+                height: isSpecialPage ? (deviceType === 'desktop' ? '1.9em' : '2.8em') : '100%',
+                marginTop: isSpecialPage ? (deviceType === 'desktop' ? '0' : '0.5rem') : 0,
+                marginBottom: isSpecialPage ? (deviceType === 'desktop' ? '0' : '0.5rem') : 0
             }}
         >
             <div
@@ -1207,7 +1207,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 </div>
             )}
 
-            <div className="quran-lines-container flex-grow flex flex-col justify-between w-full px-[1%] pb-6" style={{ direction: 'rtl' }}>
+            <div className="quran-lines-container flex-grow flex flex-col justify-between w-full px-[1%]" style={{ direction: 'rtl' }}>
                 {pageData.lines.map((line, idx) => (
                     <div key={`${idx}-${mode}-${toggleState}`}
                         data-line-type={line.lineType}
@@ -1218,6 +1218,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             line.isCentered ? "justify-center force-center" : "justify-between"
                         )}
                         style={{
+                            flex: isSpecialPage ? '0 1 auto' : 'none',
+                            height: isSpecialPage ? 'auto' : 'calc(100% / 15)',
+                            minHeight: isSpecialPage ? 'auto' : 'calc(100% / 15)',
+                            maxHeight: isSpecialPage ? 'none' : 'calc(100% / 15)',
                             fontFamily: fontName,
                             direction: 'rtl',
                             lineHeight: isSpecialPage ? '1.4' : lineHeightVal,

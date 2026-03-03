@@ -194,8 +194,8 @@ div[data-atlas] {
     align-items: center !important;
     /* font-size now controlled by React fontSizeClass variable */
     font-weight: bold !important;
-    line-height: calc((100vh - 100px) / 15) !important;
-    height: calc((100vh - 100px) / 15) !important;
+    line-height: normal !important;
+    height: 100% !important;
 
     word-wrap: normal !important;
     white-space: nowrap !important;
@@ -270,8 +270,8 @@ div[data-atlas] {
 .mushaf-page-qpc[data-device-type="mobile"][data-orientation="portrait"] .qpc-v2-text {
   font-size: min(2.8vh, 5.2vw) !important;
   /* Increased font size utilizing saved space */
-  line-height: calc((100dvh - 65px) / 15) !important;
-  height: calc((100dvh - 65px) / 15) !important;
+  line-height: normal !important;
+  height: 100% !important;
   display: inline-flex;
   align-items: center !important;
   justify-content: center !important;
@@ -315,8 +315,8 @@ div[data-atlas] {
 .mushaf-page-qpc[data-device-type="tablet"][data-orientation="portrait"] [class*="qpc-font-page-"],
 .mushaf-page-qpc[data-device-type="tablet"][data-orientation="portrait"] .qpc-v2-text {
   font-size: clamp(26px, 4.5vh, 40px) !important;
-  line-height: calc((100dvh - 110px) / 15) !important;
-  height: calc((100dvh - 110px) / 15) !important;
+  line-height: normal !important;
+  height: 100% !important;
   display: flex !important;
   align-items: center !important;
   text-align: center !important;
@@ -357,8 +357,8 @@ div[data-atlas] {
   .mushaf-page-qpc[data-device-type="tablet"][data-orientation="portrait"] [class*="qpc-font-page-"],
   .mushaf-page-qpc[data-device-type="tablet"][data-orientation="portrait"] .qpc-v2-text {
     font-weight: bold !important;
-    line-height: calc((100dvh - 110px) / 15) !important;
-    height: calc((100dvh - 110px) / 15) !important;
+    line-height: normal !important;
+    height: 100% !important;
     display: flex !important;
     align-items: center !important;
   }

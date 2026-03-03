@@ -29,16 +29,16 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
     return (
         <div
             id="tour-surah-name"
-            className="w-full my-0 relative select-none notranslate"
+            className="w-full h-full my-0 relative select-none notranslate flex items-center justify-center"
             translate="no"
             onClick={onClick}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 800 85"
-                className="w-full h-auto block"
-                style={{ minHeight: '45px', maxHeight: '85px', width: '100%' }}
+                viewBox="0 9 800 68"
+                className="w-full h-full block"
+                style={{ width: '100%', height: '100%' }}
                 preserveAspectRatio="none"
             >
                 {/* Main Outer Frame (Thin Line) */}
