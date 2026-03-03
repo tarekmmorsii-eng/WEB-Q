@@ -803,6 +803,115 @@ export default function App() {
     }
   };
 
+  // --- Touch Gesture System ---
+  const gestureRef = useRef({
+    lastTapTime: 0,
+    lastTapX: 0,
+    lastTapY: 0,
+    touchStartY: 0,
+    touchStartX: 0,
+    isTwoFingerTouch: false,
+    gestureHandled: false,
+  });
+
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      const g = gestureRef.current;
+
+      // --- Two-finger tap: Toggle UI ---
+      if (e.touches.length >= 2) {
+        g.isTwoFingerTouch = true;
+        g.gestureHandled = true;
+
+        // Toggle UI menus
+        setShowUi(prev => {
+          if (prev) {
+            if (timerRef.current) clearTimeout(timerRef.current);
+            return false;
+          } else {
+            return true;
+          }
+        });
+        // Trigger auto-hide timer when showing
+        handleUiInteraction();
+        return;
+      }
+
+      // Single finger: record start position for swipe detection
+      g.isTwoFingerTouch = false;
+      g.gestureHandled = false;
+      g.touchStartY = e.touches[0].clientY;
+      g.touchStartX = e.touches[0].clientX;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      const g = gestureRef.current;
+
+      // If was a two-finger gesture, ignore
+      if (g.isTwoFingerTouch) {
+        if (e.touches.length === 0) {
+          g.isTwoFingerTouch = false;
+        }
+        return;
+      }
+
+      if (g.gestureHandled) return;
+      if (e.touches.length > 0) return; // Still fingers on screen
+
+      const ct = e.changedTouches[0];
+      if (!ct) return;
+
+      const endX = ct.clientX;
+      const endY = ct.clientY;
+      const deltaY = g.touchStartY - endY; // positive = swipe up
+      const deltaX = Math.abs(g.touchStartX - endX);
+      const totalDist = Math.sqrt(Math.pow(endX - g.touchStartX, 2) + Math.pow(endY - g.touchStartY, 2));
+
+      // --- Swipe Up: Open Settings ---
+      if (deltaY > 100 && deltaY > deltaX * 1.5) {
+        g.gestureHandled = true;
+        setIsSettingsOpen(true);
+        return;
+      }
+
+      // --- Double Tap: Next Page ---
+      // Only if the tap didn't move much (not a swipe)
+      if (totalDist < 20) {
+        const now = Date.now();
+        const timeDiff = now - g.lastTapTime;
+        const tapDist = Math.sqrt(
+          Math.pow(endX - g.lastTapX, 2) + Math.pow(endY - g.lastTapY, 2)
+        );
+
+        if (timeDiff < 350 && tapDist < 60) {
+          // Double tap detected → next page
+          g.lastTapTime = 0;
+          g.gestureHandled = true;
+
+          if (swiperRef.current && !swiperRef.current.destroyed) {
+            swiperRef.current.slideNext(300);
+          }
+          return;
+        }
+
+        g.lastTapX = endX;
+        g.lastTapY = endY;
+        g.lastTapTime = now;
+      }
+    };
+
+    main.addEventListener('touchstart', onTouchStart, { passive: true });
+    main.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    return () => {
+      main.removeEventListener('touchstart', onTouchStart);
+      main.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [handleUiInteraction]);
+
   const playPageFlipSound = () => {
     if (!settings.soundEnabled) return;
     try {
