@@ -153,9 +153,8 @@ div[data-atlas] {
     margin: 0 auto;
     display: flex !important;
     flex-direction: column !important;
-    /* justify-content: space-between !important; <-- REMOVED stretch */
-    justify-content: center !important;
-    /* Center vertically */
+    justify-content: flex-start !important;
+    /* Start from top */
     align-items: center !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
@@ -383,18 +382,17 @@ div[data-atlas] {
 
 /* 5. SPECIAL PAGES (1 & 2) OVERRIDES */
 .special-page-frame {
-  padding: 40px 20px !important;
-  /* Added padding to compensate for lost frame */
-  min-height: 90vh !important;
-  /* Ensure it fills most of the viewport for centering */
-  height: auto !important;
+  padding: 2px 20px 20px 20px !important;
+  min-height: 100% !important;
+  height: 100% !important;
   aspect-ratio: unset !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
 }
 
 .special-page-frame .quran-lines-container {
-  padding-bottom: 2rem !important;
-  justify-content: center !important;
+  padding-bottom: 0 !important;
+  padding-top: calc((100% / 15) * 4) !important;
+  justify-content: flex-start !important;
   gap: 0.5rem !important;
 }
 
@@ -745,5 +743,5 @@ body .driver-popover>button:first-child svg {
   height: 100% !important;
   display: flex !important;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
 }

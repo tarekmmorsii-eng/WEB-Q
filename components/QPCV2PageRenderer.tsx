@@ -1047,7 +1047,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const isUnified = surahRatings?.find(r => r.surahNumber === (line.surahNumber || 1))?.isUnified || false;
 
         return (
-            <div className={clsx("w-full flex items-center justify-center", isSpecialPage ? "mb-8 md:mb-12 h-auto" : "h-full")}>
+            <div className={clsx("w-full flex items-center justify-center", isSpecialPage ? "mb-2 h-auto" : "h-full")}>
                 <SurahFrame
                     surahNumber={line.surahNumber || 1}
                     t={t}
@@ -1064,7 +1064,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         <div
             className={clsx(
                 "flex items-center justify-center w-full qpc-basmalah transition-colors duration-500 notranslate",
-                isSpecialPage && "mb-4 md:mb-6",
+                isSpecialPage && "mb-2",
                 isHighlighted && "bg-amber-100/60 dark:bg-amber-900/30 rounded-lg p-1"
             )}
             translate="no"
