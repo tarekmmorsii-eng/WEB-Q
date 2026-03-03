@@ -1,5 +1,10 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
+import { flushSync } from 'react-dom';
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import type { Swiper as SwiperClass } from 'swiper';
+import 'swiper/css';
+
 import clsx from 'clsx';
 import Header from './components/Header';
 import QPCV2PageRenderer from './components/QPCV2PageRenderer';
@@ -19,18 +24,25 @@ import HowToUseGuide from './components/HowToUseGuide';
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
 import { Mutashabiha } from './types';
 import TourWelcomeModal from './components/TourWelcomeModal';
+
+const EMPTY_ARRAY: any[] = [];
 import TourClickOverlay from './components/TourClickOverlay';
 import PrayerModeButton from './components/PrayerModeButton';
 import FullscreenExitButton from './components/FullscreenExitButton';
 import SplashScreen from './components/SplashScreen';
 import { ViewMode, LocationData, VerseBookmark, Ayah, PageData, NotificationItem, MemorizationRating, SurahRating, AppSettings } from './types';
 import { fetchPage, getAyahPage } from './services/quranService';
+import { getAyahText } from './utils/ayahTextHelper';
+import { calculateMutashabihatSimilarity } from './utils/similarityCalculator';
 import { TOTAL_PAGES } from './constants';
 import { SURAHS } from './constants/surahData';
 import ColorPickerModal from './components/ColorPickerModal';
 import { translations, Language } from './i18n/translations';
 import { THEMES, getThemeById } from './constants/themes';
 import { startTour } from './utils/TourManager';
+
+// --- STABLE SWIPER CONFIGURATION ---
+const SWIPER_MODULES: any[] = [];
 
 // Integrations
 import { FeedbackProvider } from './contexts/FeedbackContext';
@@ -62,6 +74,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   colorStopSigns: true,
   prayerMode: false,
   showMutashabihatIndicators: true,
+  enableWordLongPressAudio: true,
 };
 
 export default function App() {
@@ -152,7 +165,7 @@ export default function App() {
       const isMobileOrTablet = window.innerWidth <= 1440;
 
       if (isLandscape && isMobileOrTablet) {
-        // Ø§Ù„Ø³Ù…Ø§Ø­ Ø¨Ø§Ù„ØªÙ…Ø±ÙŠØ± ÙÙŠ Ø§Ù„ÙˆØ¶Ø¹ Ø§Ù„Ø£ÙÙ‚ÙŠ Ù„Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„ ÙˆØ§Ù„ØªØ§Ø¨Ù„Øª
+        // Ø§Ù„Ø³Ù…Ø§Ø permitir el desplazamiento en modo horizontal para móviles y tabletas
         document.documentElement.style.overflow = 'auto';
         document.body.style.overflow = 'auto';
       } else {
@@ -205,7 +218,8 @@ export default function App() {
   const [showUi, setShowUi] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastToggleTime = useRef<number>(0);
-  const [pageFlipDirection, setPageFlipDirection] = useState<'next' | 'prev' | null>(null);
+  const swiperRef = useRef<SwiperClass | null>(null);
+  const [swiperReady, setSwiperReady] = useState(false);
 
   const [pageBookmarks, setPageBookmarks] = useState<LocationData[]>([]);
   const [verseBookmarks, setVerseBookmarks] = useState<VerseBookmark[]>([]);
@@ -235,9 +249,6 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const { getProcessedMutashabihat } = await import('./utils/mutashabihatProcessor');
-        const { SURAHS } = await import('./constants/surahData');
-
         const baseData = await getProcessedMutashabihat();
         const savedCustom = localStorage.getItem('custom_mutashabihat');
         let customData: Mutashabiha[] = savedCustom ? JSON.parse(savedCustom) : [];
@@ -259,11 +270,17 @@ export default function App() {
         setMutashabihatData(Array.from(mergedMap.values()));
         console.log(`✅ Mutashabihat Loaded: ${mergedMap.size} total associations.`);
       } catch (error) {
-        console.error('❌ Error loading mutashabihat:', error);
+        console.error("Error loading mutashabihat data:", error);
       }
     };
+
     loadData();
   }, []);
+
+  const handleOpenMutashabihatSelector = () => {
+    setIsMutashabihatSelectionOpen(false);
+    setIsSelectorOpen(true);
+  };
 
   // Handle URL parameters for direct linking (e.g. ?guide=1)
   useEffect(() => {
@@ -282,12 +299,23 @@ export default function App() {
     setIsSelectorOpen(true);
   };
 
+  // Use static imports for text helpers rather than dynamic since they form part of the bundle
+  const handleCopyAyah = async (surahNumber: number, ayahNumber: number) => {
+    try {
+      const text = await getAyahText(surahNumber, ayahNumber);
+      const surahName = SURAHS.find(s => s.number === surahNumber)?.name || '';
+      await navigator.clipboard.writeText(`${text} ﴿${ayahNumber}﴾ سورة ${surahName}`);
+      setToastMessage(t.ayahCopied);
+    } catch (e) {
+      console.error(e);
+      setToastMessage(t.errorCopying);
+    }
+  };
+
   const handleSelectSimilarAyah = async (surah: number, ayah: number) => {
     if (!activeMutashabihaId) return;
 
     try {
-      const { getAyahText } = await import('./utils/ayahTextHelper');
-      const { calculateMutashabihatSimilarity } = await import('./utils/similarityCalculator');
       const targetText = await getAyahText(surah, ayah);
 
       let updatedMut: Mutashabiha | null = null;
@@ -1019,47 +1047,31 @@ export default function App() {
     localStorage.removeItem('quran_surah_ratings');
   };
 
+  // Sync History and Scroll position - Simplified to be super fast
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      if (mainRef.current) {
-        mainRef.current.scrollTop = 0;
-      }
-      try {
-        const data = await fetchPage(currentPage);
-        setPageData(data);
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
 
-        if (data && data.ayahs.length > 0) {
-          const firstAyah = data.ayahs[0];
-          // @ts-ignore
-          const surahInfo = data.surahs[firstAyah.surah.number];
-
-          const historyItem: LocationData = {
-            page: currentPage,
-            surahName: surahInfo ? t.surahNames[(firstAyah as any).surah.number - 1] : `${t.page} ${currentPage}`,
-            juz: firstAyah.juz,
-            timestamp: Date.now()
-          };
-
-          setHistory(prev => {
-            const filtered = prev.filter(h => h.page !== currentPage);
-            return [historyItem, ...filtered].slice(0, 3);
-          });
-          const currentHistory = [historyItem, ...history.filter(h => h.page !== currentPage)].slice(0, 3);
-          localStorage.setItem('quran_history', JSON.stringify(currentHistory));
-        }
-
-        if (currentPage < TOTAL_PAGES) fetchPage(currentPage + 1).catch(() => { });
-        if (currentPage > 1) fetchPage(currentPage - 1).catch(() => { });
-      } catch (err) {
-        setError(t.error);
-      } finally {
-        setLoading(false);
-      }
+    // Only update history metadata without heavy fetching
+    const historyItem: LocationData = {
+      page: currentPage,
+      surahName: `${t.page} ${currentPage}`, // Simplified name to avoid fetching
+      juz: 1, // Placeholder, can be updated if metadata is available
+      timestamp: Date.now()
     };
-    load();
-  }, [currentPage, t.error]);
+
+    setHistory(prev => {
+      const filtered = prev.filter(h => h.page !== currentPage);
+      return [historyItem, ...filtered].slice(0, 3);
+    });
+
+    const currentHistory = [historyItem, ...history.filter(h => h.page !== currentPage)].slice(0, 3);
+    localStorage.setItem('quran_history', JSON.stringify(currentHistory));
+
+    // Essential: stop the global loading state so the Swiper can be displayed
+    setLoading(false);
+  }, [currentPage, t.page]);
 
   const handleSetMode = (newMode: ViewMode, specificState?: number) => {
     // Throttle toggles to prevent layout thrashing (fix for "strange screen" on rapid clicks)
@@ -1157,15 +1169,26 @@ export default function App() {
   };
 
   // Helper function to change page without scrolling
+  // Smooth slide logic with Swiper integration
   const changePageWithoutScroll = (direction: 'next' | 'prev') => {
     playPageFlipSound();
-    setPageFlipDirection(direction);
-    setTimeout(() => setPageFlipDirection(null), 400);
-    if (direction === 'next') {
-      setCurrentPage(p => p + 1);
-    } else {
-      setCurrentPage(p => p - 1);
+
+    if (direction === 'next' && currentPage < TOTAL_PAGES) {
+      setCurrentPage(prev => Math.min(prev + 1, TOTAL_PAGES));
+      if (swiperRef.current) swiperRef.current.slideNext(400);
+    } else if (direction === 'prev' && currentPage > 1) {
+      setCurrentPage(prev => Math.max(prev - 1, 1));
+      if (swiperRef.current) swiperRef.current.slidePrev(400);
     }
+  };
+
+  const jumpToPage = (pageNum: number) => {
+    if (pageNum === currentPage) return;
+    playPageFlipSound();
+    setCurrentPage(pageNum);
+    // When jumping, we reset Swiper completely
+    setSwiperReady(false);
+    setTimeout(() => setSwiperReady(true), 10);
   };
 
   const handleNextPage = () => {
@@ -1409,53 +1432,7 @@ export default function App() {
     }
   };
 
-  const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
-  const [touchEnd, setTouchEnd] = useState({ x: 0, y: 0 });
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart.x || !touchEnd.x) return;
-
-    const distanceX = touchStart.x - touchEnd.x;
-    const distanceY = Math.abs(touchStart.y - touchEnd.y);
-    const minSwipeDistance = 50;
-
-    // Horizontal swipe must be at least 3x the vertical movement for strict horizontal detection
-    if (Math.abs(distanceX) > minSwipeDistance && Math.abs(distanceX) > distanceY * 3) {
-      const direction = distanceX > 0 ? 'prev' : 'next';
-      const canNavigate = direction === 'next' ? currentPage < TOTAL_PAGES : currentPage > 1;
-
-      if (canNavigate) {
-        // Try using both window scroll and mainRef scroll
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (mainRef.current) {
-          mainRef.current.scrollTop = 0;
-        }
-
-        // Then change page after a delay
-        setTimeout(() => {
-          changePageWithoutScroll(direction);
-        }, 400);
-      }
-    }
-
-    setTouchStart({ x: 0, y: 0 });
-    setTouchEnd({ x: 0, y: 0 });
-  };
-
+  // Swiper handles touch navigation natively, no need for manual touch state.
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen()
@@ -1482,6 +1459,69 @@ export default function App() {
   const handleMouseLeaveUi = useCallback(() => {
     handleUiInteraction();
   }, [handleUiInteraction]);
+
+  // Stable ref so slideChange callback never needs to recreate
+  const currentPageRef = useRef(currentPage);
+  useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
+
+  // Independent page numbers for each slide — prevents cross-slide content flashing
+  const [slidePages, setSlidePages] = useState([
+    Math.max(1, currentPage - 1),  // slide 0: prev
+    currentPage,                    // slide 1: center
+    Math.min(TOTAL_PAGES, currentPage + 1), // slide 2: next
+  ]);
+
+  // Handle Swipe/Slide change
+  const handleSwiperSlideChange = useCallback((swiper: SwiperClass) => {
+    if (!swiper || swiper.destroyed) return;
+    const idx = swiper.activeIndex;
+    if (idx === 1) return;
+
+    const page = currentPageRef.current;
+    const newPage = idx === 0 ? Math.max(1, page - 1) : Math.min(TOTAL_PAGES, page + 1);
+
+    if (newPage === page) {
+      swiper.slideTo(1, 0, false);
+      return;
+    }
+
+    // Batch state updates: only update currentPage. 
+    // The effect watching currentPage will handle slidePages update and jump back.
+    setCurrentPage(newPage);
+    currentPageRef.current = newPage;
+
+    if (typeof (window as any).playPageFlipSound === 'function') {
+      (window as any).playPageFlipSound();
+    }
+  }, []);
+
+  // Handle Swiper initialization
+  useEffect(() => {
+    setSwiperReady(true);
+    setLoading(false);
+  }, []);
+
+  const handleOnSwiper = useCallback((swiper: SwiperClass) => {
+    swiperRef.current = swiper;
+  }, []);
+
+  // Sync external page changes (Index navigation) back to Swiper
+  useEffect(() => {
+    setSlidePages([
+      Math.max(1, currentPage - 1),
+      currentPage,
+      Math.min(TOTAL_PAGES, currentPage + 1),
+    ]);
+
+    // Use requestAnimationFrame to ensure the DOM has updated before jumping back
+    requestAnimationFrame(() => {
+      if (swiperRef.current && !swiperRef.current.destroyed) {
+        if (swiperRef.current.activeIndex !== 1) {
+          swiperRef.current.slideTo(1, 0, false);
+        }
+      }
+    });
+  }, [currentPage]);
 
   return (
     <FeedbackProvider language={settings.language}>
@@ -1513,12 +1553,9 @@ export default function App() {
         <main
           ref={mainRef}
           className={clsx(
-            "flex-1 w-full overflow-auto relative transition-all duration-500 ease-in-out flex flex-col", // Allow scrolling
+            "flex-1 w-full overflow-auto relative transition-all duration-500 ease-in-out flex flex-col",
             showUi ? "pt-24" : "pt-0"
           )}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           onClick={handleContentTap}
         >
           <div className="flex-1 flex flex-col relative items-center w-full">
@@ -1541,44 +1578,119 @@ export default function App() {
                   </button>
                 </div>
               ) : (
-                <div
-                  className={clsx(
-                    "min-h-full flex flex-col flex-1 transition-all duration-500",
-                    pageFlipDirection === 'next' && "page-flip-next",
-                    pageFlipDirection === 'prev' && "page-flip-prev"
+                <div className="min-h-full flex flex-col flex-1 transition-all duration-500 quran-swiper-container w-full h-full">
+                  {swiperReady && (
+                    <Swiper
+                      modules={SWIPER_MODULES}
+                      onSwiper={handleOnSwiper}
+                      onSlideChangeTransitionEnd={handleSwiperSlideChange}
+                      initialSlide={1}
+                      className="w-full h-full flex-1"
+                    >
+                      <SwiperSlide className="w-full h-full flex items-center justify-center">
+                        <QPCV2PageRenderer
+                          key={`slide-0-${slidePages[0]}-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
+                          pageNumber={slidePages[0]}
+                          fontSize={settings.defaultFontSize as any}
+                          isDarkMode={currentTheme.isDark}
+                          className={showUi ? '!pb-28 w-full' : '!pb-0 w-full'}
+                          mode={viewMode}
+                          toggleState={toggleState}
+                          memorizationRatings={memorizationRatings}
+                          surahRatings={surahRatings}
+                          onRateAyah={handleRateAyah}
+                          onRateSurah={handleRateSurah}
+                          verseBookmarks={verseBookmarks}
+                          colorStopSigns={settings.colorStopSigns}
+                          accentColor={currentTheme.colors.accent}
+                          highlightedAyah={highlightedAyah}
+                          isPrayerMode={settings.prayerMode}
+                          language={settings.language}
+                          mutashabihatData={mutashabihatData}
+                          showMutashabihatIndicators={settings.showMutashabihatIndicators}
+                          enableWordLongPressAudio={settings.enableWordLongPressAudio}
+                          onOpenMutashabihat={(mutOrSurah, optAyah) => {
+                            if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+                              setCurrentMutashabiha(mutOrSurah);
+                              setIsMutashabihatModalOpen(true);
+                            } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
+                              handleOpenMutashabihat(mutOrSurah, optAyah);
+                            }
+                          }}
+                          onDeleteSimilarAyah={handleDeleteSimilarAyah}
+                          onAddSimilarAyah={handleAddSimilarAyah}
+                        />
+                      </SwiperSlide>
+                      <SwiperSlide className="w-full h-full flex items-center justify-center">
+                        <QPCV2PageRenderer
+                          key={`slide-1-${slidePages[1]}-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
+                          pageNumber={slidePages[1]}
+                          fontSize={settings.defaultFontSize as any}
+                          isDarkMode={currentTheme.isDark}
+                          className={showUi ? '!pb-28 w-full' : '!pb-0 w-full'}
+                          mode={viewMode}
+                          toggleState={toggleState}
+                          memorizationRatings={memorizationRatings}
+                          surahRatings={surahRatings}
+                          onRateAyah={handleRateAyah}
+                          onRateSurah={handleRateSurah}
+                          verseBookmarks={verseBookmarks}
+                          colorStopSigns={settings.colorStopSigns}
+                          accentColor={currentTheme.colors.accent}
+                          highlightedAyah={highlightedAyah}
+                          isPrayerMode={settings.prayerMode}
+                          language={settings.language}
+                          mutashabihatData={mutashabihatData}
+                          showMutashabihatIndicators={settings.showMutashabihatIndicators}
+                          enableWordLongPressAudio={settings.enableWordLongPressAudio}
+                          onOpenMutashabihat={(mutOrSurah, optAyah) => {
+                            if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+                              setCurrentMutashabiha(mutOrSurah);
+                              setIsMutashabihatModalOpen(true);
+                            } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
+                              handleOpenMutashabihat(mutOrSurah, optAyah);
+                            }
+                          }}
+                          onDeleteSimilarAyah={handleDeleteSimilarAyah}
+                          onAddSimilarAyah={handleAddSimilarAyah}
+                        />
+                      </SwiperSlide>
+                      <SwiperSlide className="w-full h-full flex items-center justify-center">
+                        <QPCV2PageRenderer
+                          key={`slide-2-${slidePages[2]}-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
+                          pageNumber={slidePages[2]}
+                          fontSize={settings.defaultFontSize as any}
+                          isDarkMode={currentTheme.isDark}
+                          className={showUi ? '!pb-28 w-full' : '!pb-0 w-full'}
+                          mode={viewMode}
+                          toggleState={toggleState}
+                          memorizationRatings={memorizationRatings}
+                          surahRatings={surahRatings}
+                          onRateAyah={handleRateAyah}
+                          onRateSurah={handleRateSurah}
+                          verseBookmarks={verseBookmarks}
+                          colorStopSigns={settings.colorStopSigns}
+                          accentColor={currentTheme.colors.accent}
+                          highlightedAyah={highlightedAyah}
+                          isPrayerMode={settings.prayerMode}
+                          language={settings.language}
+                          mutashabihatData={mutashabihatData}
+                          showMutashabihatIndicators={settings.showMutashabihatIndicators}
+                          enableWordLongPressAudio={settings.enableWordLongPressAudio}
+                          onOpenMutashabihat={(mutOrSurah, optAyah) => {
+                            if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+                              setCurrentMutashabiha(mutOrSurah);
+                              setIsMutashabihatModalOpen(true);
+                            } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
+                              handleOpenMutashabihat(mutOrSurah, optAyah);
+                            }
+                          }}
+                          onDeleteSimilarAyah={handleDeleteSimilarAyah}
+                          onAddSimilarAyah={handleAddSimilarAyah}
+                        />
+                      </SwiperSlide>
+                    </Swiper>
                   )}
-                >
-                  {/* Force V2 Renderer */}
-                  <QPCV2PageRenderer
-                    pageNumber={currentPage}
-                    fontSize={settings.defaultFontSize as any}
-                    isDarkMode={currentTheme.isDark}
-                    className={showUi ? "!pb-28" : "!pb-0"}
-                    mode={viewMode}
-                    toggleState={toggleState}
-                    memorizationRatings={memorizationRatings}
-                    surahRatings={surahRatings}
-                    onRateAyah={handleRateAyah}
-                    onRateSurah={handleRateSurah}
-                    verseBookmarks={verseBookmarks}
-                    colorStopSigns={settings.colorStopSigns}
-                    accentColor={currentTheme.colors.accent}
-                    highlightedAyah={highlightedAyah}
-                    isPrayerMode={settings.prayerMode}
-                    language={settings.language}
-                    mutashabihatData={mutashabihatData}
-                    showMutashabihatIndicators={settings.showMutashabihatIndicators}
-                    onOpenMutashabihat={(mutOrSurah, optAyah) => {
-                      if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
-                        setCurrentMutashabiha(mutOrSurah);
-                        setIsMutashabihatModalOpen(true);
-                      } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
-                        handleOpenMutashabihat(mutOrSurah, optAyah);
-                      }
-                    }}
-                    onDeleteSimilarAyah={handleDeleteSimilarAyah}
-                    onAddSimilarAyah={handleAddSimilarAyah}
-                  />
                 </div>
               )}
             </div>
@@ -1950,44 +2062,48 @@ export default function App() {
           excludedSurah={!selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
         />
 
-        {toastMessage && (
-          <Toast
-            message={toastMessage}
-            onClose={() => {
-              setToastMessage(null);
-              setToastActions(undefined);
-            }}
-            actions={toastActions}
-          />
-        )}
+        {
+          toastMessage && (
+            <Toast
+              message={toastMessage}
+              onClose={() => {
+                setToastMessage(null);
+                setToastActions(undefined);
+              }}
+              actions={toastActions}
+            />
+          )
+        }
 
         {/* Alarm Dismiss Overlay */}
-        {activeAlarm && (
-          <div className="fixed inset-0 z-[99999] bg-red-600/90 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-white/20 rounded-full animate-ping scale-150" />
-              <div className="relative bg-white p-8 rounded-full shadow-2xl">
-                <Bell size={64} className="text-red-600 animate-bounce" />
+        {
+          activeAlarm && (
+            <div className="fixed inset-0 z-[99999] bg-red-600/90 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 bg-white/20 rounded-full animate-ping scale-150" />
+                <div className="relative bg-white p-8 rounded-full shadow-2xl">
+                  <Bell size={64} className="text-red-600 animate-bounce" />
+                </div>
               </div>
+
+              <h2 className="text-3xl font-bold mb-2 text-center px-4">{activeAlarm.name}</h2>
+              <p className="text-xl opacity-90 mb-12 text-center">{t.alarmMessage}</p>
+
+              <button
+                onClick={() => {
+                  if (alarmAudioRef.current) {
+                    alarmAudioRef.current.pause();
+                    alarmAudioRef.current.currentTime = 0;
+                  }
+                  setActiveAlarm(null);
+                }}
+                className="bg-white text-red-600 px-12 py-4 rounded-full text-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-transform"
+              >
+                {t.stopAlarm}
+              </button>
             </div>
-
-            <h2 className="text-3xl font-bold mb-2 text-center px-4">{activeAlarm.name}</h2>
-            <p className="text-xl opacity-90 mb-12 text-center">{t.alarmMessage}</p>
-
-            <button
-              onClick={() => {
-                if (alarmAudioRef.current) {
-                  alarmAudioRef.current.pause();
-                  alarmAudioRef.current.currentTime = 0;
-                }
-                setActiveAlarm(null);
-              }}
-              className="bg-white text-red-600 px-12 py-4 rounded-full text-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-transform"
-            >
-              {t.stopAlarm}
-            </button>
-          </div>
-        )}
+          )
+        }
 
         {/* Prayer Mode Overlay Button (only when enabled and fullscreen is not blocking logic, though it can overlay fullscreen) */}
         {/* Prayer Mode Overlay Button - Hide when overlays are open */}
@@ -2032,6 +2148,6 @@ export default function App() {
           language={settings.language as Language}
         />
       </div >
-    </FeedbackProvider>
+    </FeedbackProvider >
   );
 }

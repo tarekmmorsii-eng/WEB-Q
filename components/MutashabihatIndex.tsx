@@ -5,7 +5,7 @@ import { Mutashabiha, Surah } from '../types';
 import { SURAHS } from '../constants/surahData';
 import { MUTASHABIHAT_DATA_FULL, AYAH_RULE_MAP } from '../constants/mutashabihatData';
 
-import { getAyahText } from '../utils/ayahTextHelper';
+import { getAyahText, getAyahTexts } from '../utils/ayahTextHelper';
 
 import { getMatchingWords } from '../utils/similarityCalculator';
 import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
@@ -367,7 +367,6 @@ export default function MutashabihatIndex({
                     });
                 });
 
-                const { getAyahTexts } = await import('../utils/ayahTextHelper');
                 const textsMap = await getAyahTexts(uniqueRefs);
 
                 if (!isMounted) return;

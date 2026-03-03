@@ -194,6 +194,7 @@ interface QPCV2PageRendererProps {
     onDeleteSimilarAyah?: (mutashabihaId: string, surahNumber: number, ayahNumber: number) => void;
     onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
     showMutashabihatIndicators?: boolean;
+    enableWordLongPressAudio?: boolean;
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -217,8 +218,15 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     onOpenMutashabihat,
     onDeleteSimilarAyah,
     onAddSimilarAyah,
-    showMutashabihatIndicators = true
+    showMutashabihatIndicators = true,
+    enableWordLongPressAudio = true
 }) => {
+    // Force a local reference to ensure we use the latest prop value in closures
+    const audioEnabledRef = useRef<boolean>(enableWordLongPressAudio);
+    useEffect(() => {
+        audioEnabledRef.current = enableWordLongPressAudio;
+    }, [enableWordLongPressAudio]);
+
     const t = translations[language as Language] || translations.ar;
 
     // --- State ---
@@ -513,11 +521,42 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         return { pageNumber: pageNum, lines: finalLines };
     };
 
-    // --- Data & Font Fetching ---
+    // --- Synchronous cache update (runs before browser paint) ---
+    // When pageNumber changes and data is in cache, update pageData BEFORE the browser paints.
+    // This prevents the 3-slide carousel from showing stale content when jumping to center.
+    React.useLayoutEffect(() => {
+        const cachedRaw = (window as any).qpcV2Cache?.[pageNumber.toString()];
+        if (cachedRaw) {
+            const fullData = (window as any).qpcV2Cache;
+            const processed = processPageData(cachedRaw, pageNumber, fullData);
+            setPageData(processed);
+            setLoading(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageNumber]);
+
+    // --- Data & Font Fetching (async, for non-cached pages) ---
+
     useEffect(() => {
         let isMounted = true;
 
         const loadContent = async () => {
+            const isCached = !!(window as any).qpcV2Cache?.[pageNumber.toString()];
+            // If data was already processed by useLayoutEffect, only handle font injection
+            if (isCached) {
+                // Font injection only — data already set by useLayoutEffect
+                const fontName = `p${pageNumber}-v2`;
+                const fontPath = `/fonts/v2/p${pageNumber}.woff2`;
+                const styleId = `font-v2-p${pageNumber}`;
+                if (!document.getElementById(styleId)) {
+                    const style = document.createElement('style');
+                    style.id = styleId;
+                    style.textContent = `@font-face { font-family: '${fontName}'; src: url('${fontPath}') format('woff2'); font-display: swap; }`;
+                    document.head.appendChild(style);
+                    new FontFace(fontName, `url('${fontPath}')`).load().catch(() => { });
+                }
+                return; // Skip entire async loading path
+            }
             setLoading(true);
             setError(false);
 
@@ -526,10 +565,16 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 let rawPage = null;
                 let fullData: MushafDataV2 | null = null;
 
-                // Check Memory Cache
+                // Check Memory Cache — process SYNCHRONOUSLY if cached
                 if ((window as any).qpcV2Cache && (window as any).qpcV2Cache[pageNumber.toString()]) {
                     fullData = (window as any).qpcV2Cache;
                     rawPage = fullData[pageNumber.toString()];
+                    // Process and set immediately so NO stale data flash
+                    const processedData = processPageData(rawPage, pageNumber, fullData || undefined);
+                    if (isMounted) {
+                        setPageData(processedData);
+                        setLoading(false);
+                    }
                 } else {
                     // Try Fetching specific page JSON (Fast: ~40KB)
                     try {
@@ -540,25 +585,24 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             if (!(window as any).qpcV2Cache) (window as any).qpcV2Cache = {};
                             (window as any).qpcV2Cache[pageNumber.toString()] = rawPage;
                             fullData = (window as any).qpcV2Cache; // Update fullData reference
+
+                            if (!rawPage) {
+                                if (isMounted) { setError(true); setLoading(false); }
+                                return;
+                            }
+
+                            const processedData = processPageData(rawPage, pageNumber, fullData || undefined);
+                            if (isMounted) {
+                                setPageData(processedData);
+                                setLoading(false);
+                            }
+                        } else {
+                            if (isMounted) { setError(true); setLoading(false); }
                         }
                     } catch (err) {
                         console.error("Failed to fetch page data / فشل في تحميل بيانات الصفحة", err);
+                        if (isMounted) { setError(true); setLoading(false); }
                     }
-                }
-
-                if (!rawPage) {
-                    if (isMounted) {
-                        setError(true);
-                        setLoading(false);
-                    }
-                    return;
-                }
-
-                const processedData = processPageData(rawPage, pageNumber, fullData || undefined);
-
-                if (isMounted) {
-                    setPageData(processedData);
-                    setLoading(false);
                 }
 
                 // 2. Inject and Load Font using FontFace API (faster than <style> injection)
@@ -852,48 +896,37 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             } catch (e) { /* ignore prefetch errors */ }
         };
 
-        // Prefetch next and prev in background
+        // Prefetch next and prev in background - FASTER for quick swiping
         const timer = setTimeout(() => {
+            // High priority neighbors
             prefetch(pageNumber + 1);
             prefetch(pageNumber - 1);
-        }, 1000);
+            // Extended neighbors for fast momentum
+            prefetch(pageNumber + 2);
+            prefetch(pageNumber - 2);
+        }, 100); // Only 100ms delay to be ready for fast swipes
 
         return () => clearTimeout(timer);
     }, [pageNumber, loading, error]);
 
-    const [isFontLoaded, setIsFontLoaded] = useState(false);
-
     // --- Font Injection (V2) ---
     useEffect(() => {
-        // Create dynamic font face for the current page
         const fontName = `p${pageNumber}-v2`;
         const fontPath = `/fonts/v2/p${pageNumber}.woff2`;
-
         const styleId = `font-v2-p${pageNumber}`;
         if (!document.getElementById(styleId)) {
-            setIsFontLoaded(false); // Only reset if font is not yet added
             const style = document.createElement('style');
             style.id = styleId;
             style.textContent = `
                 @font-face {
                     font-family: '${fontName}';
                     src: url('${fontPath}') format('woff2');
-                    font-display: block; 
+                    font-display: swap;
                 }
             `;
             document.head.appendChild(style);
-
-            // Wait for font to fully load before showing text
-            document.fonts.load(`1em "${fontName}"`).then(() => {
-                setIsFontLoaded(true);
-            });
-        } else {
-            // Font already loaded previously, no delay needed
-            setIsFontLoaded(true);
+            new FontFace(fontName, `url('${fontPath}')`).load().catch(() => { });
         }
-
-        // We intentionally DO NOT remove the style element on cleanup.
-        // Keeping it prevents DOM thrashing and makes returning to this page instantaneous.
     }, [pageNumber]);
 
     // --- Styling Helpers ---
@@ -915,10 +948,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             boxSizing: 'border-box' as const,
             touchAction: 'pan-y',
             overflowX: 'hidden' as const,
-            opacity: isFontLoaded ? 1 : 0, // Prevent flicker
-            transition: 'opacity 0.15s ease-in'
         };
-    }, [deviceType, orientation, isFontLoaded]);
+    }, [deviceType, orientation]);
 
     // Helper to reveal next hidden item (Shared logic for Click and Space key)
     const revealNextHidden = useCallback(() => {
@@ -1067,7 +1098,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         </div>
     );
 
-    if (loading) return (
+    // Final check: is this page in our global memory cache?
+    const isPageInCache = !!(window as any).qpcV2Cache?.[pageNumber.toString()];
+
+    // Only show spinner if we have NO data for this page AND it's not in memory cache.
+    // This effectively makes cached pages load INSTANTLY with zero flicker.
+    if ((!pageData || pageData.pageNumber !== pageNumber) && !isPageInCache) return (
         <div className="flex flex-col h-full items-center justify-center min-h-[400px]">
             <div className="w-12 h-12 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin mb-4" />
             <p className="text-amber-800/60 dark:text-amber-200/60 text-sm font-bold tracking-widest">{t.loading}</p>
@@ -1222,6 +1258,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                         onPointerDown={(e) => {
                                             // Start Long Press Timer
                                             isLongPressRef.current = false;
+                                            pointerStartPosRef.current = { x: e.clientX, y: e.clientY };
                                             longPressTimerRef.current = setTimeout(() => {
                                                 isLongPressRef.current = true;
                                                 // --- LONG PRESS ACTION ---
@@ -1254,18 +1291,32 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                     }
                                                 } else {
                                                     // Word is visible -> Long press plays audio
-                                                    if (word.surah && word.ayah && word.word) {
+                                                    if (audioEnabledRef.current && word.surah && word.ayah && word.word) {
                                                         playWordAudio(word.surah, word.ayah, word.word);
                                                         if (navigator.vibrate) navigator.vibrate(50);
                                                     }
                                                 }
                                             }, 350); // 350ms threshold
                                         }}
+                                        onPointerMove={(e) => {
+                                            if (pointerStartPosRef.current && longPressTimerRef.current) {
+                                                const dx = e.clientX - pointerStartPosRef.current.x;
+                                                const dy = e.clientY - pointerStartPosRef.current.y;
+                                                const distance = Math.sqrt(dx * dx + dy * dy);
+                                                // If moved more than 10px, it's a drag/swipe, not a long press
+                                                if (distance > 10) {
+                                                    clearTimeout(longPressTimerRef.current);
+                                                    longPressTimerRef.current = null;
+                                                }
+                                            }
+                                        }}
                                         onPointerUp={() => {
                                             if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                                            pointerStartPosRef.current = null;
                                         }}
                                         onPointerLeave={() => {
                                             if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                                            pointerStartPosRef.current = null;
                                         }}
                                         onClick={(e) => {
                                             // If it was a long press, ignore the click event and prevent bubbling

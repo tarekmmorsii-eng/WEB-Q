@@ -123,6 +123,7 @@ export interface AppSettings {
   colorStopSigns?: boolean; // New setting for stop sign coloring
   prayerMode: boolean;
   showMutashabihatIndicators: boolean;
+  enableWordLongPressAudio?: boolean; // New setting for word long press audio
 }
 
 // Mutashabihat (Similar Verses) Types

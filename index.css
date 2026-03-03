@@ -729,3 +729,21 @@ body .driver-popover>button:first-child svg {
   display: block !important;
   border-radius: 9999px !important;
 }
+
+/* Swiper specific overrides for Quran App */
+.quran-swiper-container {
+  overflow: hidden !important;
+}
+
+.swiper,
+.swiper-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.swiper-slide {
+  height: 100% !important;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}

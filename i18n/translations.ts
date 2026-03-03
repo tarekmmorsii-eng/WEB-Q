@@ -47,6 +47,7 @@ export interface Translations {
     colorThemes: string;
     soundSettings: string;
     pageFlipSound: string;
+    wordAudioLongPress: string;
     language: string;
     languages: string;
     textBrightness: string;
@@ -144,6 +145,8 @@ export interface Translations {
     addBookmark: string;
     removeBookmark: string;
     rateMemorization: string;
+    ayahCopied: string;
+    errorCopying: string;
 
     // Display Settings Labels
     displaySettings: string;
@@ -412,6 +415,7 @@ const en: Translations = {
     colorThemes: 'Color Themes',
     soundSettings: 'Sound Settings',
     pageFlipSound: 'Page Flip Sound',
+    wordAudioLongPress: 'Word sound on long press',
     language: 'Language',
     languages: 'Languages',
     textBrightness: 'Text Brightness',
@@ -506,6 +510,8 @@ const en: Translations = {
     addBookmark: 'Add Bookmark',
     removeBookmark: 'Remove Bookmark',
     rateMemorization: 'Rate Memorization',
+    ayahCopied: 'Ayah copied to clipboard',
+    errorCopying: 'Failed to copy ayah',
 
     // Display Settings Labels
     displaySettings: 'Display Settings',
@@ -787,6 +793,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'الألوان والثيمات',
         soundSettings: 'إعدادات الصوت',
         pageFlipSound: 'صوت تقليب الصفحة',
+        wordAudioLongPress: 'صوت الكلمة عند الضغط المطول',
         language: 'اللغة',
         languages: 'اللغات',
         textBrightness: 'إضاءة الخط',
@@ -881,6 +888,8 @@ export const translations: Record<Language, Translations> = {
         addBookmark: 'إضافة مرجعية',
         removeBookmark: 'إزالة المرجعية',
         rateMemorization: 'تقييم الحفظ',
+        ayahCopied: 'تم نسخ الآية للحافظة',
+        errorCopying: 'فشل نسخ الآية',
 
         // Display Settings Labels
         displaySettings: 'إعدادات العرض',
@@ -1159,6 +1168,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Tema Warna',
         soundSettings: 'Pengaturan Suara',
         pageFlipSound: 'Suara Balik Halaman',
+        wordAudioLongPress: 'Suara kata pada tekan lama',
         language: 'Bahasa',
         languages: 'Bahasa',
         textBrightness: 'Kecerahan Teks',
@@ -1297,7 +1307,8 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Tema Warna',
         soundSettings: 'Tetapan Bunyi',
         pageFlipSound: 'Bunyi Laman',
-        language: 'Bahasa',
+        wordAudioLongPress: 'Bunyi kata pada tekan lama',
+        language: 'Bahasa Melayu',
         languages: 'Bahasa',
         textBrightness: 'Kecerahan Teks',
         backgroundBrightness: 'Kecerahan Latar',
@@ -1424,6 +1435,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'رنگ تھیمز',
         soundSettings: 'آواز کی ترتیبات',
         pageFlipSound: 'صفحہ پلٹنے کی آواز',
+        wordAudioLongPress: 'طویل دبانے پر لفظ کی آواز',
         language: 'زبان',
         languages: 'زبانیں',
         textBrightness: 'متن کی روشنی',
@@ -1550,6 +1562,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'রঙের থিম',
         soundSettings: 'শব্দ সেটিংস',
         pageFlipSound: 'পৃষ্ঠা ফ্লিপ শব্দ',
+        wordAudioLongPress: 'দীর্ঘ প্রেস শব্দ',
         language: 'ভাষা',
         languages: 'ভাষা',
         textBrightness: 'টেক্সট উজ্জ্বলতা',
@@ -1676,6 +1689,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Renk Temaları',
         soundSettings: 'Ses Ayarları',
         pageFlipSound: 'Sayfa Çevirme Sesi',
+        wordAudioLongPress: 'Uzun basışta kelime sesi',
         language: 'Dil',
         languages: 'Diller',
         textBrightness: 'Metin Parlaklığı',
@@ -1802,6 +1816,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'تم‌های رنگی',
         soundSettings: 'تنظیمات صدا',
         pageFlipSound: 'صدای ورق زدن',
+        wordAudioLongPress: 'صدای کلمه در فشار طولانی',
         language: 'زبان',
         languages: 'زبان‌ها',
         textBrightness: 'روشنایی متن',
@@ -1930,6 +1945,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Jigogin Launi',
         soundSettings: 'Saitunan Sauti',
         pageFlipSound: 'Sautin Juya Shafi',
+        wordAudioLongPress: 'Sautin kalma akan dogon latsawa',
         language: 'Harshe',
         languages: 'Harsuna',
         textBrightness: 'Hasken Rubutu',
@@ -2057,6 +2073,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Thèmes de Couleur',
         soundSettings: 'Paramètres Sonores',
         pageFlipSound: 'Son Tourne-Page',
+        wordAudioLongPress: 'Son du mot sur appui long',
         language: 'Langue',
         languages: 'Langues',
         textBrightness: 'Luminosité Texte',
@@ -2223,6 +2240,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: '颜色主题',
         soundSettings: '声音设置',
         pageFlipSound: '翻页声',
+        wordAudioLongPress: '长按单词发音',
         language: '语言',
         languages: '语言',
         textBrightness: '文字亮度',
@@ -2350,6 +2368,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: '색상 테마',
         soundSettings: '소리 설정',
         pageFlipSound: '페이지 넘김 소리',
+        wordAudioLongPress: '길게 누를 때 단어 소리',
         language: '언어',
         languages: '언어',
         textBrightness: '텍스트 밝기',
@@ -2473,6 +2492,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'カラーテーマ',
         soundSettings: '音声設定',
         pageFlipSound: 'ページめくり音',
+        wordAudioLongPress: '長押しで単語の音',
         language: '言語',
         languages: '言語',
         textBrightness: 'テキストの明るさ',
@@ -2582,6 +2602,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'रंग थीम',
         soundSettings: 'ध्वनि सेटिंग्स',
         pageFlipSound: 'पृष्ठ पलटने की ध्वनि',
+        wordAudioLongPress: 'लंबे प्रेस पर शब्द ध्वनि',
         language: 'भाषा',
         languages: 'भाषाएँ',
         textBrightness: 'पाठ चमक',
@@ -2703,6 +2724,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'வண்ண தீம்கள்',
         soundSettings: 'ஒலி அமைப்புகள்',
         pageFlipSound: 'பக்க திருப்பும் ஒலி',
+        wordAudioLongPress: 'நீண்ட அழுத்தத்தில் சொல் ஒலி',
         language: 'மொழி',
         languages: 'மொழிகள்',
         textBrightness: 'உரை வெளிச்சம்',
@@ -2824,6 +2846,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'වර්ණ තේමා',
         soundSettings: 'ශබ්ද සැකසීම්',
         pageFlipSound: 'පිටු පෙරළන ශබ්දය',
+        wordAudioLongPress: 'දිගු එබීමේදී වචන ශබ්දය',
         language: 'භාෂාව',
         languages: 'භාෂා',
         textBrightness: 'පෙළ දීප්තිය',
@@ -2889,7 +2912,7 @@ export const translations: Record<Language, Translations> = {
         notificationNamePlaceholder: 'උදා. දිනපතා කියවීම',
         notificationType: 'දැනුම්දීම් වර්ගය',
         weekly: 'සතිපතා',
-        selectDays: 'දින තෝරන්න',
+        selectDays: 'නාட்களைத் தேர்ந்தெடு',
         notificationTimes: 'දැනුම්දීම් වේලාවන්',
         addAnotherTime: 'තවත් වේලාවක් එක් කරන්න',
         sunday: 'ඉරිදා',
@@ -2945,6 +2968,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'የቀለም ገጽታዎች',
         soundSettings: 'የድምጽ ቅንብሮች',
         pageFlipSound: 'የገጽ መገልበጥ ድምጽ',
+        wordAudioLongPress: 'በረጅሙ ሲጫኑ የቃል ድምጽ',
         language: 'ቋንቋ',
         languages: 'ቋንቋዎች',
         textBrightness: 'የጽሑፍ ብሩህነት',
@@ -3066,6 +3090,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Awọn Akori Awọ',
         soundSettings: 'Awọn Eto Ohun',
         pageFlipSound: 'Ohun Yiyi Oju-iwe',
+        wordAudioLongPress: 'Ohun ọrọ lori titẹ gigun',
         language: 'Èdè',
         languages: 'Àwọn èdè',
         textBrightness: 'Imọlẹ Ọrọ',
@@ -3187,6 +3212,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Bifa Halluu',
         soundSettings: 'Qindaa\'ina Sagalee',
         pageFlipSound: 'Sagalee Fuula Garagalchuu',
+        wordAudioLongPress: 'Sagalee jecha lakkofsa dheeraa',
         language: 'Afaan',
         languages: 'Afaanota',
         textBrightness: 'Ifa Barruu',
@@ -3308,6 +3334,7 @@ export const translations: Record<Language, Translations> = {
         colorThemes: 'Insanganyamatsiko z\'Amabara',
         soundSettings: 'Igenamiterere ry\'Amajwi',
         pageFlipSound: 'Ijwi ryo guhindura paji',
+        wordAudioLongPress: 'Ijwi ry\'ijambo ryo gukanda cyane',
         language: 'Ururimi',
         languages: 'Indimi',
         textBrightness: 'Urumuri rw\'Inyandiko',
