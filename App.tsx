@@ -1505,22 +1505,20 @@ export default function App() {
     swiperRef.current = swiper;
   }, []);
 
-  // Sync external page changes (Index navigation) back to Swiper
-  useEffect(() => {
+  // Sync external page changes (Index navigation) and handle Swiper jump-back
+  React.useLayoutEffect(() => {
     setSlidePages([
       Math.max(1, currentPage - 1),
       currentPage,
       Math.min(TOTAL_PAGES, currentPage + 1),
     ]);
 
-    // Use requestAnimationFrame to ensure the DOM has updated before jumping back
-    requestAnimationFrame(() => {
-      if (swiperRef.current && !swiperRef.current.destroyed) {
-        if (swiperRef.current.activeIndex !== 1) {
-          swiperRef.current.slideTo(1, 0, false);
-        }
+    // Jump back to center slide synchronously after slidePages update but before paint
+    if (swiperRef.current && !swiperRef.current.destroyed) {
+      if (swiperRef.current.activeIndex !== 1) {
+        swiperRef.current.slideTo(1, 0, false);
       }
-    });
+    }
   }, [currentPage]);
 
   return (
@@ -1589,7 +1587,7 @@ export default function App() {
                     >
                       <SwiperSlide className="w-full h-full flex items-center justify-center">
                         <QPCV2PageRenderer
-                          key={`slide-0-${slidePages[0]}-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
+                          key={`slide-0-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[0]}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
@@ -1623,7 +1621,7 @@ export default function App() {
                       </SwiperSlide>
                       <SwiperSlide className="w-full h-full flex items-center justify-center">
                         <QPCV2PageRenderer
-                          key={`slide-1-${slidePages[1]}-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
+                          key={`slide-1-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[1]}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
@@ -1657,7 +1655,7 @@ export default function App() {
                       </SwiperSlide>
                       <SwiperSlide className="w-full h-full flex items-center justify-center">
                         <QPCV2PageRenderer
-                          key={`slide-2-${slidePages[2]}-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
+                          key={`slide-2-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[2]}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
