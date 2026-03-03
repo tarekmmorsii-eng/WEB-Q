@@ -1124,7 +1124,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             data-orientation={orientation}
             translate="no"
             className={clsx(
-                "mushaf-page-qpc w-full mx-auto flex flex-col justify-between p-2 shadow-lg my-4 rounded-sm relative notranslate",
+                "mushaf-page-qpc w-full mx-auto flex flex-col justify-between px-2 pb-2 pt-0 shadow-lg mt-0 mb-0 rounded-sm relative notranslate",
                 isSpecialPage && "special-page-frame",
                 className
             )}
@@ -1136,76 +1136,77 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 aspectRatio: (deviceType === 'desktop' && !isSpecialPage) ? '0.65' : undefined
             }}
         >
-            {/* الترويسة العلوية لنسخة الكمبيوتر */}
-            {deviceType === 'desktop' && (
-                <div
-                    className="page-header mb-4 pb-4 border-b border-amber-200/40 dark:border-amber-800/40"
-                    style={{
-                        fontFamily: "'Almarai', sans-serif",
-                        fontSize: '0.85rem',
-                        color: accentColor,
-                        display: 'grid',
-                        gridTemplateColumns: '1fr auto 1fr',
-                        alignItems: 'center',
-                        width: '100%',
-                        padding: '0.25rem 10px',
-                        backgroundColor: 'var(--bg-primary)',
-                        textAlign: 'center'
-                    }}
-                >
-                    {(() => {
-                        const currentSurahNum = (() => {
-                            const header = pageData.lines.find(l => l.surahNumber);
-                            if (header && header.surahNumber) return header.surahNumber;
-                            for (const line of pageData.lines) {
-                                if (line.words && line.words.length > 0) {
-                                    const firstS = line.words.find(w => w.surah)?.surah;
-                                    if (firstS) return firstS;
-                                }
+            {/* الترويسة العلوية لكافة الأجهزة */}
+            <div
+                className="page-header pb-1 mb-2 border-b border-amber-200/40 dark:border-amber-800/40"
+                style={{
+                    fontFamily: "'Almarai', sans-serif",
+                    fontSize: '0.85rem',
+                    color: accentColor,
+                    display: 'grid',
+                    gridTemplateColumns: '1fr auto 1fr',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '0.1rem 5px',
+                    position: 'relative',
+                    zIndex: 10,
+                    backgroundColor: 'transparent',
+                    textAlign: 'center'
+                }}
+            >
+                {(() => {
+                    const currentSurahNum = (() => {
+                        const header = pageData.lines.find(l => l.surahNumber);
+                        if (header && header.surahNumber) return header.surahNumber;
+
+                        for (const line of pageData.lines) {
+                            if (line.words && line.words.length > 0) {
+                                const firstS = line.words.find(w => w.surah)?.surah;
+                                if (firstS) return firstS;
                             }
-                            return 1;
-                        })();
+                        }
+                        return 1;
+                    })();
 
-                        const sIndex = currentSurahNum - 1;
-                        const surahName = t.surahNames[sIndex] || '...';
-                        const surahDisplay = language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`;
-                        const pageNumDisplay = formatNumber(pageNumber, language);
+                    const sIndex = currentSurahNum - 1;
+                    const surahName = t.surahNames[sIndex] || '...';
+                    const surahDisplay = language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`;
+                    const pageNumDisplay = formatNumber(pageNumber, language);
 
-                        return (
-                            <>
-                                <span className="text-right whitespace-nowrap overflow-hidden text-ellipsis">
-                                    {pageNumber % 2 !== 0 ? pageNumDisplay : surahDisplay}
-                                </span>
+                    return (
+                        <>
+                            <span className="text-right whitespace-nowrap overflow-hidden text-ellipsis">
+                                {pageNumber % 2 !== 0 ? pageNumDisplay : surahDisplay}
+                            </span>
 
-                                <div className="flex flex-col items-center justify-center gap-0.5 px-4 opacity-90">
-                                    {(() => {
-                                        const div = PAGE_DIVISIONS[pageNumber];
-                                        if (!div) return null;
+                            <div className="flex flex-col items-center justify-center gap-0 px-2 opacity-90">
+                                {(() => {
+                                    const div = PAGE_DIVISIONS[pageNumber];
+                                    if (!div) return null;
 
-                                        const juzNum = formatNumber(div.juz, language);
-                                        const hizbNum = formatNumber(Math.ceil(div.hizbQuarter / 4), language);
-                                        const rubNum = formatNumber((((div.hizbQuarter - 1) % 4) + 1), language);
+                                    const juzNum = formatNumber(div.juz, language);
+                                    const hizbNum = formatNumber(Math.ceil(div.hizbQuarter / 4), language);
+                                    const rubNum = formatNumber((((div.hizbQuarter - 1) % 4) + 1), language);
 
-                                        return (
-                                            <div className="flex items-center gap-2 text-[0.75rem] md:text-[0.85rem] whitespace-nowrap">
-                                                <span>{t.juz} {juzNum}</span>
-                                                <span className="w-1 h-1 rounded-full bg-current opacity-30" />
-                                                <span>{t.hizb} {hizbNum}</span>
-                                                <span className="w-1 h-1 rounded-full bg-current opacity-30" />
-                                                <span>{t.rub} {rubNum}</span>
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
+                                    return (
+                                        <div className="flex items-center gap-1.5 text-[0.70rem] md:text-[0.80rem] whitespace-nowrap">
+                                            <span>{t.juz} {juzNum}</span>
+                                            <span className="w-1 h-1 rounded-full bg-current opacity-30" />
+                                            <span>{t.hizb} {hizbNum}</span>
+                                            <span className="w-1 h-1 rounded-full bg-current opacity-30" />
+                                            <span>{t.rub} {rubNum}</span>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
 
-                                <span className="text-left whitespace-nowrap overflow-hidden text-ellipsis">
-                                    {pageNumber % 2 === 0 ? pageNumDisplay : surahDisplay}
-                                </span>
-                            </>
-                        );
-                    })()}
-                </div>
-            )}
+                            <span className="text-left whitespace-nowrap overflow-hidden text-ellipsis">
+                                {pageNumber % 2 === 0 ? pageNumDisplay : surahDisplay}
+                            </span>
+                        </>
+                    );
+                })()}
+            </div>
 
             <div className="quran-lines-container flex-grow flex flex-col justify-between w-full px-[1%]" style={{ direction: 'rtl' }}>
                 {pageData.lines.map((line, idx) => (
@@ -1462,82 +1463,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     </div>
                 ))}
             </div>
-
-            <div
-                className="page-footer mt-4 pt-4 border-t border-amber-200/40 dark:border-amber-800/40"
-                style={{
-                    fontFamily: "'Almarai', sans-serif",
-                    fontSize: '0.85rem',
-                    color: accentColor,
-                    display: 'grid',
-                    gridTemplateColumns: '1fr auto 1fr',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '0.25rem 10px',
-                    position: deviceType === 'desktop' ? 'relative' : 'fixed',
-                    bottom: deviceType === 'desktop' ? 'auto' : '0',
-                    left: deviceType === 'desktop' ? 'auto' : '0',
-                    right: deviceType === 'desktop' ? 'auto' : '0',
-                    zIndex: deviceType === 'desktop' ? 'auto' : 50,
-                    backgroundColor: 'var(--bg-primary)',
-                    textAlign: 'center'
-                }}
-            >
-                {(() => {
-                    // Logic to find current surah for footer
-                    const currentSurahNum = (() => {
-                        const header = pageData.lines.find(l => l.surahNumber);
-                        if (header && header.surahNumber) return header.surahNumber;
-
-                        for (const line of pageData.lines) {
-                            if (line.words && line.words.length > 0) {
-                                const firstS = line.words.find(w => w.surah)?.surah;
-                                if (firstS) return firstS;
-                            }
-                        }
-                        return 1;
-                    })();
-
-                    const sIndex = currentSurahNum - 1;
-                    const surahName = t.surahNames[sIndex] || '...';
-                    const surahDisplay = language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`;
-                    const pageNumDisplay = formatNumber(pageNumber, language);
-
-                    return (
-                        <>
-                            <span className="text-right whitespace-nowrap overflow-hidden text-ellipsis">
-                                {pageNumber % 2 !== 0 ? pageNumDisplay : surahDisplay}
-                            </span>
-
-                            <div className="flex flex-col items-center justify-center gap-0.5 px-4 opacity-90">
-                                {(() => {
-                                    const div = PAGE_DIVISIONS[pageNumber];
-                                    if (!div) return null;
-
-                                    const juzNum = formatNumber(div.juz, language);
-                                    const hizbNum = formatNumber(Math.ceil(div.hizbQuarter / 4), language);
-                                    const rubNum = formatNumber((((div.hizbQuarter - 1) % 4) + 1), language);
-
-                                    return (
-                                        <div className="flex items-center gap-2 text-[0.75rem] md:text-[0.85rem] whitespace-nowrap">
-                                            <span>{t.juz} {juzNum}</span>
-                                            <span className="w-1 h-1 rounded-full bg-current opacity-30" />
-                                            <span>{t.hizb} {hizbNum}</span>
-                                            <span className="w-1 h-1 rounded-full bg-current opacity-30" />
-                                            <span>{t.rub} {rubNum}</span>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-
-                            <span className="text-left whitespace-nowrap overflow-hidden text-ellipsis">
-                                {pageNumber % 2 === 0 ? pageNumDisplay : surahDisplay}
-                            </span>
-                        </>
-                    );
-                })()}
-            </div>
-        </div >
+        </div>
     );
 
     return renderContent();

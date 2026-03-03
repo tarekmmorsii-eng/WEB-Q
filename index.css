@@ -257,8 +257,8 @@ div[data-atlas] {
 
 /* === MOBILE PORTRAIT: الموبايل العمودي === */
 .mushaf-page-qpc[data-device-type="mobile"][data-orientation="portrait"] {
-  padding: 10px 5px 15px 5px !important;
-  /* Minimized padding to maximize text width */
+  padding: 2px 5px 5px 5px !important;
+  /* Minimized padding to maximize text area */
   max-width: 100% !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -350,7 +350,7 @@ div[data-atlas] {
 /* === دعم إضافي للتابلت عبر data-device-type === */
 @media screen {
   .mushaf-page-qpc[data-device-type="tablet"][data-orientation="portrait"] {
-    padding: 50px 70px !important;
+    padding: 5px 70px 10px 70px !important;
   }
 
   .mushaf-page-qpc[data-device-type="tablet"][data-orientation="portrait"] [class*="quran-text-"],
