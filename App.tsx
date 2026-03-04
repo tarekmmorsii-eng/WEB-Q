@@ -212,6 +212,13 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('quran_last_page', currentPage.toString());
+
+    // Fetch page data for bookmark functions
+    fetchPage(currentPage).then(data => {
+      setPageData(data);
+    }).catch(err => {
+      console.error('Error fetching page data for bookmarks:', err);
+    });
   }, [currentPage]);
 
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.SHOW_ALL);
