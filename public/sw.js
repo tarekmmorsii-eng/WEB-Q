@@ -13,9 +13,9 @@ const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 // 1. Install Event
 // ---------------------------
 self.addEventListener('install', (event) => {
-    // ⚠️ Don't skipWaiting automatically anymore!
-    // We want manual update control.
-    console.log('[SW] Installing new version...');
+    // Auto-activate: new version takes effect immediately
+    console.log('[SW] Installing new version... Auto-activating.');
+    self.skipWaiting();
 });
 
 // ---------------------------

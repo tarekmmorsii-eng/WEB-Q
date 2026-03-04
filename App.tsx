@@ -952,64 +952,41 @@ export default function App() {
 
 
   useEffect(() => {
-    // 1. Listen for Service Worker updates (Manual)
+    // Silent Auto-Update System
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then(reg => {
-        if (reg) {
-          const showUpdateToast = () => {
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-            if (!isStandalone) return;
+      // Check for updates periodically (every 30 minutes)
+      const checkForUpdates = () => {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          if (reg) reg.update().catch(() => { });
+        });
+      };
+      const updateInterval = setInterval(checkForUpdates, 30 * 60 * 1000);
 
-            setHasAppUpdate(true);
-            setToastMessage(t.updateAvailable);
-            setToastActions([
-              {
-                label: t.updateNow,
-                onClick: () => {
-                  setToastMessage(null);
-                  setToastActions(undefined);
-                  if (reg?.waiting) {
-                    reg.waiting.postMessage('SKIP_WAITING');
-                  } else {
-                    window.location.reload();
-                  }
-                }
-              },
-              {
-                label: t.updateLater,
-                variant: 'secondary',
-                onClick: () => {
-                  setToastMessage(null);
-                  setToastActions(undefined);
-                }
-              }
-            ]);
-          };
-
-          if (reg.waiting) showUpdateToast();
-
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker?.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                showUpdateToast();
-              }
-            });
-          });
-        }
-      });
-
+      // Auto-reload when new service worker takes control
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) {
           refreshing = true;
+          // Mark that we just updated so we can show toast after reload
+          sessionStorage.setItem('app_just_updated', '1');
           window.location.reload();
         }
       });
+
+      // Show "App Updated" toast if we just auto-updated
+      const justUpdated = sessionStorage.getItem('app_just_updated');
+      if (justUpdated) {
+        sessionStorage.removeItem('app_just_updated');
+        setTimeout(() => {
+          setToastMessage('✅ تم تحديث التطبيق');
+        }, 1500);
+      }
+
+      return () => clearInterval(updateInterval);
     }
+  }, []);
 
-    // 2. Handle History Navigation logic moved to dedicated useEffect above
-
+  useEffect(() => {
     // 2.5 Test Alarm Listener
     const handleTestAlarm = (e: any) => {
       const { name, sound } = e.detail;
@@ -1050,12 +1027,10 @@ export default function App() {
       notifications.forEach(n => {
         if (!n.isEnabled) return;
 
-        // Use a unique key for each notification at a specific time to avoid double firing
         const lastFiredKey = `notif_last_fired_${n.id}_${currentTimeStr}`;
         const lastFired = localStorage.getItem(lastFiredKey);
 
         if (n.days.includes(currentDay) && n.times.includes(currentTimeStr) && !lastFired) {
-          // If it's an alarm, trigger alarm mode
           if (n.isAlarm) {
             setActiveAlarm(n);
             if (alarmAudioRef.current) {
@@ -1078,12 +1053,11 @@ export default function App() {
                   icon: '/logo192.png',
                   badge: '/logo192.png',
                   tag: `quran-notif-${n.id}`,
-                  // @ts-ignore - Support service worker specific options
+                  // @ts-ignore
                   renotify: true,
                   // @ts-ignore
                   requireInteraction: n.isAlarm
                 });
-                // Mark as fired for this minute
                 localStorage.setItem(lastFiredKey, 'true');
               });
             }
@@ -1092,12 +1066,12 @@ export default function App() {
       });
     };
 
-    const interval = setInterval(checkNotifications, 30000); // Every 30 seconds for accuracy
+    const interval = setInterval(checkNotifications, 30000);
     return () => {
       clearInterval(interval);
       window.removeEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
     };
-  }, [handleUpdateApp, notifications]);
+  }, [notifications]);
 
 
   useEffect(() => {
