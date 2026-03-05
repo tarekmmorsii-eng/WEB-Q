@@ -582,6 +582,46 @@ export default function Settings({
 
                             </section>
 
+                            {/* Touch Gestures */}
+                            <section>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <MousePointer2 size={20} />
+                                    {t.gestureSettings}
+                                </h3>
+                                <div className="space-y-3">
+                                    <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                        <span className="text-gray-900 dark:text-white">{t.gestureTwoFingerTap}</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={localSettings.gestureTwoFingerTap !== false}
+                                            onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureTwoFingerTap: e.target.checked }))}
+                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </label>
+
+                                    <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                        <span className="text-gray-900 dark:text-white">{t.gestureDoubleTap}</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={localSettings.gestureDoubleTap !== false}
+                                            onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureDoubleTap: e.target.checked }))}
+                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </label>
+
+                                    <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                        <span className="text-gray-900 dark:text-white">{t.gestureSwipeUp}</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={localSettings.gestureSwipeUp !== false}
+                                            onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureSwipeUp: e.target.checked }))}
+                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </label>
+                                </div>
+                            </section>
+
+
                             {/* Bottom Bar Customization */}
                             <section>
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">

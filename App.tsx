@@ -887,7 +887,15 @@ export default function App() {
       const totalDist = Math.sqrt(Math.pow(endX - g.touchStartX, 2) + Math.pow(endY - g.touchStartY, 2));
 
       // --- Swipe Up: Open Settings ---
+      const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+      const isMobileOrTablet = window.innerWidth <= 1440;
+
       if (deltaY > 100 && deltaY > deltaX * 1.5) {
+        if (isLandscape && isMobileOrTablet) {
+          // DO NOTHING - allow standard browser scroll
+          return;
+        }
+
         g.gestureHandled = true;
         setIsSettingsOpen(true);
         return;

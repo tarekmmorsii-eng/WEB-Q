@@ -124,6 +124,9 @@ export interface AppSettings {
   prayerMode: boolean;
   showMutashabihatIndicators: boolean;
   enableWordLongPressAudio?: boolean; // New setting for word long press audio
+  gestureTwoFingerTap?: boolean;
+  gestureDoubleTap?: boolean;
+  gestureSwipeUp?: boolean;
 }
 
 // Mutashabihat (Similar Verses) Types

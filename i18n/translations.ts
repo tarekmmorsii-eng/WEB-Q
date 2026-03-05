@@ -232,6 +232,12 @@ export interface Translations {
     tinyUpdate: string;
     basmallah: string;
 
+    // Gestures
+    gestureSettings: string;
+    gestureTwoFingerTap: string;
+    gestureDoubleTap: string;
+    gestureSwipeUp: string;
+
     // Mutashabihat
     similarVersesAlert: string;
     similarVersesDescription: string;
@@ -596,6 +602,12 @@ const en: Translations = {
     tinyUpdate: 'Update',
     basmallah: 'Basmallah',
 
+    // Gestures
+    gestureSettings: 'Touch Gestures',
+    gestureTwoFingerTap: 'Two-finger tap (Toggle UI)',
+    gestureDoubleTap: 'Double tap (Next Page)',
+    gestureSwipeUp: 'Swipe up (Settings)',
+
     // Mutashabihat
     similarVersesAlert: 'Similar Verses Alert',
     similarVersesDescription: 'This verse has similar verses, be careful not to confuse them while memorizing',
@@ -798,6 +810,12 @@ export const translations: Record<Language, Translations> = {
         languages: 'اللغات',
         textBrightness: 'إضاءة الخط',
         backgroundBrightness: 'إضاءة الخلفية',
+
+        // Gestures
+        gestureSettings: 'إيماءات اللمس (للموبايل والتابلت)',
+        gestureTwoFingerTap: 'ضغط بإصبعين (فتح القائمة)',
+        gestureDoubleTap: 'ضغط مزدوج (الصفحة التالية)',
+        gestureSwipeUp: 'سحب للأعلى (الإعدادات)',
         warmBeige: 'بيج دافئ',
         coolWhite: 'أبيض بارد',
         softCream: 'كريمي ناعم',
