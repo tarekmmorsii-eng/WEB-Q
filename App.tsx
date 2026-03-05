@@ -1300,29 +1300,15 @@ export default function App() {
 
   const handleNextPage = () => {
     if (currentPage < TOTAL_PAGES) {
-      // Scroll to top - use both methods for compatibility
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (mainRef.current) {
-        mainRef.current.scrollTop = 0;
-      }
-      // Wait for scroll animation to complete before page change
-      setTimeout(() => {
-        changePageWithoutScroll('next');
-      }, 300);
+      window.scrollTo(0, 0);
+      changePageWithoutScroll('next');
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
-      // Scroll to top - use both methods for compatibility
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (mainRef.current) {
-        mainRef.current.scrollTop = 0;
-      }
-      // Wait for scroll animation to complete before page change
-      setTimeout(() => {
-        changePageWithoutScroll('prev');
-      }, 300);
+      window.scrollTo(0, 0);
+      changePageWithoutScroll('prev');
     }
   };
 
@@ -1579,7 +1565,11 @@ export default function App() {
   ]);
 
   // Handle Swipe/Slide change
-  const handleSwiperSlideChange = useCallback((swiper: SwiperClass) => {
+  const handleSwiperSlideChange = useCallback((swiper: any) => {
+    // Reset window scroll to top immediately in landscape/mobile
+    window.scrollTo(0, 0);
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+
     if (!swiper || swiper.destroyed) return;
     const idx = swiper.activeIndex;
     if (idx === 1) return;
@@ -1692,7 +1682,7 @@ export default function App() {
                       initialSlide={1}
                       className="w-full h-full flex-1"
                     >
-                      <SwiperSlide className="w-full h-full flex items-center justify-center">
+                      <SwiperSlide className="w-full h-full flex items-start justify-center">
                         <QPCV2PageRenderer
                           key={`slide-0-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[0]}
@@ -1726,7 +1716,7 @@ export default function App() {
                           onAddSimilarAyah={handleAddSimilarAyah}
                         />
                       </SwiperSlide>
-                      <SwiperSlide className="w-full h-full flex items-center justify-center">
+                      <SwiperSlide className="w-full h-full flex items-start justify-center">
                         <QPCV2PageRenderer
                           key={`slide-1-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[1]}
@@ -1760,7 +1750,7 @@ export default function App() {
                           onAddSimilarAyah={handleAddSimilarAyah}
                         />
                       </SwiperSlide>
-                      <SwiperSlide className="w-full h-full flex items-center justify-center">
+                      <SwiperSlide className="w-full h-full flex items-start justify-center">
                         <QPCV2PageRenderer
                           key={`slide-2-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[2]}
