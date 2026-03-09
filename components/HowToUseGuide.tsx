@@ -99,6 +99,16 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
                 title: `${titlePrefix} - ${displayId}`,
                 category
             });
+
+            // Insert 29B.jpeg immediately after 29a.jpg
+            if (i === 29) {
+                images.push({
+                    id: 29.5,
+                    url: `/guide/29B.jpeg?v=${version}`,
+                    title: `${titlePrefix} - 29B`,
+                    category
+                });
+            }
         }
         return images;
     }, [t]);
@@ -345,7 +355,7 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
                             <section>
                                 <SectionHeader id="section-quran" title={t.guideQuranUI} />
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                                    {filteredImages.filter(img => img.id >= 24 && img.id <= 29).map((img) => (
+                                    {filteredImages.filter(img => img.id >= 24 && img.id <= 29.5).map((img) => (
                                         <ImageCard key={img.id} img={img} onClick={setSelectedImage} t={t} />
                                     ))}
                                 </div>
