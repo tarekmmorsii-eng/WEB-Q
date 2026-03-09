@@ -15,6 +15,7 @@ interface AyahOptionsModalProps {
     language: string;
     hasMutashabihat?: boolean;
     onOpenMutashabihat?: () => void;
+    tafsir?: string;
 }
 
 export default function AyahOptionsModal({
@@ -28,8 +29,10 @@ export default function AyahOptionsModal({
     isBookmarked,
     language,
     hasMutashabihat,
-    onOpenMutashabihat
+    onOpenMutashabihat,
+    tafsir
 }: AyahOptionsModalProps) {
+    const [showTafsir, setShowTafsir] = React.useState(false);
     if (!isOpen) return null;
 
     const t = translations[language as Language] || translations['ar'];
@@ -164,6 +167,16 @@ export default function AyahOptionsModal({
                         }
                     </button>
 
+                    {tafsir && (
+                        <button
+                            onClick={() => setShowTafsir(!showTafsir)}
+                            className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-4 rounded-xl flex items-center justify-center gap-3 transition-colors font-bold shadow-md"
+                        >
+                            <span className="text-xl">📜</span>
+                            {t.tafsirAyah}
+                        </button>
+                    )}
+
                     {/* Bookmark Button */}
                     <button
                         onClick={handleBookmark}
@@ -181,6 +194,40 @@ export default function AyahOptionsModal({
                 >
                     {t.close}
                 </button>
+
+                {/* Tafsir Overlay/Panel */}
+                {showTafsir && (
+                    <div className="absolute inset-0 bg-white dark:bg-slate-900 rounded-2xl z-20 flex flex-col p-6 animate-in slide-in-from-bottom-5 duration-300">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.tafsirAyah}</h3>
+                            <button
+                                onClick={() => {
+                                    setShowTafsir(false);
+                                    onClose();
+                                }}
+                                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+                        <div
+                            className="flex-1 overflow-y-auto text-slate-700 dark:text-slate-300 text-right leading-relaxed text-xl pb-4 px-1"
+                            dir="rtl"
+                            style={{ fontFamily: "'Amiri', serif" }}
+                        >
+                            {tafsir}
+                        </div>
+                        <button
+                            onClick={() => {
+                                setShowTafsir(false);
+                                onClose();
+                            }}
+                            className="w-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3 rounded-xl font-bold transition-colors mt-2"
+                        >
+                            {t.close}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

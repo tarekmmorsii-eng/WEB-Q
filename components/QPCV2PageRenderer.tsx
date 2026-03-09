@@ -8,6 +8,8 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import clsx from 'clsx';
 import { ViewMode, MemorizationRating, VerseBookmark, Mutashabiha } from '../types';
 import { Bookmark, WifiOff } from 'lucide-react';
+import WordMeaningTooltip from './WordMeaningTooltip';
+import newMa3anyPosData from '../src/data/ma3any/new_ma3any_pos.json';
 import { STOP_SIGNS } from '../src/generated/stopSigns';
 import { SURAHS } from '../constants/surahData'; // Or local SURAH_NAMES if defined there
 import SurahFrame from './SurahFrame';
@@ -22,6 +24,16 @@ import { useWordByWordAudio } from '../hooks/useWordByWordAudio';
 
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
+
+const normalizeArabic = (text: string) => {
+    if (!text) return '';
+    return text
+        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '') // Remove harakat, small alef, stop signs
+        .replace(/ٱ/g, 'ا') // Alef Wasla -> regular Alef
+        .replace(/[ـ]/g, '') // Remove tatweel
+        .replace(/\s+/g, ' ')
+        .trim();
+};
 
 // SURAH_NAMES moved to and managed by t.surahNames in translations.ts
 
@@ -55,6 +67,9 @@ interface AdaptedWord {
     originalText: string;
     isStop?: boolean;
     isEnd?: boolean;
+    meaning?: string;
+    meaningPhrase?: string;
+    meaningColorIndex?: number;
 }
 
 interface Line {
@@ -195,6 +210,8 @@ interface QPCV2PageRendererProps {
     onAddSimilarAyah?: (mutashabihaId: string, isInsideSurah: boolean) => void;
     showMutashabihatIndicators?: boolean;
     enableWordLongPressAudio?: boolean;
+    showWordMeanings?: boolean;
+    wordMeaningsSource?: 'siraj' | 'new';
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -219,7 +236,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     onDeleteSimilarAyah,
     onAddSimilarAyah,
     showMutashabihatIndicators = true,
-    enableWordLongPressAudio = true
+    enableWordLongPressAudio = true,
+    showWordMeanings = true,
+    wordMeaningsSource = 'siraj'
 }) => {
     // Force a local reference to ensure we use the latest prop value in closures
     const audioEnabledRef = useRef<boolean>(enableWordLongPressAudio);
@@ -256,6 +275,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         }
         return 'desktop';
     });
+
+    const [selectedWordMeaning, setSelectedWordMeaning] = useState<{ word: string, meaning: string, x: number, y: number } | null>(null);
 
     const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => {
         if (typeof window !== 'undefined') {
@@ -359,7 +380,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     }, []);
 
     // --- Data Processing (V2 Logic) ---
-    const processPageData = (rawPage: any, pageNum: number, fullMushafData?: MushafDataV2): AdaptedPage => {
+    const processPageData = (rawPage: any, pageNum: number, fullMushafData?: MushafDataV2, showWordMeanings: boolean = true, wordMeaningsSource: 'siraj' | 'new' = 'siraj'): AdaptedPage => {
         // rawPage is { lines: { "1": [...], "2": [...] } }
         const linesMap = rawPage.lines;
         if (!linesMap) return { pageNumber: pageNum, lines: [] };
@@ -402,14 +423,37 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
                 rawLinesCache[i] = sortedWordsV2.map(w => {
                     const pts = w.verse_key.split(/[:\-_]/);
+                    const s = parseInt(pts[0]);
+                    const a = parseInt(pts[1]);
+
+                    const ayahKey = `${s}:${a}`;
+                    const meaningsObj = (newMa3anyPosData as any)[ayahKey] || {};
+                    let meaning = undefined;
+                    let meaningPhrase = undefined;
+                    let meaningColorIndex = undefined;
+
+                    if (meaningsObj && showWordMeanings) {
+                        const wordData = meaningsObj[w.position.toString()];
+                        if (wordData) {
+                            meaning = wordData.meaning;
+                            meaningPhrase = wordData.phrase;
+                            // Calculate color index based on distinct phrases in this ayah
+                            const uniquePhrases = Array.from(new Set(Object.values(meaningsObj).map((x: any) => x.phrase)));
+                            meaningColorIndex = uniquePhrases.indexOf(wordData.phrase);
+                        }
+                    }
+
                     return {
                         id: w.id,
-                        surah: parseInt(pts[0]),
-                        ayah: parseInt(pts[1]),
+                        surah: s,
+                        ayah: a,
                         word: Number(w.position),
                         text: w.code_v2,
                         originalText: w.text_uthmani,
-                        isEnd: w.char_type === 'end'
+                        isEnd: w.char_type === 'end',
+                        meaning: meaning,
+                        meaningPhrase: meaningPhrase,
+                        meaningColorIndex: meaningColorIndex
                     };
                 });
             }
@@ -524,16 +568,17 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // --- Synchronous cache update (runs before browser paint) ---
     // When pageNumber changes and data is in cache, update pageData BEFORE the browser paints.
     // This prevents the 3-slide carousel from showing stale content when jumping to center.
+    // Prevent stale content flashes
     React.useLayoutEffect(() => {
         const cachedRaw = (window as any).qpcV2Cache?.[pageNumber.toString()];
         if (cachedRaw) {
             const fullData = (window as any).qpcV2Cache;
-            const processed = processPageData(cachedRaw, pageNumber, fullData);
+            const processed = processPageData(cachedRaw, pageNumber, fullData, showWordMeanings, wordMeaningsSource);
             setPageData(processed);
             setLoading(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pageNumber]);
+    }, [pageNumber, showWordMeanings, wordMeaningsSource]);
 
     // --- Data & Font Fetching (async, for non-cached pages) ---
 
@@ -570,7 +615,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     fullData = (window as any).qpcV2Cache;
                     rawPage = fullData[pageNumber.toString()];
                     // Process and set immediately so NO stale data flash
-                    const processedData = processPageData(rawPage, pageNumber, fullData || undefined);
+                    const processedData = processPageData(rawPage, pageNumber, fullData || undefined, showWordMeanings, wordMeaningsSource);
                     if (isMounted) {
                         setPageData(processedData);
                         setLoading(false);
@@ -590,8 +635,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                 if (isMounted) { setError(true); setLoading(false); }
                                 return;
                             }
-
-                            const processedData = processPageData(rawPage, pageNumber, fullData || undefined);
+                            const processedData = processPageData(rawPage, pageNumber, fullData || undefined, showWordMeanings, wordMeaningsSource);
                             if (isMounted) {
                                 setPageData(processedData);
                                 setLoading(false);
@@ -1098,6 +1142,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         </div>
     );
 
+    // Clear meaning on page change
+    useEffect(() => {
+        setSelectedWordMeaning(null);
+    }, [pageNumber]);
+
     // Final check: is this page in our global memory cache?
     const isPageInCache = !!(window as any).qpcV2Cache?.[pageNumber.toString()];
 
@@ -1263,20 +1312,31 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                         onPointerDown={(e) => {
                                             // Start Long Press Timer
                                             isLongPressRef.current = false;
-                                            pointerStartPosRef.current = { x: e.clientX, y: e.clientY };
+                                            const startX = e.clientX;
+                                            const startY = e.clientY;
+                                            pointerStartPosRef.current = { x: startX, y: startY };
+
                                             longPressTimerRef.current = setTimeout(() => {
                                                 isLongPressRef.current = true;
-                                                // --- LONG PRESS ACTION ---
-                                                if (shouldHide) {
-                                                    const isHiddenMode =
-                                                        (mode === ViewMode.HIDE_RANDOM_WORDS) ||
-                                                        (mode === ViewMode.TOGGLE_FIRST_WORD) ||
-                                                        (mode === ViewMode.TOGGLE_LAST_WORD);
 
-                                                    if (isHiddenMode) {
-                                                        // Reveal sequence up to next stop
+                                                const wordId = `${pageNumber}-${word.surah}-${word.ayah}-${word.word}`;
+                                                const ak = `${word.surah}-${word.ayah}`;
+
+                                                // 1. Reveal Logic (if word is hidden)
+                                                if (shouldHide) {
+                                                    // Ayah-based hidden modes
+                                                    const isAyahHiddenMode = (mode === ViewMode.HIDE_RANDOM_AYAHS && randomMasks.has(ak)) || (mode === ViewMode.HIDE_ALL_AYAHS);
+                                                    if (isAyahHiddenMode) {
+                                                        toggleReveal(wordId, word.surah, word.ayah);
+                                                        if (navigator.vibrate) navigator.vibrate(50);
+                                                        return;
+                                                    }
+
+                                                    // Word-based hidden modes
+                                                    const isWordHiddenMode = (mode === ViewMode.HIDE_RANDOM_WORDS) || (mode === ViewMode.TOGGLE_FIRST_WORD) || (mode === ViewMode.TOGGLE_LAST_WORD);
+                                                    if (isWordHiddenMode) {
                                                         if (word.surah && word.ayah) {
-                                                            const info = ayahWordMap.get(`${word.surah}-${word.ayah}`);
+                                                            const info = ayahWordMap.get(ak);
                                                             if (info) {
                                                                 const currentIdx = info.revealKeys.indexOf(wordId);
                                                                 if (currentIdx !== -1) {
@@ -1293,23 +1353,33 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                                 }
                                                             }
                                                         }
-                                                    }
-                                                } else {
-                                                    // Word is visible -> Long press plays audio
-                                                    if (audioEnabledRef.current && word.surah && word.ayah && word.word) {
-                                                        playWordAudio(word.surah, word.ayah, word.word);
-                                                        if (navigator.vibrate) navigator.vibrate(50);
+                                                        return;
                                                     }
                                                 }
-                                            }, 350); // 350ms threshold
+
+                                                // 2. Audio + Meaning together on long press (if word is visible)
+                                                if (audioEnabledRef.current && word.surah && word.ayah && word.word) {
+                                                    playWordAudio(word.surah, word.ayah, word.word);
+                                                    if (navigator.vibrate) navigator.vibrate(50);
+                                                }
+
+                                                if (showWordMeanings && word.meaning) {
+                                                    setSelectedWordMeaning({
+                                                        word: word.meaningPhrase || word.originalText || '',
+                                                        meaning: word.meaning,
+                                                        x: startX,
+                                                        y: startY
+                                                    });
+                                                }
+                                            }, 400); // 400ms threshold
                                         }}
                                         onPointerMove={(e) => {
                                             if (pointerStartPosRef.current && longPressTimerRef.current) {
                                                 const dx = e.clientX - pointerStartPosRef.current.x;
                                                 const dy = e.clientY - pointerStartPosRef.current.y;
                                                 const distance = Math.sqrt(dx * dx + dy * dy);
-                                                // If moved more than 10px, it's a drag/swipe, not a long press
-                                                if (distance > 10) {
+                                                // If moved more than 20px, it's a scroll/swipe, not a long press
+                                                if (distance > 20) {
                                                     clearTimeout(longPressTimerRef.current);
                                                     longPressTimerRef.current = null;
                                                 }
@@ -1349,10 +1419,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                 toggleReveal(wordId, word.surah, word.ayah);
                                             } else {
                                                 // Normal short click on a visible word
-                                                // Do not play audio here, just let it bubble to toggle menus
+                                                // Bubbles to toggle menus
                                             }
                                         }}
                                     >
+
+
                                         {word.isEnd && word.surah && word.ayah && verseBookmarks?.some(b => b.id === `${pageNumber}-${word.surah}-${word.ayah}`) && (
                                             <div className="absolute left-1/2 -translate-x-1/2 text-amber-500 animate-in zoom-in duration-200 z-10 drop-shadow-sm select-none pointer-events-none" style={{ bottom: '100%', marginBottom: deviceType === 'desktop' ? '-6px' : '-5px' }}>
                                                 <Bookmark size={14} fill="currentColor" />
@@ -1462,6 +1534,15 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                         })}
                     </div>
                 ))}
+
+                {selectedWordMeaning && (
+                    <WordMeaningTooltip
+                        word={selectedWordMeaning.word}
+                        meaning={selectedWordMeaning.meaning}
+                        position={{ x: selectedWordMeaning.x, y: selectedWordMeaning.y }}
+                        onClose={() => setSelectedWordMeaning(null)}
+                    />
+                )}
             </div>
         </div>
     );

@@ -147,6 +147,7 @@ export interface Translations {
     rateMemorization: string;
     ayahCopied: string;
     errorCopying: string;
+    tafsirAyah: string;
 
     // Display Settings Labels
     displaySettings: string;
@@ -518,6 +519,7 @@ const en: Translations = {
     rateMemorization: 'Rate Memorization',
     ayahCopied: 'Ayah copied to clipboard',
     errorCopying: 'Failed to copy ayah',
+    tafsirAyah: 'Verse Tafsir',
 
     // Display Settings Labels
     displaySettings: 'Display Settings',
@@ -908,6 +910,7 @@ export const translations: Record<Language, Translations> = {
         rateMemorization: 'تقييم الحفظ',
         ayahCopied: 'تم نسخ الآية للحافظة',
         errorCopying: 'فشل نسخ الآية',
+        tafsirAyah: 'تفسير الآية',
 
         // Display Settings Labels
         displaySettings: 'إعدادات العرض',

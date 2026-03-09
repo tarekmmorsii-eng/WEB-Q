@@ -127,6 +127,13 @@ export interface AppSettings {
   gestureTwoFingerTap?: boolean;
   gestureDoubleTap?: boolean;
   gestureSwipeUp?: boolean;
+  showWordMeanings?: boolean;
+  wordMeaningsSource?: 'siraj' | 'new';
+}
+
+export interface WordMeaning {
+  word: string;
+  meaning: string;
 }
 
 // Mutashabihat (Similar Verses) Types

@@ -20,6 +20,7 @@ import MutashabihatModal from './components/MutashabihatModal';
 import MutashabihatIndex from './components/MutashabihatIndex';
 import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
 import HowToUseGuide from './components/HowToUseGuide';
+import newMa3anyPosData from './src/data/ma3any/new_ma3any_pos.json';
 
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
 import { Mutashabiha } from './types';
@@ -75,6 +76,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   prayerMode: false,
   showMutashabihatIndicators: true,
   enableWordLongPressAudio: true,
+  showWordMeanings: true,
+  wordMeaningsSource: 'new',
 };
 
 export default function App() {
@@ -1704,6 +1707,8 @@ export default function App() {
                           mutashabihatData={mutashabihatData}
                           showMutashabihatIndicators={settings.showMutashabihatIndicators}
                           enableWordLongPressAudio={settings.enableWordLongPressAudio}
+                          showWordMeanings={settings.showWordMeanings}
+                          wordMeaningsSource={settings.wordMeaningsSource}
                           onOpenMutashabihat={(mutOrSurah, optAyah) => {
                             if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
                               setCurrentMutashabiha(mutOrSurah);
@@ -1738,6 +1743,8 @@ export default function App() {
                           mutashabihatData={mutashabihatData}
                           showMutashabihatIndicators={settings.showMutashabihatIndicators}
                           enableWordLongPressAudio={settings.enableWordLongPressAudio}
+                          showWordMeanings={settings.showWordMeanings}
+                          wordMeaningsSource={settings.wordMeaningsSource}
                           onOpenMutashabihat={(mutOrSurah, optAyah) => {
                             if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
                               setCurrentMutashabiha(mutOrSurah);
@@ -1772,6 +1779,8 @@ export default function App() {
                           mutashabihatData={mutashabihatData}
                           showMutashabihatIndicators={settings.showMutashabihatIndicators}
                           enableWordLongPressAudio={settings.enableWordLongPressAudio}
+                          showWordMeanings={settings.showWordMeanings}
+                          wordMeaningsSource={settings.wordMeaningsSource}
                           onOpenMutashabihat={(mutOrSurah, optAyah) => {
                             if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
                               setCurrentMutashabiha(mutOrSurah);
@@ -2080,6 +2089,7 @@ export default function App() {
               onOpenMutashabihat={() => {
                 handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
               }}
+              tafsir={(newMa3anyPosData as any)[`${ratingModalData.surah}:${ratingModalData.ayah}`]?._tafsir}
             />
           )
         }
