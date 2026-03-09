@@ -8,9 +8,10 @@ interface SurahFrameProps {
     onClick?: () => void;
     currentRating?: 'weak' | 'medium' | 'good' | null;
     isUnified?: boolean; // علامة التوافق: true = جميع الآيات متطابقة
+    isActive?: boolean;
 }
 
-const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onClick, currentRating, isUnified }) => {
+const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onClick, currentRating, isUnified, isActive = true }) => {
     const isArabic = language === 'ar';
     const info = SURAHS.find(s => s.number === surahNumber);
     const surahName = t.surahNames[surahNumber - 1] || (info ? info.name : 'Unknown');
@@ -28,7 +29,7 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
 
     return (
         <div
-            id="tour-surah-name"
+            id={isActive ? "tour-surah-name" : undefined}
             className="w-full h-full my-0 relative select-none notranslate flex items-center justify-center"
             translate="no"
             onClick={onClick}

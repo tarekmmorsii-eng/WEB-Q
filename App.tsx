@@ -310,6 +310,13 @@ export default function App() {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
+
+    // Direct Route handling for /dashboard
+    if (window.location.pathname === '/dashboard') {
+      setIsMemorizationStatsOpen(true);
+    } else if (window.location.pathname === '/index') {
+      setIsIndexOpen(true);
+    }
   }, []);
 
   const handleAddSimilarAyah = (mutashabihaId: string, isInsideSurah: boolean) => {
@@ -1689,6 +1696,7 @@ export default function App() {
                         <QPCV2PageRenderer
                           key={`slide-0-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[0]}
+                          isActive={false}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
                           className="!pb-0 w-full"
@@ -1725,6 +1733,7 @@ export default function App() {
                         <QPCV2PageRenderer
                           key={`slide-1-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[1]}
+                          isActive={true}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
                           className="!pb-0 w-full"
@@ -1761,6 +1770,7 @@ export default function App() {
                         <QPCV2PageRenderer
                           key={`slide-2-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
                           pageNumber={slidePages[2]}
+                          isActive={false}
                           fontSize={settings.defaultFontSize as any}
                           isDarkMode={currentTheme.isDark}
                           className="!pb-0 w-full"
@@ -2036,9 +2046,15 @@ export default function App() {
           currentLanguage={settings.language as Language}
           onOpenIndex={() => { setIsSettingsOpen(false); setIsIndexOpen(true); }}
           onOpenSearch={() => { setIsSettingsOpen(false); setIsSearchOpen(true); }}
-          onOpenMemorization={() => { setIsSettingsOpen(false); setIsMemorizationStatsOpen(true); }}
+          onOpenMemorization={() => { setIsSettingsOpen(false); setIsMemorizationStatsOpen(true); window.history.pushState({}, '', '/dashboard'); }}
           onOpenNotifications={() => { setIsSettingsOpen(false); setIsNotificationOpen(true); }}
-          onOpenMutashabihat={() => { setIsSettingsOpen(false); setIsMutashabihatIndexOpen(true); }}
+          onOpenMutashabihat={() => {
+            setIsSettingsOpen(false);
+            // Default to current surah from pageData if available
+            const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
+            setMutashabihatIndexSurah(currentS);
+            setIsMutashabihatIndexOpen(true);
+          }}
           onOpenColorPicker={() => { setIsSettingsOpen(false); setIsColorPickerOpen(true); }}
           onTogglePageBookmark={togglePageBookmark}
           isPageBookmarked={isPageBookmarked}

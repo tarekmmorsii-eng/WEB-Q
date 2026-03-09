@@ -212,6 +212,7 @@ interface QPCV2PageRendererProps {
     enableWordLongPressAudio?: boolean;
     showWordMeanings?: boolean;
     wordMeaningsSource?: 'siraj' | 'new';
+    isActive?: boolean;
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -238,7 +239,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     showMutashabihatIndicators = true,
     enableWordLongPressAudio = true,
     showWordMeanings = true,
-    wordMeaningsSource = 'siraj'
+    wordMeaningsSource = 'siraj',
+    isActive = true
 }) => {
     // Force a local reference to ensure we use the latest prop value in closures
     const audioEnabledRef = useRef<boolean>(enableWordLongPressAudio);
@@ -1099,6 +1101,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     onClick={() => onRateSurah?.(line.surahNumber || 1)}
                     currentRating={surahRating}
                     isUnified={isUnified}
+                    isActive={isActive}
                 />
             </div>
         );
@@ -1433,7 +1436,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
                                         {word.isEnd ? (
                                             <span
-                                                id={word.surah === 1 && word.ayah === 1 ? "tour-ayah-number" : undefined}
+                                                id={isActive && word.surah === 1 && word.ayah === 1 ? "tour-ayah-number" : undefined}
                                                 className="ayah-number-wrapper"
                                                 data-surah={word.surah}
                                                 data-ayah={word.ayah}
