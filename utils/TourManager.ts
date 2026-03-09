@@ -4,7 +4,8 @@ import "driver.js/dist/driver.css";
 // Helper function to hide/show the line under the ayah number
 const toggleAyahUnderline = (show: boolean) => {
     // Target the specific element for Ayah 1 in Fatiha (or generic if needed)
-    const underlineElement = document.querySelector('.ayah-number-wrapper[data-surah="1"][data-ayah="1"] .mutashabihat-line-indicator');
+    const wrapper = document.getElementById('tour-ayah-number');
+    const underlineElement = wrapper ? wrapper.querySelector('.mutashabihat-line-indicator') : null;
     if (underlineElement) {
         (underlineElement as HTMLElement).style.display = show ? '' : 'none';
     }
@@ -12,7 +13,7 @@ const toggleAyahUnderline = (show: boolean) => {
 
 // Helper function to simulate clicking colors for Ayah 1
 const cycleAyahColors = () => {
-    const wrapper = document.querySelector('.ayah-number-wrapper[data-surah="1"][data-ayah="1"]');
+    const wrapper = document.getElementById('tour-ayah-number');
     if (!wrapper) return;
 
     const borderGroup = wrapper.querySelector('.ayah-border-group');
@@ -46,7 +47,7 @@ const cycleAyahColors = () => {
 
 // Helper function to animate mutashabihat lines for Ayah 1
 const cycleMutashabihatColors = () => {
-    const wrapper = document.querySelector('.ayah-number-wrapper[data-surah="1"][data-ayah="1"]');
+    const wrapper = document.getElementById('tour-ayah-number');
     if (!wrapper) return;
 
     const indicatorGroup = wrapper.querySelector('.mutashabihat-line-indicator');
@@ -315,7 +316,8 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
 
                     // 2. Ensure Ayah Number is back to normal text/border (handled by cleanup above)
                     // But we need to make sure the underline is VISIBLE (it was hidden in prev step)
-                    const underlineElement = document.querySelector('.ayah-number-wrapper[data-surah="1"][data-ayah="1"] .mutashabihat-line-indicator');
+                    const wrapper = document.getElementById('tour-ayah-number');
+                    const underlineElement = wrapper ? wrapper.querySelector('.mutashabihat-line-indicator') : null;
                     if (underlineElement) {
                         (underlineElement as HTMLElement).style.display = '';
                     }
@@ -329,6 +331,18 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
                         (window as any).__tourMutashabihatCleanup();
                         (window as any).__tourMutashabihatCleanup = undefined;
                     }
+                }
+            },
+            {
+                element: '#tour-word-long-press',
+                popover: {
+                    title: 'الضغط المطوّل',
+                    description: `اضغط مطولاً على أي كلمة لسماع نطقها الصوتي 🔊 ومعرفة معناها 📖 في نافذة منبثقة.`,
+                    side: "bottom",
+                    align: 'center',
+                    showButtons: ['next', 'previous', 'close'],
+                    nextBtnText: 'التالي',
+                    prevBtnText: 'السابق',
                 }
             },
             {

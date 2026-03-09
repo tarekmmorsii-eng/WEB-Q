@@ -1296,6 +1296,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             return (
                                 <React.Fragment key={wIdx}>
                                     <span
+                                        id={isActive && word.surah === 1 && word.ayah === 2 && word.word === 1 ? 'tour-word-long-press' : undefined}
                                         data-word-surah={word.surah}
                                         data-word-ayah={word.ayah}
                                         className={clsx(
