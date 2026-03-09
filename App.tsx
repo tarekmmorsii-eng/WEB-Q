@@ -962,6 +962,13 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    (window as any).playPageFlipSound = playPageFlipSound;
+    return () => {
+      delete (window as any).playPageFlipSound;
+    };
+  }, [settings.soundEnabled]);
+
   const isIndexOpenRef = useRef(isIndexOpen);
   useEffect(() => {
     isIndexOpenRef.current = isIndexOpen;
