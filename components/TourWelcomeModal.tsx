@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, MoveRight, CheckCircle2 } from 'lucide-react';
+import { X, Sparkles, MoveRight, CheckCircle2, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
 interface TourWelcomeModalProps {
@@ -65,9 +65,18 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose }: TourWelco
                     <span className="text-amber-600 dark:text-amber-500">علي مصحفنا</span>
                 </h2>
 
-                <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-sm text-lg leading-relaxed">
-                    جولة سريعة وممتعة لاكتشاف مميزات التطبيق الجديدة والاستفادة القصوى منه.
+                <p className="text-gray-600 dark:text-gray-300 mb-4 max-w-sm text-lg leading-relaxed">
+                    جولة سريعة وممتعة لاكتشاف مميزات الموقع الجديدة والاستفادة القصوى منه.
                 </p>
+                <div className="mb-8 w-full max-w-sm">
+                    <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 py-3 px-4 rounded-2xl border border-red-100 dark:border-red-900/30">
+                        <AlertTriangle className="text-red-600 dark:text-red-400 shrink-0" size={24} />
+                        <p className="text-red-600 dark:text-red-400 text-[1.05rem] font-bold leading-tight text-right">
+                            ملاحظة: هذه النسخة تجريبية وما زالت تحت المراجعة للتنبيه
+                        </p>
+                    </div>
+                </div>
+
 
                 {/* Actions */}
                 <div className="flex flex-col gap-3 w-full max-w-xs">

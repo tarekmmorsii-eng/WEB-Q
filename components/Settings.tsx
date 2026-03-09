@@ -584,7 +584,12 @@ export default function Settings({
                                 </label>
 
                                 <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer mt-3">
-                                    <span className="text-gray-900 dark:text-white">{t.wordAudioLongPress}</span>
+                                    <span className="text-gray-900 dark:text-white">
+                                        {t.wordAudioLongPress}
+                                        {currentLanguage === 'ar' && (
+                                            <span className="text-red-500 font-bold mx-1"> (يجب توفر إنترنت)</span>
+                                        )}
+                                    </span>
                                     <input
                                         type="checkbox"
                                         checked={localSettings.enableWordLongPressAudio !== false}

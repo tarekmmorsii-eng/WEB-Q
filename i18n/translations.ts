@@ -815,7 +815,7 @@ export const translations: Record<Language, Translations> = {
 
         // Gestures
         gestureSettings: 'إيماءات اللمس (للموبايل والتابلت)',
-        gestureTwoFingerTap: 'ضغط بإصبعين (فتح القائمة)',
+        gestureTwoFingerTap: 'ضغط بإصبعين (ظهور القائمة)',
         gestureDoubleTap: 'ضغط مزدوج (الصفحة التالية)',
         gestureSwipeUp: 'سحب للأعلى (الإعدادات)',
         warmBeige: 'بيج دافئ',

@@ -1587,8 +1587,9 @@ export default function App() {
     const page = currentPageRef.current;
     const newPage = idx === 0 ? Math.max(1, page - 1) : Math.min(TOTAL_PAGES, page + 1);
 
-    if (newPage === page) {
-      swiper.slideTo(1, 0, false);
+    // Prevent back-swipe on first page
+    if (newPage === page || (idx === 0 && page <= 1)) {
+      swiper.slideTo(1, 300, false);
       return;
     }
 
