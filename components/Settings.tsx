@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube } from 'lucide-react';
+import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube, Share2 } from 'lucide-react';
 import { useFeedback } from '../contexts/FeedbackContext';
 
 import clsx from 'clsx';
@@ -135,6 +135,29 @@ export default function Settings({
         }).catch(() => {
             setIsInstalling(false);
         });
+    };
+
+    const handleShareApp = async () => {
+        const shareData = {
+            title: currentLanguage === 'ar' ? 'مصحف المراجعة' : 'Mushaf Al-Murajaa',
+            text: currentLanguage === 'ar' ? 'شارك مصحف المراجعة مع أصدقائك' : 'Share Mushaf Al-Murajaa with your friends',
+            url: 'https://mushafalmurajaa.com'
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Error sharing app:', err);
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(shareData.url);
+                alert(currentLanguage === 'ar' ? 'تم نسخ الرابط إلى الحافظة' : 'Link copied to clipboard');
+            } catch (err) {
+                console.error('Failed to copy link:', err);
+            }
+        }
     };
 
     const [hasOfflineData, setHasOfflineData] = useState(false);
@@ -818,6 +841,24 @@ export default function Settings({
                                                 {t.downloadSuccess}
                                             </div>
                                         )}
+                                    </div>
+
+                                    {/* Separator and Share App Button */}
+                                    <div className="pt-4 mt-2 border-t border-gray-200 dark:border-slate-700">
+                                        <button
+                                            onClick={handleShareApp}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98]"
+                                        >
+                                            <div className="flex flex-col items-start text-right">
+                                                <span className="font-medium text-gray-900 dark:text-white">
+                                                    {currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App'}
+                                                </span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    {currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends'}
+                                                </span>
+                                            </div>
+                                            <Share2 size={24} className="text-blue-600 dark:text-blue-400" />
+                                        </button>
                                     </div>
                                 </div>
                             </section>
