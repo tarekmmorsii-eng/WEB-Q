@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check } from 'lucide-react';
+import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube } from 'lucide-react';
 import { useFeedback } from '../contexts/FeedbackContext';
 
 import clsx from 'clsx';
@@ -865,6 +865,34 @@ export default function Settings({
                                         className="text-gray-900 dark:text-white font-medium hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted underline-offset-4"
                                     >
                                         Info@mushafalmurajaa.com
+                                    </a>
+                                </div>
+                            </section>
+
+                            {/* Social Media Section */}
+                            <section className="mt-6">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Globe size={20} />
+                                    {currentLanguage === 'ar' ? 'تابعنا' : 'Follow Us'}
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <a
+                                        href="https://youtube.com/@mushafalmurajaa?si=baoDEaZsazg0KpSQ"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex flex-col items-center justify-center p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors border border-red-100 dark:border-red-900/30"
+                                    >
+                                        <Youtube size={28} className="mb-2" />
+                                        <span className="font-medium text-sm">YouTube</span>
+                                    </a>
+                                    <a
+                                        href="https://www.facebook.com/share/1Aodps7HFw/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex flex-col items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors border border-blue-100 dark:border-blue-900/30"
+                                    >
+                                        <Facebook size={28} className="mb-2" />
+                                        <span className="font-medium text-sm">Facebook</span>
                                     </a>
                                 </div>
                             </section>
