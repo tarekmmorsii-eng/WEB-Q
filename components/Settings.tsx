@@ -49,8 +49,15 @@ export default function Settings({
     const [isExporting, setIsExporting] = useState(false);
     const [showAllSettings, setShowAllSettings] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
-
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
+
+    // Accordion open states for each section
+    const [openSound, setOpenSound] = useState(false);
+    const [openGestures, setOpenGestures] = useState(false);
+    const [openBottomBar, setOpenBottomBar] = useState(false);
+    const [openOffline, setOpenOffline] = useState(false);
+    const [openHelp, setOpenHelp] = useState(false);
+
     const { openFeedback } = useFeedback();
 
     const {
@@ -69,18 +76,17 @@ export default function Settings({
 
     React.useEffect(() => {
         if (isOpen && highlightHelp) {
-            // Un-collapse "More Settings" so the user can see it
             setShowAllSettings(true);
+            setOpenHelp(true);
             setTimeout(() => {
                 if (helpSectionRef.current) {
                     helpSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Add a temporary highlight animation class
                     helpSectionRef.current.classList.add('ring-4', 'ring-amber-500', 'ring-opacity-50', 'transition-all', 'duration-500', 'rounded-xl');
                     setTimeout(() => {
                         helpSectionRef.current?.classList.remove('ring-4', 'ring-amber-500', 'ring-opacity-50');
                     }, 2000);
                 }
-            }, 300);
+            }, 350);
         }
     }, [isOpen, highlightHelp]);
 
@@ -500,322 +506,365 @@ export default function Settings({
 
                             </section>
 
-                            {/* Sound Settings */}
-                            <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    {localSettings.soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-                                    {t.soundSettings}
-                                </h3>
-                                <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                    <span className="text-gray-900 dark:text-white">{t.pageFlipSound}</span>
-                                    <input
-                                        type="checkbox"
-                                        checked={localSettings.soundEnabled}
-                                        onChange={(e) => setLocalSettings(prev => ({ ...prev, soundEnabled: e.target.checked }))}
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </label>
-
-                                <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer mt-3">
-                                    <span className="text-gray-900 dark:text-white">
-                                        {t.wordAudioLongPress}
-                                        {currentLanguage === 'ar' && (
-                                            <span className="text-red-500 font-bold mx-1"> (يجب توفر إنترنت)</span>
-                                        )}
+                            {/* Sound Settings - Accordion */}
+                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                                <button
+                                    onClick={() => setOpenSound(v => !v)}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                        {localSettings.soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                                        {t.soundSettings}
                                     </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={localSettings.enableWordLongPressAudio !== false}
-                                        onChange={(e) => setLocalSettings(prev => ({ ...prev, enableWordLongPressAudio: e.target.checked }))}
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </label>
-
-
-                            </section>
-
-                            {/* Touch Gestures */}
-                            <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <MousePointer2 size={20} />
-                                    {t.gestureSettings}
-                                </h3>
-                                <div className="space-y-3">
-                                    <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                        <span className="text-gray-900 dark:text-white">{t.gestureTwoFingerTap}</span>
-                                        <input
-                                            type="checkbox"
-                                            checked={localSettings.gestureTwoFingerTap !== false}
-                                            onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureTwoFingerTap: e.target.checked }))}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </label>
-
-                                    <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                        <span className="text-gray-900 dark:text-white">{t.gestureDoubleTap}</span>
-                                        <input
-                                            type="checkbox"
-                                            checked={localSettings.gestureDoubleTap !== false}
-                                            onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureDoubleTap: e.target.checked }))}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </label>
-
-                                    <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                        <span className="text-gray-900 dark:text-white">{t.gestureSwipeUp}</span>
-                                        <input
-                                            type="checkbox"
-                                            checked={localSettings.gestureSwipeUp !== false}
-                                            onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureSwipeUp: e.target.checked }))}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </label>
-                                </div>
-                            </section>
-
-
-                            {/* Bottom Bar Customization */}
-                            <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <Layout size={20} />
-                                    {t.bottomBarCustomization}
-                                </h3>
-                                <div className="space-y-2">
-                                    {[
-                                        { key: 'showIndex' as keyof BottomBarSettings, label: t.index },
-                                        { key: 'showSearch' as keyof BottomBarSettings, label: t.search },
-                                        { key: 'showMemorization' as keyof BottomBarSettings, label: t.memorizationStats },
-                                        { key: 'showNotifications' as keyof BottomBarSettings, label: t.notifications },
-                                        { key: 'showDarkMode' as keyof BottomBarSettings, label: t.darkMode + ' / ' + t.lightMode },
-                                        { key: 'showBookmark' as keyof BottomBarSettings, label: t.bookmark },
-                                        { key: 'showPrayerMode' as keyof BottomBarSettings, label: t.prayerMode },
-                                        { key: 'showFullscreen' as keyof BottomBarSettings, label: t.fullscreen },
-                                        { key: 'showPageNavigation' as keyof BottomBarSettings, label: t.pageNavigation },
-                                    ].map(({ key, label }) => (
-                                        <label
-                                            key={key}
-                                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                                        >
-                                            <span className="text-gray-900 dark:text-white">{label}</span>
+                                    {openSound ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+                                </button>
+                                {openSound && (
+                                    <div className="p-4 space-y-3">
+                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                            <span className="text-gray-900 dark:text-white">{t.pageFlipSound}</span>
                                             <input
                                                 type="checkbox"
-                                                checked={localSettings.bottomBar[key]}
-                                                onChange={() => toggleBottomBarItem(key)}
+                                                checked={localSettings.soundEnabled}
+                                                onChange={(e) => setLocalSettings(prev => ({ ...prev, soundEnabled: e.target.checked }))}
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                             />
                                         </label>
-                                    ))}
-                                </div>
+                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                            <span className="text-gray-900 dark:text-white">
+                                                {t.wordAudioLongPress}
+                                                {currentLanguage === 'ar' && (
+                                                    <span className="text-red-500 font-bold mx-1"> (يجب توفر إنترنت)</span>
+                                                )}
+                                            </span>
+                                            <input
+                                                type="checkbox"
+                                                checked={localSettings.enableWordLongPressAudio !== false}
+                                                onChange={(e) => setLocalSettings(prev => ({ ...prev, enableWordLongPressAudio: e.target.checked }))}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </label>
+                                    </div>
+                                )}
+                            </section>
+
+                            {/* Touch Gestures - Accordion */}
+                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                                <button
+                                    onClick={() => setOpenGestures(v => !v)}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                        <MousePointer2 size={20} />
+                                        {t.gestureSettings}
+                                    </span>
+                                    {openGestures ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+                                </button>
+                                {openGestures && (
+                                    <div className="p-4 space-y-3">
+                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                            <span className="text-gray-900 dark:text-white">{t.gestureTwoFingerTap}</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={localSettings.gestureTwoFingerTap !== false}
+                                                onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureTwoFingerTap: e.target.checked }))}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </label>
+                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                            <span className="text-gray-900 dark:text-white">{t.gestureDoubleTap}</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={localSettings.gestureDoubleTap !== false}
+                                                onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureDoubleTap: e.target.checked }))}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </label>
+                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                                            <span className="text-gray-900 dark:text-white">{t.gestureSwipeUp}</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={localSettings.gestureSwipeUp !== false}
+                                                onChange={(e) => setLocalSettings(prev => ({ ...prev, gestureSwipeUp: e.target.checked }))}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </label>
+                                    </div>
+                                )}
+                            </section>
+
+
+                            {/* Bottom Bar Customization - Accordion */}
+                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                                <button
+                                    onClick={() => setOpenBottomBar(v => !v)}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                        <Layout size={20} />
+                                        {t.bottomBarCustomization}
+                                    </span>
+                                    {openBottomBar ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+                                </button>
+                                {openBottomBar && (
+                                    <div className="p-4 space-y-2">
+                                        {[
+                                            { key: 'showIndex' as keyof BottomBarSettings, label: t.index },
+                                            { key: 'showSearch' as keyof BottomBarSettings, label: t.search },
+                                            { key: 'showMemorization' as keyof BottomBarSettings, label: t.memorizationStats },
+                                            { key: 'showNotifications' as keyof BottomBarSettings, label: t.notifications },
+                                            { key: 'showDarkMode' as keyof BottomBarSettings, label: t.darkMode + ' / ' + t.lightMode },
+                                            { key: 'showBookmark' as keyof BottomBarSettings, label: t.bookmark },
+                                            { key: 'showPrayerMode' as keyof BottomBarSettings, label: t.prayerMode },
+                                            { key: 'showFullscreen' as keyof BottomBarSettings, label: t.fullscreen },
+                                            { key: 'showPageNavigation' as keyof BottomBarSettings, label: t.pageNavigation },
+                                        ].map(({ key, label }) => (
+                                            <label
+                                                key={key}
+                                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                            >
+                                                <span className="text-gray-900 dark:text-white">{label}</span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={localSettings.bottomBar[key]}
+                                                    onChange={() => toggleBottomBarItem(key)}
+                                                    className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
                             </section>
 
 
 
-                            {/* Offline Manager */}
-                            <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <Download size={20} />
-                                    {t.offlineMode}
-                                </h3>
+                            {/* Offline Manager - Accordion */}
+                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                                <button
+                                    onClick={() => setOpenOffline(v => !v)}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                        <Download size={20} />
+                                        {t.offlineMode}
+                                        {hasUpdate && (
+                                            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse inline-block" />
+                                        )}
+                                    </span>
+                                    {openOffline ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+                                </button>
+                                {openOffline && (
+                                    <div className="p-4 space-y-4">
 
-                                {hasUpdate && !isStandalone && (
-                                    <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
-                                        <div className="flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
-                                                    <Download size={20} className="text-blue-600 dark:text-blue-400" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-blue-900 dark:text-blue-100 text-sm">{t.updateAvailable}</p>
-                                                    <p className="text-xs text-blue-700 dark:text-blue-300">{t.updateDescription}</p>
+                                        {hasUpdate && !isStandalone && (
+                                            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
+                                                            <Download size={20} className="text-blue-600 dark:text-blue-400" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-blue-900 dark:text-blue-100 text-sm">{t.updateAvailable}</p>
+                                                            <p className="text-xs text-blue-700 dark:text-blue-300">{t.updateDescription}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={onUpdateApp}
+                                                        className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-lg active:scale-95 transition-all whitespace-nowrap"
+                                                    >
+                                                        {t.updateNow}
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={onUpdateApp}
-                                                className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-lg active:scale-95 transition-all whitespace-nowrap"
-                                            >
-                                                {t.updateNow}
-                                            </button>
+                                        )}
+
+                                        <div className="space-y-4">
+                                            {/* Main Note about two-step process */}
+                                            <div className="p-3 bg-amber-50/50 dark:bg-amber-900/10 border-r-4 border-amber-500 rounded text-xs text-amber-900 dark:text-amber-100 font-medium">
+                                                {currentLanguage === 'ar'
+                                                    ? 'ملاحظة: التثبيت يتم على خطوتين: الخطوة الأولى: تثبيت التطبيق والخطوة الثانية: تحديث وحفظ المصحف كاملاً.'
+                                                    : 'Note: Installation is done in two steps: Step 1: Install the app, and Step 2: Update and save the full Mushaf.'}
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {/* Step 1 Label */}
+                                                <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
+                                                    {currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1'}
+                                                </div>
+                                                {/* Install App Button - Always persistent per user request */}
+                                                <button
+                                                    onClick={hasUpdate && isStandalone ? onUpdateApp : (isStandalone ? undefined : handleInstallApp)}
+                                                    disabled={(!hasUpdate && isStandalone) || isInstalling}
+                                                    className={clsx(
+                                                        "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
+                                                        hasUpdate
+                                                            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 active:scale-[0.98]"
+                                                            : isStandalone
+                                                                ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 cursor-default"
+                                                                : "bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 hover:bg-amber-200 dark:hover:bg-amber-900/50 border-transparent active:scale-[0.98]",
+                                                        ((!hasUpdate && isStandalone) || isInstalling) && "opacity-60 cursor-not-allowed"
+                                                    )}
+                                                >
+                                                    <div className="flex flex-col items-start text-right">
+                                                        <span className="font-medium text-amber-900 dark:text-amber-100">
+                                                            {hasUpdate
+                                                                ? (currentLanguage === 'ar' ? 'تحديث التطبيق متوفر' : 'App update available')
+                                                                : isStandalone
+                                                                    ? (currentLanguage === 'ar' ? 'التطبيق مثبت على جهازك' : 'App is installed on your device')
+                                                                    : (isInstalling ? (currentLanguage === 'ar' ? 'جاري بدء التثبيت...' : 'Starting install...') : t.installApp)
+                                                            }
+                                                        </span>
+                                                        <span className="text-[10px] opacity-70">
+                                                            {hasUpdate
+                                                                ? (currentLanguage === 'ar' ? 'اضغط لتثبيت أحدث الميزات والإصلاحات البرمجية' : 'Click to install the latest features and fixes')
+                                                                : isStandalone
+                                                                    ? (currentLanguage === 'ar' ? 'أي كود جديد سنحدثه لك هنا' : 'We will update any new code for you here')
+                                                                    : (currentLanguage === 'ar' ? 'تثبيت الإطار البرمجي للوصول السريع' : 'Install the app frame for fast access')
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    {isInstalling ? (
+                                                        <Loader2 size={24} className="text-amber-600 dark:text-amber-400 animate-spin" />
+                                                    ) : hasUpdate ? (
+                                                        <div className="relative">
+                                                            <Download size={24} className="text-blue-600 dark:text-blue-500 animate-bounce" />
+                                                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                                                        </div>
+                                                    ) : isStandalone ? (
+                                                        <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
+                                                    ) : (
+                                                        <Download size={24} className="text-amber-600 dark:text-amber-500" />
+                                                    )}
+                                                </button>
+
+                                                {/* Step 2 Label */}
+                                                <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
+                                                    {currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2'}
+                                                </div>
+
+                                                {/* Download/Update Mushaf Button */}
+                                                <button
+                                                    onClick={handleDownloadAllData}
+                                                    disabled={isDownloading || hasOfflineData}
+                                                    className={clsx(
+                                                        "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
+                                                        isDownloading
+                                                            ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
+                                                            : hasOfflineData
+                                                                ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 cursor-default"
+                                                                : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
+                                                    )}
+                                                >
+                                                    <div className="flex flex-col items-start text-right">
+                                                        <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
+                                                            {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
+                                                        </span>
+                                                        <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
+                                                            {isDownloading
+                                                                ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
+                                                                : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    {isDownloading ? (
+                                                        <Loader2 size={24} className="animate-spin text-blue-600" />
+                                                    ) : hasOfflineData ? (
+                                                        <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
+                                                    ) : (
+                                                        <Download size={24} className="text-blue-600 dark:text-blue-400" />
+                                                    )}
+                                                </button>
+
+                                                {/* Progress Bar */}
+                                                {downloadProgress !== null && (
+                                                    <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
+                                                        <div
+                                                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                                            style={{ width: `${downloadProgress}%` }}
+                                                        ></div>
+                                                    </div>
+                                                )}
+
+                                                {downloadProgress === 100 && (
+                                                    <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
+                                                        {t.downloadSuccess}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Separator and Share App Button */}
+                                            <div className="pt-4 mt-2 border-t border-gray-200 dark:border-slate-700">
+                                                <button
+                                                    onClick={handleShareApp}
+                                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98]"
+                                                >
+                                                    <div className="flex flex-col items-start text-right">
+                                                        <span className="font-medium text-gray-900 dark:text-white">
+                                                            {currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App'}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                            {currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends'}
+                                                        </span>
+                                                    </div>
+                                                    <Share2 size={24} className="text-blue-600 dark:text-blue-400" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
-
-                                <div className="space-y-4">
-                                    {/* Main Note about two-step process */}
-                                    <div className="p-3 bg-amber-50/50 dark:bg-amber-900/10 border-r-4 border-amber-500 rounded text-xs text-amber-900 dark:text-amber-100 font-medium">
-                                        {currentLanguage === 'ar'
-                                            ? 'ملاحظة: التثبيت يتم على خطوتين: الخطوة الأولى: تثبيت التطبيق والخطوة الثانية: تحديث وحفظ المصحف كاملاً.'
-                                            : 'Note: Installation is done in two steps: Step 1: Install the app, and Step 2: Update and save the full Mushaf.'}
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {/* Step 1 Label */}
-                                        <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
-                                            {currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1'}
-                                        </div>
-                                        {/* Install App Button - Always persistent per user request */}
-                                        <button
-                                            onClick={hasUpdate && isStandalone ? onUpdateApp : (isStandalone ? undefined : handleInstallApp)}
-                                            disabled={(!hasUpdate && isStandalone) || isInstalling}
-                                            className={clsx(
-                                                "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
-                                                hasUpdate
-                                                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 active:scale-[0.98]"
-                                                    : isStandalone
-                                                        ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 cursor-default"
-                                                        : "bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 hover:bg-amber-200 dark:hover:bg-amber-900/50 border-transparent active:scale-[0.98]",
-                                                ((!hasUpdate && isStandalone) || isInstalling) && "opacity-60 cursor-not-allowed"
-                                            )}
-                                        >
-                                            <div className="flex flex-col items-start text-right">
-                                                <span className="font-medium text-amber-900 dark:text-amber-100">
-                                                    {hasUpdate
-                                                        ? (currentLanguage === 'ar' ? 'تحديث التطبيق متوفر' : 'App update available')
-                                                        : isStandalone
-                                                            ? (currentLanguage === 'ar' ? 'التطبيق مثبت على جهازك' : 'App is installed on your device')
-                                                            : (isInstalling ? (currentLanguage === 'ar' ? 'جاري بدء التثبيت...' : 'Starting install...') : t.installApp)
-                                                    }
-                                                </span>
-                                                <span className="text-[10px] opacity-70">
-                                                    {hasUpdate
-                                                        ? (currentLanguage === 'ar' ? 'اضغط لتثبيت أحدث الميزات والإصلاحات البرمجية' : 'Click to install the latest features and fixes')
-                                                        : isStandalone
-                                                            ? (currentLanguage === 'ar' ? 'أي كود جديد سنحدثه لك هنا' : 'We will update any new code for you here')
-                                                            : (currentLanguage === 'ar' ? 'تثبيت الإطار البرمجي للوصول السريع' : 'Install the app frame for fast access')
-                                                    }
-                                                </span>
-                                            </div>
-                                            {isInstalling ? (
-                                                <Loader2 size={24} className="text-amber-600 dark:text-amber-400 animate-spin" />
-                                            ) : hasUpdate ? (
-                                                <div className="relative">
-                                                    <Download size={24} className="text-blue-600 dark:text-blue-500 animate-bounce" />
-                                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                                                </div>
-                                            ) : isStandalone ? (
-                                                <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
-                                            ) : (
-                                                <Download size={24} className="text-amber-600 dark:text-amber-500" />
-                                            )}
-                                        </button>
-
-                                        {/* Step 2 Label */}
-                                        <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
-                                            {currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2'}
-                                        </div>
-
-                                        {/* Download/Update Mushaf Button */}
-                                        <button
-                                            onClick={handleDownloadAllData}
-                                            disabled={isDownloading || hasOfflineData}
-                                            className={clsx(
-                                                "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
-                                                isDownloading
-                                                    ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
-                                                    : hasOfflineData
-                                                        ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 cursor-default"
-                                                        : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
-                                            )}
-                                        >
-                                            <div className="flex flex-col items-start text-right">
-                                                <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
-                                                    {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
-                                                </span>
-                                                <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
-                                                    {isDownloading
-                                                        ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
-                                                        : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
-                                                    }
-                                                </span>
-                                            </div>
-                                            {isDownloading ? (
-                                                <Loader2 size={24} className="animate-spin text-blue-600" />
-                                            ) : hasOfflineData ? (
-                                                <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
-                                            ) : (
-                                                <Download size={24} className="text-blue-600 dark:text-blue-400" />
-                                            )}
-                                        </button>
-
-                                        {/* Progress Bar */}
-                                        {downloadProgress !== null && (
-                                            <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
-                                                <div
-                                                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                                    style={{ width: `${downloadProgress}%` }}
-                                                ></div>
-                                            </div>
-                                        )}
-
-                                        {downloadProgress === 100 && (
-                                            <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
-                                                {t.downloadSuccess}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Separator and Share App Button */}
-                                    <div className="pt-4 mt-2 border-t border-gray-200 dark:border-slate-700">
-                                        <button
-                                            onClick={handleShareApp}
-                                            className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98]"
-                                        >
-                                            <div className="flex flex-col items-start text-right">
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App'}
-                                                </span>
-                                                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    {currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends'}
-                                                </span>
-                                            </div>
-                                            <Share2 size={24} className="text-blue-600 dark:text-blue-400" />
-                                        </button>
-                                    </div>
-                                </div>
                             </section>
 
 
-                            {/* Help Section */}
-                            <section ref={helpSectionRef} className="scroll-mt-4">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <HelpCircle size={20} />
-                                    {t.help || 'المساعدة والتعليمات'}
-                                </h3>
-                                {/* Interactive Tour Button */}
+                            {/* Help Section - Accordion */}
+                            <section ref={helpSectionRef} className="scroll-mt-4 border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
                                 <button
-                                    onClick={() => {
-                                        onClose();
-                                        onStartInteractiveTour?.();
-                                    }}
-                                    className="w-full flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-100 dark:border-indigo-800 mb-3"
+                                    onClick={() => setOpenHelp(v => !v)}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                                 >
-                                    <span className="font-medium text-indigo-800 dark:text-indigo-200">
-                                        {currentLanguage === 'ar' ? 'جولة افتراضية للشرح' : 'Interactive Tour'}
+                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                        <HelpCircle size={20} />
+                                        {t.help || 'المساعدة والتعليمات'}
                                     </span>
-                                    <PlayCircle size={20} className="text-indigo-600 dark:text-indigo-400" />
+                                    {openHelp ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
                                 </button>
+                                {openHelp && (
+                                    <div className="p-4 space-y-3">
+                                        <button
+                                            onClick={() => {
+                                                onClose();
+                                                onStartInteractiveTour?.();
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-100 dark:border-indigo-800 mb-3"
+                                        >
+                                            <span className="font-medium text-indigo-800 dark:text-indigo-200">
+                                                {currentLanguage === 'ar' ? 'جولة افتراضية للشرح' : 'Interactive Tour'}
+                                            </span>
+                                            <PlayCircle size={20} className="text-indigo-600 dark:text-indigo-400" />
+                                        </button>
 
-                                <button
-                                    onClick={() => setShowHelpModal(true)}
-                                    className="w-full flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800"
-                                >
-                                    <span className="font-medium text-emerald-800 dark:text-emerald-200">
-                                        {t.guideAction}
-                                    </span>
-                                    <HelpCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
-                                </button>
-                                <a
-                                    href="https://youtu.be/t-oQKcEHSpA?si=eZEPZOHSJ8UL1OA4"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-100 dark:border-blue-800 mt-3"
-                                >
-                                    <span className="font-medium text-blue-800 dark:text-blue-200">
-                                        {t.watchVideo}
-                                    </span>
-                                    <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg">
-                                        <div className="w-0 h-0 border-t-4 border-t-transparent border-l-8 border-l-white border-b-4 border-b-transparent ml-1" />
+                                        <button
+                                            onClick={() => setShowHelpModal(true)}
+                                            className="w-full flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800"
+                                        >
+                                            <span className="font-medium text-emerald-800 dark:text-emerald-200">
+                                                {t.guideAction}
+                                            </span>
+                                            <HelpCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
+                                        </button>
+                                        <a
+                                            href="https://youtu.be/t-oQKcEHSpA?si=eZEPZOHSJ8UL1OA4"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-100 dark:border-blue-800 mt-3"
+                                        >
+                                            <span className="font-medium text-blue-800 dark:text-blue-200">
+                                                {t.watchVideo}
+                                            </span>
+                                            <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg">
+                                                <div className="w-0 h-0 border-t-4 border-t-transparent border-l-8 border-l-white border-b-4 border-b-transparent ml-1" />
+                                            </div>
+                                        </a>
                                     </div>
-                                </a>
+                                )}
                             </section>
 
                             {/* Contact Section */}

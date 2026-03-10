@@ -546,7 +546,6 @@ const en: Translations = {
     hideDetailedSettings: 'Hide Detailed Settings',
     pageNavigation: 'Navigation Buttons',
     sideMenu: 'Floating Side Menu',
-    sideMenu: 'Floating Side Menu',
     offlineMode: 'Work Offline',
     updateAvailable: 'New update available 🚀',
     updateDescription: 'Includes important improvements and fixes.',
