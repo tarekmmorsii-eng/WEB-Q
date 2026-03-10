@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube, Share2 } from 'lucide-react';
+import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube, Share2, PlayCircle } from 'lucide-react';
 import { useFeedback } from '../contexts/FeedbackContext';
 
 import clsx from 'clsx';
@@ -10,7 +10,7 @@ import { fetchPage } from '../services/quranService';
 import HowToUseGuide from './HowToUseGuide';
 import VerseCalculatorModal from './VerseCalculatorModal';
 import VisitorCounter from './VisitorCounter';
-
+import { useOfflineManager } from '../hooks/useOfflineManager';
 
 interface SettingsProps {
     isOpen: boolean;
@@ -29,6 +29,8 @@ interface SettingsProps {
     hasUpdate?: boolean;
     onUpdateApp?: () => void;
     memorizationRatings?: any[]; // Avoiding circular dependency for now, or use MemorizationRating[] if imported
+    onStartInteractiveTour?: () => void;
+    highlightHelp?: boolean;
 }
 
 export default function Settings({
@@ -38,7 +40,9 @@ export default function Settings({
     onTogglePageBookmark, isPageBookmarked,
     hasUpdate = false,
     onUpdateApp,
-    memorizationRatings = []
+    memorizationRatings = [],
+    onStartInteractiveTour,
+    highlightHelp = false
 }: SettingsProps) {
     const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
     const t = translations[currentLanguage];
@@ -49,148 +53,36 @@ export default function Settings({
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
     const { openFeedback } = useFeedback();
 
+    const {
+        installPrompt,
+        downloadProgress,
+        isDownloading,
+        isStandalone,
+        isInstalling,
+        hasOfflineData,
+        handleInstallApp,
+        handleDownloadAllData,
+        handleShareApp
+    } = useOfflineManager(currentLanguage);
 
-    // ---------------------------
-    // Offline & PWA Manager
-    // ---------------------------
-    const [installPrompt, setInstallPrompt] = useState<any>(null);
-    const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [isStandalone, setIsStandalone] = useState(false);
-    const [isInstalling, setIsInstalling] = useState(false);
-
-    React.useEffect(() => {
-        // Check if app is already installed/standalone
-        const checkStandalone = () => {
-            const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches ||
-                (window.navigator as any).standalone === true ||
-                document.referrer.includes('android-app://');
-            setIsStandalone(isStandaloneMode);
-        };
-
-        checkStandalone();
-        window.addEventListener('appinstalled', () => setIsStandalone(true));
-
-        return () => window.removeEventListener('appinstalled', () => setIsStandalone(true));
-    }, []);
+    const helpSectionRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        // 1. Capture install prompt
-        const handleBeforeInstallPrompt = (e: any) => {
-            e.preventDefault();
-            setInstallPrompt(e);
-        };
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        // 2. Listen for SW progress
-        const handleMessage = (event: MessageEvent) => {
-            const data = event.data;
-            if (data.type === 'DOWNLOAD_START') {
-                setIsDownloading(true);
-                setDownloadProgress(0);
-            } else if (data.type === 'DOWNLOAD_PROGRESS') {
-                const percent = Math.round((data.count / data.total) * 100);
-                setDownloadProgress(percent);
-            } else if (data.type === 'DOWNLOAD_COMPLETE') {
-                setIsDownloading(false);
-                setDownloadProgress(100);
-                setTimeout(() => setDownloadProgress(null), 3000); // Hide after 3s
-            } else if (data.type === 'DOWNLOAD_ERROR') {
-                setIsDownloading(false);
-                setDownloadProgress(null);
-                alert(currentLanguage === 'ar'
-                    ? `⚠️ حدث خطأ أثناء التحميل: ${data.error}. يرجى المحاولة مرة أخرى.`
-                    : `⚠️ Download error: ${data.error}. Please try again.`);
-            }
-        };
-
-        if (navigator.serviceWorker) {
-            navigator.serviceWorker.addEventListener('message', handleMessage);
-        }
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-            if (navigator.serviceWorker) {
-                navigator.serviceWorker.removeEventListener('message', handleMessage);
-            }
-        };
-    }, []);
-
-    const handleInstallApp = () => {
-        if (!installPrompt) {
-            // If prompt is missing, show a hint
-            alert(currentLanguage === 'ar'
-                ? 'عذراً، لا يمكن بدء التثبيت تلقائياً في هذا المتصفح. يرجى استخدام قائمة المتصفح (الثلاث نقاط) واختيار "إضافة إلى الشاشة الرئيسية".'
-                : 'Sorry, installation cannot be started automatically in this browser. Please use your browser menu (three dots) and select "Add to Home Screen".');
-            return;
-        }
-
-        setIsInstalling(true);
-        installPrompt.prompt();
-        installPrompt.userChoice.then((choiceResult: any) => {
-            setIsInstalling(false);
-            if (choiceResult.outcome === 'accepted') {
-                setInstallPrompt(null);
-            }
-        }).catch(() => {
-            setIsInstalling(false);
-        });
-    };
-
-    const handleShareApp = async () => {
-        const shareData = {
-            title: currentLanguage === 'ar' ? 'مصحف المراجعة' : 'Mushaf Al-Murajaa',
-            text: currentLanguage === 'ar' ? 'شارك مصحف المراجعة مع أصدقائك' : 'Share Mushaf Al-Murajaa with your friends',
-            url: 'https://mushafalmurajaa.com'
-        };
-
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-            } catch (err) {
-                console.error('Error sharing app:', err);
-            }
-        } else {
-            try {
-                await navigator.clipboard.writeText(shareData.url);
-                alert(currentLanguage === 'ar' ? 'تم نسخ الرابط إلى الحافظة' : 'Link copied to clipboard');
-            } catch (err) {
-                console.error('Failed to copy link:', err);
-            }
-        }
-    };
-
-    const [hasOfflineData, setHasOfflineData] = useState(false);
-
-    React.useEffect(() => {
-        const checkCaches = async () => {
-            try {
-                const keys = await caches.keys();
-                const fontCache = keys.find(k => k.includes('quran-fonts'));
-                if (fontCache) {
-                    const cache = await caches.open(fontCache);
-                    const reqs = await cache.keys();
-                    if (reqs.length > 600) {
-                        setHasOfflineData(true);
-                    }
+        if (isOpen && highlightHelp) {
+            // Un-collapse "More Settings" so the user can see it
+            setShowAllSettings(true);
+            setTimeout(() => {
+                if (helpSectionRef.current) {
+                    helpSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add a temporary highlight animation class
+                    helpSectionRef.current.classList.add('ring-4', 'ring-amber-500', 'ring-opacity-50', 'transition-all', 'duration-500', 'rounded-xl');
+                    setTimeout(() => {
+                        helpSectionRef.current?.classList.remove('ring-4', 'ring-amber-500', 'ring-opacity-50');
+                    }, 2000);
                 }
-            } catch (e) { }
-        };
-        // Check on mount and also after downloading finishes
-        if (!isDownloading) {
-            checkCaches();
+            }, 300);
         }
-    }, [isDownloading]);
-
-    const handleDownloadAllData = () => {
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-            setIsDownloading(true);
-            setDownloadProgress(0);
-            navigator.serviceWorker.controller.postMessage('CACHE_ALL_FONTS');
-        } else {
-            alert(currentLanguage === 'ar' ? 'Service Worker غير نشط. يرجى تحديث الصفحة والمحاولة مرة أخرى.' : 'Service Worker is inactive. Please refresh the page and try again.');
-        }
-    };
+    }, [isOpen, highlightHelp]);
 
     // مزامنة الإعدادات المحلية عند فتح القائمة أو تغيير الإعدادات الخارجية
     // مزامنة الإعدادات المحلية عند تغيير الإعدادات الخارجية
@@ -202,8 +94,11 @@ export default function Settings({
     React.useEffect(() => {
         if (isOpen) {
             setLocalSettings(settings); // Ensure fresh start
-            setShowAllSettings(false);
+            if (!highlightHelp) {
+                setShowAllSettings(false);
+            }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
     if (!isOpen) return null;
@@ -588,6 +483,21 @@ export default function Settings({
                                     </label>
                                 </div>
 
+                                {/* Floating Side Menu Toggle */}
+                                <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg mt-3">
+                                    <label className="flex items-center justify-between cursor-pointer">
+                                        <span className="text-gray-900 dark:text-white font-medium">
+                                            {t.sideMenu || 'القائمة الجانبية العائمة'}
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            checked={localSettings.bottomBar.showSideMenu !== false}
+                                            onChange={(e) => toggleBottomBarItem('showSideMenu' as keyof BottomBarSettings)}
+                                            className="w-5 h-5 text-amber-600 rounded focus:ring-2 focus:ring-amber-500"
+                                        />
+                                    </label>
+                                </div>
+
                             </section>
 
                             {/* Sound Settings */}
@@ -865,11 +775,25 @@ export default function Settings({
 
 
                             {/* Help Section */}
-                            <section>
+                            <section ref={helpSectionRef} className="scroll-mt-4">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <HelpCircle size={20} />
                                     {t.help || 'المساعدة والتعليمات'}
                                 </h3>
+                                {/* Interactive Tour Button */}
+                                <button
+                                    onClick={() => {
+                                        onClose();
+                                        onStartInteractiveTour?.();
+                                    }}
+                                    className="w-full flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-100 dark:border-indigo-800 mb-3"
+                                >
+                                    <span className="font-medium text-indigo-800 dark:text-indigo-200">
+                                        {currentLanguage === 'ar' ? 'جولة افتراضية للشرح' : 'Interactive Tour'}
+                                    </span>
+                                    <PlayCircle size={20} className="text-indigo-600 dark:text-indigo-400" />
+                                </button>
+
                                 <button
                                     onClick={() => setShowHelpModal(true)}
                                     className="w-full flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800"

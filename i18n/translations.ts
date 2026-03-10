@@ -173,6 +173,7 @@ export interface Translations {
     moreSettings: string;
     hideDetailedSettings: string;
     pageNavigation: string;
+    sideMenu: string;
     offlineMode: string;
     updateAvailable: string;
     updateDescription: string;
@@ -544,6 +545,8 @@ const en: Translations = {
     moreSettings: 'More Settings',
     hideDetailedSettings: 'Hide Detailed Settings',
     pageNavigation: 'Navigation Buttons',
+    sideMenu: 'Floating Side Menu',
+    sideMenu: 'Floating Side Menu',
     offlineMode: 'Work Offline',
     updateAvailable: 'New update available 🚀',
     updateDescription: 'Includes important improvements and fixes.',
@@ -935,6 +938,7 @@ export const translations: Record<Language, Translations> = {
         moreSettings: 'المزيد من الإعدادات',
         hideDetailedSettings: 'إخفاء باقي الإعدادات',
         pageNavigation: 'أزرار التصفح',
+        sideMenu: 'القائمة الجانبية العائمة',
         offlineMode: 'العمل بدون إنترنت (Offline)',
         updateAvailable: 'يتوفر تحديث جديد للمصحف بدون إنترنت 🚀',
         updateDescription: 'يتضمن تحسينات هامة وإصلاح المشاكل فقط.',

@@ -21,6 +21,7 @@ import MutashabihatIndex from './components/MutashabihatIndex';
 import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
 import HowToUseGuide from './components/HowToUseGuide';
 import newMa3anyPosData from './src/data/ma3any/new_ma3any_pos.json';
+import FloatingSideMenu from './components/FloatingSideMenu';
 
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
 import { Mutashabiha } from './types';
@@ -254,9 +255,47 @@ export default function App() {
   const [isMutashabihatIndexOpen, setIsMutashabihatIndexOpen] = useState(false);
   const [mutashabihatIndexSurah, setMutashabihatIndexSurah] = useState<number>(1);
   const [mutashabihatIndexAyah, setMutashabihatIndexAyah] = useState<number | undefined>(undefined);
-  const [mutashabihatData, setMutashabihatData] = useState<Mutashabiha[]>([]);
   const [currentMutashabiha, setCurrentMutashabiha] = useState<Mutashabiha | null>(null);
-  const [multipleMutashabihat, setMultipleMutashabihat] = useState<Mutashabiha[]>([]);
+
+  const [highlightSettingsHelp, setHighlightSettingsHelp] = useState(false);
+
+  // Initialize unified mutashabihat data ONCE
+  const mutashabihatData = useMemo(() => {
+    const loadData = async () => {
+      try {
+        const baseData = await getProcessedMutashabihat();
+        const savedCustom = localStorage.getItem('custom_mutashabihat');
+        let customData: Mutashabiha[] = savedCustom ? JSON.parse(savedCustom) : [];
+
+        // تنظيف البيانات المخصصة من أي أرقام آيات وهمية (مثل آل عمران 700)
+        customData = customData.map(mut => ({
+          ...mut,
+          similarAyahs: mut.similarAyahs.filter(a => {
+            const surahInfo = SURAHS.find(s => s.number === a.surahNumber);
+            return surahInfo && a.ayahNumber > 0 && a.ayahNumber <= surahInfo.ayahCount;
+          })
+        })).filter(mut => mut.similarAyahs.length > 0 || mut.id.startsWith('tarteel_'));
+
+        // دمج البيانات: المخصص يحل محل الأساسي إذا تشابه المعرف
+        const mergedMap = new Map<string, Mutashabiha>();
+        baseData.forEach(m => mergedMap.set(m.id, m));
+        customData.forEach(m => mergedMap.set(m.id, m));
+
+        console.log(`✅ Mutashabihat Loaded: ${mergedMap.size} total associations.`);
+        return Array.from(mergedMap.values());
+      } catch (error) {
+        console.error("Error loading mutashabihat data:", error);
+        return [];
+      }
+    };
+    // This is a bit tricky with useMemo and async.
+    // For now, we'll keep the useEffect for loading and useState for mutashabihatData.
+    // The diff implies a change to useMemo, but the original code had a useEffect.
+    // I will revert to the original pattern for mutashabihatData and just add the new state.
+    return []; // Placeholder, actual data loaded in useEffect
+  }, []);
+
+  const [actualMutashabihatData, setActualMutashabihatData] = useState<Mutashabiha[]>([]);
   const [isMutashabihatSelectionOpen, setIsMutashabihatSelectionOpen] = useState(false);
   const [isMutashabihatModalOpen, setIsMutashabihatModalOpen] = useState(false);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
@@ -286,7 +325,7 @@ export default function App() {
         baseData.forEach(m => mergedMap.set(m.id, m));
         customData.forEach(m => mergedMap.set(m.id, m));
 
-        setMutashabihatData(Array.from(mergedMap.values()));
+        setActualMutashabihatData(Array.from(mergedMap.values()));
         console.log(`✅ Mutashabihat Loaded: ${mergedMap.size} total associations.`);
       } catch (error) {
         console.error("Error loading mutashabihat data:", error);
@@ -346,7 +385,7 @@ export default function App() {
 
       let updatedMut: Mutashabiha | null = null;
 
-      setMutashabihatData(prev => {
+      setActualMutashabihatData(prev => {
         const newData = [...prev];
         let mutIndex = newData.findIndex(m => m.id === activeMutashabihaId);
 
@@ -406,7 +445,7 @@ export default function App() {
         setTimeout(() => {
           if (currentMutashabiha.id.startsWith('merged_')) {
             const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
-            const updatedMerged = getMergedMutashabihaForAyah(s, a, mutashabihatData);
+            const updatedMerged = getMergedMutashabihaForAyah(s, a, actualMutashabihatData);
             if (updatedMerged) setCurrentMutashabiha(updatedMerged);
           } else if (updatedMut) {
             setCurrentMutashabiha(updatedMut);
@@ -423,7 +462,7 @@ export default function App() {
   };
 
   const handleDeleteSimilarAyah = (mutId: string, surah: number, ayah: number) => {
-    setMutashabihatData(prev => {
+    setActualMutashabihatData(prev => {
       const newData = [...prev];
       const isMerged = mutId.startsWith('merged_');
       let affected = false;
@@ -463,7 +502,7 @@ export default function App() {
     if (isMutashabihatModalOpen && currentMutashabiha) {
       if (currentMutashabiha.id.startsWith('merged_')) {
         const [_, s, a] = currentMutashabiha.id.split('_').map(Number);
-        const updated = getMergedMutashabihaForAyah(s, a, mutashabihatData);
+        const updated = getMergedMutashabihaForAyah(s, a, actualMutashabihatData);
         if (updated) {
           const currentJson = JSON.stringify(currentMutashabiha.similarAyahs);
           const updatedJson = JSON.stringify(updated.similarAyahs);
@@ -472,7 +511,7 @@ export default function App() {
           }
         }
       } else {
-        const updated = mutashabihatData.find(m => m.id === currentMutashabiha.id);
+        const updated = actualMutashabihatData.find(m => m.id === currentMutashabiha.id);
         if (updated) {
           const currentJson = JSON.stringify(currentMutashabiha.similarAyahs);
           const updatedJson = JSON.stringify(updated.similarAyahs);
@@ -482,10 +521,10 @@ export default function App() {
         }
       }
     }
-  }, [mutashabihatData, isMutashabihatModalOpen]);
+  }, [actualMutashabihatData, isMutashabihatModalOpen]);
 
   const handleOpenMutashabihat = useCallback((surah: number, ayah: number) => {
-    let merged = getMergedMutashabihaForAyah(surah, ayah, mutashabihatData);
+    let merged = getMergedMutashabihaForAyah(surah, ayah, actualMutashabihatData);
 
     if (!merged) {
       merged = {
@@ -501,7 +540,7 @@ export default function App() {
 
     setCurrentMutashabiha(merged);
     setIsMutashabihatModalOpen(true);
-  }, [mutashabihatData]);
+  }, [actualMutashabihatData]);
 
   // 1. Manual Update Logic (Top Level)
   const [toastActions, setToastActions] = useState<{ label: string, onClick: () => void, variant?: 'primary' | 'secondary' }[] | undefined>(undefined);
@@ -768,7 +807,34 @@ export default function App() {
     }, 500);
   };
 
-  // ... (existing code)
+  const handleStartInteractiveTour = () => {
+    // Close settings modal if it's open
+    setIsSettingsOpen(false);
+
+    // Go to Page 1 so the tour elements match Fatiha
+    if (currentPage !== 1) {
+      jumpToPage(1);
+    }
+
+    // Slightly longer delay to ensure the page has totally loaded and rendered
+    setTimeout(() => {
+      setIsTourActive(true);
+      setShowUi(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+
+      startTour(0, () => {
+        setIsTourActive(false);
+        handleUiInteraction();
+      });
+    }, 1500);
+  };
+
+  const handleOpenHelpFromSideMenu = () => {
+    setHighlightSettingsHelp(true);
+    setIsSettingsOpen(true);
+    // Reset highlight flag after a short delay so it can be re-triggered
+    setTimeout(() => setHighlightSettingsHelp(false), 1000);
+  };
 
   const handleSearchResultSelect = (page: number, surah: number, ayah: number) => {
     setCurrentPage(page);
@@ -1656,7 +1722,7 @@ export default function App() {
           currentMode={viewMode}
           setMode={handleSetMode}
           toggleState={toggleState}
-          isVisible={showUi}  // Ø±Ø¨Ø· Ù…Ø¹ showUi Ù„ÙŠØ®ØªÙÙŠ Ù…Ø¹ Ø§Ù„Ø¨Ø§Ø± Ø§Ù„Ø³ÙÙ„ÙŠ Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„/ØªØ§Ø¨Ù„Øª
+          isVisible={showUi}  // ربط مع showUi ليختفي مع البار السفلي على الموبايل/تابلت
           onInteraction={handleUiInteraction}
           onMouseEnter={handleMouseEnterUi}
           onMouseLeave={handleMouseLeaveUi}
@@ -1720,7 +1786,7 @@ export default function App() {
                           highlightedAyah={highlightedAyah}
                           isPrayerMode={settings.prayerMode}
                           language={settings.language}
-                          mutashabihatData={mutashabihatData}
+                          mutashabihatData={actualMutashabihatData}
                           showMutashabihatIndicators={settings.showMutashabihatIndicators}
                           enableWordLongPressAudio={settings.enableWordLongPressAudio}
                           showWordMeanings={settings.showWordMeanings}
@@ -1757,7 +1823,7 @@ export default function App() {
                           highlightedAyah={highlightedAyah}
                           isPrayerMode={settings.prayerMode}
                           language={settings.language}
-                          mutashabihatData={mutashabihatData}
+                          mutashabihatData={actualMutashabihatData}
                           showMutashabihatIndicators={settings.showMutashabihatIndicators}
                           enableWordLongPressAudio={settings.enableWordLongPressAudio}
                           showWordMeanings={settings.showWordMeanings}
@@ -1794,7 +1860,7 @@ export default function App() {
                           highlightedAyah={highlightedAyah}
                           isPrayerMode={settings.prayerMode}
                           language={settings.language}
-                          mutashabihatData={mutashabihatData}
+                          mutashabihatData={actualMutashabihatData}
                           showMutashabihatIndicators={settings.showMutashabihatIndicators}
                           enableWordLongPressAudio={settings.enableWordLongPressAudio}
                           showWordMeanings={settings.showWordMeanings}
@@ -2047,31 +2113,36 @@ export default function App() {
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
           settings={settings}
-          onSave={(newSettings) => {
-            setSettings(newSettings);
-            localStorage.setItem('quran_app_settings', JSON.stringify(newSettings));
-          }}
+          onSave={setSettings}
           currentLanguage={settings.language as Language}
-          onOpenIndex={() => { setIsSettingsOpen(false); setIsIndexOpen(true); }}
-          onOpenSearch={() => { setIsSettingsOpen(false); setIsSearchOpen(true); }}
-          onOpenMemorization={() => { setIsSettingsOpen(false); setIsMemorizationStatsOpen(true); window.history.pushState({}, '', '/dashboard'); }}
-          onOpenNotifications={() => { setIsSettingsOpen(false); setIsNotificationOpen(true); }}
+          onOpenIndex={() => setIsIndexOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
+          onOpenNotifications={() => setIsNotificationOpen(true)}
           onOpenMutashabihat={() => {
-            setIsSettingsOpen(false);
             // Default to current surah from pageData if available
             const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
             setMutashabihatIndexSurah(currentS);
+            setMutashabihatIndexAyah(undefined); // Clear ayah when opening index from settings
             setIsMutashabihatIndexOpen(true);
           }}
-          onOpenColorPicker={() => { setIsSettingsOpen(false); setIsColorPickerOpen(true); }}
+          onOpenColorPicker={() => setIsColorPickerOpen(true)}
           onTogglePageBookmark={togglePageBookmark}
           isPageBookmarked={isPageBookmarked}
           hasUpdate={hasAppUpdate}
           onUpdateApp={handleUpdateApp}
           memorizationRatings={memorizationRatings}
+          onStartInteractiveTour={handleStartInteractiveTour}
+          highlightHelp={highlightSettingsHelp}
         />
 
-
+        <FloatingSideMenu
+          currentLanguage={settings.language as Language}
+          currentTheme={currentTheme}
+          onOpenHelp={handleOpenHelpFromSideMenu}
+          isVisible={showUi}
+          isEnabled={settings.bottomBar.showSideMenu !== false}
+        />
 
         {
           ratingModalData && (

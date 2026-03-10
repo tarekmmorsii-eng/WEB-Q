@@ -107,6 +107,7 @@ export interface BottomBarSettings {
   showPrayerMode: boolean;
   showFullscreen: boolean;
   showPageNavigation: boolean;
+  showSideMenu?: boolean;
 }
 
 export interface AppSettings {
