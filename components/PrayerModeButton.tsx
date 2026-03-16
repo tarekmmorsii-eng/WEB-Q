@@ -94,10 +94,24 @@ export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerMod
             return;
         }
 
-        // Logic to reveal next word - Updated for V2
-        const firstHidden = document.querySelector('.text-transparent') as HTMLElement;
+        // Find only hidden elements that are VISIBLE on screen (not from previous/next rendered pages)
+        const allHidden = Array.from(document.querySelectorAll('.text-transparent')) as HTMLElement[];
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
 
-        // If no hidden elements remain -> Turn to next page
+        const visibleHidden = allHidden.filter(el => {
+            const rect = el.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= viewportHeight &&
+                rect.right <= viewportWidth
+            );
+        });
+
+        const firstHidden = visibleHidden.length > 0 ? visibleHidden[0] : null;
+
+        // If no hidden elements remain on screen -> Turn to next page
         if (!firstHidden) {
             if (onNextPage) {
                 onNextPage();
@@ -129,7 +143,7 @@ export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerMod
                 if (!isVisible) {
                     targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-            }, 50); // Small timeout to allow the element to render if needed
+            }, 50);
         }
     };
 
