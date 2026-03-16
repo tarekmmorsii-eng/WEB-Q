@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { flushSync } from 'react-dom';
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -2180,7 +2180,7 @@ export default function App() {
               }}
               isBookmarked={verseBookmarks.some(vb => vb.id === `${currentPage}-${ratingModalData.surah}-${ratingModalData.ayah}`)}
               language={settings.language}
-              hasMutashabihat={!!findMutashabihatForAyah(ratingModalData.surah, ratingModalData.ayah, mutashabihatData)}
+              hasMutashabihat={!!findMutashabihatForAyah(ratingModalData.surah, ratingModalData.ayah, actualMutashabihatData)}
               onOpenMutashabihat={() => {
                 handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
               }}
@@ -2217,7 +2217,7 @@ export default function App() {
         <MutashabihatIndex
           isOpen={isMutashabihatIndexOpen}
           onClose={() => setIsMutashabihatIndexOpen(false)}
-          mutashabihatData={mutashabihatData}
+          mutashabihatData={actualMutashabihatData}
           isDarkMode={currentTheme.isDark}
           initialSurahId={mutashabihatIndexSurah}
           initialAyahId={mutashabihatIndexAyah}
@@ -2235,7 +2235,7 @@ export default function App() {
           isOpen={isMutashabihatModalOpen}
           onClose={() => setIsMutashabihatModalOpen(false)}
           mutashabiha={currentMutashabiha}
-          mutashabihatData={mutashabihatData}
+          mutashabihatData={actualMutashabihatData}
           language={settings.language}
           onNavigateToAyah={async (surah, ayah) => {
             const page = await getAyahPage(surah, ayah);
