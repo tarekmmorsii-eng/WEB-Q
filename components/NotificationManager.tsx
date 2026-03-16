@@ -37,7 +37,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [permissionStatus, setPermissionStatus] = useState<string>(
-        typeof window !== 'undefined' ? Notification.permission : 'default'
+        typeof window !== 'undefined' && typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
 
     // Form state
@@ -212,7 +212,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     };
 
     const sendTestNotification = () => {
-        if (Notification.permission === 'granted') {
+        const notifPermission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+        if (notifPermission === 'granted') {
             if (formIsAlarm) {
                 // Dispatch event to App.tsx to trigger alarm UI
                 window.dispatchEvent(new CustomEvent('triggerTestAlarm', {
@@ -230,7 +231,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         requireInteraction: formIsAlarm
                     });
                 });
-            } else {
+            } else if (typeof Notification !== 'undefined') {
                 new Notification(t.testNotification, { body: t.testNotificationBody });
             }
         } else {

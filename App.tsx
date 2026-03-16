@@ -1136,7 +1136,7 @@ export default function App() {
             });
           }
 
-          if (Notification.permission === 'granted') {
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.ready.then(reg => {
                 reg.showNotification(n.name, {
