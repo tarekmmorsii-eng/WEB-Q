@@ -70,7 +70,12 @@ export default function AyahOptionsModal({
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-                        {t.ayahOptions.replace('{ayah}', language === 'ar' ? ayahNumber.toLocaleString('ar-EG') : ayahNumber.toString())}
+                        {t.ayahOptions.replace('{ayah}', (() => {
+                            if (language === 'ar') return ayahNumber.toLocaleString('ar-EG');
+                            if (language === 'ur') return ayahNumber.toLocaleString('ur-PK');
+                            if (language === 'fa') return ayahNumber.toLocaleString('fa-IR');
+                            return ayahNumber.toString();
+                        })())}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">{t.rateMemorization}</p>
                 </div>
@@ -161,10 +166,7 @@ export default function AyahOptionsModal({
                         className="w-full bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white py-4 rounded-xl flex items-center justify-center gap-3 transition-colors font-bold shadow-md"
                     >
                         <span className="text-xl">📖</span>
-                        {language === 'ar'
-                            ? (hasMutashabihat ? 'عرض المتشابهات' : 'إضافة متشابهة')
-                            : (hasMutashabihat ? 'View Mutashabihat' : 'Add Mutashabihat')
-                        }
+                        {hasMutashabihat ? t.viewMutashabihat : t.addMutashabihat}
                     </button>
 
                     {tafsir && (
@@ -211,8 +213,8 @@ export default function AyahOptionsModal({
                             </button>
                         </div>
                         <div
-                            className="flex-1 overflow-y-auto text-slate-700 dark:text-slate-300 text-right leading-relaxed text-xl pb-4 px-1"
-                            dir="rtl"
+                            className={clsx("flex-1 overflow-y-auto text-slate-700 dark:text-slate-300 leading-relaxed text-xl pb-4 px-1", t.dir === 'rtl' ? "text-right" : "text-left")}
+                            dir={t.dir}
                             style={{ fontFamily: "'Amiri', serif" }}
                         >
                             {tafsir}

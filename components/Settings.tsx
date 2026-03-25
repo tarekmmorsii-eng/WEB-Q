@@ -46,8 +46,11 @@ export default function Settings({
 }: SettingsProps) {
     const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
     const t = translations[currentLanguage];
+    const isRTL = t.dir === 'rtl';
+
     const [isExporting, setIsExporting] = useState(false);
     const [showAllSettings, setShowAllSettings] = useState(false);
+
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
 
@@ -246,7 +249,7 @@ export default function Settings({
 
                     {/* Middle: Trial Version Label */}
                     <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] px-3 py-1 rounded-full border border-amber-200 dark:border-amber-700/50 shadow-sm animate-in fade-in zoom-in duration-500 delay-100">
-                        {currentLanguage === 'ar' ? 'نسخة تجريبية' : 'Beta Version'}
+                        {t.trialVersion}
                     </div>
 
                     <button
@@ -478,7 +481,7 @@ export default function Settings({
                                 <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg mt-3">
                                     <label className="flex items-center justify-between cursor-pointer">
                                         <span className="text-gray-900 dark:text-white font-medium">
-                                            {currentLanguage === 'ar' ? 'معاني كلمات القرآن الكريم كلمة كلمة' : 'Quran Word-by-Word Meanings'}
+                                            {t.quranWordMeanings}
                                         </span>
                                         <input
                                             type="checkbox"
@@ -532,9 +535,7 @@ export default function Settings({
                                         <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
                                             <span className="text-gray-900 dark:text-white">
                                                 {t.wordAudioLongPress}
-                                                {currentLanguage === 'ar' && (
-                                                    <span className="text-red-500 font-bold mx-1"> (يجب توفر إنترنت)</span>
-                                                )}
+                                                <span className="text-red-500 font-bold mx-1"> {t.internetRequired}</span>
                                             </span>
                                             <input
                                                 type="checkbox"
@@ -680,15 +681,15 @@ export default function Settings({
                                         <div className="space-y-4">
                                             {/* Main Note about two-step process */}
                                             <div className="p-3 bg-amber-50/50 dark:bg-amber-900/10 border-r-4 border-amber-500 rounded text-xs text-amber-900 dark:text-amber-100 font-medium">
-                                                {currentLanguage === 'ar'
+                                                {t.noteInstallationSteps || (currentLanguage === 'ar'
                                                     ? 'ملاحظة: التثبيت يتم على خطوتين: الخطوة الأولى: تثبيت التطبيق والخطوة الثانية: تحديث وحفظ المصحف كاملاً.'
-                                                    : 'Note: Installation is done in two steps: Step 1: Install the app, and Step 2: Update and save the full Mushaf.'}
+                                                    : 'Note: Installation is done in two steps: Step 1: Install the app, and Step 2: Update and save the full Mushaf.')}
                                             </div>
 
                                             <div className="space-y-3">
                                                 {/* Step 1 Label */}
                                                 <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
-                                                    {currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1'}
+                                                    {t.step1 || (currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1')}
                                                 </div>
                                                 {/* Install App Button - Always persistent per user request */}
                                                 <button
@@ -738,7 +739,7 @@ export default function Settings({
 
                                                 {/* Step 2 Label */}
                                                 <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
-                                                    {currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2'}
+                                                    {t.step2 || (currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2')}
                                                 </div>
 
                                                 {/* Download/Update Mushaf Button */}
@@ -799,10 +800,10 @@ export default function Settings({
                                                 >
                                                     <div className="flex flex-col items-start text-right">
                                                         <span className="font-medium text-gray-900 dark:text-white">
-                                                            {currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App'}
+                                                            {t.shareApp || (currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App')}
                                                         </span>
                                                         <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                            {currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends'}
+                                                            {t.shareAppDesc || (currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends')}
                                                         </span>
                                                     </div>
                                                     <Share2 size={24} className="text-blue-600 dark:text-blue-400" />
@@ -887,7 +888,7 @@ export default function Settings({
                             <section className="mt-6">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Globe size={20} />
-                                    {currentLanguage === 'ar' ? 'تابعنا' : 'Follow Us'}
+                                    {t.followUs || (currentLanguage === 'ar' ? 'تابعنا' : 'Follow Us')}
                                 </h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     <a

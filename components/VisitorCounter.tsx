@@ -54,11 +54,11 @@ const VisitorCounter = ({ t, language }: { t: any, language: string }) => {
 
     // Fixed realistic top countries data for presentation
     const topCountries = [
-        { name: language === 'ar' ? 'مصر' : 'Egypt', code: 'EG', flag: '🇪🇬', percentage: 48 },
-        { name: language === 'ar' ? 'السعودية' : 'Saudi Arabia', code: 'SA', flag: '🇸🇦', percentage: 21 },
-        { name: language === 'ar' ? 'إندونيسيا' : 'Indonesia', code: 'ID', flag: '🇮🇩', percentage: 14 },
-        { name: language === 'ar' ? 'الأردن' : 'Jordan', code: 'JO', flag: '🇯🇴', percentage: 6 },
-        { name: language === 'ar' ? 'المغرب' : 'Morocco', code: 'MA', flag: '🇲🇦', percentage: 5 },
+        { name: t.countryEgypt, code: 'EG', flag: '🇪🇬', percentage: 48 },
+        { name: t.countrySaudi, code: 'SA', flag: '🇸🇦', percentage: 21 },
+        { name: t.countryIndonesia, code: 'ID', flag: '🇮🇩', percentage: 14 },
+        { name: t.countryJordan, code: 'JO', flag: '🇯🇴', percentage: 6 },
+        { name: t.countryMorocco, code: 'MA', flag: '🇲🇦', percentage: 5 },
     ];
 
     return (
@@ -104,7 +104,7 @@ const VisitorCounter = ({ t, language }: { t: any, language: string }) => {
                             {t.visitorDetails}
                         </h4>
                         <div className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px] text-slate-500 font-bold uppercase tracking-tighter">
-                            Live Update
+                            {t.liveUpdate}
                         </div>
                     </div>
 
@@ -154,7 +154,7 @@ const VisitorCounter = ({ t, language }: { t: any, language: string }) => {
                             <Activity size={12} className="text-blue-500" />
                             <span>{t.totalVisitors}: {count?.toLocaleString() || '...'}</span>
                         </div>
-                        <span className="opacity-50">© 2026 MyQuran Platform Analytics</span>
+                        <span className="opacity-50">© 2026 {t.platformAnalytics}</span>
                     </div>
                 </div>
             )}

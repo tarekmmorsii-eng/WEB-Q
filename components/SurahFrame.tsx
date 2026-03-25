@@ -109,7 +109,7 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
                         }}
                         className="text-slate-800 dark:text-slate-200 text-[clamp(18px,6vw,28px)] sm:text-[clamp(28px,5vw,40px)] md:text-[50px] lg:text-[58px]"
                     >
-                        {language === 'ar' ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`}
+                        {(language === 'ar' || language === 'en') ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`}
                     </span>
 
                     {/* Rating Indicator Circle - Left of name for Arabic */}

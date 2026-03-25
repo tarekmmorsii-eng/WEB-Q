@@ -338,7 +338,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleToggle(notification.id)}
-                                                        title={notification.isEnabled ? t.disableNotification || "تعطيل الإشعار" : t.enableNotification || "تفعيل الإشعار"}
+                                                        title={notification.isEnabled ? t.disableNotification : t.enableNotification}
                                                         className={clsx(
                                                             "p-2 rounded-full transition-colors",
                                                             notification.isEnabled
@@ -350,14 +350,14 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     </button>
                                                     <button
                                                         onClick={() => handleEdit(notification)}
-                                                        title={t.editNotification || "تعديل الإشعار"}
+                                                        title={t.editNotification}
                                                         className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(notification.id)}
-                                                        title={t.deleteNotification || "حذف الإشعار"}
+                                                        title={t.deleteNotification}
                                                         className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                                     >
                                                         <Trash2 size={20} />
@@ -777,9 +777,9 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         // Ensure End >= Start
                                                         if (formEndPage < val) {
                                                             setFormEndPage(val);
-                                                            setFormName(`من صفحة ${val} إلى ${val}`);
+                                                            setFormName(t.fromPageToPage.replace('{from}', val.toString()).replace('{to}', val.toString()));
                                                         } else {
-                                                            setFormName(`من صفحة ${val} إلى ${formEndPage}`);
+                                                            setFormName(t.fromPageToPage.replace('{from}', val.toString()).replace('{to}', formEndPage.toString()));
                                                         }
                                                     }}
                                                     className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -800,7 +800,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onBlur={() => {
                                                         const val = Math.min(604, Math.max(formStartPage, formEndPage || formStartPage));
                                                         setFormEndPage(val);
-                                                        setFormName(`${t.fromPage} ${formStartPage} ${t.toPage} ${val}`);
+                                                        setFormName(t.fromPageToPage.replace('{from}', formStartPage.toString()).replace('{to}', val.toString()));
                                                     }}
                                                     className={clsx(
                                                         "w-full px-4 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500",
@@ -813,7 +813,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                 {formEndPage < formStartPage && (
                                                     <div className="absolute -bottom-5 left-0 right-0 text-center">
                                                         <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
-                                                            غير صحيح
+                                                            {t.invalidRangeError}
                                                         </span>
                                                     </div>
                                                 )}

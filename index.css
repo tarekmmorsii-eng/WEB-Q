@@ -478,6 +478,7 @@ body .driver-active-element::after {
 body .driver-popover {
   background-color: rgba(30, 41, 59, 0.98) !important;
   /* Slate 800 */
+  direction: inherit !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   color: #fff !important;
@@ -542,7 +543,7 @@ body .driver-popover-title {
   line-height: 1.4 !important;
   font-family: 'Amiri', serif !important;
   /* Arabic Font */
-  text-align: center !important;
+  text-align: start !important;
 }
 
 /* 5. Description */
@@ -552,7 +553,7 @@ body .driver-popover-description {
   color: #e2e8f0 !important;
   /* Slate 200 */
   margin-bottom: 24px !important;
-  text-align: right !important;
+  text-align: start !important;
   font-weight: 400 !important;
   white-space: pre-line !important;
 }

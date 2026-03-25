@@ -11,6 +11,7 @@ import { getMatchingWords } from '../utils/similarityCalculator';
 import { quranNormalize, quranStripConjunction, quranIsSymbol, findSharedPhrases, getRealWordCount } from '../utils/quranUtils';
 
 import { formatNumber } from '../utils/quranUtils';
+import { translations } from '../i18n/translations';
 
 function MutashabihatIcon({
     showGreenLine = false,
@@ -58,13 +59,14 @@ function MutashabihatIcon({
 /**
  * مكون لعرض النص مع تلوين الكلمات المتطابقة بناءً على القواعد
  */
-const HighlightingText = React.memo(({ text, absoluteAyahNumber, rules: manualRules, onlyRule, referenceText, isInsideSurah }: {
+const HighlightingText = React.memo(({ text, absoluteAyahNumber, rules: manualRules, onlyRule, referenceText, isInsideSurah, t }: {
     text: string,
     absoluteAyahNumber?: number,
     rules?: any[],
     onlyRule?: string,
     referenceText?: string | string[],
-    isInsideSurah?: boolean
+    isInsideSurah?: boolean,
+    t: any
 }) => {
     if (!text) return <span className="text-gray-800 dark:text-gray-200">{text}</span>;
 
@@ -131,7 +133,7 @@ const HighlightingText = React.memo(({ text, absoluteAyahNumber, rules: manualRu
         }
     }
 
-    if (filteredRules.length === 0) return <span className="text-gray-800 dark:text-gray-200 text-right w-full" dir="rtl">{text}</span>;
+    if (filteredRules.length === 0) return <span className={clsx("text-gray-800 dark:text-gray-200 w-full", t.dir === 'ltr' ? "text-left" : "text-right")} dir="rtl">{text}</span>;
 
     // --- RULE SPLITTING ---
     const effectivelySplitRules: any[] = [];
@@ -244,7 +246,7 @@ const HighlightingText = React.memo(({ text, absoluteAyahNumber, rules: manualRu
     });
 
     return (
-        <div className="flex flex-wrap gap-x-1 gap-y-1 justify-start text-right w-full" dir="rtl">
+        <div className={clsx("flex flex-wrap gap-x-1 gap-y-1 w-full", t.dir === 'ltr' ? "justify-start text-left" : "justify-start text-right")} dir="rtl">
             {rawWords.map((word, i) => {
                 const info = wordInfos[i];
                 if (!info.color) {
@@ -582,7 +584,7 @@ export default function MutashabihatIndex({
     const currentSurah = SURAHS.find(s => s.number === selectedSurahId);
 
     return (
-        <div className="fixed inset-0 bg-gray-50 dark:bg-slate-900 z-[110] flex flex-col animate-in fade-in duration-300" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="fixed inset-0 bg-gray-50 dark:bg-slate-900 z-[110] flex flex-col animate-in fade-in duration-300" dir={t.dir}>
             {/* Header */}
             <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm shrink-0">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -612,7 +614,7 @@ export default function MutashabihatIndex({
                                 </option>
                             ))}
                         </select>
-                        {language === 'ar' ? (
+                        {t.dir === 'rtl' ? (
                             <ChevronLeft className="absolute left-3 top-3 text-gray-400 pointer-events-none" size={16} />
                         ) : (
                             <ChevronRight className="absolute right-3 top-3 text-gray-400 pointer-events-none" size={16} />
@@ -621,7 +623,7 @@ export default function MutashabihatIndex({
 
                     <div className="flex flex-col md:flex-row gap-4 items-center flex-1 w-full">
                         <div className="relative flex-1 w-full">
-                            <Search className={clsx("absolute top-1/2 -translate-y-1/2 text-gray-400", language === 'ar' ? "right-3" : "left-3")} size={18} />
+                            <Search className={clsx("absolute top-1/2 -translate-y-1/2 text-gray-400", t.dir === 'rtl' ? "right-3" : "left-3")} size={18} />
                             <input
                                 type="text"
                                 value={searchQuery}
@@ -629,12 +631,12 @@ export default function MutashabihatIndex({
                                 placeholder={t.searchMutashabihatPlaceholder}
                                 className={clsx(
                                     "w-full p-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none",
-                                    language === 'ar' ? "pr-10 pl-10 text-right" : "pl-10 pr-10 text-left"
+                                    t.dir === 'rtl' ? "pr-10 pl-10 text-right" : "pl-10 pr-10 text-left"
                                 )}
-                                dir={language === 'ar' ? 'rtl' : 'ltr'}
+                                dir={t.dir}
                             />
                             {searchQuery && (
-                                <button onClick={() => setSearchQuery("")} className={clsx("absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors", language === 'ar' ? "left-3" : "right-3")}>
+                                <button onClick={() => setSearchQuery("")} className={clsx("absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors", t.dir === 'rtl' ? "left-3" : "right-3")}>
                                     <X size={18} />
                                 </button>
                             )}
@@ -717,7 +719,7 @@ export default function MutashabihatIndex({
                                     <MutashabihatIcon showRedLine size="w-7 h-7" language={language} />
                                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">
                                         {t.outsideSurahTitle}
-                                        <span className={clsx("text-sm font-normal text-gray-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full", language === 'ar' ? "mr-2" : "ml-2")}>
+                                        <span className={clsx("text-sm font-normal text-gray-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full", t.dir === 'rtl' ? "mr-2" : "ml-2")}>
                                             {outside.length}
                                         </span>
                                     </h3>
@@ -746,9 +748,7 @@ export default function MutashabihatIndex({
                                             key={`${item.mut.id}_out_${idx}`}
                                             item={item}
                                             onNavigateToAyah={onNavigateToAyah}
-                                            surahNameMap={surahNameMap}
                                             t={t}
-                                            language={language}
                                         />
                                     ))}
                                     {outside.length > visibleCount && (
@@ -769,13 +769,7 @@ export default function MutashabihatIndex({
     );
 }
 
-const MutashabihaCard = React.memo(({ item, onNavigateToAyah, surahNameMap, t, language }: {
-    item: { mut: Mutashabiha, targets: any[] },
-    onNavigateToAyah?: (s: number, a: number) => void,
-    surahNameMap: Record<number, string>,
-    t: any,
-    language: string
-}) => {
+const SimilarAyahCard = React.memo(({ item, onNavigateToAyah, t }: { item: any, onNavigateToAyah?: (s: number, a: number) => void, t: any }) => {
     const { mut, targets } = item;
     return (
         <div id={`mut-ayah-${mut.sourceAyah.surahNumber}-${mut.sourceAyah.ayahNumber}`} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden scroll-mt-24">
@@ -787,7 +781,7 @@ const MutashabihaCard = React.memo(({ item, onNavigateToAyah, surahNameMap, t, l
                     <button onClick={() => onNavigateToAyah?.(mut.sourceAyah.surahNumber, mut.sourceAyah.ayahNumber)} className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white px-2 py-0.5 rounded transition-colors">{t.goAction}</button>
                 </div>
                 <div className="text-right font-quran text-xl leading-loose text-gray-900 dark:text-white">
-                    <HighlightingText text={mut.sourceAyah.text} absoluteAyahNumber={mut.sourceAyah.absoluteAyahNumber} referenceText={targets.map(t => t.text)} isInsideSurah={false} />
+                    <HighlightingText text={mut.sourceAyah.text} absoluteAyahNumber={mut.sourceAyah.absoluteAyahNumber} referenceText={targets.map(t => t.text)} isInsideSurah={false} t={t} />
                 </div>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-slate-700 bg-white dark:bg-slate-900">
@@ -803,13 +797,21 @@ const MutashabihaCard = React.memo(({ item, onNavigateToAyah, surahNameMap, t, l
                             <button onClick={() => onNavigateToAyah?.(target.surahNumber, target.ayahNumber)} className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white px-2 py-0.5 rounded shadow-sm">{t.goAction}</button>
                         </div>
                         <div className="text-right font-quran text-lg leading-relaxed text-gray-700 dark:text-gray-300">
-                            <HighlightingText text={target.text} absoluteAyahNumber={target.absoluteAyahNumber} referenceText={mut.sourceAyah.text} isInsideSurah={false} />
+                            <HighlightingText text={target.text} absoluteAyahNumber={target.absoluteAyahNumber} referenceText={mut.sourceAyah.text} isInsideSurah={false} t={t} />
                         </div>
                     </div>
                 ))}
             </div>
         </div>
     );
+});
+
+const MutashabihaCard = React.memo(({ item, onNavigateToAyah, t }: {
+    item: { mut: Mutashabiha, targets: any[] },
+    onNavigateToAyah?: (s: number, a: number) => void,
+    t: any
+}) => {
+    return <SimilarAyahCard item={item} onNavigateToAyah={onNavigateToAyah} t={t} />;
 });
 
 const InternalGroupSection = React.memo(({ group, onNavigateToAyah, t }: { group: any, onNavigateToAyah?: (s: number, a: number) => void, t: any }) => {
@@ -841,7 +843,7 @@ const InternalGroupSection = React.memo(({ group, onNavigateToAyah, t }: { group
                 {ayahs.map((ayah: any, i: number) => (
                     <div key={i} id={`mut-ayah-${ayah.surahNumber}-${ayah.ayahNumber}`} className="p-3 hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors scroll-mt-24">
                         <div className="text-right font-quran text-lg leading-loose text-gray-700 dark:text-gray-300">
-                            <HighlightingText text={ayah.text} absoluteAyahNumber={ayah.absoluteAyahNumber} onlyRule={rule} referenceText={ayahs.map((a: any) => a.text)} isInsideSurah={true} />
+                            <HighlightingText text={ayah.text} absoluteAyahNumber={ayah.absoluteAyahNumber} onlyRule={rule} referenceText={ayahs.map((a: any) => a.text)} isInsideSurah={true} t={t} />
                             <div className="flex items-center gap-1 mt-1 justify-end">
                                 <button onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)} className="text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">{t.goAction}</button>
                                 <span className="inline-flex text-sm font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30 whitespace-nowrap">({ayah.ayahNumber})</span>

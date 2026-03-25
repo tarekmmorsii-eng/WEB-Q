@@ -103,7 +103,7 @@ export default function SurahRatingModal({
                         {t.rateSurah} {surahName}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        {isArabic ? 'قيّم مستوى حفظك للسورة بالكامل' : 'Rate your memorization of the entire Surah'}
+                        {t.rateEntireSurah}
                     </p>
                 </div>
 
@@ -189,7 +189,7 @@ export default function SurahRatingModal({
                         {t.rateRange}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-xs mb-4 text-center">
-                        {isArabic ? 'قيّم مجموعة من الآيات بنفس التقييم' : 'Rate multiple ayahs with the same rating'}
+                        {t.rateMultipleAyahs}
                     </p>
 
                     {/* Input Fields */}

@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { X, Sparkles, MoveRight, CheckCircle2, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
+import { Translations } from '../i18n/translations';
+
 interface TourWelcomeModalProps {
     isOpen: boolean;
     onStart: () => void;
     onClose: () => void;
+    t: Translations;
 }
 
-export default function TourWelcomeModal({ isOpen, onStart, onClose }: TourWelcomeModalProps) {
+export default function TourWelcomeModal({ isOpen, onStart, onClose, t }: TourWelcomeModalProps) {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -61,18 +64,18 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose }: TourWelco
 
                 {/* Content */}
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3 leading-tight">
-                    هيا بنا لكي نتعرف <br />
-                    <span className="text-amber-600 dark:text-amber-500">علي مصحفنا</span>
+                    {t.tourWelcomeTitle} <br />
+                    <span className="text-amber-600 dark:text-amber-500">{t.tourWelcomeSubtitle}</span>
                 </h2>
 
                 <p className="text-gray-600 dark:text-gray-300 mb-4 max-w-sm text-lg leading-relaxed">
-                    جولة سريعة وممتعة لاكتشاف مميزات الموقع الجديدة والاستفادة القصوى منه.
+                    {t.tourWelcomeDesc}
                 </p>
                 <div className="mb-8 w-full max-w-sm">
                     <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 py-3 px-4 rounded-2xl border border-red-100 dark:border-red-900/30">
                         <AlertTriangle className="text-red-600 dark:text-red-400 shrink-0" size={24} />
-                        <p className="text-red-600 dark:text-red-400 text-[1.05rem] font-bold leading-tight text-right">
-                            ملاحظة: هذه النسخة تجريبية وما زالت تحت المراجعة للتنبيه
+                        <p className="text-red-600 dark:text-red-400 text-[1.05rem] font-bold leading-tight">
+                            {t.tourBetaNote}
                         </p>
                     </div>
                 </div>
@@ -84,7 +87,7 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose }: TourWelco
                         onClick={onStart}
                         className="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-amber-500/25 transition-all duration-300 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2 group/btn"
                     >
-                        <span>موافق، ابدأ الجولة</span>
+                        <span>{t.tourStartAction}</span>
                         <CheckCircle2 size={20} className="group-hover/btn:scale-110 transition-transform" />
                     </button>
 
@@ -92,7 +95,7 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose }: TourWelco
                         onClick={onClose}
                         className="w-full py-3 bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium text-sm transition-colors flex items-center justify-center gap-1 hover:bg-gray-100/50 dark:hover:bg-slate-800/50 rounded-xl"
                     >
-                        <span>تخطي الآن</span>
+                        <span>{t.tourSkipAction}</span>
                         <X size={16} />
                     </button>
                 </div>

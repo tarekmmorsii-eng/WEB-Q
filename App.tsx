@@ -32,6 +32,7 @@ import TourClickOverlay from './components/TourClickOverlay';
 import PrayerModeButton from './components/PrayerModeButton';
 import FullscreenExitButton from './components/FullscreenExitButton';
 import SplashScreen from './components/SplashScreen';
+import LanguageSelection from './components/LanguageSelection';
 import { ViewMode, LocationData, VerseBookmark, Ayah, PageData, NotificationItem, MemorizationRating, SurahRating, AppSettings } from './types';
 import { fetchPage, getAyahPage } from './services/quranService';
 import { getAyahText } from './utils/ayahTextHelper';
@@ -153,6 +154,7 @@ export default function App() {
   });
 
   const t = translations[settings.language as Language] || translations['ar'];
+  const isRTL = t.dir === 'rtl';
 
   useEffect(() => {
     localStorage.setItem('quran_app_settings', JSON.stringify(settings));
@@ -169,7 +171,10 @@ export default function App() {
     root.style.setProperty('--bg-primary', theme.colors.background);
     root.style.setProperty('--text-primary', theme.colors.text);
 
-  }, [settings]);
+    // Set direction and language metadata
+    root.setAttribute('dir', t.dir);
+    root.setAttribute('lang', settings.language);
+  }, [settings, t]);
 
   // Force disable window scrolling programmatically (except in landscape for scrolling)
   useEffect(() => {
@@ -213,6 +218,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [showLanguageSelection, setShowLanguageSelection] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('quran_last_page', currentPage.toString());
@@ -764,11 +770,16 @@ export default function App() {
   // Check for First Time User
   useEffect(() => {
     const hasSeenTour = localStorage.getItem('hasSeenTour');
-    if (!hasSeenTour) {
+    const langSelected = localStorage.getItem('quran_language_selected');
+    
+    // Only show tour welcome if user has already selected a language 
+    // and hasn't seen the tour yet, AND the language selection screen isn't active
+    if (!hasSeenTour && langSelected && !showLanguageSelection) {
       // Delay slightly to let app load
-      setTimeout(() => setShowTourWelcome(true), 1500);
+      const timer = setTimeout(() => setShowTourWelcome(true), 1000);
+      return () => clearTimeout(timer);
     }
-  }, []);
+  }, [showLanguageSelection]);
 
   const handleStartTour = () => {
     setShowTourWelcome(false);
@@ -799,7 +810,7 @@ export default function App() {
       setShowUi(true);
       if (timerRef.current) clearTimeout(timerRef.current);
 
-      startTour(0, () => {
+      startTour(t, 0, () => {
         setIsTourActive(false);
         // Resume normal auto-hide behavior after tour ends
         handleUiInteraction();
@@ -822,7 +833,7 @@ export default function App() {
       setShowUi(true);
       if (timerRef.current) clearTimeout(timerRef.current);
 
-      startTour(0, () => {
+      startTour(t, 0, () => {
         setIsTourActive(false);
         handleUiInteraction();
       });
@@ -1713,7 +1724,30 @@ export default function App() {
       >
         <FeedbackModal />
 
-        {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+        {showSplash && (
+          <SplashScreen
+            onFinish={() => {
+              setShowSplash(false);
+              const langSelected = localStorage.getItem('quran_language_selected');
+              if (!langSelected) {
+                setShowLanguageSelection(true);
+              }
+            }}
+          />
+        )}
+
+        {showLanguageSelection && (
+          <LanguageSelection
+            onSelect={(lang) => {
+              setSettings(prev => ({ ...prev, language: lang }));
+              localStorage.setItem('quran_language_selected', 'true');
+              setShowLanguageSelection(false);
+              
+              // If it's the first time, we might also want to trigger the tour welcome
+              // but the tour welcome already has its own logic based on 'hasSeenTour'
+            }}
+          />
+        )}
 
         {/* Main Content hidden while splash is showing to prevent flash? Optional. 
           For now we overlay it. */}
@@ -1722,11 +1756,12 @@ export default function App() {
           currentMode={viewMode}
           setMode={handleSetMode}
           toggleState={toggleState}
-          isVisible={showUi}  // ربط مع showUi ليختفي مع البار السفلي على الموبايل/تابلت
+          isVisible={showUi}
           onInteraction={handleUiInteraction}
           onMouseEnter={handleMouseEnterUi}
           onMouseLeave={handleMouseLeaveUi}
           t={t}
+          isRTL={isRTL}
         />
 
         <main
@@ -1760,6 +1795,8 @@ export default function App() {
                 <div className="min-h-full flex flex-col flex-1 transition-all duration-500 quran-swiper-container w-full h-full">
                   {swiperReady && (
                     <Swiper
+                      key={`swiper-mushaf-${settings.language}`}
+                      dir="rtl"
                       modules={SWIPER_MODULES}
                       onSwiper={handleOnSwiper}
                       onSlideChangeTransitionEnd={handleSwiperSlideChange}
@@ -1889,12 +1926,17 @@ export default function App() {
         <div
           id="navigation-bar"
           className={clsx(
-            "fixed bottom-0 left-0 right-0 lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-20 border-t lg:border-t-0 lg:border-l p-3 flex lg:flex-col items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] lg:shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)] z-[60] transition-all duration-500 ease-in-out",
-            "lg:!right-0 lg:!left-auto",
+            "fixed bottom-0 left-0 right-0 z-[60] border-t p-3 flex items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-all duration-500 ease-in-out",
+            // Desktop: sidebar on right for LTR, left for RTL
+            isRTL
+              ? "lg:top-0 lg:left-0 lg:bottom-0 lg:right-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-r lg:shadow-[4px_0_6px_-1px_rgba(0,0,0,0.1)]"
+              : "lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-l lg:shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)]",
             settings.bottomBar.showPageNavigation ? "justify-between lg:justify-center" : "justify-center",
             showUi
               ? "translate-y-0 opacity-100 lg:translate-x-0"
-              : "translate-y-full opacity-0 lg:translate-y-0 lg:translate-x-full lg:opacity-0 pointer-events-none"
+              : isRTL
+                ? "translate-y-full opacity-0 lg:translate-y-0 lg:-translate-x-full lg:opacity-0 pointer-events-none"
+                : "translate-y-full opacity-0 lg:translate-y-0 lg:translate-x-full lg:opacity-0 pointer-events-none"
           )}
           style={{
             backgroundColor: currentTheme.colors.cardBg,
@@ -1915,68 +1957,29 @@ export default function App() {
             </button>
           )}
 
-          <div className="flex lg:flex-col gap-3 sm:gap-6 lg:gap-6 items-center">
-            {settings.bottomBar.showIndex && (
+          <div className={clsx("flex lg:flex-col gap-3 sm:gap-6 lg:gap-6 items-center", isRTL && "flex-row-reverse lg:flex-col")}>
+            <button
+              id="tour-settings-btn"
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors relative"
+            >
+              {hasAppUpdate && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 animate-pulse z-10" />
+              )}
+              <SettingsIcon size={20} />
+              <span className="text-[10px]">{t.settings}</span>
+            </button>
+
+            <BottomBarFeedbackButton t={t} />
+
+            {settings.bottomBar.showFullscreen && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
               <button
-                onClick={() => setIsIndexOpen(true)}
+                onClick={toggleFullScreen}
                 className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                title={isFullscreen ? t.exitFullscreen : t.fullscreen}
               >
-                <Menu size={20} />
-                <span className="text-[10px]">{t.index}</span>
-              </button>
-            )}
-
-            {settings.bottomBar.showSearch && (
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-              >
-                <Search size={20} />
-                <span className="text-[10px]">{t.search}</span>
-              </button>
-            )}
-
-            {settings.bottomBar.showMemorization && (
-              <button
-                onClick={() => setIsMemorizationStatsOpen(true)}
-                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-              >
-                <BarChart3 size={20} />
-                <span className="text-[10px]">{t.memorizationStats}</span>
-              </button>
-            )}
-
-            {settings.bottomBar.showNotifications && (
-              <button
-                onClick={() => setIsNotificationOpen(true)}
-                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-              >
-                <Bell size={20} />
-                <span className="text-[10px]">{t.notifications}</span>
-              </button>
-            )}
-
-            {settings.bottomBar.showDarkMode && (
-              <button
-                onClick={toggleDarkMode}
-                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-              >
-                {currentTheme.isDark ? <Sun size={20} /> : <Moon size={20} />}
-                <span className="text-[10px]">{currentTheme.isDark ? t.lightMode : t.darkMode}</span>
-              </button>
-            )}
-
-
-            {settings.bottomBar.showBookmark && (
-              <button
-                onClick={togglePageBookmark}
-                className={clsx(
-                  "flex flex-col items-center transition-colors",
-                  isPageBookmarked ? "text-amber-600 dark:text-amber-500" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
-                )}
-              >
-                <Bookmark size={20} fill={isPageBookmarked ? "currentColor" : "none"} />
-                <span className="text-[10px]">{t.bookmark}</span>
+                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                <span className="text-[10px]">{isFullscreen ? t.minimize : t.fullscreen}</span>
               </button>
             )}
 
@@ -1993,31 +1996,68 @@ export default function App() {
               </button>
             )}
 
-            {settings.bottomBar.showFullscreen && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
+            {settings.bottomBar.showBookmark && (
               <button
-                onClick={toggleFullScreen}
-                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                title={isFullscreen ? t.exitFullscreen : t.fullscreen}
+                onClick={togglePageBookmark}
+                className={clsx(
+                  "flex flex-col items-center transition-colors",
+                  isPageBookmarked ? "text-amber-600 dark:text-amber-500" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
+                )}
               >
-                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-                <span className="text-[10px]">{isFullscreen ? t.minimize : t.fullscreen}</span>
+                <Bookmark size={20} fill={isPageBookmarked ? "currentColor" : "none"} />
+                <span className="text-[10px]">{t.bookmark}</span>
               </button>
             )}
 
-            <BottomBarFeedbackButton t={t} />
+            {settings.bottomBar.showDarkMode && (
+              <button
+                onClick={toggleDarkMode}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                {currentTheme.isDark ? <Sun size={20} /> : <Moon size={20} />}
+                <span className="text-[10px]">{currentTheme.isDark ? t.lightMode : t.darkMode}</span>
+              </button>
+            )}
 
-            <button
-              id="tour-settings-btn"
-              onClick={() => setIsSettingsOpen(true)}
-              className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors relative"
-            >
-              {hasAppUpdate && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 animate-pulse z-10" />
-              )}
-              <SettingsIcon size={20} />
-              <span className="text-[10px]">{t.settings}</span>
+            {settings.bottomBar.showNotifications && (
+              <button
+                onClick={() => setIsNotificationOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <Bell size={20} />
+                <span className="text-[10px]">{t.notifications}</span>
+              </button>
+            )}
 
-            </button>
+            {settings.bottomBar.showMemorization && (
+              <button
+                onClick={() => setIsMemorizationStatsOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <BarChart3 size={20} />
+                <span className="text-[10px]">{t.memorizationStats}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showSearch && (
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <Search size={20} />
+                <span className="text-[10px]">{t.search}</span>
+              </button>
+            )}
+
+            {settings.bottomBar.showIndex && (
+              <button
+                onClick={() => setIsIndexOpen(true)}
+                className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <Menu size={20} />
+                <span className="text-[10px]">{t.index}</span>
+              </button>
+            )}
           </div>
 
           {settings.bottomBar.showPageNavigation && (
@@ -2038,15 +2078,22 @@ export default function App() {
                 id="prev-page-btn"
                 onClick={handlePrevPage}
                 disabled={currentPage <= 1}
-                className="hidden lg:flex fixed right-24 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0"
+                className={clsx(
+                  "hidden lg:flex fixed top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0",
+                  "left-6" // Always on left for Mushaf 'Previous' (going right)
+                )}
               >
                 <ChevronRight size={32} />
               </button>
 
               <button
+                id="next-page-btn"
                 onClick={handleNextPage}
                 disabled={currentPage >= TOTAL_PAGES}
-                className="hidden lg:flex fixed left-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0"
+                className={clsx(
+                  "hidden lg:flex fixed top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0",
+                  "right-24" // Always on right for Mushaf 'Next' (going left)
+                )}
               >
                 <ChevronLeft size={32} />
               </button>
@@ -2142,7 +2189,9 @@ export default function App() {
           onOpenHelp={handleOpenHelpFromSideMenu}
           isVisible={showUi}
           isEnabled={settings.bottomBar.showSideMenu !== false}
+          isRTL={isRTL}
         />
+
 
         {
           ratingModalData && (
@@ -2335,11 +2384,13 @@ export default function App() {
           isOpen={showTourWelcome}
           onStart={handleStartTour}
           onClose={handleCloseTourWelcome}
+          t={t}
         />
 
         <TourClickOverlay
           isOpen={showTourClickOverlay}
           onComplete={handleClickTutorialComplete}
+          t={t}
         />
 
         <HowToUseGuide

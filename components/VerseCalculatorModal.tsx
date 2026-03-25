@@ -270,7 +270,7 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
                                 >
                                     {SURAHS.map(s => (
                                         <option key={s.number} value={s.number}>
-                                            {currentLanguage === 'ar' ? `${s.number}. ${s.name}` : `${s.number}. ${s.name}`}
+                                            {s.number}. {currentLanguage === 'ar' ? s.name : trans.surahNames[s.number - 1]}
                                         </option>
                                     ))}
                                 </select>
@@ -300,7 +300,7 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
                                     {/* Only show Surahs starting from current Start Surah */}
                                     {SURAHS.slice(startSurah - 1).map(s => (
                                         <option key={s.number} value={s.number}>
-                                            {currentLanguage === 'ar' ? `${s.number}. ${s.name}` : `${s.number}. ${s.name}`}
+                                            {s.number}. {currentLanguage === 'ar' ? s.name : trans.surahNames[s.number - 1]}
                                         </option>
                                     ))}
                                 </select>
@@ -340,7 +340,7 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
                                 </h3>
                                 {isValid && SURAHS[startSurah - 1] && SURAHS[endSurah - 1] && (
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                        {t.surah} {SURAHS[startSurah - 1].name} ({startAyah}) - {SURAHS[endSurah - 1].name} ({endAyah})
+                                        {t.surah} {currentLanguage === 'ar' ? SURAHS[startSurah - 1].name : trans.surahNames[startSurah - 1]} ({startAyah}) - {currentLanguage === 'ar' ? SURAHS[endSurah - 1].name : trans.surahNames[endSurah - 1]} ({endAyah})
                                     </p>
                                 )}
                             </div>

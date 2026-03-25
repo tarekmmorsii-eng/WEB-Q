@@ -33,9 +33,10 @@ interface HeaderProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   t: Translations;
+  isRTL?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVisible, onInteraction, onMouseEnter, onMouseLeave, t }) => {
+const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVisible, onInteraction, onMouseEnter, onMouseLeave, t, isRTL = false }) => {
   const [openDropdown, setOpenDropdown] = useState<ViewMode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { openFeedback } = useFeedback();
@@ -131,7 +132,8 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
     <div
       ref={containerRef}
       className={clsx(
-        "fixed top-0 left-0 right-0 lg:right-20 z-50 bg-white dark:bg-slate-900 shadow-md border-b border-amber-200 dark:border-slate-700 transition-all duration-500 ease-in-out",
+        "fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 shadow-md border-b border-amber-200 dark:border-slate-700 transition-all duration-500 ease-in-out",
+        isRTL ? "lg:left-20" : "lg:right-20",
         isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
       )}
       onTouchStart={onInteraction}
@@ -139,13 +141,13 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
       onMouseLeave={onMouseLeave}
     >
       <div className="grid grid-cols-6 gap-1 p-2 max-w-4xl mx-auto">
-        {/* Beta Badge - Absolute Left on Desktop, Relative on Mobile */}
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden lg:block">
+        {/* Beta Badge - Absolute Left on Desktop (RTL: right), Relative on Mobile */}
+        <div className={clsx("absolute top-1/2 -translate-y-1/2 hidden lg:block", isRTL ? "right-4" : "left-4")}>
           <BetaBadge onClick={() => openFeedback('bug_tech')} />
         </div>
 
         {/* Mobile Beta Badge (Small) */}
-        <div className="lg:hidden absolute left-2 top-2 z-50">
+        <div className={clsx("lg:hidden absolute top-2 z-50", isRTL ? "right-2" : "left-2")}>
           <BetaBadge className="scale-75 origin-top-left" onClick={() => openFeedback('bug_tech')} />
         </div>
 

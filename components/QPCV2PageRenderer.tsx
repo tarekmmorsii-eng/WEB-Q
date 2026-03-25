@@ -1203,7 +1203,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     position: 'relative',
                     zIndex: 10,
                     backgroundColor: 'transparent',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    direction: 'rtl'
                 }}
             >
                 {(() => {

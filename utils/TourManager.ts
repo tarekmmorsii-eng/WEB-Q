@@ -1,5 +1,6 @@
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
+import { Translations } from "../i18n/translations";
 
 // Helper function to hide/show the line under the ayah number
 const toggleAyahUnderline = (show: boolean) => {
@@ -78,7 +79,7 @@ const cycleMutashabihatColors = () => {
     };
 };
 
-export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
+export const startTour = (t: Translations, stepIndex: number = 0, onExit?: () => void) => {
     const driverObj = driver({
         showProgress: false,
         animate: true,
@@ -86,162 +87,180 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
             {
                 element: '#tour-btn-SHOW_ALL',
                 popover: {
-                    title: 'إظهار الكل',
-                    description: 'انقر هنا لعرض محتوى الصفحة كاملاً، وإلغاء أي إخفاء مفعّل للآيات أو الكلمات.',
+                    title: t.tourShowAllTitle,
+                    description: t.tourShowAllDesc,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'close'],
-                    nextBtnText: 'التالي',
+                    nextBtnText: t.tourNext,
                 }
             },
             {
                 element: '#tour-btn-HIDE_ALL_AYAHS',
                 popover: {
-                    title: 'إخفاء الكل',
-                    description: `انقر هنا لحجب محتوى الصفحة بالكامل، مع خيارات مرنة للإظهار عند النقر على الآية للمراجعة:
-• إظهار الآية حتى رقمها
-• إظهار الآية حتى أقرب علامة وقف`,
+                    title: t.tourHideAllTitle,
+                    description: t.tourHideAllDesc,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-btn-HIDE_RANDOM_AYAHS',
                 popover: {
-                    title: 'إخفاء الآيات',
-                    description: `انقر هنا لإخفاء آيات محددة من الصفحة وفق عدة معايير متقدمة لاختبار الحفظ:
-• إخفاء عشوائي للآيات
-• إخفاء الآيات المصنفة:
-  🔴 ضعيفة الحفظ
-  🟡 متوسطة الحفظ
-  🟢 جيدة الحفظ
-• إخفاء الآيات غير المصنفة مسبقاً`,
+                    title: t.tourHideAyahsTitle,
+                    description: `
+<div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="line-height: 1.5;">${t.tourHideAyahsDescText}</div>
+    <ul style="margin: 0; padding-inline-start: 20px; list-style-type: disc;">
+        <li style="margin-bottom: 4px;">${t.randomHidden}</li>
+        <li style="margin-bottom: 4px;">${t.hideRatedVerses}
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; margin-bottom: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 14px; height: 14px; border-radius: 50%; background: #ef4444; border: 1px solid #dc2626; flex-shrink: 0;"></div>
+                    <span>${t.tourWeak}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 14px; height: 14px; border-radius: 50%; background: #eab308; border: 1px solid #ca8a04; flex-shrink: 0;"></div>
+                    <span>${t.tourMedium}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 14px; height: 14px; border-radius: 50%; background: #22c55e; border: 1px solid #16a34a; flex-shrink: 0;"></div>
+                    <span>${t.tourGood}</span>
+                </div>
+            </div>
+        </li>
+        <li style="margin-top: 8px;">${t.notRated}</li>
+    </ul>
+</div>`,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-btn-HIDE_RANDOM_WORDS',
                 popover: {
-                    title: 'إخفاء الكلمات',
-                    description: `انقر هنا للتحكم في حجب كلمات محددة داخل الصفحة لتعزيز التركيز:
-• إخفاء عشوائي للكلمات
-• إخفاء كافة الكلمات في الصفحة`,
+                    title: t.tourHideWordsTitle,
+                    description: t.tourHideWordsDesc,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-btn-TOGGLE_FIRST_WORD',
                 popover: {
-                    title: 'الكلمة الأولى',
-                    description: `(مفاتيح الآيات)
-
-التحكم في حالة (الكلمة الأولى) من كل آية في الصفحة لترسيخ بدايات الآيات:
-• إخفاء الكلمة الأولى
-• إظهار الكلمة الأولى`,
+                    title: t.tourFirstWordTitle,
+                    description: t.tourFirstWordDesc,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-btn-TOGGLE_LAST_WORD',
                 popover: {
-                    title: 'الكلمة الأخيرة',
-                    description: `(خواتيم الآيات)
-
-التحكم في حالة (الكلمة الأخيرة) من كل آية في الصفحة لضبط نهايات الآيات:
-• إخفاء الكلمة الأخيرة
-• إظهار الكلمة الأخيرة`,
+                    title: t.tourLastWordTitle,
+                    description: t.tourLastWordDesc,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-surah-name',
                 popover: {
-                    title: 'اسم السورة',
-                    description: `انقر على اسم السورة للوصول إلى ميزات متقدمة:
-• قيّم مستوى حفظك للسورة بالكامل
-• قيّم مجموعة من الآيات في السورة بنفس التقييم مرة واحدة`,
+                    title: t.tourSurahNameTitle,
+                    description: t.tourSurahNameDesc,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-ayah-number',
                 popover: {
-                    title: 'رقم الآية',
-                    description: `انقر على رقم الآية للوصول إلى ميزات متقدمة:
-• تقييم قوة الحفظ:
-  🔴 ضعيف
-  🟡 متوسط
-  🟢 جيد
-• إضافة علامة مرجعية للآية
-• عرض المتشابهات مع الآية`,
+                    title: t.tourAyahNumberTitle,
+                    description: `
+<div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="line-height: 1.5;">${t.tourAyahNumberDescText || 'انقر على رقم الآية للوصول إلى الميزات المتقدمة:'}</div>
+    <ul style="margin: 0; padding-inline-start: 20px; list-style-type: disc;">
+        <li style="margin-bottom: 4px;">${t.tourAssessment || 'تصنيف قوة الحفظ:'}
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; margin-bottom: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 14px; height: 14px; border-radius: 50%; background: #ef4444; border: 1px solid #dc2626; flex-shrink: 0;"></div>
+                    <span>${t.tourWeak}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 14px; height: 14px; border-radius: 50%; background: #eab308; border: 1px solid #ca8a04; flex-shrink: 0;"></div>
+                    <span>${t.tourMedium}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 14px; height: 14px; border-radius: 50%; background: #22c55e; border: 1px solid #16a34a; flex-shrink: 0;"></div>
+                    <span>${t.tourGood}</span>
+                </div>
+            </div>
+        </li>
+        <li style="margin-top: 8px;">${t.tourBookmark || 'إضافة إشارة مرجعية للآية'}</li>
+        <li style="margin-top: 4px;">${t.tourViewMutashabihat || 'مشاهدة المتشابهات مع الآية'}</li>
+    </ul>
+</div>`,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-ayah-number',
                 popover: {
-                    title: 'ألوان تقييم الحفظ 🎨',
-                    description: `<div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
-    <div style="font-size: 0.95em; color: #cbd5e1;">يتغيّر لون رقم الآية بحسب مستوى الحفظ الذي تحدّده لنفسك عند الضغط علي رقم الايه:</div>
+                    title: t.tourAyahColorsTitle,
+                    description: `
+<div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+    <div style="font-size: 0.95em; color: #cbd5e1; line-height: 1.4;">${t.tourAyahColorsDescText}</div>
     
     <div style="display: flex; justify-content: space-around; align-items: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-        <!-- Weak -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
             <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.2); border: 2px solid #ef4444; display: flex; align-items: center; justify-content: center; position: relative;">
-                 <span style="color: #ef4444; font-size: 18px; font-weight: bold;">١</span>
+                 <span style="color: #ef4444; font-size: 18px; font-weight: bold;">🔴</span>
             </div>
-            <span style="font-size: 0.8em; color: #ef4444;">ضعيف</span>
+            <span style="font-size: 0.8em; color: #ef4444; text-align: center;">${t.tourWeak}</span>
         </div>
         
-        <!-- Medium -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
             <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(234, 179, 8, 0.2); border: 2px solid #eab308; display: flex; align-items: center; justify-content: center; position: relative;">
-                 <span style="color: #eab308; font-size: 18px; font-weight: bold;">٢</span>
+                 <span style="color: #eab308; font-size: 18px; font-weight: bold;">🟡</span>
             </div>
-            <span style="font-size: 0.8em; color: #eab308;">متوسط</span>
+            <span style="font-size: 0.8em; color: #eab308; text-align: center;">${t.tourMedium}</span>
         </div>
 
-        <!-- Good -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
             <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(34, 197, 94, 0.2); border: 2px solid #22c55e; display: flex; align-items: center; justify-content: center; position: relative;">
-                 <span style="color: #22c55e; font-size: 18px; font-weight: bold;">٣</span>
+                 <span style="color: #22c55e; font-size: 18px; font-weight: bold;">🟢</span>
             </div>
-            <span style="font-size: 0.8em; color: #22c55e;">جيد</span>
+            <span style="font-size: 0.8em; color: #22c55e; text-align: center;">${t.tourGood}</span>
         </div>
     </div>
 </div>`,
                     side: "bottom",
                     align: 'start',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 },
                 onHighlightStarted: () => {
                     // Hide the underline for valid visual
@@ -264,31 +283,29 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
             {
                 element: '#tour-ayah-number',
                 popover: {
-                    title: 'تنبيهات المتشابهات',
-                    description: `<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
-    <div style="font-size: 0.85em; color: #cbd5e1;">يظهر خط ملوّن أسفل رقم الآية للدلالة على المتشابهات:</div>
+                    title: t.tourMutashabihatTitle,
+                    description: `
+<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+    <div style="font-size: 0.85em; color: #cbd5e1; line-height: 1.4;">${t.tourMutashabihatDescText}</div>
     
     <div style="display: flex; justify-content: space-around; align-items: flex-start; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px;">
-        <!-- Inside -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 33%;">
             <div style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 50%; border: 1px solid #fbbf24;">
-                 <span style="font-size: 12px; font-weight: bold; color: #fbbf24;">١</span>
+                 <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">1</span>
                  <div style="position: absolute; bottom: -2px; left: 15%; right: 15%; height: 2px; background-color: #22c55e; border-radius: 2px;"></div>
             </div>
         </div>
         
-        <!-- Outside -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 33%;">
             <div style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 50%; border: 1px solid #fbbf24;">
-                 <span style="font-size: 12px; font-weight: bold; color: #fbbf24;">٢</span>
+                 <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">1</span>
                  <div style="position: absolute; bottom: -2px; left: 15%; right: 15%; height: 2px; background-color: #ef4444; border-radius: 2px;"></div>
             </div>
         </div>
 
-        <!-- Both -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 33%;">
             <div style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 50%; border: 1px solid #fbbf24;">
-                 <span style="font-size: 12px; font-weight: bold; color: #fbbf24;">٣</span>
+                 <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">1</span>
                  <div style="position: absolute; bottom: -2px; left: 15%; width: 35%; height: 2px; background-color: #22c55e; border-radius: 2px 0 0 2px;"></div>
                  <div style="position: absolute; bottom: -2px; right: 15%; width: 35%; height: 2px; background-color: #ef4444; border-radius: 0 2px 2px 0;"></div>
             </div>
@@ -296,16 +313,16 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
     </div>
     
     <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75em; color: #94a3b8; line-height: 1.3; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; justify-content: center;">
-        <span><span style="color: #22c55e;">●</span> نفس السورة</span>
-        <span><span style="color: #ef4444;">●</span> سور أخرى</span>
-        <span><span style="color: #fbbf24;">●</span> كلاهما</span>
+        <span style="display: flex; align-items: center; gap: 4px;"><span style="color: #22c55e;">● </span> ${t.tourSameSurah}</span>
+        <span style="display: flex; align-items: center; gap: 4px;"><span style="color: #ef4444;">● </span> ${t.tourOtherSurahs}</span>
+        <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: linear-gradient(90deg, #22c55e 50%, #ef4444 50%); display: inline-block;"></span> ${t.tourBoth}</span>
     </div>
 </div>`,
                     side: "bottom",
                     align: 'center',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 },
                 onHighlightStarted: () => {
                     // 1. Cleanup previous step (Ayah Number Colors) if active
@@ -336,34 +353,34 @@ export const startTour = (stepIndex: number = 0, onExit?: () => void) => {
             {
                 element: '#tour-word-long-press',
                 popover: {
-                    title: 'الضغط المطوّل',
-                    description: `اضغط مطولاً على أي كلمة لسماع نطقها الصوتي 🔊 ومعرفة معناها 📖 في نافذة منبثقة.`,
+                    title: t.tourLongPressTitle,
+                    description: t.tourLongPressDesc,
                     side: "bottom",
                     align: 'center',
                     showButtons: ['next', 'previous', 'close'],
-                    nextBtnText: 'التالي',
-                    prevBtnText: 'السابق',
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
                 }
             },
             {
                 element: '#tour-settings-btn',
                 popover: {
-                    title: 'المزيد من المزايا بانتظارك!',
-                    description: '<span style="color: #ffffff; font-size: 1.25rem; font-weight: bold;">استكشف باقي الأدوات في قائمة الإعدادات</span>',
+                    title: t.tourMoreFeaturesTitle,
+                    description: t.tourMoreFeaturesDesc,
                     side: "top",
                     align: 'center',
                     showButtons: ['previous', 'next', 'close'],
-                    prevBtnText: 'السابق',
-                    nextBtnText: 'إنهاء',
-                    doneBtnText: 'إنهاء',
+                    prevBtnText: t.tourPrevious,
+                    nextBtnText: t.tourFinish,
+                    doneBtnText: t.tourFinish,
                 }
             }
         ],
-        nextBtnText: 'التالي',
-        prevBtnText: 'السابق',
-        doneBtnText: 'إنهاء',
+        nextBtnText: t.tourNext,
+        prevBtnText: t.tourPrevious,
+        doneBtnText: t.tourFinish,
         // @ts-ignore
-        closeBtnText: 'إنهاء',
+        closeBtnText: t.tourFinish,
         allowClose: true,
         overlayColor: 'rgba(15, 23, 42, 0.4)',
         disableActiveInteraction: false,

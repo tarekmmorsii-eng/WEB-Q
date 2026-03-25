@@ -23,8 +23,8 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
     const slides = [
         {
             id: 0,
-            title: language === 'ar' ? "فيديو تعليمي (الجزء الأول)" : "Tutorial Video (Part 1)",
-            description: language === 'ar' ? "شاهد فيديو توضيحي لكيفية استخدام أهم مميزات مصحف المراجعة." : "Watch a video demonstrating how to use the most important features of My Quran.",
+            title: t.tutorialVideoTitle,
+            description: t.tutorialVideoDesc,
             icon: PlayCircle,
             color: "bg-red-600",
             image: "/logo_splash.png",
