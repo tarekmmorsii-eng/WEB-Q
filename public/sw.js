@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Native Service Worker - Quran App
  * Strategy: Manual Control
  * 1. Fonts -> Stale-While-Revalidate (Fast render + Background update)
@@ -92,8 +92,8 @@ async function cacheAllDataSafely(reportProgress = false) {
 
         if (!reportProgress) {
             const fontKeys = await fontCache.keys();
-            if (fontKeys.length > 600) {
-                console.log('[SW] ✅ Data appears to be cached. Skipping background download.');
+            if (fontKeys.length >= 607) {
+                console.log('[SW] ✅ Data appears to be fully cached. Skipping background download.');
                 return;
             }
         } else {
@@ -111,11 +111,26 @@ async function cacheAllDataSafely(reportProgress = false) {
             });
             // Task 2: Page Font
             queue.push({
-                url: `/fonts/p${p}.woff2`,
+                url: `/fonts/v2/p${p}.woff2`,
                 cache: fontCache,
                 page: p
             });
         }
+
+        // Task 3: Baseline Fonts (Critical for UI rendering)
+        const baselineFonts = [
+            '/fonts/ArbFONTS-DTHULUTH-II.ttf',
+            '/fonts/arfonts-almarai-bold/almarai-bold.ttf',
+            '/fonts/KFGQPC_UthmaniHafs_08.ttf'
+        ];
+
+        baselineFonts.forEach(fontUrl => {
+            queue.push({
+                url: fontUrl,
+                cache: fontCache,
+                page: 0 // Baseline fonts don't belong to a specific page
+            });
+        });
 
         const totalTasks = queue.length;
         let completedTasks = 0;
@@ -150,11 +165,11 @@ async function cacheAllDataSafely(reportProgress = false) {
                     // Report progress per page completion roughly
                     if (reportProgress) {
                         const currentPage = Math.floor((completedTasks / totalTasks) * totalPages);
-                        if (currentPage > lastReportedPage) {
+                        if (currentPage > lastReportedPage || completedTasks === totalTasks) {
                             lastReportedPage = currentPage;
                             sendMessageToClients({
                                 type: 'DOWNLOAD_PROGRESS',
-                                count: currentPage,
+                                count: Math.min(currentPage, totalPages),
                                 total: totalPages
                             });
                         }

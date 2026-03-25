@@ -91,7 +91,12 @@ export function useOfflineManager(currentLanguage: Language): OfflineManagerStat
                     if (fontCache) {
                         const cache = await caches.open(fontCache);
                         const reqs = await cache.keys();
-                        if (reqs.length > 600) {
+                        
+                        // Check for at least one critical baseline font to ensure download was complete
+                        const hasBaseline = reqs.some(r => r.url.includes('KFGQPC_UthmaniHafs_08.ttf'));
+                        
+                        // 604 pages + 3 baseline fonts = 607 minimum for a perfect download
+                        if (reqs.length >= 604 && hasBaseline) {
                             setHasOfflineData(true);
                         }
                     }
