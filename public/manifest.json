@@ -15,25 +15,25 @@
     ],
     "icons": [
         {
-            "src": "https://mushafalmurajaa.com/mushaf_logo_v2.png?v=2",
+            "src": "/mushaf_logo_v2.png?v=2",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "https://mushafalmurajaa.com/mushaf_logo_v2.png?v=2",
+            "src": "/mushaf_logo_v2.png?v=2",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "https://mushafalmurajaa.com/mushaf_logo_v2.png?v=2",
+            "src": "/mushaf_logo_v2.png?v=2",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "https://mushafalmurajaa.com/mushaf_logo_v2.png?v=2",
+            "src": "/mushaf_logo_v2.png?v=2",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"

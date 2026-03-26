@@ -111,10 +111,19 @@ export function useOfflineManager(currentLanguage: Language): OfflineManagerStat
 
     const handleInstallApp = () => {
         if (!installPrompt) {
-            // If prompt is missing, show a hint
-            alert(currentLanguage === 'ar'
-                ? 'عذراً، لا يمكن بدء التثبيت تلقائياً في هذا المتصفح. يرجى استخدام قائمة المتصفح (الثلاث نقاط) واختيار "إضافة إلى الشاشة الرئيسية".'
-                : 'Sorry, installation cannot be started automatically in this browser. Please use your browser menu (three dots) and select "Add to Home Screen".');
+            // Check for iOS / Safari which don't support beforeinstallprompt
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+            if (isiOS || isSafari) {
+                alert(currentLanguage === 'ar'
+                    ? 'لتثبيت التطبيق على جهازك: اضغط على زر "مشاركة" (المربع مع سهم في الأسفل) ثم اختر "إضافة إلى الشاشة الرئيسية" (Add to Home Screen).'
+                    : 'To install on your device: Tap the "Share" button (square with arrow) and select "Add to Home Screen".');
+            } else {
+                alert(currentLanguage === 'ar'
+                    ? 'عذراً، لا يمكن بدء التثبيت تلقائياً الآن. يرجى استخدام قائمة المتصفح (الثلاث نقاط) واختيار "إضافة إلى الشاشة الرئيسية" أو "تثبيت التطبيق".'
+                    : 'Sorry, installation cannot be started automatically right now. Please use your browser menu (three dots) and select "Add to Home Screen" or "Install App".');
+            }
             return;
         }
 

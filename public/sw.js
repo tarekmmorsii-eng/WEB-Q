@@ -30,14 +30,15 @@ self.addEventListener('message', (event) => {
         return;
     }
 
-    if (event.data === 'CACHE_ALL_FONTS') {
-        console.log('[SW] 📥 Received manual download request');
+    if (event.data === 'CACHE_ALL_FONTS' || event.data === 'CHECK_OFFLINE_DATA') {
+        const isManual = event.data === 'CACHE_ALL_FONTS';
+        console.log(`[SW] 📥 Received ${isManual ? 'manual' : 'background'} download check request`);
         // Prevent multiple concurrent downloads
         if (currentDownloadPromise) {
             console.log('[SW] ⏳ Download already in progress, ignoring duplicate request.');
             return;
         }
-        currentDownloadPromise = cacheAllDataSafely(true).finally(() => {
+        currentDownloadPromise = cacheAllDataSafely(isManual).finally(() => {
             currentDownloadPromise = null;
         });
         // Wrap with event.waitUntil to prevent the browser from terminating the SW midway
