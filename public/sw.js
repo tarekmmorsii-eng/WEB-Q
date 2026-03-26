@@ -80,15 +80,42 @@ self.addEventListener('activate', (event) => {
 });
 
 // ---------------------------
-// Helper: Cache All Data Safely (Pool-based with Timeouts)
+// Helper: Fetch with Retry
+// ---------------------------
+async function fetchWithRetry(url, options = {}, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (res.ok) return res;
+            throw new Error(`Status ${res.status}`);
+        } catch (err) {
+            if (i === retries - 1) throw err;
+            console.warn(`[SW] Retry ${i + 1} for ${url}`);
+            await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential-ish backoff
+        }
+    }
+}
+
+// ---------------------------
+// Helper: Cache All Data Safely (Batched + Retries + Verification)
 // ---------------------------
 async function cacheAllDataSafely(reportProgress = false) {
-    console.log(`[SW] 📥 Starting data download process (Manual: ${reportProgress})...`);
+    console.log(`[SW] 📥 Starting robust download process (Manual: ${reportProgress})...`);
 
     try {
         const fontCache = await caches.open(FONTS_CACHE);
         const coreCache = await caches.open(CORE_CACHE);
         const totalPages = 604;
+        
+        // Baseline Fonts
+        const baselineFonts = [
+            '/fonts/ArbFONTS-DTHULUTH-II.ttf',
+            '/fonts/arfonts-almarai-bold/almarai-bold.ttf',
+            '/fonts/KFGQPC_UthmaniHafs_08.ttf'
+        ];
 
         if (!reportProgress) {
             const fontKeys = await fontCache.keys();
@@ -100,91 +127,87 @@ async function cacheAllDataSafely(reportProgress = false) {
             sendMessageToClients({ type: 'DOWNLOAD_START', total: totalPages });
         }
 
-        // Preparation: Create a queue of tasks
-        const queue = [];
-        for (let p = 1; p <= totalPages; p++) {
-            // Task 1: Page JSON
-            queue.push({
-                url: `/data/v2/pages/${p}.json`,
-                cache: coreCache,
-                page: p
-            });
-            // Task 2: Page Font
-            queue.push({
-                url: `/fonts/v2/p${p}.woff2`,
-                cache: fontCache,
-                page: p
-            });
-        }
+        // BATCH PROCESSING
+        const BATCH_SIZE = 50;
+        let successfulTasks = 0;
+        const totalItemsToCache = (totalPages * 2) + baselineFonts.length;
 
-        // Task 3: Baseline Fonts (Critical for UI rendering)
-        const baselineFonts = [
-            '/fonts/ArbFONTS-DTHULUTH-II.ttf',
-            '/fonts/arfonts-almarai-bold/almarai-bold.ttf',
-            '/fonts/KFGQPC_UthmaniHafs_08.ttf'
-        ];
+        for (let i = 1; i <= totalPages; i += BATCH_SIZE) {
+            const end = Math.min(i + BATCH_SIZE - 1, totalPages);
+            const batchQueue = [];
 
-        baselineFonts.forEach(fontUrl => {
-            queue.push({
-                url: fontUrl,
-                cache: fontCache,
-                page: 0 // Baseline fonts don't belong to a specific page
-            });
-        });
+            for (let p = i; p <= end; p++) {
+                batchQueue.push({ url: `/data/v2/pages/${p}.json`, cache: coreCache });
+                batchQueue.push({ url: `/fonts/v2/p${p}.woff2`, cache: fontCache });
+            }
+            
+            // Add baseline fonts to the first batch only
+            if (i === 1) {
+                baselineFonts.forEach(f => batchQueue.push({ url: f, cache: fontCache }));
+            }
 
-        const totalTasks = queue.length;
-        let completedTasks = 0;
-        let lastReportedPage = 0;
+            // Run batch with concurrency
+            const CONCURRENCY = 3;
+            const workers = Array(CONCURRENCY).fill(0).map(async () => {
+                while (batchQueue.length > 0) {
+                    const task = batchQueue.shift();
+                    if (!task) break;
 
-        // Concurrent Worker Pool (Max 3 parallel requests to stay safe on shared hosting)
-        const CONCURRENCY = 3;
-        const workers = Array(CONCURRENCY).fill(0).map(async () => {
-            while (queue.length > 0) {
-                const task = queue.shift();
-                if (!task) break;
-
-                try {
-                    const match = await task.cache.match(task.url);
-                    if (!match) {
-                        // Use a timeout for fetch to prevent infinite hanging
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-                        const res = await fetch(task.url, { signal: controller.signal });
-                        clearTimeout(timeoutId);
-
-                        if (res.status === 200) {
+                    try {
+                        const cached = await task.cache.match(task.url);
+                        if (!cached) {
+                            const res = await fetchWithRetry(task.url);
                             await task.cache.put(task.url, res);
                         }
-                    }
-                } catch (err) {
-                    console.warn(`[SW] Failed to fetch ${task.url}:`, err);
-                    // Silently continue to next task
-                } finally {
-                    completedTasks++;
-                    // Report progress per page completion roughly
-                    if (reportProgress) {
-                        const currentPage = Math.floor((completedTasks / totalTasks) * totalPages);
-                        if (currentPage > lastReportedPage || completedTasks === totalTasks) {
-                            lastReportedPage = currentPage;
-                            sendMessageToClients({
-                                type: 'DOWNLOAD_PROGRESS',
-                                count: Math.min(currentPage, totalPages),
-                                total: totalPages
-                            });
-                        }
+                        successfulTasks++;
+                    } catch (err) {
+                        console.error(`[SW] Failed task ${task.url} after retries:`, err);
                     }
                 }
-            }
-        });
+            });
 
-        await Promise.all(workers);
+            await Promise.all(workers);
+
+            if (reportProgress) {
+                const progressPage = Math.floor((i / totalPages) * totalPages);
+                sendMessageToClients({
+                    type: 'DOWNLOAD_PROGRESS',
+                    count: progressPage,
+                    total: totalPages
+                });
+            }
+        }
+
+        // FINAL VERIFICATION STEP (The "Self-Healing" part)
+        console.log('[SW] 🔍 Starting manifest verification...');
+        let missingCount = 0;
+        for (let p = 1; p <= totalPages; p++) {
+            const jsonExists = await coreCache.match(`/data/v2/pages/${p}.json`);
+            const fontExists = await fontCache.match(`/fonts/v2/p${p}.woff2`);
+            
+            if (!jsonExists || !fontExists) {
+                missingCount++;
+                if (!jsonExists) {
+                    try {
+                        const res = await fetchWithRetry(`/data/v2/pages/${p}.json`);
+                        await coreCache.put(`/data/v2/pages/${p}.json`, res);
+                    } catch (e) {}
+                }
+                if (!fontExists) {
+                    try {
+                        const res = await fetchWithRetry(`/fonts/v2/p${p}.woff2`);
+                        await fontCache.put(`/fonts/v2/p${p}.woff2`, res);
+                    } catch (e) {}
+                }
+            }
+        }
+        console.log(`[SW] Verification complete. Repaired ${missingCount} records.`);
 
         if (reportProgress) {
             sendMessageToClients({ type: 'DOWNLOAD_PROGRESS', count: totalPages, total: totalPages });
             sendMessageToClients({ type: 'DOWNLOAD_COMPLETE' });
         }
-        console.log('[SW] 🎉 Full download finished successfully!');
+        console.log('[SW] 🎉 Full robust download finished successfully!');
 
     } catch (e) {
         console.error('[SW] Fatal error in caching:', e);
