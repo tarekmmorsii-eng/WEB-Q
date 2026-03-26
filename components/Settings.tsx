@@ -31,6 +31,7 @@ interface SettingsProps {
     memorizationRatings?: any[]; // Avoiding circular dependency for now, or use MemorizationRating[] if imported
     onStartInteractiveTour?: () => void;
     highlightHelp?: boolean;
+    highlightOffline?: boolean;
 }
 
 export default function Settings({
@@ -42,7 +43,8 @@ export default function Settings({
     onUpdateApp,
     memorizationRatings = [],
     onStartInteractiveTour,
-    highlightHelp = false
+    highlightHelp = false,
+    highlightOffline = false
 }: SettingsProps) {
     const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
     const t = translations[currentLanguage];
@@ -76,6 +78,23 @@ export default function Settings({
     } = useOfflineManager(currentLanguage);
 
     const helpSectionRef = React.useRef<HTMLDivElement>(null);
+    const offlineSectionRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (isOpen && highlightOffline) {
+            setShowAllSettings(true);
+            setOpenOffline(true);
+            setTimeout(() => {
+                if (offlineSectionRef.current) {
+                    offlineSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    offlineSectionRef.current.classList.add('ring-4', 'ring-red-500/50', 'ring-offset-2', 'dark:ring-offset-slate-900', 'transition-all', 'duration-500', 'rounded-xl');
+                    setTimeout(() => {
+                        offlineSectionRef.current?.classList.remove('ring-4', 'ring-red-500/50', 'ring-offset-2', 'dark:ring-offset-slate-900');
+                    }, 4000);
+                }
+            }, 350);
+        }
+    }, [isOpen, highlightOffline]);
 
     React.useEffect(() => {
         if (isOpen && highlightHelp) {
@@ -103,7 +122,7 @@ export default function Settings({
     React.useEffect(() => {
         if (isOpen) {
             setLocalSettings(settings); // Ensure fresh start
-            if (!highlightHelp) {
+            if (!highlightHelp && !highlightOffline) {
                 setShowAllSettings(false);
             }
         }
@@ -639,7 +658,10 @@ export default function Settings({
 
 
                             {/* Offline Manager - Accordion */}
-                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <section
+                                ref={offlineSectionRef}
+                                className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden transition-all duration-500"
+                            >
                                 <button
                                     onClick={() => setOpenOffline(v => !v)}
                                     className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
@@ -792,23 +814,6 @@ export default function Settings({
                                                 )}
                                             </div>
 
-                                            {/* Separator and Share App Button */}
-                                            <div className="pt-4 mt-2 border-t border-gray-200 dark:border-slate-700">
-                                                <button
-                                                    onClick={handleShareApp}
-                                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98]"
-                                                >
-                                                    <div className="flex flex-col items-start text-right">
-                                                        <span className="font-medium text-gray-900 dark:text-white">
-                                                            {t.shareApp || (currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App')}
-                                                        </span>
-                                                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                            {t.shareAppDesc || (currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends')}
-                                                        </span>
-                                                    </div>
-                                                    <Share2 size={24} className="text-blue-600 dark:text-blue-400" />
-                                                </button>
-                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -913,6 +918,27 @@ export default function Settings({
                             </section>
 
                             {/* Visitor Counter - Inside More Settings */}
+                            {/* Standalone Share App Section */}
+                            <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                <button
+                                    onClick={handleShareApp}
+                                    className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-slate-800 border-2 border-amber-500/20 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98] shadow-sm group"
+                                >
+                                    <div className="flex flex-col items-start text-right">
+                                        <span className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                            <Share2 size={18} className="text-amber-600 dark:text-amber-500" />
+                                            {t.shareApp || (currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App')}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            {t.shareAppDesc || (currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends')}
+                                        </span>
+                                    </div>
+                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-full group-hover:scale-110 transition-transform">
+                                        <Share2 size={24} className="text-amber-600 dark:text-amber-500" />
+                                    </div>
+                                </button>
+                            </section>
+
                             <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
                                 <VisitorCounter t={t} language={currentLanguage} />
 

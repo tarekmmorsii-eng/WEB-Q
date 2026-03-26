@@ -8,6 +8,7 @@ interface FloatingSideMenuProps {
     currentLanguage: Language;
     currentTheme: Theme;
     onOpenHelp: () => void;
+    onOpenOffline: () => void;
     isVisible?: boolean;
     isEnabled?: boolean;
     isRTL?: boolean;
@@ -17,6 +18,7 @@ export default function FloatingSideMenu({
     currentLanguage,
     currentTheme,
     onOpenHelp,
+    onOpenOffline,
     isVisible = true,
     isEnabled = true,
     isRTL = false
@@ -26,20 +28,11 @@ export default function FloatingSideMenu({
         isDownloading,
         hasOfflineData,
         isStandalone,
-        handleInstallApp,
-        handleDownloadAllData,
         handleShareApp
     } = useOfflineManager(currentLanguage);
 
     const handleDownloadClick = () => {
-        // First try to install the app if not installed
-        if (!isStandalone) {
-            handleInstallApp();
-        }
-        // Always try to download mushaf data too if not already downloaded
-        if (!hasOfflineData && !isDownloading) {
-            handleDownloadAllData();
-        }
+        onOpenOffline();
     };
 
     if (!isEnabled) return null;

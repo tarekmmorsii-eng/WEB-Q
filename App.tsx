@@ -264,6 +264,14 @@ export default function App() {
   const [currentMutashabiha, setCurrentMutashabiha] = useState<Mutashabiha | null>(null);
 
   const [highlightSettingsHelp, setHighlightSettingsHelp] = useState(false);
+  const [highlightOffline, setHighlightOffline] = useState(false);
+
+  const handleOpenOfflineSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+    setHighlightOffline(true);
+    // Reset after a delay so it doesn't stay highlighted if closed/reopened
+    setTimeout(() => setHighlightOffline(false), 3000);
+  }, []);
 
   // Initialize unified mutashabihat data ONCE
   const mutashabihatData = useMemo(() => {
@@ -2181,12 +2189,14 @@ export default function App() {
           memorizationRatings={memorizationRatings}
           onStartInteractiveTour={handleStartInteractiveTour}
           highlightHelp={highlightSettingsHelp}
+          highlightOffline={highlightOffline}
         />
 
         <FloatingSideMenu
           currentLanguage={settings.language as Language}
           currentTheme={currentTheme}
           onOpenHelp={handleOpenHelpFromSideMenu}
+          onOpenOffline={handleOpenOfflineSettings}
           isVisible={showUi}
           isEnabled={settings.bottomBar.showSideMenu !== false}
           isRTL={isRTL}
