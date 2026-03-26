@@ -1324,13 +1324,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                             longPressTimerRef.current = setTimeout(() => {
                                                 isLongPressRef.current = true;
 
-                                                const wordId = `${pageNumber}-${word.surah}-${word.ayah}-${word.word}`;
-                                                const ak = `${word.surah}-${word.ayah}`;
+                                                const currentAyahKey = `${word.surah}-${word.ayah}`;
 
                                                 // 1. Reveal Logic (if word is hidden)
                                                 if (shouldHide) {
                                                     // Ayah-based hidden modes
-                                                    const isAyahHiddenMode = (mode === ViewMode.HIDE_RANDOM_AYAHS && randomMasks.has(ak)) || (mode === ViewMode.HIDE_ALL_AYAHS);
+                                                    const isAyahHiddenMode = (mode === ViewMode.HIDE_RANDOM_AYAHS && randomMasks.has(currentAyahKey)) || (mode === ViewMode.HIDE_ALL_AYAHS);
                                                     if (isAyahHiddenMode) {
                                                         toggleReveal(wordId, word.surah, word.ayah);
                                                         if (navigator.vibrate) navigator.vibrate(50);
@@ -1341,14 +1340,18 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                     const isWordHiddenMode = (mode === ViewMode.HIDE_RANDOM_WORDS) || (mode === ViewMode.TOGGLE_FIRST_WORD) || (mode === ViewMode.TOGGLE_LAST_WORD);
                                                     if (isWordHiddenMode) {
                                                         if (word.surah && word.ayah) {
-                                                            const info = ayahWordMap.get(ak);
+                                                            const info = ayahWordMap.get(currentAyahKey);
                                                             if (info) {
                                                                 const currentIdx = info.revealKeys.indexOf(wordId);
                                                                 if (currentIdx !== -1) {
                                                                     const stops = info.stopIndices || [];
+                                                                    // Reveal the whole segment (from previous stop to next stop)
+                                                                    const prevStop = stops.filter((s: number) => s < currentIdx).pop();
+                                                                    const start = (prevStop !== undefined) ? prevStop + 1 : 0;
                                                                     const nextStop = stops.find((s: number) => s >= currentIdx);
                                                                     const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
-                                                                    const idsToReveal = info.revealKeys.slice(currentIdx, end + 1);
+                                                                    const idsToReveal = info.revealKeys.slice(start, end + 1);
+
                                                                     setRevealedIndices(prev => {
                                                                         const next = new Set(prev);
                                                                         idsToReveal.forEach(i => next.add(i));
