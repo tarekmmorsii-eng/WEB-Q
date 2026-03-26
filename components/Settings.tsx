@@ -937,6 +937,24 @@ export default function Settings({
                                         <Share2 size={24} className="text-amber-600 dark:text-amber-500" />
                                     </div>
                                 </button>
+
+                                {/* QR Code Section */}
+                                <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm">
+                                    <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                                        {currentLanguage === 'ar' ? 'رمز الاستجابة السريعة (QR)' : 'Scan QR Code'}
+                                    </h4>
+                                    <div className="relative p-2 bg-white rounded-lg shadow-inner border border-gray-100">
+                                        <img 
+                                            src="/qr_code.jpg" 
+                                            alt="QR Code" 
+                                            className="w-48 h-48 object-contain rounded-sm"
+                                        />
+                                        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500 rounded-tl-sm -translate-x-1 -translate-y-1" />
+                                        <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500 rounded-tr-sm translate-x-1 -translate-y-1" />
+                                        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500 rounded-bl-sm -translate-x-1 translate-y-1" />
+                                        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500 rounded-br-sm translate-x-1 translate-y-1" />
+                                    </div>
+                                </div>
                             </section>
 
                             <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
