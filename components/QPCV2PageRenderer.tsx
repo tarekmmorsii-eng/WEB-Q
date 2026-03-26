@@ -213,6 +213,7 @@ interface QPCV2PageRendererProps {
     showWordMeanings?: boolean;
     wordMeaningsSource?: 'siraj' | 'new';
     isActive?: boolean;
+    resetCounter?: number;
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -240,7 +241,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     enableWordLongPressAudio = true,
     showWordMeanings = true,
     wordMeaningsSource = 'siraj',
-    isActive = true
+    isActive = true,
+    resetCounter = 0
 }) => {
     // Force a local reference to ensure we use the latest prop value in closures
     const audioEnabledRef = useRef<boolean>(enableWordLongPressAudio);
@@ -779,6 +781,19 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             setRevealedIndices(new Set());
         }
     }, [mode, pageNumber, toggleState]);
+
+    const lastResetRef = useRef(resetCounter);
+    useEffect(() => {
+        if (resetCounter > lastResetRef.current) {
+            // Force reset current cache and state
+            const cacheKey = `${pageNumber}-${mode}-${toggleState}`;
+            if ((window as any).revealedCache) {
+                delete (window as any).revealedCache[cacheKey];
+            }
+            setRevealedIndices(new Set());
+        }
+        lastResetRef.current = resetCounter;
+    }, [resetCounter, pageNumber, mode, toggleState]);
 
     // 1.5. Save to Cache Logic: Update global cache whenever revealed indices change
     useEffect(() => {

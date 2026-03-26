@@ -233,6 +233,7 @@ export default function App() {
 
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.SHOW_ALL);
   const [toggleState, setToggleState] = useState<number>(0);
+  const [resetCounter, setResetCounter] = useState<number>(0);
 
   const [isIndexOpen, setIsIndexOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -1294,6 +1295,10 @@ export default function App() {
 
     if (newMode === viewMode) {
       if (specificState !== undefined) {
+        if (toggleState === specificState) {
+          // If already in this state, force a reset of revealed items
+          setResetCounter(prev => prev + 1);
+        }
         setToggleState(specificState);
         // Show appropriate toast
         if (newMode === ViewMode.TOGGLE_FIRST_WORD) showToast(specificState === 0 ? t.firstWordHidden : t.firstWordShown);
@@ -1846,6 +1851,7 @@ export default function App() {
                           }}
                           onDeleteSimilarAyah={handleDeleteSimilarAyah}
                           onAddSimilarAyah={handleAddSimilarAyah}
+                          resetCounter={resetCounter}
                         />
                       </SwiperSlide>
                       <SwiperSlide className="w-full h-full flex items-start justify-center">
@@ -1883,6 +1889,7 @@ export default function App() {
                           }}
                           onDeleteSimilarAyah={handleDeleteSimilarAyah}
                           onAddSimilarAyah={handleAddSimilarAyah}
+                          resetCounter={resetCounter}
                         />
                       </SwiperSlide>
                       <SwiperSlide className="w-full h-full flex items-start justify-center">
@@ -1920,6 +1927,7 @@ export default function App() {
                           }}
                           onDeleteSimilarAyah={handleDeleteSimilarAyah}
                           onAddSimilarAyah={handleAddSimilarAyah}
+                          resetCounter={resetCounter}
                         />
                       </SwiperSlide>
                     </Swiper>
