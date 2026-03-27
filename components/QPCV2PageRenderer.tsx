@@ -21,6 +21,7 @@ import { getMushafData, saveMushafData } from '../utils/db';
 import { findMutashabihatForAyah, findAllMutashabihatForAyah } from '../utils/mutashabihatProcessor';
 import { formatNumber } from '../utils/quranUtils';
 import { useWordByWordAudio } from '../hooks/useWordByWordAudio';
+import { LINE_STYLE_OVERRIDES } from '../constants/lineOverrides';
 
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
@@ -470,15 +471,34 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         for (let i = 1; i <= 15; i++) {
             const sNum = verseStarts[i];
 
+            // --- AUTO-INJECTION CHECK ---
             if (sNum && !surahsInjected.has(sNum)) {
-                // Prepend Headers before the line where the surah starts
-                if (sNum === 1 || sNum === 9) {
-                    // Tawba or Fatiha: Single line header
-                    finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNum });
-                } else {
-                    // Standard: Header + Basmallah
-                    finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNum });
-                    finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [], surahNumber: sNum });
+                // Check if this surah already has a header in the raw JSON of this page
+                const hasHeaderInCurrentJson = Object.values(rawPage.lines).some((lineWords: any) => 
+                    lineWords.some((w: any) => (w.char_type === 'surah_name' || w.line_type === 'surah_name') && (w.surah_number === sNum || parseInt(w.verse_key.split(/[:\-_]/)[0]) === sNum))
+                );
+
+                // Check if previous page ended with this surah's header (Madinah Mushaf style, e.g. p584/585)
+                let hasHeaderInPrevJson = false;
+                if (pageNum > 1 && fullMushafData) {
+                    const prevPage = fullMushafData[(pageNum - 1).toString()];
+                    const lastLineOfPrev = prevPage?.lines ? prevPage.lines["15"] : null;
+                    if (lastLineOfPrev && lastLineOfPrev.some((w: any) => 
+                        (w.char_type === 'surah_name' || w.line_type === 'surah_name') && 
+                        (w.surah_number === sNum || parseInt(w.verse_key.split(/[:\-_]/)[0]) === sNum)
+                    )) {
+                        hasHeaderInPrevJson = true;
+                    }
+                }
+
+                if (!hasHeaderInCurrentJson && !hasHeaderInPrevJson) {
+                    // Prepend Headers only if not already in JSON
+                    if (sNum === 1 || sNum === 9) {
+                        finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNum });
+                    } else {
+                        finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNum });
+                        finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [], surahNumber: sNum });
+                    }
                 }
                 surahsInjected.add(sNum);
             }
@@ -486,83 +506,60 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             // Append the actual text line if it exists
             if (rawLinesCache[i]) {
                 const words = rawLinesCache[i];
-
-                // --- FILTER: Hide V2 Raw Text Headers to avoid duplication ---
                 const combinedText = words.map(w => w.originalText || w.text).join(' ');
 
-                // Regex for Surah Name (e.g., "سورة نوح") - loose match
-                const isV2SurahHeader = /سورة\s+[\u0600-\u06FF]+/.test(combinedText);
+                // --- RAW HEADER DETECTION ---
+                const isV2SurahHeader = words.some(w => w.originalText?.includes('سورة') || w.text?.includes('سورة'));
+                const isV2Basmallah = (combinedText.includes('بسم') && combinedText.includes('الله')) && !combinedText.includes('إنه من سليمان');
 
-                let shouldSkip = false;
-
-                if (isV2SurahHeader) {
-                    // Verify it's not part of an ayah (Ayahs usually satisfy length or have markers)
-                    // Header lines are usually short and specific.
-                    if (combinedText.length < 50) shouldSkip = true;
+                if (isV2SurahHeader && combinedText.length < 50) {
+                    const sNumber = words[0].surah || parseInt(words[0].id.toString().substring(0, 3)) || 1; // Fallback surah detection
+                    finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNumber });
+                    surahsInjected.add(sNumber);
+                    continue;
                 }
 
-                const isV2Basmallah = combinedText.includes('بسم') && combinedText.includes('الله') && combinedText.includes('الرحيم');
-                if (isV2Basmallah && !combinedText.includes('إنه من سليمان')) { // Exception for 27:30
-                    // Exception for Fatiha (1:1)
-                    if (pageNum !== 1) {
-                        if (combinedText.length < 50) shouldSkip = true;
+                if (isV2Basmallah && pageNum !== 1 && combinedText.length < 50) {
+                    const sNumber = words[0].surah || 0;
+                    finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [], surahNumber: sNumber });
+                    continue;
+                }
+
+                // Regular Ayah Line
+                const lineWords = rawLinesCache[i];
+                const currentSurah = lineWords[lineWords.length - 1]?.surah;
+                let nextLineSurah: number | null = null;
+                const nextLine = rawLinesCache[i + 1];
+                if (nextLine && nextLine.length > 0) nextLineSurah = nextLine[0].surah;
+
+                let isLastLineOfSurah = false;
+                if (nextLineSurah !== null) {
+                    isLastLineOfSurah = (currentSurah !== nextLineSurah);
+                } else if (fullMushafData) {
+                    const nextPageData = fullMushafData[(pageNum + 1).toString()];
+                    const firstLineOfNextPage = nextPageData?.lines ? nextPageData.lines["1"] : null;
+                    if (firstLineOfNextPage && firstLineOfNextPage.length > 0) {
+                        const nextSurahNum = parseInt(firstLineOfNextPage[0].verse_key.split(/[:\-_]/)[0]);
+                        isLastLineOfSurah = (currentSurah !== nextSurahNum);
+                    } else if (pageNum === 604) {
+                        isLastLineOfSurah = true;
                     }
                 }
 
-                if (!shouldSkip) {
-                    const lineWords = rawLinesCache[i];
-
-                    // --- SMART SURAH BOUNDARY DETECTION ---
-                    const currentSurah = lineWords[lineWords.length - 1]?.surah;
-                    let nextLineSurah: number | null = null;
-
-                    // Look ahead for next line
-                    const nextLine = rawLinesCache[i + 1];
-                    if (nextLine && nextLine.length > 0) {
-                        nextLineSurah = nextLine[0].surah;
-                    }
-
-                    const isShort = lineWords.length < 8;
-
-                    // SMART END-OF-SURAH DETECTION
-                    let isLastLineOfSurah = false;
-                    if (nextLineSurah !== null) {
-                        isLastLineOfSurah = (currentSurah !== nextLineSurah);
-                    } else {
-                        // Current line is 15 or next lines are empty/missing
-                        // We must check if a new surah starts on the next page
-                        if (fullMushafData) {
-                            const nextPageData = fullMushafData[(pageNum + 1).toString()];
-                            const firstLineOfNextPage = nextPageData?.lines ? nextPageData.lines["1"] : null;
-                            if (firstLineOfNextPage && firstLineOfNextPage.length > 0) {
-                                const nextSurahNum = parseInt(firstLineOfNextPage[0].verse_key.split(/[:\-_]/)[0]);
-                                isLastLineOfSurah = (currentSurah !== nextSurahNum);
-                            } else {
-                                // If page 605+ doesn't exist, it's the end
-                                if (pageNum === 604) isLastLineOfSurah = true;
-                            }
-                        } else {
-                            // Fallback if no full data
-                            isLastLineOfSurah = (pageNum === 604 && i === 15);
-                        }
-                    }
-
-                    // Centering Logic - Using global CENTERED_SURAHS (L20)
-                    let shouldCenter = (pageNum <= 2);
-
-                    if (pageNum === 604 && (i === 14 || i === 15)) {
-                        shouldCenter = true;
-                    } else if (currentSurah && CENTERED_SURAHS.has(currentSurah) && isShort && isLastLineOfSurah) {
-                        shouldCenter = true;
-                    }
-
-                    finalLines.push({
-                        lineNumber: i,
-                        lineType: 'ayah',
-                        isCentered: shouldCenter,
-                        words: lineWords
-                    });
+                const isShort = lineWords.length < 8;
+                let shouldCenter = (pageNum <= 2);
+                if (pageNum === 604 && (i === 14 || i === 15)) {
+                    shouldCenter = true;
+                } else if (currentSurah && CENTERED_SURAHS.has(currentSurah) && isShort && isLastLineOfSurah) {
+                    shouldCenter = true;
                 }
+
+                finalLines.push({
+                    lineNumber: i,
+                    lineType: 'ayah',
+                    isCentered: shouldCenter,
+                    words: lineWords
+                });
             }
         }
 
@@ -1299,7 +1296,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             justifyContent: line.isCentered ? 'center' : 'space-between',
                             alignSelf: 'stretch',
                             width: '100%',
-                            gap: line.isCentered ? '4px' : '0px'
+                            gap: line.isCentered ? '4px' : '0px',
+                            ...(LINE_STYLE_OVERRIDES[pageNumber]?.[idx] || {}),
                         }}
                     >
                         {line.lineType === 'surah_name' && renderSurahName(line)}
