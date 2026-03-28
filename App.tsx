@@ -616,6 +616,24 @@ export default function App() {
     };
   }, [isIndexOpen, isSearchOpen, isSettingsOpen, isMemorizationStatsOpen, isNotificationOpen, isColorPickerOpen, ratingModalData, isTouchDevice]);
 
+  // ⭐ إغلاق وضع الصلاة تلقائياً عند فتح أي نافذة أخرى بناءً على طلب المستخدم
+  useEffect(() => {
+    if (settings.prayerMode && (
+      isIndexOpen || isSearchOpen || isSettingsOpen || isMemorizationStatsOpen || 
+      isNotificationOpen || isColorPickerOpen || isMutashabihatIndexOpen || 
+      isMutashabihatModalOpen || isSelectorOpen || isHowToUseOpen || 
+      ratingModalData || surahRatingModalData || showTourWelcome || showTourClickOverlay
+    )) {
+      setSettings(prev => ({ ...prev, prayerMode: false }));
+    }
+  }, [
+    isIndexOpen, isSearchOpen, isSettingsOpen, isMemorizationStatsOpen, 
+    isNotificationOpen, isColorPickerOpen, isMutashabihatIndexOpen, 
+    isMutashabihatModalOpen, isSelectorOpen, isHowToUseOpen, 
+    ratingModalData, surahRatingModalData, showTourWelcome, showTourClickOverlay,
+    settings.prayerMode
+  ]);
+
   // Listen for custom back button event
   useEffect(() => {
     const handleOpenIndex = () => {
@@ -2380,9 +2398,7 @@ export default function App() {
               t={t}
               onNextPage={handleNextPage}
               onDismiss={() => {
-                const newSettings = { ...settings, prayerMode: false };
-                setSettings(newSettings);
-                localStorage.setItem('quran_settings', JSON.stringify(newSettings));
+                setSettings(prev => ({ ...prev, prayerMode: false }));
               }}
             />
           )
