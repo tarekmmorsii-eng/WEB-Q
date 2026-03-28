@@ -738,10 +738,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
                 const stopIndices = sorted
                     .map((item, idx) => {
-                        // Intelligent Detection: Either from generated map or direct glyph length check.
-                        // In QPC V2, multi-glyph 'word' entries are virtually always words with attached stop signs.
                         const wordPosIndex = item.word.word - 1;
-                        const hasStop = (stopsForAyah && stopsForAyah.includes(wordPosIndex)) || (item.word.text && item.word.text.length > 1);
+                        // Special detection for start of Hizb/Quarter (which has an ornament but isn't a pause)
+                        const isHizbMark = item.word.word === 1 && JUZ_SECTIONS.some(s => s.surahNum === item.word.surah && s.ayahNum === item.word.ayah);
+                        // A word is a stop boundary IF (it's in STOP_SIGNS OR it has stop-glyph length) AND it's NOT a Hizb mark
+                        const hasStop = !isHizbMark && ((stopsForAyah && stopsForAyah.includes(wordPosIndex)) || (item.word.text && item.word.text.length > 1));
                         return hasStop ? idx : -1;
                     })
                     .filter(idx => idx !== -1);
