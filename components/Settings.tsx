@@ -249,7 +249,7 @@ export default function Settings({
                 <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 p-4 flex justify-between items-center shrink-0 z-10">
                     <div className="flex items-center gap-3">
                         <img
-                            src="https://mushafalmurajaa.com/mushaf_logo_v2.png"
+                            src="/mushaf_logo_v2.png?v=10"
                             alt="Logo"
                             className="w-10 h-10 rounded-full border border-amber-500/30"
                         />

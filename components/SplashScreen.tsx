@@ -41,9 +41,10 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
             {/* Main Logo: Absolutely Centered */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-in fade-in zoom-in duration-1000">
                 <img
-                    src="/logo_splash.png?v=6"
+                    src="/logo_splash.png?v=10"
                     alt="مصحف المراجعة"
                     className="w-72 md:w-96 object-contain"
+                    style={{ clipPath: 'inset(0 7% 7% 0)' }}
                 />
             </div>
 
@@ -85,7 +86,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
             {/* Bottom Logo: 10% from bottom */}
             <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-forwards">
                 <img
-                    src="/splash_bottom_icon.png?v=1"
+                    src="/splash_bottom_icon.png?v=10"
                     alt="Logo Icon"
                     className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-[0_0_10px_rgba(202,138,4,0.3)]"
                 />
