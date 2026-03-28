@@ -141,10 +141,10 @@ const HighlightedText = React.memo(({ text, absoluteAyahNumber, manualRules, ref
         if (ruleWords.length === 0) return;
 
         const colors = {
-            'START': forceColor || '#10b981', // Green
-            'END': forceColor || '#ef4444',   // Red
-            'MIDDLE': forceColor || '#3b82f6', // Blue
-            'OTHER': forceColor || '#8b5cf6'  // Purple
+            'START': forceColor || '#d97706',
+            'END': forceColor || '#d97706',
+            'MIDDLE': forceColor || '#d97706',
+            'OTHER': forceColor || '#d97706'
         };
 
         for (let i = 0; i <= rawWords.length - ruleWords.length; i++) {

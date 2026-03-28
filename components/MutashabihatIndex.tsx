@@ -78,23 +78,48 @@ const HighlightingText = React.memo(({ text, absoluteAyahNumber, rules: manualRu
     if (onlyRule) {
         const cleanOnly = onlyRule.replace(/[\(\)]/g, '');
         // Split by /, -, ..., or unicode ellipsis …
-        const parts = cleanOnly.split(/\s*[\/\-]\s*|\s*\.\.\.\s*|\s*…\s*/).filter(p => p.length > 0).map(p => quranNormalize(p));
+        const parts = cleanOnly.split(/\s*[\/\-]\s*|\s*\.\.\.\s*|\s*…\s*/).filter(p => p.length > 0);
 
         const originalRules = [...allRules];
-        allRules = originalRules.filter(r => {
-            const normR = quranNormalize(r.rule);
-            return parts.some(p => normR.includes(p) || p.includes(normR));
-        });
-
-        // Add the group's title parts as candidates too, especially for single-word variations
+        
+        // Strategy: For each part of the rule, find if there's a shared phrase in the current text
         parts.forEach(p => {
-            if (p.length >= 2 && !allRules.some(r => quranNormalize(r.rule).includes(p))) {
-                allRules.push({
-                    rule: p,
-                    type: 'MIDDLE', // Default to blue if not matched in map
-                    isDynamic: true
+            const pNorm = quranNormalize(p);
+            // 1. Precise match in existing rules
+            const exists = originalRules.some(r => quranNormalize(r.rule).includes(pNorm) || pNorm.includes(quranNormalize(r.rule)));
+            
+            if (!exists) {
+                // 2. Dynamic discovery: Find what sequence in 'text' best matches this rule part 'p'
+                const shared = findSharedPhrases(text, p);
+                shared.forEach(sh => {
+                    // Only add if it's a significant match (2+ real words)
+                    if (getRealWordCount(sh.phrase) >= 2) {
+                        allRules.push({
+                            rule: sh.phrase,
+                            type: 'MIDDLE',
+                            isDynamic: true
+                        });
+                    }
                 });
+                
+                // 3. Fallback: Literal match (original behavior)
+                if (shared.length === 0 && pNorm.length >= 2) {
+                    allRules.push({
+                        rule: pNorm,
+                        type: 'MIDDLE',
+                        isDynamic: true
+                    });
+                }
             }
+        });
+        
+        // Keep original matching rules too
+        allRules = allRules.filter(r => {
+            const normR = quranNormalize(r.rule);
+            return parts.some(p => {
+                const pn = quranNormalize(p);
+                return normR.includes(pn) || pn.includes(normR);
+            }) || r.isDynamic;
         });
     }
 
@@ -166,10 +191,10 @@ const HighlightingText = React.memo(({ text, absoluteAyahNumber, rules: manualRu
         const isSingleWord = ruleWords.length === 1;
 
         const colors = {
-            'START': '#10b981', // Green
-            'END': isInsideSurah ? '#10b981' : '#ef4444',   // Red -> Green if internal
-            'MIDDLE': isInsideSurah ? '#10b981' : '#3b82f6', // Blue -> Green if internal
-            'OTHER': isInsideSurah ? '#10b981' : '#d97706'
+            'START': isInsideSurah ? '#10b981' : '#ef4444',
+            'END': isInsideSurah ? '#10b981' : '#ef4444',
+            'MIDDLE': isInsideSurah ? '#10b981' : '#ef4444',
+            'OTHER': isInsideSurah ? '#10b981' : '#ef4444'
         };
 
         const realWordIndices = rawWords.map((w, idx) => ({ norm: quranNormalize(w), idx })).filter(item => item.norm.length > 0);
@@ -540,9 +565,9 @@ export default function MutashabihatIndex({
 
                     const colors = {
                         'START': '#10b981',
-                        'END': '#ef4444',
-                        'MIDDLE': '#3b82f6',
-                        'OTHER': '#d97706'
+                        'END': '#10b981',
+                        'MIDDLE': '#10b981',
+                        'OTHER': '#10b981'
                     };
 
                     groups[ruleKey] = {
@@ -817,13 +842,7 @@ const MutashabihaCard = React.memo(({ item, onNavigateToAyah, t }: {
 const InternalGroupSection = React.memo(({ group, onNavigateToAyah, t }: { group: any, onNavigateToAyah?: (s: number, a: number) => void, t: any }) => {
     const { rule, ruleType, ruleColor, ayahs } = group;
     // Descriptions for color coded rules (START, END, MIDDLE)
-    const typeDesc = ruleType === 'START'
-        ? t.startRuleDesc
-        : ruleType === 'END'
-            ? t.endRuleDesc
-            : ruleType === 'MIDDLE'
-                ? t.middleRuleDesc
-                : '';
+    const typeDesc = '';
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden mb-6 border-r-4" style={{ borderRightColor: ruleColor }}>
@@ -837,7 +856,7 @@ const InternalGroupSection = React.memo(({ group, onNavigateToAyah, t }: { group
                         {t.allPositions.includes('{count}') ? t.allPositions.replace('{count}', ayahs.length.toString()) : `${ayahs.length} ${t.allPositions}`}
                     </span>
                 </div>
-                {typeDesc && <div className="text-[10px] font-medium opacity-70 pr-5" style={{ color: ruleColor }}>{typeDesc}</div>}
+
             </div>
             <div className="divide-y divide-gray-50 dark:divide-slate-800/50">
                 {ayahs.map((ayah: any, i: number) => (
