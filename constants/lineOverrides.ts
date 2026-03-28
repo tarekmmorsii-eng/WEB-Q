@@ -28,12 +28,20 @@ export const LINE_STYLE_OVERRIDES: Record<number, Record<number, React.CSSProper
             paddingLeft: '10px'
         }
     },
-    // Page 578, Line 12 (index 11) - Safety fix for Al-Insan 1 if numbered differently
+    // Page 578, Line 12 (index 11) - Fixes clipping of 'خَلَقْنَا' without thinning the text
     578: {
         11: {
-            transform: 'scaleX(0.94)',
+            transform: 'none',
+            letterSpacing: '-2.5px',
+            paddingLeft: '5px'
+        }
+    },
+    // Page 585, Line 11 (index 10) - Balanced fix for "(30) وَفَاكِهَةً" visibility
+    585: {
+        10: {
+            transform: 'scaleX(0.93)',
             transformOrigin: 'right',
-            wordSpacing: '-12px',
+            wordSpacing: '-10px',
             paddingLeft: '10px'
         }
     }
