@@ -15,25 +15,25 @@
     ],
     "icons": [
         {
-            "src": "/final_logo.png?v=30",
+            "src": "/final_logo.png?v=40",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/final_logo.png?v=30",
+            "src": "/final_logo.png?v=40",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/final_logo.png?v=30",
+            "src": "/final_logo.png?v=40",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "/final_logo.png?v=30",
+            "src": "/final_logo.png?v=40",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"

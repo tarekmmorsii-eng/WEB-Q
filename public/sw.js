@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-03-01-V5'; // Cache First strategy for fonts & page JSONs
+const CACHE_VERSION = 'v2026-03-30-V1'; // Force update for new logo and manifest
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
