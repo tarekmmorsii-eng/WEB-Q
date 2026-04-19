@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, HelpCircle, Share2 } from 'lucide-react';
+import { Download, HelpCircle, Share2, PlayCircle } from 'lucide-react';
 import { useOfflineManager } from '../hooks/useOfflineManager';
 import { Language, translations } from '../i18n/translations';
 import { Theme } from '../constants/themes';
@@ -9,6 +9,8 @@ interface FloatingSideMenuProps {
     currentTheme: Theme;
     onOpenHelp: () => void;
     onOpenOffline: () => void;
+    onOpenReciterSelection?: () => void;
+    onOpenShare?: () => void;
     isVisible?: boolean;
     isEnabled?: boolean;
     isRTL?: boolean;
@@ -19,6 +21,8 @@ export default function FloatingSideMenu({
     currentTheme,
     onOpenHelp,
     onOpenOffline,
+    onOpenReciterSelection,
+    onOpenShare,
     isVisible = true,
     isEnabled = true,
     isRTL = false
@@ -27,8 +31,7 @@ export default function FloatingSideMenu({
     const {
         isDownloading,
         hasOfflineData,
-        isStandalone,
-        handleShareApp
+        isStandalone
     } = useOfflineManager(currentLanguage);
 
     const handleDownloadClick = () => {
@@ -39,6 +42,16 @@ export default function FloatingSideMenu({
 
     return (
         <div className={`fixed ${isRTL ? 'right-0' : 'left-0'} top-1/2 -translate-y-1/2 z-[55] flex flex-col gap-2 p-2 transition-all duration-500 ease-in-out ${isVisible ? 'translate-x-0' : isRTL ? 'translate-x-full opacity-0 pointer-events-none' : '-translate-x-full opacity-0 pointer-events-none'}`}>
+            {/* Recitation Auto-Play Button */}
+            <button
+                onClick={onOpenReciterSelection}
+                disabled={!isVisible}
+                className={`w-12 h-12 ${isRTL ? 'rounded-l-xl border-y border-l border-amber-500/30' : 'rounded-r-xl border-y border-r border-amber-500/30'} flex items-center justify-center bg-[var(--bg-card)] text-amber-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14`}
+                title={currentLanguage === 'ar' ? 'تلاوة الآيات' : 'Ayah Recitation'}
+            >
+                <PlayCircle size={24} />
+            </button>
+
             {/* Download Button */}
             <button
                 onClick={handleDownloadClick}
@@ -47,7 +60,7 @@ export default function FloatingSideMenu({
                     ? 'bg-amber-100 text-amber-500 cursor-wait'
                     : (isStandalone && hasOfflineData)
                         ? 'bg-emerald-50 text-emerald-600'
-                        : 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-700 hover:w-14'
+                        : 'bg-[var(--bg-card)] text-amber-600 hover:bg-[var(--bg-secondary)] hover:w-14'
                     }`}
                 title={t.installAndDownload}
             >
@@ -58,7 +71,7 @@ export default function FloatingSideMenu({
             <button
                 onClick={onOpenHelp}
                 disabled={!isVisible}
-                className={`w-12 h-12 ${isRTL ? 'rounded-l-xl border-y border-l border-indigo-500/30' : 'rounded-r-xl border-y border-r border-indigo-500/30'} flex items-center justify-center bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-lg hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all hover:w-14`}
+                className={`w-12 h-12 ${isRTL ? 'rounded-l-xl border-y border-l border-indigo-500/30' : 'rounded-r-xl border-y border-r border-indigo-500/30'} flex items-center justify-center bg-[var(--bg-card)] text-indigo-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14`}
                 title={t.help || 'المساعدة'}
             >
                 <HelpCircle size={24} />
@@ -66,9 +79,9 @@ export default function FloatingSideMenu({
 
             {/* Share Button */}
             <button
-                onClick={handleShareApp}
+                onClick={onOpenShare}
                 disabled={!isVisible}
-                className={`w-12 h-12 ${isRTL ? 'rounded-l-xl border-y border-l border-blue-500/30' : 'rounded-r-xl border-y border-r border-blue-500/30'} flex items-center justify-center bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-lg hover:bg-blue-50 dark:hover:bg-slate-700 transition-all hover:w-14`}
+                className={`w-12 h-12 ${isRTL ? 'rounded-l-xl border-y border-l border-blue-500/30' : 'rounded-r-xl border-y border-r border-blue-500/30'} flex items-center justify-center bg-[var(--bg-card)] text-blue-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14`}
                 title={t.shareApp}
             >
                 <Share2 size={24} />

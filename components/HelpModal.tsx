@@ -81,17 +81,17 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
             {/* Blurred Backdrop */}
             <div
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity"
+                className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
                 onClick={onClose}
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:h-[600px] border border-white/20 dark:border-slate-700/50 ring-1 ring-black/5">
+            <div className="relative w-full max-w-4xl bg-[var(--bg-card)] rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:h-[600px] border border-[var(--border-primary)] ring-1 ring-black/5">
 
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-50 p-2 bg-white/20 backdrop-blur-md hover:bg-white/30 text-white md:text-gray-500 md:bg-gray-100/50 md:hover:bg-gray-200 dark:md:bg-slate-800 dark:md:text-gray-400 rounded-full transition-all duration-200 shadow-sm"
+                    className="absolute top-4 right-4 z-50 p-2 bg-[var(--bg-secondary)] opacity-50 hover:opacity-100 text-[var(--text-primary)] rounded-full transition-all duration-200 shadow-sm"
                     aria-label="Close"
                 >
                     <X size={20} />
@@ -110,7 +110,7 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
                         pagination={{
                             clickable: true,
                             el: '.custom-pagination',
-                            bulletClass: 'w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 transition-all duration-300 mx-1.5 cursor-pointer inline-block',
+                            bulletClass: 'w-2.5 h-2.5 rounded-full bg-[var(--border-primary)] transition-all duration-300 mx-1.5 cursor-pointer inline-block opacity-40',
                             bulletActiveClass: '!bg-amber-600 !w-8'
                         }}
                         loop={true}
@@ -153,12 +153,12 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
                                     </div>
 
                                     {/* Right Side: Content (Bottom on mobile) */}
-                                    <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center text-right bg-white dark:bg-slate-900 absolute bottom-0 md:relative rounded-t-3xl md:rounded-none z-10 h-auto md:h-full shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:shadow-none">
+                                    <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center text-right bg-[var(--bg-card)] absolute bottom-0 md:relative rounded-t-3xl md:rounded-none z-10 h-auto md:h-full shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:shadow-none">
                                         <div className="space-y-4 md:space-y-6">
-                                            <h3 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+                                            <h3 className="text-2xl md:text-4xl font-bold text-[var(--text-primary)] leading-tight">
                                                 {slide.title}
                                             </h3>
-                                            <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                                            <p className="text-base md:text-lg text-[var(--text-primary)] opacity-70 leading-relaxed">
                                                 {slide.description}
                                             </p>
                                         </div>
@@ -177,7 +177,7 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
 
                         {/* Arrows */}
                         <div className="flex gap-2 pointer-events-auto">
-                            <button className="custom-prev p-2 md:p-3 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-800 dark:text-white transition-colors shadow-sm disabled:opacity-50">
+                            <button className="custom-prev p-2 md:p-3 rounded-full bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors shadow-sm disabled:opacity-50">
                                 <ChevronRight size={24} />
                             </button>
                             <button className="custom-next p-2 md:p-3 rounded-full bg-amber-600 hover:bg-amber-700 text-white transition-colors shadow-md disabled:opacity-50">

@@ -27,6 +27,21 @@ const extractSurahs = (ayahs: Ayah[]) => {
 };
 
 /**
+ * Get the exact page number for a specific ayah synchronously
+ */
+export const getAyahPageSync = (surahNumber: number, ayahNumber: number): number | null => {
+  if (!fullQuranData) return null;
+
+  const surah = fullQuranData.surahs[surahNumber - 1];
+  if (surah) {
+    const ayah = surah.ayahs.find(a => a.numberInSurah === ayahNumber);
+    if (ayah) return ayah.page;
+  }
+
+  return null;
+};
+
+/**
  * Get the exact page number for a specific ayah
  */
 export const getAyahPage = async (surahNumber: number, ayahNumber: number): Promise<number> => {

@@ -52,7 +52,7 @@ export default function MutashabihatSelectorModal({
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 border-amber-400">
+            <div className="bg-[var(--bg-card)] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-primary)]">
                 <div className="p-4 bg-amber-500 text-white flex justify-between items-center">
                     <h3 className="font-bold text-lg">{t.addSimilarAyah}</h3>
                     <button onClick={onClose} className="p-1 hover:bg-amber-600 rounded-full transition-colors">
@@ -63,7 +63,7 @@ export default function MutashabihatSelectorModal({
                 <div className="p-6">
                     {/* Surah Selection */}
                     <div className="mb-4">
-                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        <label className="block text-sm font-bold text-[var(--text-primary)] opacity-70 mb-2">
                             {t.selectSurah}
                         </label>
                         <div className="relative mb-2">
@@ -73,7 +73,7 @@ export default function MutashabihatSelectorModal({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={t.searchSurah}
-                                className="w-full pr-10 pl-4 py-2 bg-slate-100 dark:bg-slate-700 border-2 border-transparent focus:border-amber-500 rounded-xl outline-none transition-all text-sm"
+                                className="w-full pr-10 pl-4 py-2 bg-[var(--bg-secondary)] border-2 border-transparent focus:border-amber-500 rounded-xl outline-none transition-all text-sm text-[var(--text-primary)]"
                             />
                         </div>
                         <select
@@ -82,7 +82,7 @@ export default function MutashabihatSelectorModal({
                                 setSelectedSurah(Number(e.target.value));
                                 setSelectedAyah(1);
                             }}
-                            className="w-full p-3 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none border-2 border-transparent focus:border-amber-500 transition-all font-sans"
+                            className="w-full p-3 bg-[var(--bg-secondary)] border-2 border-transparent focus:border-amber-500 rounded-xl outline-none transition-all font-sans text-[var(--text-primary)]"
                             size={5}
                         >
                             {filteredSurahs.map(s => (
@@ -95,7 +95,7 @@ export default function MutashabihatSelectorModal({
 
                     {/* Ayah Selection */}
                     <div className="mb-6">
-                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        <label className="block text-sm font-bold text-[var(--text-primary)] opacity-70 mb-2">
                             {t.ayahNumber} ({formatNumber(1, language)}-{formatNumber(ayahCount, language)})
                         </label>
                         <input
@@ -108,7 +108,7 @@ export default function MutashabihatSelectorModal({
                                 setSelectedAyah(val);
                             }}
                             className={clsx(
-                                "w-full p-3 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none border-2 transition-all",
+                                "w-full p-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-xl outline-none border-2 transition-all",
                                 (selectedAyah > ayahCount || selectedAyah < 1) ? "border-red-500 focus:border-red-500" : "border-transparent focus:border-amber-500"
                             )}
                         />

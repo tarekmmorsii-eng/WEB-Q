@@ -20,11 +20,11 @@ interface HowToUseGuideProps {
 // Sub-component for individual image cards to keep the main grid clean
 const ImageCard = ({ img, onClick, t }: { img: any, onClick: (img: any) => void, t: any }) => (
     <div
-        className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-1 border border-slate-200 dark:border-slate-800 cursor-pointer"
+        className="group relative flex flex-col bg-[var(--bg-card)] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-1 border border-[var(--border-primary)] cursor-pointer"
         onClick={() => onClick(img)}
     >
         {/* Image Container */}
-        <div className="relative aspect-[3/4] md:aspect-[3/2] overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center p-2">
+        <div className="relative aspect-[3/4] md:aspect-[3/2] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center p-2">
             <img
                 src={img.url}
                 alt={img.title}
@@ -33,7 +33,7 @@ const ImageCard = ({ img, onClick, t }: { img: any, onClick: (img: any) => void,
             />
             {/* Overlay on Hover */}
             <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <div className="bg-white/90 dark:bg-slate-900/90 p-3 rounded-full shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                <div className="bg-[var(--bg-card)] bg-opacity-90 p-3 rounded-full shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
                     <Maximize2 size={20} className="text-amber-600" />
                 </div>
             </div>
@@ -44,11 +44,11 @@ const ImageCard = ({ img, onClick, t }: { img: any, onClick: (img: any) => void,
         </div>
 
         {/* Info */}
-        <div className="p-4 md:p-5 flex-1 flex flex-col justify-between border-t border-slate-100 dark:border-slate-800">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug">
+        <div className="p-4 md:p-5 flex-1 flex flex-col justify-between border-t border-[var(--border-primary)]">
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 line-clamp-2 leading-snug">
                 {img.title}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+            <p className="text-xs text-[var(--text-primary)] opacity-60 flex items-center gap-1.5 font-medium">
                 <Maximize2 size={12} />
                 {t.clickToZoom}
             </p>
@@ -199,9 +199,9 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
         <div className="relative inline-block mb-8 scroll-mt-24" id={id}>
             <button
                 onClick={() => setShowQuickNav(showQuickNav === id ? null : id)}
-                className="flex items-center gap-3 px-4 py-2 border-r-4 border-amber-500 bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-all rounded-l-lg group"
+                className="flex items-center gap-3 px-4 py-2 border-r-4 border-amber-500 bg-amber-50 dark:bg-[var(--bg-secondary)] dark:bg-opacity-30 hover:bg-amber-100 dark:hover:bg-opacity-50 transition-all rounded-l-lg group"
             >
-                <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                <h2 className="text-xl md:text-3xl font-black text-[var(--text-primary)] uppercase tracking-tight">
                     {title}
                 </h2>
                 <ChevronDown size={24} className={clsx("text-amber-600 transition-transform duration-300", showQuickNav === id && "rotate-180")} />
@@ -209,7 +209,7 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
 
             {/* Quick Nav Dropdown */}
             {showQuickNav === id && (
-                <div className="absolute top-full right-0 mt-2 w-72 md:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-72 md:w-80 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {currentSections.map((sec) => (
                         <button
                             key={sec.id}
@@ -218,7 +218,7 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
                                 "w-full text-right px-4 py-3 rounded-xl transition-all flex items-center justify-between group",
                                 sec.id === id
                                     ? "bg-amber-500 text-white"
-                                    : "hover:bg-amber-50 dark:hover:bg-amber-900/20 text-slate-700 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 font-bold"
+                                    : "hover:bg-amber-50 dark:hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:text-amber-600 dark:hover:text-amber-400 font-bold"
                             )}
                         >
                             <span>{sec.title}</span>
@@ -233,28 +233,28 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 flex flex-col animate-in fade-in slide-in-from-bottom duration-300 select-none">
+        <div className="fixed inset-0 z-[200] bg-[var(--bg-card)] flex flex-col animate-in fade-in slide-in-from-bottom duration-300 select-none">
             {/* Header */}
-            <header className="h-16 md:h-20 flex items-center justify-between px-4 md:px-8 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-40 shadow-sm">
+            <header className="h-16 md:h-20 flex items-center justify-between px-4 md:px-8 border-b border-[var(--border-primary)] bg-[var(--bg-card)] sticky top-0 z-40 shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/20">
                         <Info size={24} />
                     </div>
-                    <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
+                    <h1 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">
                         {t.howToUse}
                     </h1>
                 </div>
 
                 <div className="flex items-center gap-4">
                     {/* Tabs Control - Desktop */}
-                    <div className="hidden md:flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                    <div className="hidden md:flex items-center p-1 bg-[var(--bg-secondary)] rounded-xl">
                         <button
                             onClick={() => setActiveTab('interface')}
                             className={clsx(
                                 "flex items-center gap-2 px-6 py-2 rounded-lg transition-all duration-300 font-medium",
                                 activeTab === 'interface'
-                                    ? "bg-white dark:bg-slate-700 text-amber-600 shadow-sm"
-                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                                    ? "bg-[var(--bg-card)] text-amber-600 shadow-sm"
+                                    : "text-[var(--text-primary)] opacity-60 hover:opacity-100"
                             )}
                         >
                             <Layout size={18} />
@@ -265,8 +265,8 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
                             className={clsx(
                                 "flex items-center gap-2 px-6 py-2 rounded-lg transition-all duration-300 font-medium",
                                 activeTab === 'settings'
-                                    ? "bg-white dark:bg-slate-700 text-amber-600 shadow-sm"
-                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                                    ? "bg-[var(--bg-card)] text-amber-600 shadow-sm"
+                                    : "text-[var(--text-primary)] opacity-60 hover:opacity-100"
                             )}
                         >
                             <Settings size={18} />
@@ -276,7 +276,7 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
 
                     <button
                         onClick={onClose}
-                        className="p-2 md:p-3 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+                        className="p-2 md:p-3 rounded-full hover:bg-[var(--bg-primary)] hover:bg-opacity-10 text-[var(--text-primary)] opacity-60 transition-colors"
                         aria-label="Close"
                     >
                         <X size={24} />
@@ -290,14 +290,14 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
                 className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 custom-scrollbar relative"
             >
                 {/* Mobile Tabs */}
-                <div className="flex md:hidden items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6 sticky top-0 z-30">
+                <div className="flex md:hidden items-center p-1 bg-[var(--bg-secondary)] rounded-xl mb-6 sticky top-0 z-30">
                     <button
                         onClick={() => setActiveTab('interface')}
                         className={clsx(
                             "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg transition-all duration-300 font-medium",
                             activeTab === 'interface'
-                                ? "bg-white dark:bg-slate-700 text-amber-600 shadow-sm"
-                                : "text-slate-600 dark:text-slate-400"
+                                ? "bg-[var(--bg-card)] text-amber-600 shadow-sm"
+                                : "text-[var(--text-primary)] opacity-60"
                         )}
                     >
                         <Layout size={18} />
@@ -308,8 +308,8 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
                         className={clsx(
                             "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg transition-all duration-300 font-medium",
                             activeTab === 'settings'
-                                ? "bg-white dark:bg-slate-700 text-amber-600 shadow-sm"
-                                : "text-slate-600 dark:text-slate-400"
+                                ? "bg-[var(--bg-card)] text-amber-600 shadow-sm"
+                                : "text-[var(--text-primary)] opacity-60"
                         )}
                     >
                         <Settings size={18} />

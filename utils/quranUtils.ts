@@ -2,6 +2,8 @@
  * Quranic Text Processing Utilities
  */
 
+import { SURAHS } from '../constants/surahData';
+
 /**
  * Formats a number according to the language (Arabic vs others)
  */
@@ -10,6 +12,37 @@ export const formatNumber = (num: number | string, language: string) => {
         return num.toLocaleString('ar-EG');
     }
     return num.toString();
+};
+
+/**
+ * Gets the global serial number of an ayah (1 to 6236)
+ */
+export const getGlobalAyahNumber = (surahNumber: number, ayahNumber: number): number => {
+    if (surahNumber < 1 || surahNumber > 114) return 0;
+    let globalIndex = 0;
+    for (let i = 0; i < surahNumber - 1; i++) {
+        globalIndex += SURAHS[i].ayahCount;
+    }
+    return globalIndex + ayahNumber;
+};
+
+/**
+ * Gets the surah and ayah numbers from a global serial number (1 to 6236)
+ */
+export const getAyahFromGlobalNumber = (globalNumber: number): { surahNumber: number, ayahNumber: number } | null => {
+    if (globalNumber < 1 || globalNumber > 6236) return null;
+    let currentGlobal = 0;
+    for (let i = 0; i < SURAHS.length; i++) {
+        const surah = SURAHS[i];
+        if (globalNumber <= currentGlobal + surah.ayahCount) {
+            return {
+                surahNumber: surah.number,
+                ayahNumber: globalNumber - currentGlobal
+            };
+        }
+        currentGlobal += surah.ayahCount;
+    }
+    return null;
 };
 
 export const quranNormalize = (t: string) => {

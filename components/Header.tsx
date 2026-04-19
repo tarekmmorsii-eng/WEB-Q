@@ -115,6 +115,7 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
   };
 
   const handleButtonClick = (mode: ViewMode) => {
+    onInteraction(); // Trigger audio close via App-level interaction handler
     if (mode === ViewMode.SHOW_ALL) {
       setMode(mode);
       setOpenDropdown(null);
@@ -132,7 +133,7 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
     <div
       ref={containerRef}
       className={clsx(
-        "fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 shadow-md border-b border-amber-200 dark:border-slate-700 transition-all duration-500 ease-in-out",
+        "fixed top-0 left-0 right-0 z-50 bg-[var(--bg-card)] shadow-md border-b border-[var(--border-primary)] transition-all duration-500 ease-in-out",
         isRTL ? "lg:left-20" : "lg:right-20",
         isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
       )}
@@ -167,15 +168,15 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
                 id={`tour-btn-${config.mode}`}
                 onClick={() => handleButtonClick(config.mode)}
                 className={clsx(
-                  "relative flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 w-full",
+                  "relative flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 w-full",
                   "h-16",
                   isActive
-                    ? "bg-amber-600 text-white shadow-inner dark:bg-amber-700"
-                    : "bg-amber-50 text-amber-900 hover:bg-amber-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    ? "text-amber-600 dark:text-amber-500 scale-105"
+                    : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 group"
                 )}
               >
-                <Icon size={18} className="mb-1" />
-                <span className="text-[9px] font-bold leading-tight text-center hidden sm:block">
+                <Icon size={18} className={clsx("mb-1 transition-transform", !isActive && "group-hover:scale-110")} />
+                <span className="text-[10px] font-bold leading-tight text-center">
                   {config.mode === ViewMode.SHOW_ALL ? t.showAll :
                     config.mode === ViewMode.HIDE_ALL_AYAHS ? t.hideAll :
                       config.mode === ViewMode.HIDE_RANDOM_AYAHS ? t.hideAyahs :
@@ -190,7 +191,7 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
               {isOpen && options.length > 0 && (
                 <div
                   id={`tour-dropdown-${config.mode}`}
-                  className="absolute top-16 left-0 right-0 z-[100000005] mt-1 flex flex-col gap-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-1.5 rounded-xl shadow-2xl border border-amber-100 dark:border-slate-700 animate-in fade-in slide-in-from-top-2 duration-200"
+                  className="absolute top-16 left-0 right-0 z-[100000005] mt-1 flex flex-col gap-1.5 bg-[var(--bg-card)] bg-opacity-95 backdrop-blur-sm p-1.5 rounded-xl shadow-2xl border border-[var(--border-primary)] animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   {options.map((opt) => (
                     <button
@@ -200,8 +201,8 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
                         "w-full flex flex-col items-center justify-center rounded-lg transition-all duration-200",
                         "h-16 p-1",
                         isActive && toggleState === opt.state
-                          ? "bg-amber-600 text-white shadow-md dark:bg-amber-700"
-                          : "bg-amber-50 text-amber-900 hover:bg-amber-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                          ? "text-amber-600 dark:text-amber-500 scale-105"
+                          : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
                       )}
                     >
                       {opt.color ? (

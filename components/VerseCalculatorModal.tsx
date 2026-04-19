@@ -166,14 +166,14 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
 
     return (
         <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border border-amber-500/20">
+            <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border border-[var(--border-primary)]">
                 {/* Header */}
-                <div className="bg-amber-50 dark:bg-slate-800/50 p-4 border-b border-amber-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                <div className="bg-[var(--bg-secondary)] p-4 border-b border-[var(--border-primary)] flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-2">
                         <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
                             <Calculator size={20} className="text-amber-600 dark:text-amber-500" />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t.title}</h2>
+                        <h2 className="text-lg font-bold text-[var(--text-primary)]">{t.title}</h2>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                         <X size={24} />
@@ -182,14 +182,14 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
 
                 <div className="p-6 space-y-6 overflow-y-auto">
                     {/* Mode Toggle */}
-                    <div className="flex p-1 bg-gray-100 dark:bg-slate-800 rounded-xl relative shrink-0">
+                    <div className="flex p-1 bg-[var(--bg-secondary)] rounded-xl relative shrink-0">
                         <button
                             onClick={() => setMode('range')}
                             className={clsx(
                                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                                mode === 'range'
-                                    ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
-                                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                                 mode === 'range'
+                                    ? "bg-[var(--bg-card)] text-amber-600 dark:text-amber-400 shadow-sm"
+                                    : "text-[var(--text-primary)] opacity-50 hover:opacity-100"
                             )}
                         >
                             <BookOpen size={16} />
@@ -199,9 +199,9 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
                             onClick={() => setMode('structure')}
                             className={clsx(
                                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                                mode === 'structure'
-                                    ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
-                                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                                 mode === 'structure'
+                                    ? "bg-[var(--bg-card)] text-amber-600 dark:text-amber-400 shadow-sm"
+                                    : "text-[var(--text-primary)] opacity-50 hover:opacity-100"
                             )}
                         >
                             <Layers size={16} />

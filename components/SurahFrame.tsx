@@ -51,7 +51,7 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
                     rx="6"
                     ry="6"
                     fill="none"
-                    className="stroke-amber-800 dark:stroke-amber-500"
+                    className="stroke-[var(--accent-color)]"
                     strokeWidth="1.2"
                 />
 
@@ -64,12 +64,12 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
                     rx="4"
                     ry="4"
                     fill="none"
-                    className="stroke-amber-800 dark:stroke-amber-500"
+                    className="stroke-[var(--accent-color)]"
                     strokeWidth="0.6"
                 />
 
                 {/* Left Medallion / Rosette - Moved further left */}
-                <g transform="translate(30, 42.5) scale(0.6)" fill="none" className="stroke-amber-800 dark:stroke-amber-500">
+                <g transform="translate(30, 42.5) scale(0.6)" fill="none" className="stroke-[var(--accent-color)]">
                     <circle cx="0" cy="0" r="30" strokeWidth="1.5" />
                     <circle cx="0" cy="0" r="15" strokeWidth="1" />
                     <g strokeWidth="0.8">
@@ -79,7 +79,7 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
                 </g>
 
                 {/* Right Medallion / Rosette (Mirrored) - Moved further right */}
-                <g transform="translate(770, 42.5) scale(0.6)" fill="none" className="stroke-amber-800 dark:stroke-amber-500">
+                <g transform="translate(770, 42.5) scale(0.6)" fill="none" className="stroke-[var(--accent-color)]">
                     <circle cx="0" cy="0" r="30" strokeWidth="1.5" />
                     <circle cx="0" cy="0" r="15" strokeWidth="1" />
                     <g strokeWidth="0.8">
@@ -107,7 +107,7 @@ const SurahFrame: React.FC<SurahFrameProps> = ({ surahNumber, t, language, onCli
                             textAlign: 'center',
                             transform: 'translateY(-5%)'
                         }}
-                        className="text-slate-800 dark:text-slate-200 text-[clamp(18px,6vw,28px)] sm:text-[clamp(28px,5vw,40px)] md:text-[50px] lg:text-[58px]"
+                        className="text-[var(--text-primary)] opacity-90 text-[clamp(18px,6vw,28px)] sm:text-[clamp(28px,5vw,40px)] md:text-[50px] lg:text-[58px]"
                     >
                         {(language === 'ar' || language === 'en') ? `${t.surahPrefix} ${surahName}` : `${surahName} ${t.surah}`}
                     </span>

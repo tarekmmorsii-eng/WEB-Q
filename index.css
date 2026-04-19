@@ -373,11 +373,23 @@ div[data-atlas] {
   padding: 0 2px;
 }
 
-.target-ayah-highlight {
-  background-color: rgba(192, 127, 0, 0.3) !important;
-  transition: background-color 1s ease-out;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(192, 127, 0, 0.2);
+/* 🚀 Unified Ayah Highlighting: Overlay System */
+.hl-ayah-overlay {
+  position: absolute;
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  border-radius: 6px;
+  /* A singular, professional soft glow */
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.3s ease-in-out;
+  /* Ensure it doesn't clip its own shadow */
+  overflow: visible !important;
+}
+
+.dark .hl-ayah-overlay {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
 }
 
 /* 5. SPECIAL PAGES (1 & 2) OVERRIDES */

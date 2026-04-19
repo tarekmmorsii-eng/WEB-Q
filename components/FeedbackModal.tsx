@@ -85,16 +85,16 @@ const FeedbackModal = () => {
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div
-                className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform scale-100 transition-all"
+                className="w-full max-w-md bg-[var(--bg-card)] rounded-2xl shadow-2xl border border-[var(--border-primary)] overflow-hidden transform scale-100 transition-all"
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
             >
                 {/* Header */}
-                <div className="bg-gradient-to-l from-amber-50 to-white dark:from-slate-800 dark:to-slate-900 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <div className="bg-[var(--bg-secondary)] px-6 py-4 border-b border-[var(--border-primary)] flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
                         <MessageSquare size={20} className="text-amber-600" />
                         {t.sendFeedback}
                     </h3>
-                    <button onClick={closeFeedback} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500">
+                    <button onClick={closeFeedback} className="p-2 hover:bg-[var(--text-primary)] hover:bg-opacity-10 rounded-full transition-colors text-[var(--text-primary)] opacity-50">
                         <X size={20} />
                     </button>
                 </div>
@@ -106,8 +106,8 @@ const FeedbackModal = () => {
                             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
                                 <Send size={32} />
                             </div>
-                            <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">{t.feedbackSentSuccessfully}</h4>
-                            <p className="text-slate-500 dark:text-slate-400">{t.feedbackThanks}</p>
+                            <h4 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t.feedbackSentSuccessfully}</h4>
+                            <p className="text-[var(--text-primary)] opacity-60">{t.feedbackThanks}</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -126,11 +126,11 @@ const FeedbackModal = () => {
                                                 "flex flex-col items-center justify-center p-3 rounded-xl border transition-all cursor-pointer",
                                                 isSelected
                                                     ? `border-amber-500 bg-amber-50 dark:bg-amber-900/20 shadow-sm ring-1 ring-amber-500`
-                                                    : "border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800"
+                                                    : "border-[var(--border-primary)] hover:border-amber-300 bg-[var(--bg-card)]"
                                             )}
                                         >
                                             <Icon size={24} className={clsx("mb-2", isSelected ? "text-amber-600" : "text-slate-400")} />
-                                            <span className={clsx("text-xs font-medium", isSelected ? "text-amber-800 dark:text-amber-100" : "text-slate-500 dark:text-slate-400")}>
+                                            <span className={clsx("text-xs font-medium", isSelected ? "text-amber-800 dark:text-amber-100" : "text-[var(--text-primary)] opacity-60")}>
                                                 {type.label}
                                             </span>
                                         </button>
@@ -140,11 +140,11 @@ const FeedbackModal = () => {
                             {/* Dynamic Sub-options based on Type */}
                             {selectedType === 'interface_notes' && (
                                 <div className="space-y-2 animate-in slide-in-from-top-4 duration-300">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    <label className="block text-sm font-medium text-[var(--text-primary)] opacity-80">
                                         {t.feedbackTargetItem}
                                     </label>
                                     <select
-                                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        className="w-full p-3 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500"
                                         value={subType}
                                         onChange={(e) => {
                                             setSubType(e.target.value);
@@ -173,11 +173,11 @@ const FeedbackModal = () => {
 
                             {selectedType === 'settings_notes' && (
                                 <div className="space-y-2 animate-in slide-in-from-top-4 duration-300">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    <label className="block text-sm font-medium text-[var(--text-primary)] opacity-80">
                                         {t.feedbackTargetSetting}
                                     </label>
                                     <select
-                                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        className="w-full p-3 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500"
                                         value={subType}
                                         onChange={(e) => {
                                             setSubType(e.target.value);
@@ -224,7 +224,7 @@ const FeedbackModal = () => {
 
                             {/* Message Input */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                <label className="block text-sm font-medium text-[var(--text-primary)] opacity-80 mb-1">
                                     {t.feedbackDetails}
                                 </label>
                                 <textarea
@@ -232,7 +232,7 @@ const FeedbackModal = () => {
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     placeholder={t.feedbackPlaceholder}
-                                    className="w-full h-32 p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none transition-all"
+                                    className="w-full h-32 p-3 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none transition-all"
                                 />
                             </div>
 
@@ -243,7 +243,7 @@ const FeedbackModal = () => {
                                 className={clsx(
                                     "w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95",
                                     (isSubmitting || !message.trim())
-                                        ? "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
+                                        ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] opacity-40 cursor-not-allowed"
                                         : "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-orange-200 dark:shadow-none"
                                 )}
                             >

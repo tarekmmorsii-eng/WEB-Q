@@ -295,16 +295,16 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
             style={{ fontFamily: "'Almarai', sans-serif" }}
         >
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-100 dark:border-slate-800">
+            <div className="bg-[var(--bg-card)] rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-[var(--border-primary)]">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50 shrink-0">
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] shrink-0">
+                    <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
                         <SearchIcon size={20} className="text-amber-600" />
                         {t.search}
                     </h2>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors text-gray-500 dark:text-slate-400"
+                        className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors text-[var(--text-primary)] opacity-50"
                     >
                         <X size={24} />
                     </button>
@@ -315,7 +315,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
 
                     {/* Section 1: Page Search */}
                     <div className="space-y-3">
-                        <h3 className="text-base font-bold text-gray-600 dark:text-slate-300 flex items-center gap-2">
+                        <h3 className="text-base font-bold text-[var(--text-primary)] opacity-70 flex items-center gap-2">
                             <span className="w-1 h-4 bg-amber-500 rounded-full"></span>
                             {t.searchByPage}
                         </h3>
@@ -337,7 +337,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                     e.stopPropagation();
                                     if (e.key === 'Enter') handlePageSearch();
                                 }}
-                                className="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-lg placeholder-gray-400 transition-all font-sans"
+                                className="flex-1 px-4 py-3 border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-[var(--bg-card)] text-[var(--text-primary)] text-lg placeholder-[var(--text-primary)] placeholder-opacity-40 transition-all font-sans"
                                 placeholder={t.enterPageNumber.replace('{max}', formatNum(totalPages).toString())}
                             />
                             <button
@@ -351,11 +351,11 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                     </div>
 
                     {/* Divider */}
-                    <hr className="border-t border-gray-100 dark:border-slate-800 my-2" />
+                    <hr className="border-t border-[var(--border-primary)] my-2" />
 
                     {/* Section 1.5: Ayah Search */}
                     <div className="space-y-3">
-                        <h3 className="text-base font-bold text-gray-600 dark:text-slate-300 flex items-center gap-2">
+                        <h3 className="text-base font-bold text-[var(--text-primary)] opacity-70 flex items-center gap-2">
                             <span className="w-1 h-4 bg-amber-500 rounded-full"></span>
                             {t.searchByAyah}
                         </h3>
@@ -366,7 +366,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                     setSelectedSurah(parseInt(e.target.value, 10));
                                     setAyahInput(''); // Reset ayah input when surah changes
                                 }}
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-lg transition-all"
+                                className="w-full px-4 py-3 border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-[var(--bg-card)] text-[var(--text-primary)] text-lg transition-all"
                                 dir="rtl"
                             >
                                 {t.surahNames.map((name: string, index: number) => (
@@ -397,7 +397,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                                 e.stopPropagation();
                                                 if (e.key === 'Enter') handleAyahSearch();
                                             }}
-                                            className="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-lg placeholder-gray-400 transition-all font-sans"
+                                            className="flex-1 px-4 py-3 border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-[var(--bg-card)] text-[var(--text-primary)] text-lg placeholder-[var(--text-primary)] placeholder-opacity-40 transition-all font-sans"
                                             placeholder={maxAyahs > 0 ? `${t.verse} (١ - ${formatNum(maxAyahs)})` : t.verse}
                                         />
                                         <button
@@ -415,7 +415,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
 
                     {/* Section 2: Word Search */}
                     <div className="space-y-3">
-                        <h3 className="text-base font-bold text-gray-600 dark:text-slate-300 flex items-center gap-2">
+                        <h3 className="text-base font-bold text-[var(--text-primary)] opacity-70 flex items-center gap-2">
                             <span className="w-1 h-4 bg-amber-500 rounded-full"></span>
                             {t.searchByWord}
                         </h3>
@@ -433,11 +433,11 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                         e.stopPropagation();
                                         if (e.key === 'Enter') handleTextSearch();
                                     }}
-                                    className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-lg placeholder-gray-400 transition-all font-sans"
+                                    className="w-full px-4 py-3 pl-12 border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-[var(--bg-card)] text-[var(--text-primary)] text-lg placeholder-[var(--text-primary)] placeholder-opacity-40 transition-all font-sans"
                                     placeholder={t.searchPlaceholder}
                                     dir="rtl"
                                 />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-primary)] opacity-40">
                                     {isSearching ? <Loader2 className="animate-spin" size={20} /> : <SearchIcon size={20} />}
                                 </div>
                             </div>
@@ -454,7 +454,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                         {/* Search Results */}
                         {hasSearched && !isSearching && (
                             <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="mb-4 text-sm text-gray-500 dark:text-slate-400 font-bold px-1">
+                                <div className="mb-4 text-sm text-[var(--text-primary)] opacity-60 font-bold px-1">
                                     {searchResults.length > 0
                                         ? t.resultsFound.replace('{count}', formatNum(searchResults.length).toString())
                                         : t.noResultsFound}
@@ -468,8 +468,8 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                             className={clsx(
                                                 "p-4 rounded-xl cursor-pointer transition-all border group relative overflow-hidden",
                                                 result.isSurahResult
-                                                    ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50 hover:border-amber-400 shadow-sm"
-                                                    : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:border-amber-300 dark:hover:border-slate-600 hover:shadow-md"
+                                                    ? "bg-[var(--bg-secondary)] border-amber-200 hover:border-amber-400 shadow-sm"
+                                                    : "bg-[var(--bg-card)] border-[var(--border-primary)] hover:border-amber-300 hover:shadow-md"
                                             )}
                                         >
                                             {result.isSurahResult && (
@@ -479,7 +479,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                             <div className="flex justify-between items-center mb-3">
                                                 <div className={clsx(
                                                     "text-lg font-bold font-sans",
-                                                    result.isSurahResult ? "text-amber-700 dark:text-amber-400 text-xl" : "text-gray-800 dark:text-slate-200"
+                                                    result.isSurahResult ? "text-amber-700 dark:text-amber-400 text-xl" : "text-[var(--text-primary)]"
                                                 )}>
                                                     {result.isSurahResult
                                                         ? result.surahName
@@ -494,7 +494,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                                             </div>
 
                                             {!result.isSurahResult && (
-                                                <div className="text-right text-gray-700 dark:text-slate-300 leading-loose text-lg" style={{ fontFamily: 'Amiri' }}>
+                                                <div className="text-right text-[var(--text-primary)] leading-loose text-lg" style={{ fontFamily: 'Amiri' }}>
                                                     <HighlightText text={result.text} highlight={textInput} />
                                                 </div>
                                             )}

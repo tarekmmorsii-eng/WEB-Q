@@ -50,7 +50,7 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
     };
 
     return (
-        <div className="fixed inset-0 z-[110000] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-700">
+        <div className="fixed inset-0 z-[110000] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-6 animate-in fade-in duration-700">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
                 <div className="absolute -top-24 -left-24 w-96 h-96 bg-amber-600 rounded-full blur-[120px]" />
@@ -59,10 +59,10 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
 
             <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
                 <div className="mb-8 text-center animate-in slide-in-from-top-10 duration-1000">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-4 shadow-xl shadow-amber-900/20">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-4 shadow-xl">
                         <Globe className="text-amber-500 w-8 h-8" />
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">
+                    <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 tracking-tight">
                         Choose Your Language
                     </h1>
                     <p className="text-amber-200/60 text-lg font-medium">
@@ -78,17 +78,17 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
                             className={`
                                 relative group flex flex-col items-center p-4 rounded-2xl border transition-all duration-300
                                 ${selected === lang.code
-                                    ? 'bg-amber-500 border-amber-400 shadow-lg shadow-amber-900/40 scale-105'
-                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                    ? 'bg-amber-500 border-amber-400 shadow-lg scale-105'
+                                    : 'bg-[var(--bg-secondary)] border-[var(--border-primary)] hover:bg-[var(--bg-primary)] hover:bg-opacity-20'
                                 }
                             `}
                             style={{ animationDelay: `${index * 50}ms` }}
                         >
                             <span className="text-3xl mb-2 filter drop-shadow-md">{lang.flag}</span>
-                            <span className={`text-sm font-bold transition-colors ${selected === lang.code ? 'text-black' : 'text-white'}`}>
+                            <span className={`text-sm font-bold transition-colors ${selected === lang.code ? 'text-black' : 'text-[var(--text-primary)]'}`}>
                                 {lang.nativeName}
                             </span>
-                            <span className={`text-[10px] opacity-60 ${selected === lang.code ? 'text-black' : 'text-amber-200/40'}`}>
+                            <span className={`text-[10px] opacity-60 ${selected === lang.code ? 'text-black' : 'text-[var(--text-primary)]'}`}>
                                 {lang.name}
                             </span>
 
@@ -109,7 +109,7 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
                             w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-lg shadow-2xl transition-all duration-500
                             ${selected
                                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:scale-105 active:scale-95'
-                                : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
+                                : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] opacity-20 cursor-not-allowed border border-[var(--border-primary)]'
                             }
                         `}
                     >
@@ -117,7 +117,7 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
                         <ChevronRight className={`transition-transform duration-500 ${selected ? 'translate-x-1' : ''}`} />
                     </button>
                     
-                    <p className="mt-4 text-center text-white/30 text-xs font-medium uppercase tracking-widest">
+                    <p className="mt-4 text-center text-[var(--text-primary)] opacity-30 text-xs font-medium uppercase tracking-widest">
                         You can change this later in settings
                     </p>
                 </div>

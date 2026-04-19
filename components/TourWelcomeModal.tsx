@@ -31,7 +31,7 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose, t }: TourWe
             {/* Blurred Backdrop */}
             <div
                 className={clsx(
-                    "absolute inset-0 bg-slate-900/70 backdrop-blur-md transition-opacity duration-500 ease-out",
+                    "absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-500 ease-out",
                     isVisible ? "opacity-100" : "opacity-0"
                 )}
             />
@@ -39,7 +39,7 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose, t }: TourWe
             {/* Modal Container */}
             <div
                 className={clsx(
-                    "relative w-full max-w-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700 p-8 flex flex-col items-center text-center transform transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    "relative w-full max-w-lg bg-[var(--bg-card)] backdrop-blur-xl rounded-3xl shadow-2xl border border-[var(--border-primary)] p-8 flex flex-col items-center text-center transform transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1)",
                     isVisible ? "scale-100 translate-y-0 opacity-100" : "scale-90 translate-y-10 opacity-0"
                 )}
             >
@@ -50,7 +50,7 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose, t }: TourWe
                 {/* Logo Section */}
                 <div className="relative mb-6 group">
                     <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full animate-pulse-slow"></div>
-                    <div className="relative w-24 h-24 bg-white dark:bg-slate-800 rounded-full p-1 shadow-lg ring-4 ring-amber-100 dark:ring-amber-900/30 transition-transform duration-500 group-hover:scale-110">
+                    <div className="relative w-24 h-24 bg-[var(--bg-card)] rounded-full p-1 shadow-lg ring-4 ring-amber-600/20 transition-transform duration-500 group-hover:scale-110">
                         <img
                             src="/final_logo.png"
                             alt="Logo"
@@ -63,18 +63,18 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose, t }: TourWe
                 </div>
 
                 {/* Content */}
-                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3 leading-tight">
+                <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-3 leading-tight">
                     {t.tourWelcomeTitle} <br />
                     <span className="text-amber-600 dark:text-amber-500">{t.tourWelcomeSubtitle}</span>
                 </h2>
 
-                <p className="text-gray-600 dark:text-gray-300 mb-4 max-w-sm text-lg leading-relaxed">
+                <p className="text-[var(--text-primary)] opacity-70 mb-4 max-w-sm text-lg leading-relaxed">
                     {t.tourWelcomeDesc}
                 </p>
                 <div className="mb-8 w-full max-w-sm">
-                    <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 py-3 px-4 rounded-2xl border border-red-100 dark:border-red-900/30">
+                    <div className="flex items-center gap-3 bg-[var(--bg-secondary)] py-3 px-4 rounded-2xl border border-[var(--border-primary)] shadow-sm">
                         <AlertTriangle className="text-red-600 dark:text-red-400 shrink-0" size={24} />
-                        <p className="text-red-600 dark:text-red-400 text-[1.05rem] font-bold leading-tight">
+                        <p className="text-[var(--text-primary)] opacity-70 text-[1.05rem] font-bold leading-tight">
                             {t.tourBetaNote}
                         </p>
                     </div>
@@ -93,7 +93,7 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose, t }: TourWe
 
                     <button
                         onClick={onClose}
-                        className="w-full py-3 bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium text-sm transition-colors flex items-center justify-center gap-1 hover:bg-gray-100/50 dark:hover:bg-slate-800/50 rounded-xl"
+                        className="w-full py-3 bg-transparent text-[var(--text-primary)] opacity-50 hover:opacity-100 font-medium text-sm transition-colors flex items-center justify-center gap-1 hover:bg-[var(--bg-primary)] hover:bg-opacity-10 rounded-xl"
                     >
                         <span>{t.tourSkipAction}</span>
                         <X size={16} />

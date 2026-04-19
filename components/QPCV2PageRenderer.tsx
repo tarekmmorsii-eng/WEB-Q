@@ -4,7 +4,7 @@
  * Combines V2 Data Logic (Correct Line Breaks) with V1 Features (Styling, Interactivity, Masking).
  */
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
 import clsx from 'clsx';
 import { ViewMode, MemorizationRating, VerseBookmark, Mutashabiha } from '../types';
 import { Bookmark, WifiOff } from 'lucide-react';
@@ -89,6 +89,7 @@ interface AdaptedPage {
 // --- Components ---
 
 interface AyahSeparatorProps {
+    surahNumber?: number;
     ayahNumber: number;
     accentColor: string;
     rating?: 'weak' | 'medium' | 'good' | null;
@@ -100,7 +101,7 @@ interface AyahSeparatorProps {
 }
 
 const AyahSeparator: React.FC<AyahSeparatorProps> = ({
-    ayahNumber, accentColor, rating, deviceType = 'desktop', orientation = 'portrait', language = 'ar',
+    surahNumber, ayahNumber, accentColor, rating, deviceType = 'desktop', orientation = 'portrait', language = 'ar',
     mutashabihatType = 'none', onMutashabihatClick
 }) => {
     const arabicNumber = formatNumber(ayahNumber, language);
@@ -112,12 +113,14 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({
         weak: '#ef4444'
     };
 
-    const activeColor = rating ? ratingColors[rating] : accentColor;
+    const activeColor = rating ? ratingColors[rating] : 'var(--accent-color, #B45309)';
     const fillColor = rating ? ratingColors[rating] : 'none';
     const isTabletLandscape = deviceType === 'tablet' && orientation === 'landscape';
 
     return (
         <span translate="no" className="notranslate ayah-separator-container"
+            data-surah={surahNumber}
+            data-ayah={ayahNumber}
             onClick={onMutashabihatClick}
             style={{
                 display: 'inline-flex',
@@ -128,7 +131,8 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({
                 height: deviceType === 'mobile' ? '1.5em' : (isTabletLandscape ? '1.45em' : '1.9em'),
                 margin: deviceType === 'mobile' ? '0 2px' : (isTabletLandscape ? '0 3px' : '0 4px'),
                 fontSize: deviceType === 'mobile' ? '0.9em' : (isTabletLandscape ? '0.95em' : '1.1em'),
-                cursor: onMutashabihatClick ? 'pointer' : 'default'
+                cursor: onMutashabihatClick ? 'pointer' : 'default',
+                zIndex: 10
             }}
         >
             <svg
@@ -215,6 +219,9 @@ interface QPCV2PageRendererProps {
     wordMeaningsSource?: 'siraj' | 'new';
     isActive?: boolean;
     resetCounter?: number;
+    audioModeActive?: boolean;
+    playingAyahId?: string | null;
+    onAyahClickForAudio?: (surah: number, ayah: number) => void;
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -243,7 +250,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     showWordMeanings = true,
     wordMeaningsSource = 'siraj',
     isActive = true,
-    resetCounter = 0
+    resetCounter = 0,
+    audioModeActive = false,
+    playingAyahId = null,
+    onAyahClickForAudio
 }) => {
     // Force a local reference to ensure we use the latest prop value in closures
     const audioEnabledRef = useRef<boolean>(enableWordLongPressAudio);
@@ -328,17 +338,101 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     const isLongPressRef = useRef<boolean>(false);
     const pointerStartPosRef = useRef<{ x: number, y: number } | null>(null);
 
+    const linesContainerRef = useRef<HTMLDivElement>(null);
+
+    // =============================================================
+    // UNIFIED AYAH HIGHLIGHTING: DOM Overlays for all lines
+    // Handles BOTH Search (highlightedAyah) and Audio (playingAyahId)
+    // =============================================================
+    useLayoutEffect(() => {
+        const container = linesContainerRef.current;
+        if (!container) return;
+
+        // 1. Remove old overlays
+        container.querySelectorAll('.hl-ayah-overlay').forEach(el => el.remove());
+
+        // 2. Determine target status
+        let targetSurah: number | null = null;
+        let targetAyah: number | null = null;
+
+        if (highlightedAyah) {
+            targetSurah = highlightedAyah.surah;
+            targetAyah = highlightedAyah.ayah;
+        } else if (playingAyahId) {
+            const parts = playingAyahId.split('-');
+            if (parts.length >= 2) {
+                targetSurah = parseInt(parts[0]);
+                targetAyah = parseInt(parts[1]);
+            }
+        }
+
+        if (!targetSurah || !targetAyah) return;
+
+        // 3. Find lines container
+        const lineEls = container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]');
+
+        lineEls.forEach((lineEl) => {
+            const el = lineEl as HTMLElement;
+            
+            // Find highlighted words AND ayah separators in this line
+            const hlElements = el.querySelectorAll<HTMLElement>(
+                `[data-word-surah="${targetSurah}"][data-word-ayah="${targetAyah}"], [data-surah="${targetSurah}"][data-ayah="${targetAyah}"]`
+            );
+            
+            if (hlElements.length === 0) return;
+
+            // Detect if this is a "Pure Line"
+            const allRealWordsInLine = el.querySelectorAll('[data-word-surah]');
+            const isPureLine = allRealWordsInLine.length > 0 && Array.from(allRealWordsInLine).every(w => {
+                const s = w.getAttribute('data-word-surah');
+                const a = w.getAttribute('data-word-ayah');
+                return s === targetSurah?.toString() && a === targetAyah?.toString();
+            });
+
+            // Create absolutely-positioned overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'hl-ayah-overlay';
+            
+            if (isPureLine) {
+                overlay.style.position = 'absolute';
+                overlay.style.height = `${el.offsetHeight + 4}px`;
+                overlay.style.top = '50%';
+                overlay.style.transform = 'translateY(-47%)'; // Optimal visual centering for Arabic text
+                overlay.style.left = '0';
+                overlay.style.right = '0';
+            } else {
+                const lineRect = el.getBoundingClientRect();
+                let minLeft = Infinity, maxRight = -Infinity;
+                hlElements.forEach(item => {
+                    const r = item.getBoundingClientRect();
+                    minLeft = Math.min(minLeft, r.left);
+                    maxRight = Math.max(maxRight, r.right);
+                });
+
+                // Add 4px horizontal bleed for better look
+                const finalLeft = Math.max(0, minLeft - lineRect.left - 4);
+                const finalRight = Math.min(lineRect.width, maxRight - lineRect.left + 4);
+
+                overlay.style.position = 'absolute';
+                overlay.style.height = `${el.offsetHeight + 4}px`;
+                overlay.style.top = '50%';
+                overlay.style.transform = 'translateY(-47%)';
+                overlay.style.left = `${finalLeft}px`;
+                overlay.style.width = `${finalRight - finalLeft}px`;
+            }
+
+            el.style.position = 'relative';
+            el.appendChild(overlay);
+        });
+    }, [highlightedAyah, playingAyahId, pageData, isDarkMode, toggleState, deviceType, orientation]);
+
     // --- Device Detection & Resize Handler ---
     useEffect(() => {
         const handleResize = () => {
-            // الكشف الدقيق باستخدام Media Queries المتقدمة
-
-            // الموبايل: شاشة صغيرة + لمسي (coarse pointer)
             const isMobile = window.matchMedia(
                 '(max-width: 899px) and (hover: none) and (pointer: coarse)'
             ).matches;
 
-            // التابلت: شاشة متوسطة + لمسي (coarse pointer)
             const isTablet = window.matchMedia(
                 '(min-width: 900px) and (max-width: 1366px) and (hover: none) and (pointer: coarse)'
             ).matches;
@@ -351,7 +445,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             // تحديث الاتجاه
             setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
 
-            // المنطق النهائي مع Fallback للأجهزة الهجينة
             // المنطق النهائي المحسن
             if (isMobile) {
                 setDeviceType('mobile');
@@ -360,16 +453,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             } else if (isDesktop) {
                 setDeviceType('desktop');
             } else {
-                // Fallback ذكي يعتمد على اللمس
                 const width = window.innerWidth;
                 const isTouch = window.matchMedia('(pointer: coarse)').matches;
-
                 if (isTouch) {
-                    // جهاز لمسي
                     if (width < 900) setDeviceType('mobile');
                     else setDeviceType('tablet');
                 } else {
-                    // جهاز غير لمسي (ماوس) - Golden Alignment
                     if (width >= 1367) setDeviceType('desktop');
                     else if (width > 700) setDeviceType('tablet');
                     else setDeviceType('mobile');
@@ -378,7 +467,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         };
 
         window.addEventListener('resize', handleResize);
-        // Initial check
         handleResize();
 
         return () => window.removeEventListener('resize', handleResize);
@@ -1125,7 +1213,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             className={clsx(
                 "flex items-center justify-center w-full qpc-basmalah transition-colors duration-500 notranslate",
                 isSpecialPage && "mb-2",
-                isHighlighted && "bg-amber-100/60 dark:bg-amber-900/30 rounded-lg p-1"
+                isHighlighted && "target-ayah-highlight px-4 py-1"
             )}
             translate="no"
             style={{
@@ -1145,8 +1233,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     gap: isSpecialPage ? '0.4em' : '0.15em' // Reduced consistent spacing between words
                 }}
                 className={clsx(
-                    "text-slate-800 dark:text-slate-200 qpc-v2-text",
-                    isHighlighted && "text-amber-800 dark:text-amber-400"
+                    "text-slate-800 dark:text-slate-200 qpc-v2-text transition-colors duration-500",
+                    isHighlighted && "text-amber-900 dark:text-amber-200"
                 )}
             >
                 {/* Split glyphs for consistent spacing: Bism, Allah, ARrahman, ARrahim */}
@@ -1274,7 +1362,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 })()}
             </div>
 
-            <div className="quran-lines-container flex-grow flex flex-col justify-between w-full px-[1%]" style={{ direction: 'rtl' }}>
+            <div ref={linesContainerRef} className="quran-lines-container flex-grow flex flex-col w-full px-[1%]" style={{ direction: 'rtl', height: '100%', minHeight: '100%' }}>
                 {pageData.lines.map((line, idx) => (
                     <div key={`${idx}-${mode}-${toggleState}`}
                         data-line-type={line.lineType}
@@ -1285,10 +1373,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             line.isCentered ? "justify-center force-center" : "justify-between"
                         )}
                         style={{
-                            flex: isSpecialPage ? '0 1 auto' : 'none',
-                            height: isSpecialPage ? 'auto' : 'calc(100% / 15)',
-                            minHeight: isSpecialPage ? 'auto' : 'calc(100% / 15)',
-                            maxHeight: isSpecialPage ? 'none' : 'calc(100% / 15)',
+                            flex: isSpecialPage ? '0 1 auto' : '1 1 0px',
+                            height: isSpecialPage ? 'auto' : 'auto',
+                            minHeight: isSpecialPage ? 'auto' : '0',
+                            maxHeight: isSpecialPage ? 'none' : 'none',
                             fontFamily: fontName,
                             direction: 'rtl',
                             lineHeight: isSpecialPage ? '1.4' : lineHeightVal,
@@ -1302,258 +1390,208 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                         }}
                     >
                         {line.lineType === 'surah_name' && renderSurahName(line)}
-                        {line.lineType === 'basmallah' && renderBasmallah(line, highlightedAyah?.ayah === 0 && highlightedAyah?.surah === line.surahNumber)}
-                        {line.lineType === 'ayah' && line.words.map((word, wIdx) => {
-                            const isHighlighted = highlightedAyah?.surah === word.surah && highlightedAyah?.ayah === word.ayah;
-                            const shouldHide = isHidden(idx, wIdx) && !word.isEnd;
-                            const wordId = getId(idx, wIdx);
-
+                        {line.lineType === 'basmallah' && renderBasmallah(line, (highlightedAyah?.ayah === 0 && highlightedAyah?.surah === line.surahNumber) || (playingAyahId === `${line.surahNumber}-1` && line.surahNumber === 1))}
+                        {line.lineType === 'ayah' && (() => {
                             return (
-                                <React.Fragment key={wIdx}>
-                                    <span
-                                        id={isActive && word.surah === 1 && word.ayah === 2 && word.word === 1 ? 'tour-word-long-press' : undefined}
-                                        data-word-surah={word.surah}
-                                        data-word-ayah={word.ayah}
-                                        className={clsx(
-                                            `qpc-v2-text cursor-pointer transition-colors duration-300 relative`,
-                                            isHighlighted && "bg-amber-100 dark:bg-amber-900/40 rounded px-1",
-                                            (activeWord?.surah === word.surah && activeWord?.ayah === word.ayah && activeWord?.word === word.word) && "bg-amber-300 dark:bg-amber-700/80 rounded px-1",
-                                            shouldHide
-                                                ? "text-transparent bg-slate-800 rounded-[4px]"
-                                                : "hover:text-amber-600"
-                                        )}
-                                        style={{
-                                            fontSize: isSpecialPage ? '1.5rem' : fontSizeClass,
-                                            lineHeight: '1.2',
-                                            flexShrink: line.isCentered ? 0 : 1,
-                                            color: shouldHide ? 'transparent' : (isDarkMode ? '#f5f5f5' : '#1a1a1a'),
-                                        }}
-                                        onPointerDown={(e) => {
-                                            // Start Long Press Timer
-                                            isLongPressRef.current = false;
-                                            const startX = e.clientX;
-                                            const startY = e.clientY;
-                                            pointerStartPosRef.current = { x: startX, y: startY };
+                                <>
+                                    {line.words.map((word, wIdx) => {
+                                        const shouldHide = isHidden(idx, wIdx) && !word.isEnd;
+                                        const wordId = getId(idx, wIdx);
 
-                                            longPressTimerRef.current = setTimeout(() => {
-                                                isLongPressRef.current = true;
+                                        return (
+                                            <React.Fragment key={wIdx}>
+                                                <span
+                                                    id={isActive && word.surah === 1 && word.ayah === 2 && word.word === 1 ? 'tour-word-long-press' : undefined}
+                                                    data-word-surah={word.surah}
+                                                    data-word-ayah={word.ayah}
+                                                    className={clsx(
+                                                        `qpc-v2-text cursor-pointer transition-colors duration-300 relative`,
+                                                        (activeWord?.surah === word.surah && activeWord?.ayah === word.ayah && activeWord?.word === word.word) && "bg-amber-300 dark:bg-amber-700/80 rounded px-1",
+                                                        shouldHide
+                                                            ? "text-transparent bg-slate-800 rounded-[4px]"
+                                                            : "hover:text-amber-600 outline-none"
+                                                    )}
+                                                    style={{
+                                                        fontSize: isSpecialPage ? '1.5rem' : fontSizeClass,
+                                                        lineHeight: '1.2',
+                                                        flexShrink: line.isCentered ? 0 : 1,
+                                                        color: shouldHide ? 'transparent' : (isDarkMode ? '#f5f5f5' : '#1a1a1a'),
+                                                        zIndex: 10
+                                                    }}
+                                                    onPointerDown={(e) => {
+                                                        isLongPressRef.current = false;
+                                                        const startX = e.clientX;
+                                                        const startY = e.clientY;
+                                                        pointerStartPosRef.current = { x: startX, y: startY };
 
-                                                const currentAyahKey = `${word.surah}-${word.ayah}`;
+                                                        longPressTimerRef.current = setTimeout(() => {
+                                                            isLongPressRef.current = true;
+                                                            const currentAyahKey = `${word.surah}-${word.ayah}`;
 
-                                                // 1. Reveal Logic (if word is hidden)
-                                                if (shouldHide) {
-                                                    // Ayah-based hidden modes
-                                                    const isAyahHiddenMode = (mode === ViewMode.HIDE_RANDOM_AYAHS && randomMasks.has(currentAyahKey)) || (mode === ViewMode.HIDE_ALL_AYAHS);
-                                                    if (isAyahHiddenMode) {
-                                                        toggleReveal(wordId, word.surah, word.ayah);
-                                                        if (navigator.vibrate) navigator.vibrate(50);
-                                                        return;
-                                                    }
-
-                                                    // Word-based hidden modes
-                                                    const isWordHiddenMode = (mode === ViewMode.HIDE_RANDOM_WORDS) || (mode === ViewMode.TOGGLE_FIRST_WORD) || (mode === ViewMode.TOGGLE_LAST_WORD);
-                                                    if (isWordHiddenMode) {
-                                                        if (word.surah && word.ayah) {
-                                                            const info = ayahWordMap.get(currentAyahKey);
-                                                            if (info) {
-                                                                const currentIdx = info.revealKeys.indexOf(wordId);
-                                                                if (currentIdx !== -1) {
-                                                                    const stops = info.stopIndices || [];
-                                                                    // Reveal the whole segment (from previous stop to next stop)
-                                                                    const prevStop = stops.filter((s: number) => s < currentIdx).pop();
-                                                                    const start = (prevStop !== undefined) ? prevStop + 1 : 0;
-                                                                    const nextStop = stops.find((s: number) => s >= currentIdx);
-                                                                    const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
-                                                                    const idsToReveal = info.revealKeys.slice(start, end + 1);
-
-                                                                    setRevealedIndices(prev => {
-                                                                        const next = new Set(prev);
-                                                                        idsToReveal.forEach(i => next.add(i));
-                                                                        return next;
-                                                                    });
+                                                            if (shouldHide) {
+                                                                const isAyahHiddenMode = (mode === ViewMode.HIDE_RANDOM_AYAHS && randomMasks.has(currentAyahKey)) || (mode === ViewMode.HIDE_ALL_AYAHS);
+                                                                if (isAyahHiddenMode) {
+                                                                    toggleReveal(wordId, word.surah, word.ayah);
                                                                     if (navigator.vibrate) navigator.vibrate(50);
+                                                                    return;
+                                                                }
+
+                                                                const isWordHiddenMode = (mode === ViewMode.HIDE_RANDOM_WORDS) || (mode === ViewMode.TOGGLE_FIRST_WORD) || (mode === ViewMode.TOGGLE_LAST_WORD);
+                                                                if (isWordHiddenMode) {
+                                                                    const info = ayahWordMap.get(currentAyahKey);
+                                                                    if (info) {
+                                                                        const currentIdx = info.revealKeys.indexOf(wordId);
+                                                                        if (currentIdx !== -1) {
+                                                                            const stops = info.stopIndices || [];
+                                                                            const prevStop = stops.filter((s: number) => s < currentIdx).pop();
+                                                                            const start = (prevStop !== undefined) ? prevStop + 1 : 0;
+                                                                            const nextStop = stops.find((s: number) => s >= currentIdx);
+                                                                            const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
+                                                                            const idsToReveal = info.revealKeys.slice(start, end + 1);
+
+                                                                            setRevealedIndices(prev => {
+                                                                                const next = new Set(prev);
+                                                                                idsToReveal.forEach(i => next.add(i));
+                                                                                return next;
+                                                                            });
+                                                                            if (navigator.vibrate) navigator.vibrate(50);
+                                                                        }
+                                                                    }
+                                                                    return;
                                                                 }
                                                             }
-                                                        }
-                                                        return;
-                                                    }
-                                                }
 
-                                                // 2. Audio + Meaning together on long press (if word is visible)
-                                                if (audioEnabledRef.current && word.surah && word.ayah && word.word) {
-                                                    playWordAudio(word.surah, word.ayah, word.word);
-                                                    if (navigator.vibrate) navigator.vibrate(50);
-                                                }
+                                                            if (audioEnabledRef.current && word.surah && word.ayah && word.word) {
+                                                                playWordAudio(word.surah, word.ayah, word.word);
+                                                                if (navigator.vibrate) navigator.vibrate(50);
+                                                            }
 
-                                                if (showWordMeanings && word.meaning) {
-                                                    setSelectedWordMeaning({
-                                                        word: word.meaningPhrase || word.originalText || '',
-                                                        meaning: word.meaning,
-                                                        x: startX,
-                                                        y: startY
-                                                    });
-                                                }
-                                            }, 400); // 400ms threshold
-                                        }}
-                                        onPointerMove={(e) => {
-                                            if (pointerStartPosRef.current && longPressTimerRef.current) {
-                                                const dx = e.clientX - pointerStartPosRef.current.x;
-                                                const dy = e.clientY - pointerStartPosRef.current.y;
-                                                const distance = Math.sqrt(dx * dx + dy * dy);
-                                                // If moved more than 20px, it's a scroll/swipe, not a long press
-                                                if (distance > 20) {
-                                                    clearTimeout(longPressTimerRef.current);
-                                                    longPressTimerRef.current = null;
-                                                }
-                                            }
-                                        }}
-                                        onPointerUp={() => {
-                                            if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-                                            pointerStartPosRef.current = null;
-                                        }}
-                                        onPointerLeave={() => {
-                                            if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-                                            pointerStartPosRef.current = null;
-                                        }}
-                                        onClick={(e) => {
-                                            // If it was a long press, ignore the click event and prevent bubbling
-                                            if (isLongPressRef.current) {
-                                                isLongPressRef.current = false;
-                                                e.stopPropagation();
-                                                return;
-                                            }
-
-                                            if (word.isEnd) {
-                                                const ak = `${word.surah}-${word.ayah}`;
-                                                const isHiddenContext = (mode === ViewMode.HIDE_RANDOM_AYAHS && randomMasks.has(ak));
-
-                                                if (isHiddenContext) {
-                                                    const info = ayahWordMap.get(ak);
-                                                    if (info && info.revealKeys.length > 0 && !revealedIndices.has(info.revealKeys[0])) {
-                                                        e.stopPropagation();
-                                                        toggleReveal(wordId, word.surah, word.ayah);
-                                                        return;
-                                                    }
-                                                }
-                                                handleRateClick(e, word.surah, word.ayah);
-                                            } else if (shouldHide) {
-                                                e.stopPropagation();
-                                                toggleReveal(wordId, word.surah, word.ayah);
-                                            } else {
-                                                // Normal short click on a visible word
-                                                // Bubbles to toggle menus
-                                            }
-                                        }}
-                                    >
-
-
-                                        {word.isEnd && word.surah && word.ayah && verseBookmarks?.some(b => b.id === `${pageNumber}-${word.surah}-${word.ayah}`) && (
-                                            <div className="absolute left-1/2 -translate-x-1/2 text-amber-500 animate-in zoom-in duration-200 z-10 drop-shadow-sm select-none pointer-events-none" style={{ bottom: '100%', marginBottom: deviceType === 'desktop' ? '-6px' : '-5px' }}>
-                                                <Bookmark size={14} fill="currentColor" />
-                                            </div>
-                                        )}
-
-                                        {word.isEnd ? (
-                                            <span
-                                                id={isActive && word.surah === 1 && word.ayah === 1 ? "tour-ayah-number" : undefined}
-                                                className="ayah-number-wrapper"
-                                                data-surah={word.surah}
-                                                data-ayah={word.ayah}
-                                                style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
-                                            >
-                                                {(() => {
-                                                    let mutType: 'none' | 'inside' | 'outside' | 'both' = 'none';
-                                                    if (showMutashabihatIndicators) {
-                                                        const allGroups = findAllMutashabihatForAyah(word.surah, word.ayah, mutashabihatData);
-                                                        if (allGroups.length > 0) {
-                                                            let hasInside = false;
-                                                            let hasOutside = false;
-
-                                                            allGroups.forEach(group => {
-                                                                // Check the source ayah of the group (if it's not the current verse)
-                                                                if (group.sourceAyah.surahNumber !== word.surah || group.sourceAyah.ayahNumber !== word.ayah) {
-                                                                    if (group.sourceAyah.surahNumber === word.surah) hasInside = true;
-                                                                    else hasOutside = true;
-                                                                }
-
-                                                                // Check all target ayahs in the group (excluding the current verse)
-                                                                group.similarAyahs.forEach(a => {
-                                                                    if (a.surahNumber === word.surah && a.ayahNumber === word.ayah) return;
-
-                                                                    if (a.surahNumber === word.surah) hasInside = true;
-                                                                    else hasOutside = true;
+                                                            if (showWordMeanings && word.meaning) {
+                                                                setSelectedWordMeaning({
+                                                                    word: word.meaningPhrase || word.originalText || '',
+                                                                    meaning: word.meaning,
+                                                                    x: startX,
+                                                                    y: startY
                                                                 });
-                                                            });
-
-                                                            if (hasInside && hasOutside) mutType = 'both';
-                                                            else if (hasInside) mutType = 'inside';
-                                                            else if (hasOutside) mutType = 'outside';
-                                                        }
-                                                    }
-
-                                                    return (
-                                                        <AyahSeparator
-                                                            ayahNumber={word.ayah}
-                                                            accentColor={accentColor}
-                                                            deviceType={deviceType}
-                                                            orientation={orientation}
-                                                            rating={getEffectiveRating(word.surah, word.ayah)}
-                                                            language={language}
-                                                            mutashabihatType={mutType}
-                                                            onMutashabihatClick={(e) => {
-                                                                // لا تقم بإيقاف الانتشار، دع الحدث يصل للأب ليفتح نافذة الخيارات
-                                                            }}
-                                                        />
-                                                    );
-                                                })()}
-                                            </span>
-                                        ) : (
-                                            <span dangerouslySetInnerHTML={{
-                                                __html: (() => {
-                                                    const text = word.text || '';
-                                                    if (shouldHide) return text;
-
-                                                    if (colorStopSigns) {
-                                                        const key = `${word.surah}-${word.ayah}`;
-                                                        const stops = STOP_SIGNS[key] || [];
-                                                        const isStopWord = stops.includes(word.word - 1);
-
-                                                        if (isStopWord && text.length > 0) {
-                                                            if (text.length === 1) {
-                                                                return `<span style="color: ${accentColor}">${text}</span>`;
                                                             }
-
-                                                            // Hizb/Quarter markers come at the start of the first word
-                                                            const isQuarterStart = JUZ_SECTIONS.some(s =>
-                                                                s.surahNum === word.surah &&
-                                                                s.ayahNum === word.ayah &&
-                                                                Number(word.word) === 1
-                                                            );
-
-                                                            const isHizbMark = isQuarterStart && Number(word.word) === 1;
-
-                                                            if (isHizbMark) {
-                                                                // Start-of-word sign (Hizb marker)
-                                                                return `<span style="color: ${accentColor}">${text[0]}</span>${text.slice(1)}`;
-                                                            } else {
-                                                                // End-of-word sign (Stop signs: Sali, Qali, Jim)
-                                                                const base = text.slice(0, -1);
-                                                                const sign = text.slice(-1);
-                                                                return `${base}<span style="color: ${accentColor}">${sign}</span>`;
+                                                        }, 600);
+                                                    }}
+                                                    onPointerMove={(e) => {
+                                                        if (pointerStartPosRef.current && longPressTimerRef.current) {
+                                                            const dx = e.clientX - pointerStartPosRef.current.x;
+                                                            const dy = e.clientY - pointerStartPosRef.current.y;
+                                                            if (Math.sqrt(dx * dx + dy * dy) > 20) {
+                                                                clearTimeout(longPressTimerRef.current);
+                                                                longPressTimerRef.current = null;
                                                             }
                                                         }
-                                                    }
-                                                    return text;
-                                                })()
-                                            }} />
-                                        )}
-                                    </span>
-                                    {!isSpecialPage && !line.isCentered && wIdx < line.words.length - 1 && (
-                                        <span className="flex-grow" style={{ minWidth: deviceType === 'mobile' ? '1px' : '4px' }} />
-                                    )}
-                                </React.Fragment>
+                                                    }}
+                                                    onPointerUp={() => {
+                                                        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                                                        pointerStartPosRef.current = null;
+                                                    }}
+                                                    onPointerLeave={() => {
+                                                        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                                                        pointerStartPosRef.current = null;
+                                                    }}
+                                                    onClick={(e) => {
+                                                        if (isLongPressRef.current) {
+                                                            isLongPressRef.current = false;
+                                                            e.stopPropagation();
+                                                            return;
+                                                        }
+
+                                                        if (word.isEnd) {
+                                                            const ak = `${word.surah}-${word.ayah}`;
+                                                            if (mode === ViewMode.HIDE_RANDOM_AYAHS && randomMasks.has(ak)) {
+                                                                const info = ayahWordMap.get(ak);
+                                                                if (info && info.revealKeys.length > 0 && !revealedIndices.has(info.revealKeys[0])) {
+                                                                    e.stopPropagation();
+                                                                    toggleReveal(wordId, word.surah, word.ayah);
+                                                                    return;
+                                                                }
+                                                            }
+                                                            handleRateClick(e, word.surah, word.ayah);
+                                                        } else if (shouldHide) {
+                                                            e.stopPropagation();
+                                                            toggleReveal(wordId, word.surah, word.ayah);
+                                                        }
+                                                    }}
+                                                >
+                                                    {word.isEnd && word.surah && word.ayah && verseBookmarks?.some(b => b.id === `${pageNumber}-${word.surah}-${word.ayah}`) && (
+                                                        <div className="absolute left-1/2 -translate-x-1/2 text-amber-500 animate-in zoom-in duration-200 z-10 drop-shadow-sm select-none pointer-events-none" style={{ bottom: '100%', marginBottom: deviceType === 'desktop' ? '-6px' : '-5px' }}>
+                                                            <Bookmark size={14} fill="currentColor" />
+                                                        </div>
+                                                    )}
+
+                                                    {word.isEnd ? (
+                                                        <span className="ayah-number-wrapper" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                                                            {(() => {
+                                                                let mutType: 'none' | 'inside' | 'outside' | 'both' = 'none';
+                                                                if (showMutashabihatIndicators) {
+                                                                    const allGroups = findAllMutashabihatForAyah(word.surah, word.ayah, mutashabihatData);
+                                                                    if (allGroups.length > 0) {
+                                                                        let hasInside = false, hasOutside = false;
+                                                                        allGroups.forEach(group => {
+                                                                            if (group.sourceAyah.surahNumber !== word.surah || group.sourceAyah.ayahNumber !== word.ayah) {
+                                                                                if (group.sourceAyah.surahNumber === word.surah) hasInside = true; else hasOutside = true;
+                                                                            }
+                                                                            group.similarAyahs.forEach(a => {
+                                                                                if (a.surahNumber === word.surah && a.ayahNumber === word.ayah) return;
+                                                                                if (a.surahNumber === word.surah) hasInside = true; else hasOutside = true;
+                                                                            });
+                                                                        });
+                                                                        if (hasInside && hasOutside) mutType = 'both'; else if (hasInside) mutType = 'inside'; else if (hasOutside) mutType = 'outside';
+                                                                    }
+                                                                }
+                                                                return (
+                                                                    <AyahSeparator
+                                                                        surahNumber={word.surah}
+                                                                        ayahNumber={word.ayah}
+                                                                        accentColor={accentColor}
+                                                                        deviceType={deviceType}
+                                                                        orientation={orientation}
+                                                                        rating={getEffectiveRating(word.surah, word.ayah)}
+                                                                        language={language}
+                                                                        mutashabihatType={mutType}
+                                                                    />
+                                                                );
+                                                            })()}
+                                                        </span>
+                                                    ) : (
+                                                        <span dangerouslySetInnerHTML={{
+                                                            __html: (() => {
+                                                                const text = word.text || '';
+                                                                if (shouldHide) return text;
+
+                                                                if (colorStopSigns) {
+                                                                    const key = `${word.surah}-${word.ayah}`;
+                                                                    const stops = STOP_SIGNS[key] || [];
+                                                                    const isStopWord = stops.includes(word.word - 1);
+
+                                                                    if (isStopWord && text.length > 0) {
+                                                                        if (text.length === 1) return `<span style="color: ${accentColor}">${text}</span>`;
+                                                                        const isQuarterStart = JUZ_SECTIONS.some(s => s.surahNum === word.surah && s.ayahNum === word.ayah && Number(word.word) === 1);
+                                                                        if (isQuarterStart && Number(word.word) === 1) return `<span style="color: ${accentColor}">${text[0]}</span>${text.slice(1)}`;
+                                                                        const base = text.slice(0, -1), sign = text.slice(-1);
+                                                                        return `${base}<span style="color: ${accentColor}">${sign}</span>`;
+                                                                    }
+                                                                }
+                                                                return text;
+                                                            })()
+                                                        }} />
+                                                    )}
+                                                </span>
+                                                {!isSpecialPage && !line.isCentered && wIdx < line.words.length - 1 && (
+                                                    <span className="flex-grow" style={{ minWidth: deviceType === 'mobile' ? '1px' : '4px' }} />
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                    {line.words.length === 0 && <div className="h-full" />}
+                                </>
                             );
-                        })}
+                        })()}
                     </div>
                 ))}
 

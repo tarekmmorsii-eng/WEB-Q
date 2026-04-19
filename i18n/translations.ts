@@ -1,4 +1,4 @@
-﻿// Translation system for 27 languages
+// Translation system for 27 languages
 export type Language =
     | 'ar' | 'en' | 'id' | 'ms' | 'ur' | 'bn' | 'tr' | 'fa' | 'ha' | 'fr'
     | 'es' | 'de' | 'ru' | 'sw' | 'zh' | 'ko' | 'ja' | 'bs' | 'sq' | 'uz'
@@ -118,6 +118,7 @@ export interface Translations {    dir: string;
     rateAyah: string;
     saveAyah: string;
     ayahOptions: string;
+    playAyah: string;
     addBookmark: string;
     removeBookmark: string;
     rateMemorization: string;

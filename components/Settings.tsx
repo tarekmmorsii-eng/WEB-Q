@@ -24,6 +24,7 @@ interface SettingsProps {
     onOpenNotifications?: () => void;
     onOpenMutashabihat?: () => void;
     onOpenColorPicker?: () => void;
+    onOpenReciterSelection?: () => void;
     onTogglePageBookmark?: () => void;
     isPageBookmarked?: boolean;
     hasUpdate?: boolean;
@@ -32,19 +33,21 @@ interface SettingsProps {
     onStartInteractiveTour?: () => void;
     highlightHelp?: boolean;
     highlightOffline?: boolean;
+    onOpenShare?: () => void;
 }
 
 export default function Settings({
     isOpen, onClose, settings, onSave, currentLanguage,
     onOpenIndex, onOpenSearch, onOpenMemorization,
-    onOpenNotifications, onOpenMutashabihat, onOpenColorPicker,
+    onOpenNotifications, onOpenMutashabihat, onOpenColorPicker, onOpenReciterSelection,
     onTogglePageBookmark, isPageBookmarked,
     hasUpdate = false,
     onUpdateApp,
     memorizationRatings = [],
     onStartInteractiveTour,
     highlightHelp = false,
-    highlightOffline = false
+    highlightOffline = false,
+    onOpenShare
 }: SettingsProps) {
     const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
     const t = translations[currentLanguage];
@@ -73,8 +76,7 @@ export default function Settings({
         isInstalling,
         hasOfflineData,
         handleInstallApp,
-        handleDownloadAllData,
-        handleShareApp
+        handleDownloadAllData
     } = useOfflineManager(currentLanguage);
 
     const helpSectionRef = React.useRef<HTMLDivElement>(null);
@@ -236,6 +238,7 @@ export default function Settings({
         { icon: Menu, label: t.index, onClick: onOpenIndex },
         { icon: Search, label: t.search, onClick: onOpenSearch },
         { icon: BarChart3, label: t.memorizationStats, onClick: onOpenMemorization },
+        { icon: PlayCircle, label: currentLanguage === 'ar' ? 'تلاوة الآيات' : 'Ayah Recitation', onClick: onOpenReciterSelection },
         { icon: Bell, label: t.notifications, onClick: onOpenNotifications },
         { icon: FileWarning, label: t.similarVersesAlert, onClick: onOpenMutashabihat },
         { icon: Calculator, label: t.verseCalculatorTitle, onClick: () => setShowVerseCalculator(true), keepOpen: true },
@@ -244,16 +247,16 @@ export default function Settings({
 
     return (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[96vh] md:max-h-[90vh] flex flex-col overflow-hidden border border-amber-200/20 dark:border-slate-700">
+            <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[96vh] md:max-h-[90vh] flex flex-col overflow-hidden border border-[var(--border-primary)]">
                 {/* Header - Non-sticky since parent is flex-col */}
-                <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 p-4 flex justify-between items-center shrink-0 z-10">
+                <div className="bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] p-4 flex justify-between items-center shrink-0 z-10">
                     <div className="flex items-center gap-3">
                         <img
                             src="/mushaf_logo_v2.png?v=10"
                             alt="Logo"
                             className="w-10 h-10 rounded-full border border-amber-500/30"
                         />
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <h2 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2">
                             {t.settingsTitle}
                             {hasUpdate && (
                                 <div className="flex items-center gap-1.5">
@@ -273,9 +276,9 @@ export default function Settings({
 
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                        className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
                     >
-                        <X size={24} className="text-gray-600 dark:text-gray-400" />
+                        <X size={24} className="text-[var(--text-primary)] opacity-60 hover:opacity-100" />
                     </button>
                 </div>
 
@@ -292,10 +295,10 @@ export default function Settings({
                                         if (!btn.keepOpen) onClose();
                                         btn.onClick?.();
                                     }}
-                                    className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                                    className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                                 >
-                                    <btn.icon size={24} className="text-amber-600 dark:text-amber-500" />
-                                    <span className="text-sm text-gray-700 dark:text-gray-300">{btn.label}</span>
+                                    <btn.icon size={24} className="text-amber-600" />
+                                    <span className="text-sm text-[var(--text-primary)]">{btn.label}</span>
                                 </button>
                             ))}
                         </div>
@@ -312,10 +315,10 @@ export default function Settings({
                                     onSave(updatedSettings);
                                     onClose();
                                 }}
-                                className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                             >
-                                {currentTheme.isDark ? <Sun size={24} className="text-amber-600 dark:text-amber-500" /> : <Moon size={24} className="text-amber-600 dark:text-amber-500" />}
-                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {currentTheme.isDark ? <Sun size={24} className="text-amber-600" /> : <Moon size={24} className="text-amber-600" />}
+                                <span className="text-sm text-[var(--text-primary)]">
                                     {currentTheme.isDark ? t.lightMode : t.darkMode}
                                 </span>
                             </button>
@@ -328,14 +331,21 @@ export default function Settings({
                                     onSave(updatedSettings);
                                     onClose();
                                 }}
-                                className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                             >
-                                <MousePointer2
-                                    size={24}
-                                    className="text-amber-600 dark:text-amber-500"
-                                    fill={localSettings.prayerMode ? "currentColor" : "none"}
-                                />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">{t.prayerMode}</span>
+                                <div className="relative w-6 h-6 flex items-center justify-center mb-0.5">
+                                    <div className={clsx(
+                                        "absolute inset-0 rounded-full border-2 border-amber-600 transition-all duration-300",
+                                        localSettings.prayerMode ? "scale-110" : ""
+                                    )} />
+                                    <div className={clsx(
+                                        "w-2.5 h-2.5 rounded-full bg-amber-600 transition-all duration-300",
+                                        localSettings.prayerMode 
+                                            ? "shadow-[0_0_8px_rgba(245,158,11,0.6)]" 
+                                            : ""
+                                    )} />
+                                </div>
+                                <span className="text-sm text-[var(--text-primary)]">{t.prayerMode}</span>
                             </button>
 
                             {/* Page Bookmark Toggle */}
@@ -344,14 +354,14 @@ export default function Settings({
                                     onTogglePageBookmark?.();
                                     onClose();
                                 }}
-                                className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                             >
                                 <Bookmark
                                     size={24}
-                                    className="text-amber-600 dark:text-amber-500"
+                                    className="text-amber-600"
                                     fill={isPageBookmarked ? "currentColor" : "none"}
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-300">{t.bookmark}</span>
+                                <span className="text-sm text-[var(--text-primary)]">{t.bookmark}</span>
                             </button>
 
                             {/* Fullscreen Toggle (hide on iOS) */}
@@ -371,10 +381,10 @@ export default function Settings({
                                         }
                                         onClose();
                                     }}
-                                    className="flex flex-col items-center gap-2 p-4 bg-amber-50 dark:bg-slate-800 rounded-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors"
+                                    className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                                 >
-                                    <Maximize size={24} className="text-amber-600 dark:text-amber-500" />
-                                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.fullscreen}</span>
+                                    <Maximize size={24} className="text-amber-600" />
+                                    <span className="text-sm text-[var(--text-primary)]">{t.fullscreen}</span>
                                 </button>
                             )}
                         </div>
@@ -382,13 +392,13 @@ export default function Settings({
                         {/* More Settings Toggle Button */}
                         <button
                             onClick={() => setShowAllSettings(!showAllSettings)}
-                            className="w-full mt-4 flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group"
+                            className="w-full mt-4 flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors group"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white dark:bg-slate-700 rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                                    <Settings2 size={20} className="text-gray-600 dark:text-gray-300" />
+                                <div className="p-2 bg-[var(--bg-card)] rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                                    <Settings2 size={20} className="text-[var(--text-primary)] opacity-60" />
                                 </div>
-                                <span className="font-medium text-gray-900 dark:text-white">
+                                <span className="font-medium text-[var(--text-primary)]">
                                     {showAllSettings ? t.hideDetailedSettings : t.moreSettings}
                                 </span>
                             </div>
@@ -405,14 +415,14 @@ export default function Settings({
 
                             {/* Language Selection */}
                             <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                                     <Globe size={20} />
                                     {t.languages}
                                 </h3>
                                 <select
                                     value={localSettings.language}
                                     onChange={(e) => setLocalSettings(prev => ({ ...prev, language: e.target.value }))}
-                                    className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                                    className="w-full p-3 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)]"
                                 >
                                     {Object.entries(LANGUAGE_NAMES).map(([code, name]) => (
                                         <option key={code} value={code}>{name}</option>
@@ -424,7 +434,7 @@ export default function Settings({
 
                             {/* Color Themes */}
                             <section>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                                     <Palette size={20} />
                                     {t.colorThemes}
                                 </h3>
@@ -433,23 +443,23 @@ export default function Settings({
                                         onClose(); // Close settings modal
                                         onOpenColorPicker?.(); // Open Color Picker Modal
                                     }}
-                                    className="w-full p-6 rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-700 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800/50 transition-all flex flex-col items-center justify-center gap-3 group"
+                                    className="w-full p-6 rounded-xl border-2 border-dashed border-[var(--border-primary)] hover:border-amber-500 hover:bg-[var(--bg-secondary)] transition-all flex flex-col items-center justify-center gap-3 group"
                                 >
                                     <div className="flex -space-x-2">
-                                        <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-white dark:border-slate-800" />
-                                        <div className="w-8 h-8 rounded-full bg-blue-200 border-2 border-white dark:border-slate-800" />
-                                        <div className="w-8 h-8 rounded-full bg-green-200 border-2 border-white dark:border-slate-800" />
+                                        <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-[var(--bg-card)]" />
+                                        <div className="w-8 h-8 rounded-full bg-blue-200 border-2 border-[var(--bg-card)]" />
+                                        <div className="w-8 h-8 rounded-full bg-green-200 border-2 border-[var(--bg-card)]" />
                                     </div>
-                                    <span className="font-medium text-gray-700 dark:text-gray-300 group-hover:text-amber-700 dark:group-hover:text-amber-400">
+                                    <span className="font-medium text-[var(--text-primary)] opacity-70 group-hover:opacity-100">
                                         {t.selectTheme || 'اختر نمط الألوان'}
                                     </span>
                                 </button>
 
                                 {/* Color Stop Signs Toggle */}
-                                <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer mt-4">
-                                    <span className="text-gray-900 dark:text-white flex items-center gap-2">
+                                <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer mt-4">
+                                    <span className="text-[var(--text-primary)] flex items-center gap-2">
                                         {t.colorStopSigns || 'تلوين علامات الوقف'}
-                                        <span className="text-3xl text-amber-600 dark:text-amber-500 font-serif mx-4 gap-4 flex items-center">
+                                        <span className="text-3xl text-amber-600 font-serif mx-4 gap-4 flex items-center">
                                             <span>ۘ</span> <span>ۚ</span> <span>ۖ</span> <span>ۗ</span> <span>ۙ</span> <span>ۛ</span>
                                         </span>
                                     </span>
@@ -464,13 +474,13 @@ export default function Settings({
                                 </label>
 
                                 {/* Mutashabihat Indicators Toggle */}
-                                <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer mt-3">
+                                <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer mt-3">
                                     <div className="flex items-center gap-4">
                                         <div className="flex flex-col">
-                                            <span className="text-gray-900 dark:text-white font-medium">
+                                            <span className="text-[var(--text-primary)] font-medium">
                                                 {currentLanguage === 'ar' ? t.showSimilarVersesIndicators : 'Show Mutashabihat Indicators'}
                                             </span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            <span className="text-xs text-[var(--text-primary)] opacity-50">
                                                 {currentLanguage === 'ar' ? t.similarVersesIndicatorsDesc : 'Colored lines under ayah numbers'}
                                             </span>
                                         </div>
@@ -497,9 +507,9 @@ export default function Settings({
                                     />
                                 </label>
 
-                                <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg mt-3">
+                                <div className="p-4 bg-[var(--bg-secondary)] rounded-lg mt-3">
                                     <label className="flex items-center justify-between cursor-pointer">
-                                        <span className="text-gray-900 dark:text-white font-medium">
+                                        <span className="text-[var(--text-primary)] font-medium">
                                             {t.quranWordMeanings}
                                         </span>
                                         <input
@@ -512,9 +522,9 @@ export default function Settings({
                                 </div>
 
                                 {/* Floating Side Menu Toggle */}
-                                <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg mt-3">
+                                <div className="p-4 bg-[var(--bg-secondary)] rounded-lg mt-3">
                                     <label className="flex items-center justify-between cursor-pointer">
-                                        <span className="text-gray-900 dark:text-white font-medium">
+                                        <span className="text-[var(--text-primary)] font-medium">
                                             {t.sideMenu || 'القائمة الجانبية العائمة'}
                                         </span>
                                         <input
@@ -529,12 +539,12 @@ export default function Settings({
                             </section>
 
                             {/* Sound Settings - Accordion */}
-                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <section className="border border-[var(--border-primary)] rounded-xl overflow-hidden">
                                 <button
                                     onClick={() => setOpenSound(v => !v)}
-                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                    className="w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] hover:bg-opacity-10 transition-colors"
                                 >
-                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <span className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
                                         {localSettings.soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
                                         {t.soundSettings}
                                     </span>
@@ -542,8 +552,8 @@ export default function Settings({
                                 </button>
                                 {openSound && (
                                     <div className="p-4 space-y-3">
-                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                            <span className="text-gray-900 dark:text-white">{t.pageFlipSound}</span>
+                                        <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer">
+                                            <span className="text-[var(--text-primary)]">{t.pageFlipSound}</span>
                                             <input
                                                 type="checkbox"
                                                 checked={localSettings.soundEnabled}
@@ -551,8 +561,8 @@ export default function Settings({
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                             />
                                         </label>
-                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                            <span className="text-gray-900 dark:text-white">
+                                        <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer">
+                                            <span className="text-[var(--text-primary)]">
                                                 {t.wordAudioLongPress}
                                                 <span className="text-red-500 font-bold mx-1"> {t.internetRequired}</span>
                                             </span>
@@ -568,12 +578,12 @@ export default function Settings({
                             </section>
 
                             {/* Touch Gestures - Accordion */}
-                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <section className="border border-[var(--border-primary)] rounded-xl overflow-hidden">
                                 <button
                                     onClick={() => setOpenGestures(v => !v)}
-                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                    className="w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] hover:bg-opacity-10 transition-colors"
                                 >
-                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <span className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
                                         <MousePointer2 size={20} />
                                         {t.gestureSettings}
                                     </span>
@@ -581,8 +591,8 @@ export default function Settings({
                                 </button>
                                 {openGestures && (
                                     <div className="p-4 space-y-3">
-                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                            <span className="text-gray-900 dark:text-white">{t.gestureTwoFingerTap}</span>
+                                        <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer">
+                                            <span className="text-[var(--text-primary)]">{t.gestureTwoFingerTap}</span>
                                             <input
                                                 type="checkbox"
                                                 checked={localSettings.gestureTwoFingerTap !== false}
@@ -590,8 +600,8 @@ export default function Settings({
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                             />
                                         </label>
-                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                            <span className="text-gray-900 dark:text-white">{t.gestureDoubleTap}</span>
+                                        <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer">
+                                            <span className="text-[var(--text-primary)]">{t.gestureDoubleTap}</span>
                                             <input
                                                 type="checkbox"
                                                 checked={localSettings.gestureDoubleTap !== false}
@@ -599,8 +609,8 @@ export default function Settings({
                                                 className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                             />
                                         </label>
-                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                            <span className="text-gray-900 dark:text-white">{t.gestureSwipeUp}</span>
+                                        <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer">
+                                            <span className="text-[var(--text-primary)]">{t.gestureSwipeUp}</span>
                                             <input
                                                 type="checkbox"
                                                 checked={localSettings.gestureSwipeUp !== false}
@@ -614,12 +624,12 @@ export default function Settings({
 
 
                             {/* Bottom Bar Customization - Accordion */}
-                            <section className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <section className="border border-[var(--border-primary)] rounded-xl overflow-hidden">
                                 <button
                                     onClick={() => setOpenBottomBar(v => !v)}
-                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                    className="w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] hover:bg-opacity-10 transition-colors"
                                 >
-                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <span className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
                                         <Layout size={20} />
                                         {t.bottomBarCustomization}
                                     </span>
@@ -640,9 +650,9 @@ export default function Settings({
                                         ].map(({ key, label }) => (
                                             <label
                                                 key={key}
-                                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                                className="flex items-center justify-between p-3 bg-[var(--bg-secondary)] rounded-lg cursor-pointer hover:bg-[var(--bg-primary)] hover:bg-opacity-10 transition-colors"
                                             >
-                                                <span className="text-gray-900 dark:text-white">{label}</span>
+                                                <span className="text-[var(--text-primary)]">{label}</span>
                                                 <input
                                                     type="checkbox"
                                                     checked={localSettings.bottomBar[key]}
@@ -921,7 +931,7 @@ export default function Settings({
                             {/* Standalone Share App Section */}
                             <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
                                 <button
-                                    onClick={handleShareApp}
+                                    onClick={onOpenShare}
                                     className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-slate-800 border-2 border-amber-500/20 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98] shadow-sm group"
                                 >
                                     <div className="flex flex-col items-start text-right">

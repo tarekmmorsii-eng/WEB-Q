@@ -22,7 +22,7 @@ const DecorativePageFrame: React.FC<DecorativePageFrameProps> = ({ children, pag
                         width="780"
                         height="1080"
                         fill="none"
-                        className="stroke-amber-600/30 dark:stroke-amber-500/20"
+                        className="stroke-amber-600/30 dark:stroke-[var(--accent-color)] dark:opacity-20"
                         strokeWidth="15"
                     />
 
@@ -33,7 +33,7 @@ const DecorativePageFrame: React.FC<DecorativePageFrameProps> = ({ children, pag
                         width="740"
                         height="1040"
                         fill="none"
-                        className="stroke-amber-600 dark:stroke-amber-500"
+                        className="stroke-amber-600 dark:stroke-[var(--accent-color)]"
                         strokeWidth="3"
                     />
                     <rect
@@ -42,7 +42,7 @@ const DecorativePageFrame: React.FC<DecorativePageFrameProps> = ({ children, pag
                         width="720"
                         height="1020"
                         fill="none"
-                        className="stroke-amber-700/50 dark:stroke-amber-400/50"
+                        className="stroke-amber-700/50 dark:stroke-[var(--accent-color)] dark:opacity-50"
                         strokeWidth="1"
                     />
 
@@ -53,14 +53,14 @@ const DecorativePageFrame: React.FC<DecorativePageFrameProps> = ({ children, pag
                         "translate(760, 1060) rotate(180)",
                         "translate(40, 1060) rotate(270)"
                     ].map((transform, i) => (
-                        <g key={i} transform={transform} className="fill-amber-700 dark:fill-amber-500">
+                        <g key={i} transform={transform} className="fill-amber-700 dark:fill-[var(--accent-color)]">
                             <path d="M 0 0 L 60 0 C 40 5 35 15 35 35 L 35 60 C 15 40 5 35 0 35 Z" />
                             <circle cx="15" cy="15" r="4" />
                         </g>
                     ))}
 
                     {/* Side decorative nodes */}
-                    <g className="fill-amber-700 dark:fill-amber-500 opacity-60">
+                    <g className="fill-amber-700 dark:fill-[var(--accent-color)] opacity-60">
                         {/* Left Side */}
                         <path d="M 30 550 l -20 -30 v 60 z" />
                         {/* Right Side */}

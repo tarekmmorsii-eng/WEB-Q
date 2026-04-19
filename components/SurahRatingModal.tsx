@@ -95,14 +95,14 @@ export default function SurahRatingModal({
             style={{ fontFamily: "'Almarai', sans-serif" }}
         >
             <div
-                className="w-full max-w-sm rounded-2xl shadow-xl border border-gray-200 dark:border-slate-800 p-6 relative animate-in zoom-in-95 duration-200 bg-[#f8f9fa] dark:bg-slate-900"
+                className="w-full max-w-sm rounded-2xl shadow-xl border border-[var(--border-primary)] p-6 relative animate-in zoom-in-95 duration-200 bg-[var(--bg-card)]"
             >
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
                         {t.rateSurah} {surahName}
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
+                    <p className="text-[var(--text-primary)] opacity-60 text-sm">
                         {t.rateEntireSurah}
                     </p>
                 </div>
@@ -117,7 +117,7 @@ export default function SurahRatingModal({
                                 "w-14 h-14 rounded-full flex items-center justify-center transition-all border-2",
                                 currentRating === 'weak'
                                     ? "bg-red-600 border-red-400 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] scale-110"
-                                    : "bg-white dark:bg-slate-800 border-red-200 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-400"
+                                    : "bg-[var(--bg-secondary)] border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-400"
                             )}
                         >
                             <WeakIcon
@@ -130,7 +130,7 @@ export default function SurahRatingModal({
                                 fill="currentColor"
                             />
                         </button>
-                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'weak' ? "text-red-500" : "text-gray-500 dark:text-slate-400")}>
+                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'weak' ? "text-red-500" : "text-[var(--text-primary)] opacity-50")}>
                             {t.weak}
                         </span>
                     </div>
@@ -143,12 +143,12 @@ export default function SurahRatingModal({
                                 "w-14 h-14 rounded-full flex items-center justify-center transition-all border-2",
                                 currentRating === 'medium'
                                     ? "bg-yellow-500 border-yellow-300 text-white shadow-[0_0_20px_rgba(234,179,8,0.4)] scale-110"
-                                    : "bg-white dark:bg-slate-800 border-yellow-200 dark:border-yellow-900/30 text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-950/30 hover:border-yellow-400"
+                                    : "bg-[var(--bg-secondary)] border-yellow-200 text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-950/30 hover:border-yellow-400"
                             )}
                         >
                             <span className={clsx("text-2xl transition-transform grayscale-0", currentRating === 'medium' && "scale-110")}>👌</span>
                         </button>
-                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'medium' ? "text-yellow-600" : "text-gray-500 dark:text-slate-400")}>
+                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'medium' ? "text-yellow-600" : "text-[var(--text-primary)] opacity-50")}>
                             {t.medium}
                         </span>
                     </div>
@@ -161,7 +161,7 @@ export default function SurahRatingModal({
                                 "w-14 h-14 rounded-full flex items-center justify-center transition-all border-2",
                                 currentRating === 'good'
                                     ? "bg-green-600 border-green-400 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)] scale-110"
-                                    : "bg-white dark:bg-slate-800 border-green-200 dark:border-green-900/30 text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-400"
+                                    : "bg-[var(--bg-secondary)] border-green-200 text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-400"
                             )}
                         >
                             <GoodIcon
@@ -174,28 +174,28 @@ export default function SurahRatingModal({
                                 fill="currentColor"
                             />
                         </button>
-                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'good' ? "text-green-600" : "text-gray-500 dark:text-slate-400")}>
+                        <span className={clsx("text-sm font-bold transition-colors", currentRating === 'good' ? "text-green-600" : "text-[var(--text-primary)] opacity-50")}>
                             {t.good}
                         </span>
                     </div>
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-gray-300 dark:border-slate-800 my-6"></div>
+                <div className="border-t border-[var(--border-primary)] my-6"></div>
 
                 {/* Ayah Range Rating Section */}
                 <div className="mb-6">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3 text-center">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3 text-center">
                         {t.rateRange}
                     </h3>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mb-4 text-center">
+                    <p className="text-[var(--text-primary)] opacity-50 text-xs mb-4 text-center">
                         {t.rateMultipleAyahs}
                     </p>
 
                     {/* Input Fields */}
                     <div className="flex gap-3 mb-4 justify-center items-center">
                         <div className="flex flex-col items-center">
-                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1">{t.fromAyah}</label>
+                            <label className="text-xs text-[var(--text-primary)] opacity-60 mb-1">{t.fromAyah}</label>
                             <input
                                 type="number"
                                 min="1"
@@ -203,12 +203,12 @@ export default function SurahRatingModal({
                                 value={fromAyah}
                                 onChange={(e) => setFromAyah(parseInt(e.target.value) || 1)}
                                 onFocus={(e) => e.target.select()}
-                                className="w-20 px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                                className="w-20 px-3 py-2 border border-[var(--border-primary)] rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-amber-500 bg-[var(--bg-card)] text-[var(--text-primary)]"
                             />
                         </div>
                         <span className="text-slate-400 mt-5">←</span>
                         <div className="flex flex-col items-center">
-                            <label className="text-xs text-slate-600 dark:text-slate-400 mb-1">{t.toAyah}</label>
+                            <label className="text-xs text-[var(--text-primary)] opacity-60 mb-1">{t.toAyah}</label>
                             <input
                                 type="number"
                                 min="1"
@@ -216,7 +216,7 @@ export default function SurahRatingModal({
                                 value={toAyah}
                                 onChange={(e) => setToAyah(parseInt(e.target.value) || ayahCount)}
                                 onFocus={(e) => e.target.select()}
-                                className="w-20 px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                                className="w-20 px-3 py-2 border border-[var(--border-primary)] rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-amber-500 bg-[var(--bg-card)] text-[var(--text-primary)]"
                             />
                         </div>
                     </div>
@@ -229,7 +229,7 @@ export default function SurahRatingModal({
                                 "w-12 h-12 rounded-full flex items-center justify-center transition-all border-2",
                                 rangeRating === 'weak'
                                     ? "bg-red-600 border-red-400 text-white scale-110"
-                                    : "bg-white dark:bg-slate-800 border-red-200 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                    : "bg-[var(--bg-secondary)] border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                             )}
                         >
                             <WeakIcon size={20} strokeWidth={2} fill="currentColor" />
@@ -240,7 +240,7 @@ export default function SurahRatingModal({
                                 "w-12 h-12 rounded-full flex items-center justify-center transition-all border-2",
                                 rangeRating === 'medium'
                                     ? "bg-yellow-500 border-yellow-300 text-white scale-110"
-                                    : "bg-white dark:bg-slate-800 border-yellow-200 dark:border-yellow-900/30 text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-950/30"
+                                    : "bg-[var(--bg-secondary)] border-yellow-200 text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-950/30"
                             )}
                         >
                             <span className="text-xl">👌</span>
@@ -251,7 +251,7 @@ export default function SurahRatingModal({
                                 "w-12 h-12 rounded-full flex items-center justify-center transition-all border-2",
                                 rangeRating === 'good'
                                     ? "bg-green-600 border-green-400 text-white scale-110"
-                                    : "bg-white dark:bg-slate-800 border-green-200 dark:border-green-900/30 text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30"
+                                    : "bg-[var(--bg-secondary)] border-green-200 text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30"
                             )}
                         >
                             <GoodIcon size={20} strokeWidth={2} fill="currentColor" />
@@ -266,7 +266,7 @@ export default function SurahRatingModal({
                             "w-full py-2 rounded-lg font-medium transition-all",
                             rangeRating
                                 ? "bg-amber-600 text-white hover:bg-amber-700"
-                                : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed"
+                                : "bg-[var(--bg-secondary)] text-[var(--text-primary)] opacity-40 cursor-not-allowed"
                         )}
                     >
                         {t.applyRating}
@@ -281,7 +281,7 @@ export default function SurahRatingModal({
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="w-full text-gray-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 py-2 transition-colors text-sm font-medium"
+                    className="w-full text-[var(--text-primary)] opacity-60 hover:opacity-100 py-2 transition-colors text-sm font-medium"
                 >
                     {t.close}
                 </button>

@@ -21,6 +21,7 @@ import MutashabihatIndex from './components/MutashabihatIndex';
 import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
 import HowToUseGuide from './components/HowToUseGuide';
 import newMa3anyPosData from './src/data/ma3any/new_ma3any_pos.json';
+import SocialShareModal from './components/SocialShareModal';
 import FloatingSideMenu from './components/FloatingSideMenu';
 
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
@@ -34,7 +35,7 @@ import FullscreenExitButton from './components/FullscreenExitButton';
 import SplashScreen from './components/SplashScreen';
 import LanguageSelection from './components/LanguageSelection';
 import { ViewMode, LocationData, VerseBookmark, Ayah, PageData, NotificationItem, MemorizationRating, SurahRating, AppSettings } from './types';
-import { fetchPage, getAyahPage } from './services/quranService';
+import { fetchPage, getAyahPage, getAyahPageSync } from './services/quranService';
 import { getAyahText } from './utils/ayahTextHelper';
 import { calculateMutashabihatSimilarity } from './utils/similarityCalculator';
 import { TOTAL_PAGES } from './constants';
@@ -44,14 +45,44 @@ import { translations, Language } from './i18n/translations';
 import { THEMES, getThemeById } from './constants/themes';
 import { startTour } from './utils/TourManager';
 
+import { useAyahAudio } from './hooks/useAyahAudio';
+import FloatingAudioPlayer from './components/FloatingAudioPlayer';
+import AuthModal from './components/AuthModal';
+import AudioSettingsModal from './components/AudioSettingsModal';
+import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
+
 // --- STABLE SWIPER CONFIGURATION ---
 const SWIPER_MODULES: any[] = [];
 
 // Integrations
-import { FeedbackProvider } from './contexts/FeedbackContext';
+import { FeedbackProvider, useFeedback } from './contexts/FeedbackContext';
 import FeedbackModal from './components/FeedbackModal';
 import BetaBadge from './components/BetaBadge';
 import BottomBarFeedbackButton from './components/BottomBarFeedbackButton';
+
+// Internal component to handle automatic audio closure when modals open
+const ModalMonitor: React.FC<{
+  modals: boolean[],
+  onCloseAudio: () => void,
+  onClosePrayerMode?: () => void
+}> = ({ modals, onCloseAudio, onClosePrayerMode }) => {
+  const { isOpen: isFeedbackOpen } = useFeedback();
+
+  useEffect(() => {
+    // If any modal local state is true OR the feedback context state is true
+    const isAnyModalOpen = modals.some(m => !!m) || isFeedbackOpen;
+    if (isAnyModalOpen) {
+      onCloseAudio();
+    }
+
+    // ⭐ New: Specifically close prayer mode only when Feedback opens (as requested)
+    if (isFeedbackOpen && onClosePrayerMode) {
+      onClosePrayerMode();
+    }
+  }, [modals, isFeedbackOpen, onCloseAudio, onClosePrayerMode]);
+
+  return null;
+};
 
 const DEFAULT_SETTINGS: AppSettings = {
   language: 'ar',
@@ -65,7 +96,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     showMemorization: false,
     showNotifications: false,
     showDarkMode: true,
-    showFontSize: false,  // Ø­Ø°Ù Ø²Ø± ØªØ¨Ø¯ÙŠÙ„ Ø§Ù„Ø®Ø· - Ø§Ù„ØªØ­Ø¬ÙŠÙ… ØªÙ„Ù‚Ø§Ø¦ÙŠ
+    showFontSize: false,  // Ø­Ø°Ù  Ø²Ø± ØªØ¨Ø¯ÙŠÙ„ Ø§Ù„Ø®Ø· - Ø§Ù„ØªØ­Ø¬ÙŠÙ… ØªÙ„Ù‚Ø§Ø¦ÙŠ
     showBookmark: true,
     showPrayerMode: true,
     showFullscreen: true,
@@ -84,6 +115,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 export default function App() {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const ayahAudio = useAyahAudio();
 
   useEffect(() => {
     const checkTouch = () => {
@@ -140,7 +172,13 @@ export default function App() {
       // Set CSS variables immediately to prevent flash
       const theme = getThemeById(finalSettings.theme);
       document.documentElement.style.setProperty('--bg-primary', theme.colors.background);
+      document.documentElement.style.setProperty('--bg-secondary', theme.colors.secondary);
+      document.documentElement.style.setProperty('--bg-card', theme.colors.cardBg);
       document.documentElement.style.setProperty('--text-primary', theme.colors.text);
+      document.documentElement.style.setProperty('--border-primary', theme.colors.border);
+      document.documentElement.style.setProperty('--accent-primary', theme.colors.primary);
+      document.documentElement.style.setProperty('--accent-color', theme.colors.accent);
+      
       if (theme.isDark) {
         document.documentElement.classList.add('dark');
       } else {
@@ -169,7 +207,12 @@ export default function App() {
     }
 
     root.style.setProperty('--bg-primary', theme.colors.background);
+    root.style.setProperty('--bg-secondary', theme.colors.secondary);
+    root.style.setProperty('--bg-card', theme.colors.cardBg);
     root.style.setProperty('--text-primary', theme.colors.text);
+    root.style.setProperty('--border-primary', theme.colors.border);
+    root.style.setProperty('--accent-primary', theme.colors.primary);
+    root.style.setProperty('--accent-color', theme.colors.accent);
 
     // Set direction and language metadata
     root.setAttribute('dir', t.dir);
@@ -187,7 +230,7 @@ export default function App() {
         document.documentElement.style.overflow = 'auto';
         document.body.style.overflow = 'auto';
       } else {
-        // Ù…Ù†Ø¹ Ø§Ù„ØªÙ…Ø±ÙŠØ± ÙÙŠ Ø§Ù„ÙˆØ¶Ø¹ Ø§Ù„Ø¹Ù…ÙˆØ¯ÙŠ ÙˆØ§Ù„ÙƒÙ…Ø¨ÙŠÙˆØªØ±
+        // Ù…Ù†Ø¹ Ø§Ù„ØªÙ…Ø±ÙŠØ± Ù ÙŠ Ø§Ù„ÙˆØ¶Ø¹ Ø§Ù„Ø¹Ù…ÙˆØ¯ÙŠ ÙˆØ§Ù„ÙƒÙ…Ø¨ÙŠÙˆØªØ±
         document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
       }
@@ -231,6 +274,11 @@ export default function App() {
     });
   }, [currentPage]);
 
+  const currentPageRef = useRef(currentPage);
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
+
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.SHOW_ALL);
   const [toggleState, setToggleState] = useState<number>(0);
   const [resetCounter, setResetCounter] = useState<number>(0);
@@ -241,6 +289,203 @@ export default function App() {
   const [isMemorizationStatsOpen, setIsMemorizationStatsOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [selectedReciterId, setSelectedReciterId] = useState<string>(() => localStorage.getItem('selected_reciter_id') || 'ar.husary');
+  const [audioModeActive, setAudioModeActive] = useState(false);
+  const [playingAyahId, setPlayingAyahId] = useState<string | null>(null);
+  const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+
+  // Advanced Audio Settings
+  const [audioSettings, setAudioSettings] = useState({
+      startSurah: 1,
+      startAyah: 1,
+      endSurah: 1,
+      endAyah: 7,
+      groupRepetitions: 1,
+      ayahRepetitions: 1,
+      playbackRate: 1.0,
+      useRangeOnly: true
+  });
+
+  // Sync audio settings range with current page
+  useEffect(() => {
+    if (pageData && pageData.ayahs && pageData.ayahs.length > 0) {
+      const firstAyah = pageData.ayahs[0];
+      const lastAyah = pageData.ayahs[pageData.ayahs.length - 1];
+      
+      setAudioSettings(prev => ({
+        ...prev,
+        startSurah: firstAyah.surah?.number || 1,
+        startAyah: firstAyah.numberInSurah || 1,
+        endSurah: lastAyah.surah?.number || 1,
+        endAyah: lastAyah.numberInSurah || 1,
+      }));
+    }
+  }, [pageData]);
+
+
+  const handleToggleSpeed = () => {
+    const rates = [1.0, 1.25, 1.5, 0.5, 0.75];
+    const currentIndex = rates.indexOf(audioSettings.playbackRate);
+    const nextRate = rates[(currentIndex + 1) % rates.length];
+    
+    setAudioSettings(prev => ({ ...prev, playbackRate: nextRate }));
+    ayahAudio.updateRuntimeSettings({ playbackRate: nextRate });
+  };
+
+  const handleToggleRepeat = () => {
+    const counts = [1, 2, 3, -1];
+    const currentIndex = counts.indexOf(audioSettings.ayahRepetitions);
+    const nextCount = counts[(currentIndex + 1) % counts.length];
+    
+    setAudioSettings(prev => ({ ...prev, ayahRepetitions: nextCount }));
+    ayahAudio.updateRuntimeSettings({ ayahRepetitions: nextCount });
+  };
+
+
+
+  const isAudioNavigatingRef = useRef(false);
+
+  // Watch for page changes to stop audio if user swipes away
+  useEffect(() => {
+      if (pageData?.number) {
+          if (ayahAudio.isPlayingSeq) {
+              if (isAudioNavigatingRef.current) {
+                  // This is a programmatic change, don't stop audio
+                  isAudioNavigatingRef.current = false;
+                  return;
+              }
+              ayahAudio.stopAudio();
+              setPlayingAyahId(null);
+          }
+      }
+  }, [pageData?.number]);
+
+  // Pre-cache audio for current page
+  useEffect(() => {
+      if (pageData && pageData.ayahs && audioModeActive) {
+          const nums = pageData.ayahs.map(a => getGlobalAyahNumber(a.surah?.number || 1, a.numberInSurah)).filter(n => n > 0);
+          ayahAudio.preCacheAudio(nums, selectedReciterId);
+      }
+  }, [pageData, audioModeActive, selectedReciterId, ayahAudio.preCacheAudio]);
+
+  useEffect(() => {
+     localStorage.setItem('selected_reciter_id', selectedReciterId);
+  }, [selectedReciterId]);
+
+  const closeAudioPlayer = useCallback(() => {
+    ayahAudio.stopAudio();
+    setAudioModeActive(false);
+    setPlayingAyahId(null);
+  }, [ayahAudio]);
+
+  const openAudioPlayer = useCallback(() => {
+    setAudioModeActive(true);
+    // Mutual exclusivity: reset view mode when opening audio bar
+    setViewMode(ViewMode.SHOW_ALL);
+    setToggleState(0);
+  }, []);
+
+  const handleAyahClickForAudio = async (surah: number, ayah: number) => {
+      if (audioModeActive) return;
+      const globalNum = getGlobalAyahNumber(surah, ayah);
+      if (globalNum > 0) {
+          closeAudioPlayer();
+          setPlayingAyahId(`${surah}-${ayah}`);
+          await ayahAudio.playAyahAudio(globalNum, selectedReciterId, audioSettings.playbackRate);
+          setPlayingAyahId(null);
+      }
+  };
+
+  const startPagePlayback = async (reciterId?: string, overrideSettings?: typeof audioSettings) => {
+      const activeId = reciterId || selectedReciterId;
+      const currentSettings = overrideSettings || audioSettings;
+      
+      if (reciterId) setSelectedReciterId(reciterId);
+      
+      openAudioPlayer();
+      
+      if (ayahAudio.isPlayingSeq && !overrideSettings) {
+          // If already playing and no settings change, just toggle pause/resume elsewhere
+          // or handle toggle logic in the caller. 
+          // For startPagePlayback specifically, if session is active we usually don't want to double start.
+          return;
+      }
+
+
+      let startGlobal = getGlobalAyahNumber(currentSettings.startSurah, currentSettings.startAyah);
+      let endGlobal = 6236; // End of Quran
+
+      // Handle navigation to start page if necessary
+      const targetStartPage = getAyahPageSync(currentSettings.startSurah, currentSettings.startAyah);
+      if (targetStartPage && targetStartPage !== currentPageRef.current) {
+          isAudioNavigatingRef.current = true;
+          setCurrentPage(targetStartPage);
+      }
+
+      if (currentSettings.useRangeOnly) {
+        endGlobal = getGlobalAyahNumber(currentSettings.endSurah, currentSettings.endAyah);
+      } else {
+          // If range is not forced, we still start from the selected start but go to the end
+          // However, if the user hasn't changed the default start (1:1), 
+          // we might want to default to the current page's first ayah for better UX
+          const isDefaultStart = currentSettings.startSurah === 1 && currentSettings.startAyah === 1;
+          if (isDefaultStart && pageData && pageData.ayahs && pageData.ayahs.length > 0) {
+              const firstAyah = pageData.ayahs[0];
+              startGlobal = getGlobalAyahNumber(firstAyah.surah?.number || 1, firstAyah.numberInSurah);
+          }
+      }
+          
+      if (startGlobal > 0 && endGlobal >= startGlobal) {
+          const runSettings = {
+              startGlobalAyah: startGlobal,
+              endGlobalAyah: endGlobal,
+              reciterId: activeId,
+              groupRepetitions: currentSettings.groupRepetitions,
+              ayahRepetitions: currentSettings.ayahRepetitions,
+              playbackRate: currentSettings.playbackRate,
+          };
+          
+          await ayahAudio.playSequence(runSettings, (globalNum) => {
+              const dest = getAyahFromGlobalNumber(globalNum);
+              if (dest) {
+                  setPlayingAyahId(`${dest.surahNumber}-${dest.ayahNumber}`);
+
+                  // Automatic page transition logic
+                  const targetPage = getAyahPageSync(dest.surahNumber, dest.ayahNumber);
+                  if (targetPage && targetPage !== currentPageRef.current) {
+                      isAudioNavigatingRef.current = true;
+                      setCurrentPage(targetPage);
+                  }
+
+                  // Scroll into view logic strictly for UX
+                  setTimeout(() => {
+                      const el = document.querySelector(`span[data-word-surah="${dest.surahNumber}"][data-word-ayah="${dest.ayahNumber}"]`);
+                      if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                  }, 50);
+              }
+          });
+          setPlayingAyahId(null);
+      }
+  };
+
+  const handlePlaySingleAyah = useCallback(async (surahNum: number, ayahNum: number) => {
+    // Close existing session and start fresh for the single ayah
+    ayahAudio.stopAudio();
+    
+    // Tiny delay to ensure stop state is registered before starting new one
+    setTimeout(() => {
+        startPagePlayback(selectedReciterId, {
+            ...audioSettings,
+            startSurah: surahNum,
+            startAyah: ayahNum,
+            endSurah: surahNum,
+            endAyah: ayahNum,
+            useRangeOnly: true
+        });
+    }, 10);
+  }, [ayahAudio, startPagePlayback, selectedReciterId, audioSettings]);
 
   const [showUi, setShowUi] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -564,6 +809,7 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // 3. Alarm State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [activeAlarm, setActiveAlarm] = useState<NotificationItem | null>(null);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -895,6 +1141,15 @@ export default function App() {
       timerRef.current = setTimeout(() => setShowUi(false), 3000);
     }
   }, [isIndexOpen, isSettingsOpen, isTourActive]);
+
+  const handleHeaderInteraction = useCallback(() => {
+    handleUiInteraction();
+    // Mutual exclusivity: Close audio player when interacting with top menu
+    if (audioModeActive) {
+      closeAudioPlayer();
+    }
+  }, [handleUiInteraction, audioModeActive, closeAudioPlayer]);
+
 
   const toggleDarkMode = () => {
     setSettings(prev => {
@@ -1308,6 +1563,16 @@ export default function App() {
     lastToggleTime.current = now;
 
     handleUiInteraction();
+    
+    // Close audio player when any top menu button is clicked
+    if (audioModeActive) {
+      closeAudioPlayer();
+    }
+
+    // ⭐ New: Auto-activate Prayer Mode when choosing Hide All Ayahs
+    if (newMode === ViewMode.HIDE_ALL_AYAHS) {
+      setSettings(prev => ({ ...prev, prayerMode: true }));
+    }
 
     const showToast = (msg: string) => setToastMessage(msg);
 
@@ -1679,8 +1944,7 @@ export default function App() {
   }, [handleUiInteraction]);
 
   // Stable ref so slideChange callback never needs to recreate
-  const currentPageRef = useRef(currentPage);
-  useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
+  // (currentPageRef moved to top of component)
 
   // Independent page numbers for each slide — prevents cross-slide content flashing
   const [slidePages, setSlidePages] = useState([
@@ -1746,6 +2010,16 @@ export default function App() {
 
   return (
     <FeedbackProvider language={settings.language}>
+      <ModalMonitor 
+        modals={[
+          isIndexOpen, isSearchOpen, isNotificationOpen, isMemorizationStatsOpen,
+          isColorPickerOpen, isSettingsOpen, isMutashabihatIndexOpen,
+          isMutashabihatModalOpen, isMutashabihatSelectionOpen, isSelectorOpen,
+          isAudioSettingsOpen, isHowToUseOpen, showLanguageSelection, !!activeAlarm
+        ]} 
+        onCloseAudio={closeAudioPlayer} 
+        onClosePrayerMode={() => setSettings(prev => ({ ...prev, prayerMode: false }))}
+      />
       <div
         className="h-[100dvh] lg:h-screen w-full flex flex-col relative overflow-auto transition-colors duration-300"
         style={{
@@ -1788,7 +2062,7 @@ export default function App() {
           setMode={handleSetMode}
           toggleState={toggleState}
           isVisible={showUi}
-          onInteraction={handleUiInteraction}
+          onInteraction={handleHeaderInteraction}
           onMouseEnter={handleMouseEnterUi}
           onMouseLeave={handleMouseLeaveUi}
           t={t}
@@ -1870,6 +2144,9 @@ export default function App() {
                           onDeleteSimilarAyah={handleDeleteSimilarAyah}
                           onAddSimilarAyah={handleAddSimilarAyah}
                           resetCounter={resetCounter}
+                          audioModeActive={audioModeActive}
+                          playingAyahId={playingAyahId}
+                          onAyahClickForAudio={handleAyahClickForAudio}
                         />
                       </SwiperSlide>
                       <SwiperSlide className="w-full h-full flex items-start justify-center">
@@ -1908,6 +2185,9 @@ export default function App() {
                           onDeleteSimilarAyah={handleDeleteSimilarAyah}
                           onAddSimilarAyah={handleAddSimilarAyah}
                           resetCounter={resetCounter}
+                          audioModeActive={audioModeActive}
+                          playingAyahId={playingAyahId}
+                          onAyahClickForAudio={handleAyahClickForAudio}
                         />
                       </SwiperSlide>
                       <SwiperSlide className="w-full h-full flex items-start justify-center">
@@ -1946,6 +2226,9 @@ export default function App() {
                           onDeleteSimilarAyah={handleDeleteSimilarAyah}
                           onAddSimilarAyah={handleAddSimilarAyah}
                           resetCounter={resetCounter}
+                          audioModeActive={audioModeActive}
+                          playingAyahId={playingAyahId}
+                          onAyahClickForAudio={handleAyahClickForAudio}
                         />
                       </SwiperSlide>
                     </Swiper>
@@ -2021,12 +2304,24 @@ export default function App() {
               <button
                 onClick={() => setSettings(prev => ({ ...prev, prayerMode: !prev.prayerMode }))}
                 className={clsx(
-                  "flex flex-col items-center transition-colors",
-                  settings.prayerMode ? "text-amber-600 dark:text-amber-500" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
+                  "flex flex-col items-center transition-all duration-300",
+                  settings.prayerMode ? "text-amber-600 dark:text-amber-500 scale-110" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
                 )}
               >
-                <MousePointer2 size={20} fill={settings.prayerMode ? "currentColor" : "none"} />
-                <span className="text-[10px]">{t.prayerMode}</span>
+                {/* Custom icon resembling the floating prayer mode circle */}
+                <div className="relative w-5 h-5 mb-0.5 flex items-center justify-center">
+                  <div className={clsx(
+                    "absolute inset-0 rounded-full border-2 transition-all duration-300",
+                    settings.prayerMode ? "border-current scale-110" : "border-current"
+                  )} />
+                  <div className={clsx(
+                    "w-2 h-2 rounded-full transition-all duration-300",
+                    settings.prayerMode 
+                      ? "bg-current shadow-[0_0_8px_rgba(245,158,11,0.6)]" 
+                      : "bg-current"
+                  )} />
+                </div>
+                <span className="text-[10px] whitespace-nowrap">{t.prayerMode}</span>
               </button>
             )}
 
@@ -2201,13 +2496,13 @@ export default function App() {
           onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
           onOpenNotifications={() => setIsNotificationOpen(true)}
           onOpenMutashabihat={() => {
-            // Default to current surah from pageData if available
             const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
             setMutashabihatIndexSurah(currentS);
-            setMutashabihatIndexAyah(undefined); // Clear ayah when opening index from settings
+            setMutashabihatIndexAyah(undefined);
             setIsMutashabihatIndexOpen(true);
           }}
           onOpenColorPicker={() => setIsColorPickerOpen(true)}
+          onOpenReciterSelection={openAudioPlayer}
           onTogglePageBookmark={togglePageBookmark}
           isPageBookmarked={isPageBookmarked}
           hasUpdate={hasAppUpdate}
@@ -2216,6 +2511,13 @@ export default function App() {
           onStartInteractiveTour={handleStartInteractiveTour}
           highlightHelp={highlightSettingsHelp}
           highlightOffline={highlightOffline}
+          onOpenShare={() => setIsShareModalOpen(true)}
+        />
+
+        <SocialShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          currentLanguage={settings.language as Language}
         />
 
         <FloatingSideMenu
@@ -2223,9 +2525,11 @@ export default function App() {
           currentTheme={currentTheme}
           onOpenHelp={handleOpenHelpFromSideMenu}
           onOpenOffline={handleOpenOfflineSettings}
+          onOpenReciterSelection={openAudioPlayer}
           isVisible={showUi}
-          isEnabled={settings.bottomBar.showSideMenu !== false}
+          isEnabled={settings.bottomBar.showSideMenu !== false && !settings.prayerMode}
           isRTL={isRTL}
+          onOpenShare={() => setIsShareModalOpen(true)}
         />
 
 
@@ -2237,11 +2541,10 @@ export default function App() {
               surahNumber={ratingModalData.surah}
               ayahNumber={ratingModalData.ayah}
               currentRating={getAyahRating(ratingModalData.surah, ratingModalData.ayah)}
+              onPlay={() => handlePlaySingleAyah(ratingModalData.surah, ratingModalData.ayah)}
               onRate={(r) => handleSaveRating(r)}
               onBookmark={() => {
                 if (pageData) {
-                  // Find the ayah in pageData.ayahs
-                  // We need to cast 'a' or assert surah property exists because Types definition might be missing it for 'Ayah' interface
                   const foundAyah = pageData.ayahs.find((a: any) =>
                     a.numberInSurah === ratingModalData.ayah &&
                     (a.surah?.number === ratingModalData.surah)
@@ -2250,9 +2553,8 @@ export default function App() {
                   if (foundAyah) {
                     toggleVerseBookmark(foundAyah);
                   } else {
-                    // Fallback: Construct a minimal Ayah object if not found in current page data
                     const ayahObj: any = {
-                      number: ratingModalData.ayah, // Global number unknown
+                      number: ratingModalData.ayah,
                       text: "...",
                       numberInSurah: ratingModalData.ayah,
                       juz: pageData.ayahs[0]?.juz || 1,
@@ -2359,6 +2661,112 @@ export default function App() {
             />
           )
         }
+
+        <FloatingAudioPlayer
+            isOpen={audioModeActive}
+            isUiVisible={showUi}
+            onClose={() => {
+                setAudioModeActive(false);
+                ayahAudio.stopAudio();
+                setPlayingAyahId(null);
+            }}
+            currentLanguage={settings.language as Language}
+            selectedReciterId={selectedReciterId}
+            onSelectReciter={setSelectedReciterId}
+            isPlaying={ayahAudio.isPlayingSeq || playingAyahId !== null}
+            isPaused={ayahAudio.isPaused}
+            currentContext={(() => {
+                const activeAyahNum = ayahAudio.currentGlobalAyah;
+                if (activeAyahNum) {
+                    const dest = getAyahFromGlobalNumber(activeAyahNum);
+                    if (dest) {
+                        const surah = SURAHS.find(s => s.number === dest.surahNumber);
+                        const sName = settings.language === 'ar' ? surah?.name : t.surahNames[dest.surahNumber - 1];
+                        return `${sName} - ${t.verse} ${dest.ayahNumber}`;
+                    }
+                }
+
+                if (pageData && pageData.ayahs && pageData.ayahs.length > 0) {
+                    const firstAyah = pageData.ayahs[0];
+                    const sName = settings.language === 'ar' ? firstAyah.surah?.name : t.surahNames[(firstAyah.surah?.number || 1) - 1];
+                    return `${sName} - ${t.verse} ${firstAyah.numberInSurah}`;
+                }
+                return "";
+            })()}
+            onTogglePlay={() => {
+                if (ayahAudio.isPlayingSeq) {
+                    if (ayahAudio.isPaused) {
+                        ayahAudio.resumeAudio();
+                    } else {
+                        ayahAudio.pauseAudio();
+                    }
+                } else {
+                    startPagePlayback(selectedReciterId);
+                }
+            }}
+            onStop={() => {
+                ayahAudio.stopAudio();
+                setPlayingAyahId(null);
+            }}
+            onNext={async () => {
+                const current = ayahAudio.currentGlobalAyah;
+                console.log("Skipping Next from:", current);
+                if (current) {
+                    const next = Math.min(6236, current + 1);
+                    ayahAudio.stopAudio();
+                    const dest = getAyahFromGlobalNumber(next);
+                    if (dest) {
+                        // Small delay to ensure previous loop broke
+                        setTimeout(() => {
+                            startPagePlayback(undefined, {
+                                ...audioSettings,
+                                startSurah: dest.surahNumber,
+                                startAyah: dest.ayahNumber
+                            });
+                        }, 100);
+                    }
+                }
+            }}
+            onPrevious={async () => {
+                const current = ayahAudio.currentGlobalAyah;
+                console.log("Skipping Prev from:", current);
+                if (current) {
+                    const prev = Math.max(1, current - 1);
+                    ayahAudio.stopAudio();
+                    const dest = getAyahFromGlobalNumber(prev);
+                    if (dest) {
+                        // Small delay to ensure previous loop broke
+                        setTimeout(() => {
+                            startPagePlayback(undefined, {
+                                ...audioSettings,
+                                startSurah: dest.surahNumber,
+                                startAyah: dest.ayahNumber
+                            });
+                        }, 100);
+                    }
+                }
+            }}
+            playbackRate={audioSettings.playbackRate}
+            groupRepetitions={audioSettings.groupRepetitions}
+            ayahRepetitions={audioSettings.ayahRepetitions}
+            onToggleRepeat={handleToggleRepeat}
+            onToggleSpeed={handleToggleSpeed}
+            onOpenSettings={() => setIsAudioSettingsOpen(true)}
+        />
+
+        <AudioSettingsModal
+            isOpen={isAudioSettingsOpen}
+            onClose={() => setIsAudioSettingsOpen(false)}
+            currentLanguage={settings.language as Language}
+            settings={audioSettings}
+            onApply={(newSettings) => {
+                setAudioSettings(newSettings);
+                setIsAudioSettingsOpen(false);
+                // Restart playback if was playing or if just applied
+                ayahAudio.stopAudio();
+                startPagePlayback(selectedReciterId, newSettings);
+            }}
+        />
 
         {/* Alarm Dismiss Overlay */}
         {

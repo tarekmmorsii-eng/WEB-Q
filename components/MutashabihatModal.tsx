@@ -97,7 +97,7 @@ const HighlightedText = React.memo(({ text, absoluteAyahNumber, manualRules, ref
         });
     }
 
-    if (allRules.length === 0) return <span className="text-slate-900 dark:text-slate-100">{text}</span>;
+    if (allRules.length === 0) return <span className="text-[var(--text-primary)]">{text}</span>;
 
     // --- RULE SPLITTING ---
     const effectivelySplitRules: any[] = [];
@@ -215,7 +215,7 @@ const HighlightedText = React.memo(({ text, absoluteAyahNumber, manualRules, ref
             {rawWords.map((word, i) => {
                 const info = wordInfos[i];
                 if (!info.color) {
-                    return <span key={i} className="transition-colors duration-300 rounded px-1 text-slate-900 dark:text-slate-100">{word}</span>;
+                    return <span key={i} className="transition-colors duration-300 rounded px-1 text-[var(--text-primary)]">{word}</span>;
                 }
 
                 if (info.prefixLen > 0) {
@@ -228,7 +228,7 @@ const HighlightedText = React.memo(({ text, absoluteAyahNumber, manualRules, ref
 
                     return (
                         <span key={i} className="flex">
-                            <span className="text-slate-900 dark:text-slate-100">{pPart}</span>
+                            <span className="text-[var(--text-primary)]">{pPart}</span>
                             <span
                                 className={clsx("transition-colors duration-300 rounded px-1 font-bold")}
                                 style={{
@@ -365,14 +365,14 @@ export default function MutashabihatModal({
             style={{ fontFamily: "'Almarai', sans-serif" }}
         >
             <div
-                className="w-full max-w-3xl rounded-2xl shadow-2xl border-2 border-amber-300 dark:border-amber-600 p-6 relative animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900"
+                className="w-full max-w-3xl rounded-2xl shadow-2xl border border-[var(--border-primary)] p-6 relative animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto bg-[var(--bg-card)]"
             >
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 left-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors z-10"
+                    className="absolute top-4 left-4 p-2 rounded-full hover:bg-[var(--bg-secondary)] transition-colors z-10"
                 >
-                    <X size={20} className="text-gray-600 dark:text-gray-300" />
+                    <X size={20} className="text-[var(--text-primary)] opacity-50" />
                 </button>
 
                 {/* Report Error Button */}
@@ -387,25 +387,25 @@ export default function MutashabihatModal({
 
                 {/* Header */}
                 <div className="text-center mb-6 mt-2">
-                    <h2 className="text-2xl font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center justify-center gap-2">
+                    <h2 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-2 flex items-center justify-center gap-2">
                         <span className="text-3xl">⚠️</span>
                         {t.similarVersesAlert}
                     </h2>
-                    <p className="text-slate-600 dark:text-slate-300 text-sm">
+                    <p className="text-[var(--text-primary)] opacity-60 text-sm">
                         {t.similarVersesDescription}
                     </p>
                 </div>
 
                 {/* Source Ayah */}
-                <div className="mb-6 p-5 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-slate-700 dark:to-slate-800 border-2 border-amber-400 dark:border-amber-600 rounded-2xl shadow-md">
+                <div className="mb-6 p-5 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl shadow-md">
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-bold text-amber-900 dark:text-amber-300 bg-amber-200 dark:bg-amber-900 px-3 py-1 rounded-full">
+                        <span className="text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-600/10 px-3 py-1 rounded-full">
                             📍 {t.sourceVerse}
                         </span>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => onOpenInIndex?.(mutashabiha.sourceAyah.surahNumber, mutashabiha.sourceAyah.ayahNumber)}
-                                className="text-[10px] bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-full transition-all border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95 flex items-center gap-1.5"
+                                className="text-[10px] bg-[var(--bg-card)] hover:bg-[var(--bg-primary)] hover:bg-opacity-10 text-[var(--text-primary)] px-3 py-2 rounded-full transition-all border border-[var(--border-primary)] shadow-sm active:scale-95 flex items-center gap-1.5"
                             >
                                 <MutashabihatIcon showGreenLine showRedLine size="w-4 h-4" language={language} />
                                 {t.openInIndex}
@@ -423,7 +423,7 @@ export default function MutashabihatModal({
                     </div>
 
                     <div className="text-center mb-2">
-                        <p className="text-base font-bold text-slate-800 dark:text-slate-200">
+                        <p className="text-base font-bold text-[var(--text-primary)]">
                             {sourceSurahName} - {t.verse} {mutashabiha.sourceAyah.ayahNumber}
                         </p>
                     </div>
@@ -465,19 +465,19 @@ export default function MutashabihatModal({
                 {(() => {
                     const displayMutashabiha = activeMutashabiha || mutashabiha;
                     return (
-                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl mb-6 shadow-inner">
+                        <div className="flex bg-[var(--bg-secondary)] p-1.5 rounded-2xl mb-6 shadow-inner">
                             <button
                                 onClick={() => setActiveTab('all')}
                                 className={clsx(
                                     "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
                                     activeTab === 'all'
-                                        ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm"
-                                        : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                                        ? "bg-[var(--bg-card)] text-amber-600 dark:text-amber-400 shadow-sm"
+                                        : "text-[var(--text-primary)] opacity-50 hover:bg-[var(--bg-card)] hover:bg-opacity-50"
                                 )}
                             >
                                 <span>🔗</span>
                                 {t.all}
-                                <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                <span className="text-[10px] bg-[var(--bg-primary)] opacity-20 px-1.5 py-0.5 rounded-full">
                                     {displayMutashabiha.similarAyahs.length}
                                 </span>
                             </button>
@@ -486,14 +486,14 @@ export default function MutashabihatModal({
                                 className={clsx(
                                     "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
                                     activeTab === 'inside'
-                                        ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
-                                        : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                                        ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
+                                        : "text-[var(--text-primary)] opacity-50 hover:bg-[var(--bg-card)] hover:bg-opacity-50"
                                 )}
                             >
                                 <div className="flex items-center gap-2">
                                     <MutashabihatIcon showGreenLine size="w-6 h-6" language={language} />
                                     {t.insideSurah}
-                                    <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                    <span className="text-[10px] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded-full">
                                         {displayMutashabiha.similarAyahs.filter(a => a.surahNumber === displayMutashabiha.sourceAyah.surahNumber).length}
                                     </span>
                                 </div>
@@ -504,14 +504,14 @@ export default function MutashabihatModal({
                                 className={clsx(
                                     "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
                                     activeTab === 'outside'
-                                        ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
-                                        : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700/50"
+                                        ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
+                                        : "text-[var(--text-primary)] opacity-50 hover:bg-[var(--bg-card)] hover:bg-opacity-50"
                                 )}
                             >
                                 <div className="flex items-center gap-2">
                                     <MutashabihatIcon showRedLine size="w-6 h-6" language={language} />
                                     {t.outsideSurah}
-                                    <span className="text-[10px] bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">
+                                    <span className="text-[10px] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded-full">
                                         {displayMutashabiha.similarAyahs.filter(a => a.surahNumber !== displayMutashabiha.sourceAyah.surahNumber).length}
                                     </span>
                                 </div>
@@ -523,10 +523,10 @@ export default function MutashabihatModal({
 
                 {/* Similar Ayahs */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3 flex items-center gap-2">
                         <MutashabihatIcon showGreenLine showRedLine size="w-7 h-7" language={language} />
                         {t.similarVersesLabel}
-                        <span className="text-sm text-slate-500 dark:text-slate-400">({(activeMutashabiha || mutashabiha).similarAyahs.length})</span>
+                        <span className="text-sm text-[var(--text-primary)] opacity-50">({(activeMutashabiha || mutashabiha).similarAyahs.length})</span>
                     </h3>
 
                     {(() => {
@@ -582,8 +582,8 @@ export default function MutashabihatModal({
                                 return a.ayahNumber - b.ayahNumber;
                             });
 
-                        if (filteredData.length === 0) return (
-                            <div className="text-center py-8 text-slate-400 dark:text-slate-500 italic">
+                         if (filteredData.length === 0) return (
+                            <div className="text-center py-8 text-[var(--text-primary)] opacity-40 italic">
                                 {t.noMatchingVerses}
                             </div>
                         );
@@ -597,31 +597,31 @@ export default function MutashabihatModal({
                                     return (
                                         <div
                                             key={`${ayah.surahNumber}-${ayah.ayahNumber}-${globalIdx}`}
-                                            className="p-4 rounded-xl border-r-4 bg-slate-100 dark:bg-slate-800 shadow-sm border-l-0"
+                                            className="p-4 rounded-xl border-r-4 bg-[var(--bg-secondary)] shadow-sm border-l-0"
                                             style={{
                                                 borderColor: ayah.surahNumber !== activeMutashabiha.sourceAyah.surahNumber ? '#ef4444' : '#10b981'
                                             }}
                                         >
                                             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                                                 <div className="flex items-center gap-3 flex-1">
-                                                    <span className="bg-slate-200 dark:bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                                                    <span className="bg-[var(--bg-card)] rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-[var(--text-primary)]">
                                                         {globalIdx + 1}
                                                     </span>
 
-                                                    <p className="font-bold text-slate-700 dark:text-slate-200" dir="rtl">
+                                                    <p className="font-bold text-[var(--text-primary)]" dir="rtl">
                                                         {similarSurahName} - {t.verse} {ayah.ayahNumber}
                                                     </p>
 
                                                     <button
                                                         onClick={() => onOpenInIndex?.(ayah.surahNumber, ayah.ayahNumber)}
-                                                        className="text-[10px] bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 flex items-center gap-1"
+                                                        className="text-[10px] bg-[var(--bg-card)] hover:bg-[var(--bg-primary)] hover:bg-opacity-10 text-[var(--text-primary)] opacity-70 px-3 py-1 rounded-full transition-all border border-[var(--border-primary)] shadow-sm active:scale-95 flex items-center gap-1"
                                                     >
                                                         <MutashabihatIcon showGreenLine showRedLine size="w-3 h-3" language={language} />
                                                         {t.openInIndex}
                                                     </button>
                                                     <button
                                                         onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
-                                                        className="text-xs bg-white hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-900/40 text-slate-700 dark:text-amber-600 dark:text-slate-300 px-3 py-1 rounded-full transition-all border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95"
+                                                        className="text-xs bg-[var(--bg-card)] hover:bg-amber-100 dark:hover:bg-amber-900/40 text-[var(--text-primary)] px-3 py-1 rounded-full transition-all border border-[var(--border-primary)] shadow-sm active:scale-95"
                                                     >
                                                         {t.goAction}
                                                     </button>
@@ -643,7 +643,7 @@ export default function MutashabihatModal({
                                             </div>
 
                                             {!isLoading && (
-                                                <div className="font-quran text-xl leading-loose text-slate-900 dark:text-slate-50 text-right px-2 py-2">
+                                                <div className="font-quran text-xl leading-loose text-[var(--text-primary)] text-right px-2 py-2">
                                                     <HighlightedText
                                                         text={ayahText}
                                                         absoluteAyahNumber={ayah.absoluteAyahNumber}
@@ -664,7 +664,7 @@ export default function MutashabihatModal({
                 {onAddSimilarAyah && activeTab !== 'all' && (
                     <button
                         onClick={() => onAddSimilarAyah((activeMutashabiha || mutashabiha).id, activeTab === 'inside')}
-                        className="w-full mt-4 p-4 border-2 border-dashed border-amber-300 dark:border-slate-600 rounded-xl flex items-center justify-center gap-2 text-amber-800 dark:text-slate-400 hover:border-amber-500 hover:text-amber-900 dark:hover:text-slate-200 transition-all group"
+                        className="w-full mt-4 p-4 border-2 border-dashed border-[var(--border-primary)] rounded-xl flex items-center justify-center gap-2 text-[var(--text-primary)] opacity-50 hover:opacity-100 transition-all group"
                     >
                         <Plus size={20} className="group-hover:scale-110 transition-transform" />
                         <span className="font-bold">
@@ -673,9 +673,9 @@ export default function MutashabihatModal({
                     </button>
                 )}
 
-                {mutashabiha.showContext && (
-                    <div className="mt-5 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 rounded-xl">
-                        <p className="text-sm text-blue-900 dark:text-blue-200 text-center font-medium">
+                 {mutashabiha.showContext && (
+                    <div className="mt-5 p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl">
+                        <p className="text-sm text-blue-600 dark:text-blue-400 text-center font-medium">
                             💡 {t.mutashabihatContextTip}
                         </p>
                     </div>

@@ -179,9 +179,9 @@ export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerMod
                 }}
                 className={clsx(
                     "fixed z-[9999] w-[70px] h-[70px] rounded-full shadow-2xl flex items-center justify-center transition-all",
-                    "bg-gray-400/20 dark:bg-slate-600/30 border-[3px] border-yellow-500/50 hover:bg-gray-400/40", // خلفية شفافة وإطار نصف شفاف
+                    "bg-transparent border-[3px] border-yellow-500/60 hover:bg-yellow-500/10", 
                     isDragging ? "cursor-grabbing scale-95" : "cursor-grab",
-                    isFlashing && "opacity-100 shadow-[0_0_25px_rgba(234,179,8,0.6)] border-yellow-400 ring-4 ring-yellow-400/50 animate-pulse bg-gray-400/60",
+                    isFlashing && "opacity-100 shadow-[0_0_25px_rgba(234,179,8,0.6)] border-yellow-400 ring-4 ring-yellow-400/50 animate-pulse bg-transparent",
                     isOverDeleteZone && "bg-red-500 opacity-80"
                 )}
                 title={t.prayerModeTitle}
@@ -189,7 +189,7 @@ export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerMod
                 {/* Visual indicator on the button */}
                 <div className="relative w-full h-full flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full border-2 border-white/10 animate-pulse" />
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-transparent flex items-center justify-center">
                         <div className="w-4 h-4 rounded-full bg-yellow-500/50 border-2 border-yellow-200 shadow-[0_0_5px_rgba(250,204,21,0.5)]" />
                     </div>
                 </div>

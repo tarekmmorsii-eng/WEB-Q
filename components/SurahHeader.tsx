@@ -28,7 +28,7 @@ const SurahHeader: React.FC<SurahHeaderProps> = ({ surahName }) => {
           rx="8"
           ry="8"
           fill="none"
-          className="stroke-amber-800 dark:stroke-amber-500"
+          className="stroke-[var(--accent-color)]"
           strokeWidth="1.5"
         />
 
@@ -41,12 +41,12 @@ const SurahHeader: React.FC<SurahHeaderProps> = ({ surahName }) => {
           rx="6"
           ry="6"
           fill="none"
-          className="stroke-amber-800 dark:stroke-amber-500"
+          className="stroke-[var(--accent-color)]"
           strokeWidth="0.8"
         />
 
         {/* Left Medallion / Rosette */}
-        <g transform="translate(60, 60)" fill="none" strokeWidth="1.2" className="stroke-amber-800 dark:stroke-amber-500">
+        <g transform="translate(60, 60)" fill="none" strokeWidth="1.2" className="stroke-[var(--accent-color)]">
           <circle cx="0" cy="0" r="30" strokeWidth="1.5" />
           <circle cx="0" cy="0" r="15" strokeWidth="1" />
           <g strokeWidth="0.8">
@@ -60,7 +60,7 @@ const SurahHeader: React.FC<SurahHeaderProps> = ({ surahName }) => {
         </g>
 
         {/* Right Medallion / Rosette (Mirrored) */}
-        <g transform="translate(740, 60)" fill="none" strokeWidth="1.2" className="stroke-amber-800 dark:stroke-amber-500">
+        <g transform="translate(740, 60)" fill="none" strokeWidth="1.2" className="stroke-[var(--accent-color)]">
           <circle cx="0" cy="0" r="30" strokeWidth="1.5" />
           <circle cx="0" cy="0" r="15" strokeWidth="1" />
           <g strokeWidth="0.8">
@@ -92,7 +92,7 @@ const SurahHeader: React.FC<SurahHeaderProps> = ({ surahName }) => {
             textAlign: 'center',
             transform: 'translateY(-5%)'
           }}
-          className="text-slate-800 dark:text-slate-200 text-[clamp(18px,6vw,28px)] sm:text-[clamp(28px,5vw,40px)] md:text-[50px] lg:text-[58px]"
+          className="text-[var(--text-primary)] opacity-90 text-[clamp(18px,6vw,28px)] sm:text-[clamp(28px,5vw,40px)] md:text-[50px] lg:text-[58px]"
         >
           {surahName}
         </span>

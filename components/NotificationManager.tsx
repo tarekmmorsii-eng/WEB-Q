@@ -243,15 +243,15 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-[var(--bg-card)] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-amber-200 dark:border-slate-700">
-                    <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100">{t.notificationManagerTitle}</h2>
+                <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)]">
+                    <h2 className="text-xl font-bold text-amber-600 dark:text-amber-400">{t.notificationManagerTitle}</h2>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-amber-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                        className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
                     >
-                        <X size={24} className="text-amber-900 dark:text-amber-100" />
+                        <X size={24} className="text-[var(--text-primary)] opacity-50 hover:opacity-100" />
                     </button>
                 </div>
 
@@ -269,7 +269,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                     notifications.map(notification => (
                                         <div
                                             key={notification.id}
-                                            className="bg-amber-50 dark:bg-slate-800 rounded-lg p-4 border border-amber-200 dark:border-slate-700 transition-all"
+                                            className="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-primary)] transition-all"
                                         >
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex-1">
@@ -284,26 +284,26 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             }
                                                         }}
                                                         className={clsx(
-                                                            "font-bold text-amber-900 dark:text-amber-100 mb-1 transition-all inline-block",
+                                                            "font-bold text-[var(--text-primary)] mb-1 transition-all inline-block",
                                                             onNavigate && "cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
                                                         )}
                                                     >
                                                         {notification.name}
                                                     </h3>
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                    <p className="text-sm text-[var(--text-primary)] opacity-60">
                                                         {notification.category === 'surah' && notification.metadata ? (
-                                                            <span className="block text-amber-700 dark:text-amber-300 mb-1">
+                                                            <span className="block text-amber-600 dark:text-amber-400 mb-1">
                                                                 {notification.metadata.startAyah && notification.metadata.endAyah ?
                                                                     `${t.fromAyah} ${notification.metadata.startAyah} ${t.toAyah} ${notification.metadata.endAyah}` : ''}
                                                                 {notification.metadata.startPage && notification.metadata.endPage ?
                                                                     ` (${t.page} ${notification.metadata.startPage} - ${notification.metadata.endPage})` : ''}
                                                             </span>
                                                         ) : notification.category === 'page' && notification.metadata ? (
-                                                            <span className="block text-amber-700 dark:text-amber-300 mb-1">
+                                                            <span className="block text-amber-600 dark:text-amber-400 mb-1">
                                                                 <SurahListSummary startPage={notification.metadata.startPage!} endPage={notification.metadata.endPage!} language={language} />
                                                             </span>
                                                         ) : notification.category === 'quran_part' && notification.metadata ? (
-                                                            <span className="block text-amber-700 dark:text-amber-300 mb-1">
+                                                            <span className="block text-amber-600 dark:text-amber-400 mb-1">
                                                                 {notification.name.includes(t.juz) ? (
                                                                     <>
                                                                         {t.hizb} {notification.metadata.hizb}، {t.surah} {t.surahNames[JUZ_SECTIONS[(notification.metadata.hizb - 1) * 4].surahNum - 1]}
@@ -322,7 +322,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         {notification.times.map((time, i) => (
                                                             <span
                                                                 key={i}
-                                                                className="inline-flex items-center gap-1 px-2 py-1 bg-amber-200 dark:bg-slate-700 rounded text-sm text-amber-900 dark:text-amber-100"
+                                                                className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--bg-card)] rounded text-sm text-[var(--text-primary)]"
                                                             >
                                                                 <Clock size={14} />
                                                                 {time}
@@ -380,15 +380,15 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         </>
                     ) : (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-amber-900 dark:text-amber-100">
+                            <h3 className="text-lg font-bold text-amber-600 dark:text-amber-400">
                                 {editingId ? t.editNotification : t.addNewNotification}
                             </h3>
 
 
 
                             {/* Category Selection */}
-                            <div className="bg-amber-50 dark:bg-slate-800/50 p-3 rounded-lg border border-amber-200 dark:border-slate-700">
-                                <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
+                            <div className="bg-[var(--bg-secondary)] p-3 rounded-lg border border-[var(--border-primary)]">
+                                <label className="block text-sm font-bold text-[var(--text-primary)] opacity-70 mb-2">
                                     {t.notificationCategory}
                                 </label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -398,7 +398,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
                                             formCategory === 'text'
                                                 ? "bg-amber-600 text-white"
-                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                                : "bg-[var(--bg-card)] text-[var(--text-primary)] opacity-70 hover:opacity-100"
                                         )}
                                     >
                                         {t.notificationAlert}
@@ -409,7 +409,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
                                             formCategory === 'surah'
                                                 ? "bg-amber-600 text-white"
-                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                                : "bg-[var(--bg-card)] text-[var(--text-primary)] opacity-70 hover:opacity-100"
                                         )}
                                     >
                                         {t.notificationSurahName}
@@ -420,7 +420,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
                                             formCategory === 'quran_part'
                                                 ? "bg-amber-600 text-white"
-                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                                : "bg-[var(--bg-card)] text-[var(--text-primary)] opacity-70 hover:opacity-100"
                                         )}
                                     >
                                         {t.notificationJuzHizb}
@@ -431,7 +431,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             "py-2 px-1 rounded-lg text-sm font-bold transition-colors truncate",
                                             formCategory === 'page'
                                                 ? "bg-amber-600 text-white"
-                                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-600"
+                                                : "bg-[var(--bg-card)] text-[var(--text-primary)] opacity-70 hover:opacity-100"
                                         )}
                                     >
                                         {t.notificationPageNumber}
@@ -450,7 +450,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             type="text"
                                             value={formName}
                                             onChange={(e) => setFormName(e.target.value)}
-                                            className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                            className="w-full px-4 py-2 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             placeholder={t.notificationNamePlaceholder}
                                         />
                                     </div>
@@ -485,7 +485,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         setFormEndPage(actualEndPage);
                                                     }
                                                 }}
-                                                className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                className="w-full px-4 py-2 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             >
                                                 {SURAHS.map(surah => (
                                                     <option key={surah.number} value={surah.number}>
@@ -531,7 +531,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             // Ensure end page is at least start page on blur
                                                             if (formEndPage < val) setFormEndPage(val);
                                                         }}
-                                                        className="w-full px-2 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center"
+                                                        className="w-full px-2 py-2 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-center"
                                                     />
                                                     <span className="text-slate-400">-</span>
                                                     <div className="relative w-full">
@@ -608,7 +608,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             setFormStartAyah(val);
                                                             if (formEndAyah < val) setFormEndAyah(val);
                                                         }}
-                                                        className="w-full px-2 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center"
+                                                        className="w-full px-2 py-2 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-center"
                                                     />
                                                     <span className="text-slate-400">-</span>
                                                     <div className="relative w-full">

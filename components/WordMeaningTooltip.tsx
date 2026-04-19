@@ -69,12 +69,12 @@ const WordMeaningTooltip: React.FC<WordMeaningTooltipProps> = ({ word, meaning, 
             <div
                 ref={tooltipRef}
                 className={clsx(
-                    "relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-2 border-amber-200 dark:border-amber-800 shadow-lg rounded-xl transition-all duration-300 ease-out transform",
+                    "relative bg-[var(--bg-card)] bg-opacity-95 backdrop-blur-xl border-2 border-[var(--border-primary)] shadow-lg rounded-xl transition-all duration-300 ease-out transform",
                     isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
                 )}
             >
                 {/* Word/Phrase Header */}
-                <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-2 border-b border-amber-100 dark:border-amber-800/50 rounded-t-[10px]">
+                <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-2 border-b border-[var(--border-primary)] opacity-80 rounded-t-[10px]">
                     <span
                         className="text-amber-800 dark:text-amber-400 font-bold text-xl leading-none block text-center truncate"
                         style={{ fontFamily: "'Amiri', serif" }}
@@ -85,7 +85,7 @@ const WordMeaningTooltip: React.FC<WordMeaningTooltipProps> = ({ word, meaning, 
 
                 <div className="p-3 px-4">
                     <p
-                        className="text-slate-800 dark:text-slate-200 text-lg md:text-xl leading-relaxed text-center dir-rtl font-medium m-0"
+                        className="text-[var(--text-primary)] text-lg md:text-xl leading-relaxed text-center dir-rtl font-medium m-0"
                         style={{ fontFamily: "'Amiri', serif" }}
                     >
                         {meaning}
@@ -95,10 +95,10 @@ const WordMeaningTooltip: React.FC<WordMeaningTooltipProps> = ({ word, meaning, 
                 {/* Tooltip Arrow */}
                 <div
                     className={clsx(
-                        "absolute w-3.5 h-3.5 bg-white/95 dark:bg-slate-900/95 rotate-45 pointer-events-none",
+                        "absolute w-3.5 h-3.5 bg-[var(--bg-card)] bg-opacity-95 rotate-45 pointer-events-none",
                         isAbove
-                            ? "border-r-2 border-b-2 border-amber-200 dark:border-amber-800 -bottom-[8px]"
-                            : "border-l-2 border-t-2 border-amber-200 dark:border-amber-800 -top-[8px]"
+                            ? "border-r-2 border-b-2 border-[var(--border-primary)] -bottom-[8px]"
+                            : "border-l-2 border-t-2 border-[var(--border-primary)] -top-[8px]"
                     )}
                     style={{
                         left: `${arrowLeft}px`,

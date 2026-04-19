@@ -609,15 +609,15 @@ export default function MutashabihatIndex({
     const currentSurah = SURAHS.find(s => s.number === selectedSurahId);
 
     return (
-        <div className="fixed inset-0 bg-gray-50 dark:bg-slate-900 z-[110] flex flex-col animate-in fade-in duration-300" dir={t.dir}>
+        <div className="fixed inset-0 bg-[var(--bg-card)] z-[110] flex flex-col animate-in fade-in duration-300" dir={t.dir}>
             {/* Header */}
-            <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm shrink-0">
+            <div className="bg-[var(--bg-card)] border-b border-[var(--border-primary)] shadow-sm shrink-0">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">
-                        <X className="text-gray-600 dark:text-gray-300" />
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--bg-primary)] hover:bg-opacity-10 rounded-lg">
+                        <X className="text-[var(--text-primary)]" />
                     </button>
 
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <h1 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
                         <MutashabihatIcon showGreenLine showRedLine size="w-8 h-8" />
                         {t.mutashabihatIndex}
                     </h1>
@@ -630,7 +630,7 @@ export default function MutashabihatIndex({
                         <select
                             value={selectedSurahId}
                             onChange={(e) => setSelectedSurahId(Number(e.target.value))}
-                            className="w-full p-2.5 pr-10 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg appearance-none text-right font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+                            className="w-full p-2.5 pr-10 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg appearance-none text-right font-medium text-[var(--text-primary)] focus:ring-2 focus:ring-amber-500"
                             dir="rtl"
                         >
                             {SURAHS.map(surah => (
@@ -655,7 +655,7 @@ export default function MutashabihatIndex({
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={t.searchMutashabihatPlaceholder}
                                 className={clsx(
-                                    "w-full p-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none",
+                                    "w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-[var(--text-primary)]",
                                     t.dir === 'rtl' ? "pr-10 pl-10 text-right" : "pl-10 pr-10 text-left"
                                 )}
                                 dir={t.dir}
@@ -674,12 +674,12 @@ export default function MutashabihatIndex({
                     </div>
                 </div>
 
-                <div className="flex md:hidden border-t border-gray-200 dark:border-slate-700">
+                <div className="flex md:hidden border-t border-[var(--border-primary)]">
                     <button
                         onClick={() => setActiveTab('inside')}
                         className={clsx(
                             "flex-1 p-3 text-sm font-medium text-center border-b-2 transition-colors",
-                            activeTab === 'inside' ? "border-amber-600 text-amber-600 bg-amber-50 dark:bg-slate-800" : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                            activeTab === 'inside' ? "border-amber-600 text-amber-600 bg-amber-50 dark:bg-[var(--bg-secondary)]" : "border-transparent text-[var(--text-primary)] opacity-60 hover:opacity-100"
                         )}
                     >
                         {t.insideSurahCounted?.replace('{count}', inside.length.toString()) || `${t.insideSurah} (${inside.length})`}
@@ -688,7 +688,7 @@ export default function MutashabihatIndex({
                         onClick={() => setActiveTab('outside')}
                         className={clsx(
                             "flex-1 p-3 text-sm font-medium text-center border-b-2 transition-colors",
-                            activeTab === 'outside' ? "border-amber-600 text-amber-600 bg-amber-50 dark:bg-slate-800" : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                            activeTab === 'outside' ? "border-amber-600 text-amber-600 bg-amber-50 dark:bg-[var(--bg-secondary)]" : "border-transparent text-[var(--text-primary)] opacity-60 hover:opacity-100"
                         )}
                     >
                         {t.outsideSurahCounted?.replace('{count}', outside.length.toString()) || `${t.outsideSurah} (${outside.length})`}
@@ -709,11 +709,11 @@ export default function MutashabihatIndex({
                 <div className="h-full overflow-y-auto p-4 md:p-6">
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                         <div className={clsx("space-y-4", { 'hidden md:block': activeTab === 'outside' })}>
-                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200 dark:border-slate-700">
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[var(--border-primary)]">
                                 <MutashabihatIcon showGreenLine size="w-7 h-7" language={language} />
-                                <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                                <h3 className="font-bold text-lg text-[var(--text-primary)]">
                                     {t.insideSurahTitle.replace('{surah}', t.surahNames[selectedSurahId - 1])}
-                                    <span className={clsx("text-sm font-normal text-gray-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full", language === 'ar' ? "mr-2" : "ml-2")}>
+                                    <span className={clsx("text-sm font-normal text-[var(--text-primary)] opacity-50 bg-[var(--bg-secondary)] px-2 py-0.5 rounded-full", language === 'ar' ? "mr-2" : "ml-2")}>
                                         {inside.length}
                                     </span>
                                 </h3>
@@ -739,12 +739,12 @@ export default function MutashabihatIndex({
                         </div>
 
                         <div className={clsx("space-y-4", { 'hidden md:block': activeTab === 'inside' })}>
-                            <div className="flex flex-col gap-2 mb-4 pb-2 border-b border-gray-200 dark:border-slate-700">
+                            <div className="flex flex-col gap-2 mb-4 pb-2 border-b border-[var(--border-primary)]">
                                 <div className="flex items-center gap-2">
                                     <MutashabihatIcon showRedLine size="w-7 h-7" language={language} />
-                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                                    <h3 className="font-bold text-lg text-[var(--text-primary)]">
                                         {t.outsideSurahTitle}
-                                        <span className={clsx("text-sm font-normal text-gray-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full", t.dir === 'rtl' ? "mr-2" : "ml-2")}>
+                                        <span className={clsx("text-sm font-normal text-[var(--text-primary)] opacity-50 bg-[var(--bg-secondary)] px-2 py-0.5 rounded-full", t.dir === 'rtl' ? "mr-2" : "ml-2")}>
                                             {outside.length}
                                         </span>
                                     </h3>
@@ -753,7 +753,7 @@ export default function MutashabihatIndex({
                                     <select
                                         value={targetSurahFilter || ""}
                                         onChange={(e) => setTargetSurahFilter(e.target.value ? Number(e.target.value) : null)}
-                                        className="flex-1 p-2 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-amber-500"
+                                        className="flex-1 p-2 text-sm bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-[var(--text-primary)]"
                                     >
                                         <option value="">{t.allSurahs}</option>
                                         {availableTargetSurahs.map(sNum => (
@@ -797,31 +797,31 @@ export default function MutashabihatIndex({
 const SimilarAyahCard = React.memo(({ item, onNavigateToAyah, t }: { item: any, onNavigateToAyah?: (s: number, a: number) => void, t: any }) => {
     const { mut, targets } = item;
     return (
-        <div id={`mut-ayah-${mut.sourceAyah.surahNumber}-${mut.sourceAyah.ayahNumber}`} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden scroll-mt-24">
-            <div className="p-4 bg-amber-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700">
+        <div id={`mut-ayah-${mut.sourceAyah.surahNumber}-${mut.sourceAyah.ayahNumber}`} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm hover:shadow-md transition-shadow overflow-hidden scroll-mt-24">
+            <div className="p-4 bg-amber-50/50 dark:bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] opacity-90">
                 <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-slate-900 px-2 py-1 rounded">
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-[var(--bg-card)] px-2 py-1 rounded">
                         {t.ayahWithPositions.replace('{number}', mut.sourceAyah.ayahNumber.toString()).replace('{count}', targets.length.toString())}
                     </span>
                     <button onClick={() => onNavigateToAyah?.(mut.sourceAyah.surahNumber, mut.sourceAyah.ayahNumber)} className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white px-2 py-0.5 rounded transition-colors">{t.goAction}</button>
                 </div>
-                <div className="text-right font-quran text-xl leading-loose text-gray-900 dark:text-white">
+                <div className="text-right font-quran text-xl leading-loose text-[var(--text-primary)]">
                     <HighlightingText text={mut.sourceAyah.text} absoluteAyahNumber={mut.sourceAyah.absoluteAyahNumber} referenceText={targets.map(t => t.text)} isInsideSurah={false} t={t} />
                 </div>
             </div>
-            <div className="divide-y divide-gray-100 dark:divide-slate-700 bg-white dark:bg-slate-900">
+            <div className="divide-y divide-[var(--border-primary)] bg-[var(--bg-card)]">
                 {targets.sort((a, b) => a.ayahNumber - b.ayahNumber).map((target, i) => (
-                    <div key={i} id={`mut-ayah-${target.surahNumber}-${target.ayahNumber}`} className="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors border-b border-gray-50 dark:border-slate-800/50 last:border-0 scroll-mt-24">
+                    <div key={i} id={`mut-ayah-${target.surahNumber}-${target.ayahNumber}`} className="p-4 hover:bg-[var(--bg-secondary)] transition-colors border-b border-[var(--border-primary)] last:border-0 scroll-mt-24">
                         <div className="flex justify-between items-center mb-2">
                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600 px-2 py-0.5 rounded">
+                                <span className="text-xs font-bold text-[var(--text-primary)] opacity-60 border border-[var(--border-primary)] px-2 py-0.5 rounded">
                                     {t.surahNames[target.surahNumber - 1]} : {target.ayahNumber}
                                 </span>
                                 <span className="text-[10px] px-1.5 py-0.5 rounded text-white bg-blue-500">{t.similarBadge}</span>
                             </div>
                             <button onClick={() => onNavigateToAyah?.(target.surahNumber, target.ayahNumber)} className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white px-2 py-0.5 rounded shadow-sm">{t.goAction}</button>
                         </div>
-                        <div className="text-right font-quran text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+                        <div className="text-right font-quran text-lg leading-relaxed text-[var(--text-primary)] opacity-90">
                             <HighlightingText text={target.text} absoluteAyahNumber={target.absoluteAyahNumber} referenceText={mut.sourceAyah.text} isInsideSurah={false} t={t} />
                         </div>
                     </div>
@@ -845,26 +845,26 @@ const InternalGroupSection = React.memo(({ group, onNavigateToAyah, t }: { group
     const typeDesc = '';
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden mb-6 border-r-4" style={{ borderRightColor: ruleColor }}>
-            <div className="p-3 bg-gray-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-800 flex flex-col gap-1">
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm overflow-hidden mb-6 border-r-4" style={{ borderRightColor: ruleColor }}>
+            <div className="p-3 bg-gray-50/50 dark:bg-[var(--bg-secondary)] opacity-90 border-b border-[var(--border-primary)] flex flex-col gap-1">
                 <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
                         <span className="text-xl font-bold" style={{ color: ruleColor }}>*</span>
                         <span className="font-bold text-lg" style={{ color: ruleColor }}>({rule}) :</span>
                     </div>
-                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded uppercase">
+                    <span className="text-[10px] font-bold text-[var(--text-primary)] opacity-40 bg-[var(--bg-secondary)] px-2 py-0.5 rounded uppercase">
                         {t.allPositions.includes('{count}') ? t.allPositions.replace('{count}', ayahs.length.toString()) : `${ayahs.length} ${t.allPositions}`}
                     </span>
                 </div>
 
             </div>
-            <div className="divide-y divide-gray-50 dark:divide-slate-800/50">
+            <div className="divide-y divide-[var(--border-primary)]">
                 {ayahs.map((ayah: any, i: number) => (
-                    <div key={i} id={`mut-ayah-${ayah.surahNumber}-${ayah.ayahNumber}`} className="p-3 hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors scroll-mt-24">
-                        <div className="text-right font-quran text-lg leading-loose text-gray-700 dark:text-gray-300">
+                    <div key={i} id={`mut-ayah-${ayah.surahNumber}-${ayah.ayahNumber}`} className="p-3 hover:bg-[var(--bg-secondary)] transition-colors scroll-mt-24">
+                        <div className="text-right font-quran text-lg leading-loose text-[var(--text-primary)]">
                             <HighlightingText text={ayah.text} absoluteAyahNumber={ayah.absoluteAyahNumber} onlyRule={rule} referenceText={ayahs.map((a: any) => a.text)} isInsideSurah={true} t={t} />
                             <div className="flex items-center gap-1 mt-1 justify-end">
-                                <button onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)} className="text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">{t.goAction}</button>
+                                <button onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)} className="text-[10px] bg-[var(--bg-primary)] bg-opacity-10 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-[var(--text-primary)] px-2 py-0.5 rounded">{t.goAction}</button>
                                 <span className="inline-flex text-sm font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30 whitespace-nowrap">({ayah.ayahNumber})</span>
                             </div>
                         </div>

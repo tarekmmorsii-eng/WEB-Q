@@ -67,16 +67,16 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
 
   const HizbIcon = ({ type }: { type: string }) => {
     return (
-      <div className="relative w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+      <div className="relative w-8 h-8 rounded-full bg-[var(--bg-secondary)] overflow-hidden flex-shrink-0">
         <div className={clsx(
-          "absolute inset-0 bg-teal-500 dark:bg-teal-400",
+          "absolute inset-0 bg-teal-600 dark:bg-teal-400",
           type === 'full' && "w-full h-full",
           type === 'quarter' && "w-1/2 h-1/2 left-1/2 top-0",
           type === 'half' && "w-1/2 h-full left-1/2",
           type === 'three-quarter' && "w-full h-full",
         )}>
           {type === 'three-quarter' && (
-            <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-slate-200 dark:bg-slate-700"></div>
+            <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-[var(--bg-secondary)]"></div>
           )}
         </div>
       </div>
@@ -117,7 +117,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
         }
 
         return (
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-[var(--bg-card)]">
             {surahsWithJuz.map((item, idx) => {
               const isActive = idx === activeIdx;
 
@@ -130,14 +130,14 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                       onClose();
                     }}
                     className={clsx(
-                      "w-full flex items-center justify-between px-4 py-3 sticky top-0 z-10 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
-                      isActive ? "bg-amber-100 dark:bg-amber-900/40 active-index-item" : "bg-slate-100 dark:bg-slate-800"
+                      "w-full flex items-center justify-between px-4 py-3 sticky top-0 z-10 hover:bg-[var(--bg-primary)] hover:bg-opacity-10 transition-colors",
+                      isActive ? "bg-amber-600/10 active-index-item" : "bg-[var(--bg-secondary)]"
                     )}
                   >
                     {/* Juz Name */}
-                    <span className="text-amber-800 dark:text-amber-500 font-bold text-base" style={{ fontFamily: "'Almarai', sans-serif" }}>{t.juz} {toArabic(item.juz!)}</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-bold text-base" style={{ fontFamily: "'Almarai', sans-serif" }}>{t.juz} {toArabic(item.juz!)}</span>
                     {/* Page Number */}
-                    <span className="text-slate-400 dark:text-slate-500 text-sm" style={{ fontFamily: "'Almarai', sans-serif" }}>{toArabic(item.page!)}</span>
+                    <span className="text-[var(--text-primary)] opacity-40 text-sm" style={{ fontFamily: "'Almarai', sans-serif" }}>{toArabic(item.page!)}</span>
                   </button>
                 );
               }
@@ -151,30 +151,30 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                     onClose();
                   }}
                   className={clsx(
-                    "w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-800 transition-colors group",
-                    isActive ? "bg-amber-50 dark:bg-amber-900/20 active-index-item" : "hover:bg-amber-50 dark:hover:bg-slate-800"
+                    "w-full flex items-center justify-between px-4 py-3 border-b border-[var(--border-primary)] transition-colors group",
+                    isActive ? "bg-amber-600/5 active-index-item" : "hover:bg-amber-600/5 dark:hover:bg-[var(--bg-secondary)]"
                   )}
                 >
                   {/* Surah Number (Left) */}
-                  <span className="flex items-center justify-center w-8 h-8 text-slate-600 dark:text-slate-400 text-lg font-bold" style={{ fontFamily: "'Almarai', sans-serif" }}>
+                  <span className="flex items-center justify-center w-8 h-8 text-[var(--text-primary)] opacity-60 text-lg font-bold" style={{ fontFamily: "'Almarai', sans-serif" }}>
                     {toArabic(surah.number)}
                   </span>
 
                   {/* Surah Info (Center) */}
                   <div className={clsx("flex-1 px-4", isRTL ? "text-right" : "text-left")}>
-                    <div className="text-slate-800 dark:text-slate-200 font-amiri text-lg font-bold mb-0.5 group-hover:text-amber-800 dark:group-hover:text-amber-400">
+                    <div className="text-[var(--text-primary)] font-amiri text-lg font-bold mb-0.5 group-hover:text-amber-800 dark:group-hover:text-amber-400">
                       {(() => {
                         const sName = t.surahNames[surah.number - 1];
                         return (language === 'ar' || language === 'en') ? `${t.surahPrefix} ${sName}` : `${sName} ${t.surah}`;
                       })()}
                     </div>
-                    <div className="text-slate-500 dark:text-slate-500 text-xs font-sans">
+                    <div className="text-[var(--text-primary)] opacity-40 text-xs font-sans">
                       {surah.revelationType} - {toArabic(surah.ayahCount)} {t.verse}
                     </div>
                   </div>
 
                   {/* Page Number (Right in RTL, Left in LTR) */}
-                  <span className={clsx("text-slate-400 dark:text-slate-500 text-sm w-10", isRTL ? "text-right" : "text-left")} style={{ fontFamily: "'Almarai', sans-serif" }}>
+                  <span className={clsx("text-[var(--text-primary)] opacity-40 text-sm w-10", isRTL ? "text-right" : "text-left")} style={{ fontFamily: "'Almarai', sans-serif" }}>
                     {toArabic(surah.startPage)}
                   </span>
                 </button>
@@ -195,7 +195,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
         }
 
         return (
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-[var(--bg-card)]">
             {JUZ_SECTIONS.map((section, idx) => {
               const showJuzHeader = section.juz !== lastJuz;
               if (showJuzHeader) lastJuz = section.juz;
@@ -205,8 +205,8 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
 
               return (
                 <React.Fragment key={section.id}>
-                  {showJuzHeader && (
-                    <div className={clsx("bg-slate-100 dark:bg-slate-800 px-4 py-2 text-amber-800 dark:text-amber-500 font-bold text-lg sticky top-0 z-10 shadow-sm", isRTL ? "text-right" : "text-left")} style={{ fontFamily: "'Almarai', sans-serif" }}>
+                   {showJuzHeader && (
+                    <div className={clsx("bg-[var(--bg-secondary)] px-4 py-2 text-amber-600 dark:text-amber-400 font-bold text-lg sticky top-0 z-10 shadow-sm", isRTL ? "text-right" : "text-left")} style={{ fontFamily: "'Almarai', sans-serif" }}>
                       {t.juz} {toArabic(section.juz)}
                     </div>
                   )}
@@ -215,23 +215,23 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                       onSelectPage(section.page);
                       onClose();
                     }}
-                    className={clsx(
-                      "w-full flex items-center p-4 border-b border-gray-100 dark:border-slate-800 transition-colors group",
+                     className={clsx(
+                      "w-full flex items-center p-4 border-b border-[var(--border-primary)] transition-colors group",
                       isRTL && "flex-row-reverse",
-                      isActive ? "bg-amber-50 dark:bg-amber-900/20 active-index-item" : "hover:bg-amber-50 dark:hover:bg-slate-800"
+                      isActive ? "bg-amber-600/5 active-index-item" : "hover:bg-amber-600/5 dark:hover:bg-[var(--bg-secondary)]"
                     )}
                   >
-                    {/* Page Number */}
-                    <div className={clsx("w-8 pl-2 text-slate-300 dark:text-slate-600 text-sm group-hover:text-slate-500 transition-colors", isRTL ? "text-left" : "text-right")} style={{ fontFamily: "'Almarai', sans-serif" }}>
+                     {/* Page Number */}
+                    <div className={clsx("w-8 pl-2 text-[var(--text-primary)] opacity-20 text-sm group-hover:opacity-40 transition-colors", isRTL ? "text-left" : "text-right")} style={{ fontFamily: "'Almarai', sans-serif" }}>
                       {toArabic(section.page)}
                     </div>
 
                     {/* Text Content (Center) */}
                     <div className={clsx("flex-1 pr-4", isRTL ? "text-right" : "text-left")}>
-                      <div className="text-slate-800 dark:text-slate-200 font-amiri text-lg leading-normal mb-1 truncate">
+                      <div className="text-[var(--text-primary)] font-amiri text-lg leading-normal mb-1 truncate">
                         {section.text}
                       </div>
-                      <div className="text-slate-500 dark:text-slate-500 text-xs font-sans">
+                       <div className="text-[var(--text-primary)] opacity-40 text-xs font-sans">
                         {(() => {
                           const sName = t.surahNames[section.surahNum - 1] || section.surahNum;
                           return `${language === 'ar' ? t.surahPrefix : ''} ${sName}${language !== 'ar' ? ' ' + t.surah : ''}، ${t.verse} ${toArabic(section.ayahNum)}`;
@@ -242,7 +242,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                     {/* Icon (Right side) */}
                     <div className="ml-3 flex-shrink-0 w-10 flex justify-center">
                       {isHizbStart ? (
-                        <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/30 border border-teal-500 dark:border-teal-400 flex items-center justify-center text-teal-700 dark:text-teal-400 font-bold font-sans text-lg shadow-sm">
+                        <div className="w-9 h-9 rounded-full bg-teal-600/10 border border-teal-600/50 flex items-center justify-center text-teal-600 dark:text-teal-400 font-bold font-sans text-lg shadow-sm">
                           {toArabic(section.hizb)}
                         </div>
                       ) : (
@@ -258,20 +258,20 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
 
       case 'bookmarks':
         return (
-          <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
+          <div className="flex-1 overflow-y-auto bg-[var(--bg-card)]">
             {/* 1. Last Viewed (History) */}
             {history.length > 0 && (
               <div className="mb-2">
-                <div className={clsx("bg-gray-100 dark:bg-slate-800 px-4 py-3 text-slate-500 dark:text-slate-400 font-sans text-sm sticky top-0 z-10", isRTL ? "text-right" : "text-left")}>
+                <div className={clsx("bg-[var(--bg-secondary)] px-4 py-3 text-[var(--text-primary)] opacity-50 font-sans text-sm sticky top-0 z-10", isRTL ? "text-right" : "text-left")}>
                   {t.recentPages}
                 </div>
                 {history.map((item, idx) => (
-                  <div key={`hist-${idx}`} className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                  <div key={`hist-${idx}`} className="flex items-center justify-between p-4 border-b border-[var(--border-primary)] hover:bg-[var(--bg-secondary)] transition-colors">
                     <button className="p-2 text-slate-400 dark:text-slate-500">
                       <Clock size={18} />
                     </button>
                     <div className={clsx("flex-1 mr-4 cursor-pointer", isRTL ? "text-right" : "text-left")} onClick={() => { onSelectPage(item.page); onClose(); }}>
-                      <div className="text-slate-800 dark:text-slate-200 font-amiri text-xl mb-1">{item.surahName}</div>
+                      <div className="text-[var(--text-primary)] font-amiri text-xl mb-1">{item.surahName}</div>
                       <div className="text-slate-500 dark:text-slate-400 text-sm" style={{ fontFamily: "'Almarai', sans-serif" }}>
                         {t.page} {toArabic(item.page)}، {t.juz} {toArabic(item.juz)}
                       </div>
@@ -286,14 +286,14 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
 
             {/* 2. Page Bookmarks */}
             <div className="mb-2">
-              <div className={clsx("bg-gray-100 dark:bg-slate-800 px-4 py-3 text-slate-500 dark:text-slate-400 font-sans text-sm sticky top-0 z-10", isRTL ? "text-right" : "text-left")}>
+              <div className={clsx("bg-[var(--bg-secondary)] px-4 py-3 text-[var(--text-primary)] opacity-50 font-sans text-sm sticky top-0 z-10", isRTL ? "text-right" : "text-left")}>
                 {t.pageBookmarks}
               </div>
               {pageBookmarks.length === 0 ? (
                 <div className="text-slate-400 dark:text-slate-500 text-center p-8 text-sm">{t.noPageBookmarks}</div>
               ) : (
                 pageBookmarks.map((item) => (
-                  <div key={`pb-${item.page}`} className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 group hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                  <div key={`pb-${item.page}`} className="flex items-center justify-between p-4 border-b border-[var(--border-primary)] group hover:bg-[var(--bg-secondary)] transition-colors">
                     <button
                       className="p-2 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition"
                       onClick={() => onRemovePageBookmark(item.page)}
@@ -305,7 +305,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                       className={clsx("flex-1 mr-4 cursor-pointer", isRTL ? "text-right" : "text-left")}
                       onClick={() => { onSelectPage(item.page); onClose(); }}
                     >
-                      <div className="text-slate-800 dark:text-slate-200 font-amiri text-xl mb-1">{item.surahName}</div>
+                      <div className="text-[var(--text-primary)] font-amiri text-xl mb-1">{item.surahName}</div>
                       <div className="text-slate-500 dark:text-slate-400 text-sm" style={{ fontFamily: "'Almarai', sans-serif" }}>
                         {t.page} {toArabic(item.page)}، {t.juz} {toArabic(item.juz)}
                       </div>
@@ -320,14 +320,14 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
 
             {/* 3. Verse Bookmarks */}
             <div className="mb-2">
-              <div className={clsx("bg-gray-100 dark:bg-slate-800 px-4 py-3 text-slate-500 dark:text-slate-400 font-sans text-sm sticky top-0 z-10", isRTL ? "text-right" : "text-left")}>
+              <div className={clsx("bg-[var(--bg-secondary)] px-4 py-3 text-[var(--text-primary)] opacity-50 font-sans text-sm sticky top-0 z-10", isRTL ? "text-right" : "text-left")}>
                 {t.verseBookmarksSection}
               </div>
               {verseBookmarks.length === 0 ? (
                 <div className="text-slate-400 dark:text-slate-500 text-center p-8 text-sm">{t.noVerseBookmarks}</div>
               ) : (
                 verseBookmarks.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 group hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                  <div key={item.id} className="flex items-center justify-between p-4 border-b border-[var(--border-primary)] group hover:bg-[var(--bg-secondary)] transition-colors">
                     {/* 1. Delete Button (Right in RTL) */}
                     <button
                       className="p-2 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition"
@@ -342,7 +342,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                       className="text-right flex-1 mr-4 cursor-pointer overflow-hidden"
                       onClick={() => { onSelectPage(item.page); onClose(); }}
                     >
-                      <div className={clsx("text-slate-800 dark:text-slate-200 font-amiri text-xl mb-1 truncate leading-relaxed", isRTL ? "text-right" : "text-left")} dir="rtl">
+                      <div className={clsx("text-[var(--text-primary)] font-amiri text-xl mb-1 truncate leading-relaxed", isRTL ? "text-right" : "text-left")} dir="rtl">
                         {item.textPreview}
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 text-sm" style={{ fontFamily: "'Almarai', sans-serif" }}>
@@ -367,20 +367,20 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
   return (
     <div className={clsx("fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex animate-fade-in", isRTL ? "justify-end" : "justify-start")} onClick={onClose}>
       <div
-        className={clsx("w-full sm:w-96 bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col transition-colors duration-300", isRTL ? "animate-slide-in" : "animate-slide-in-left")}
+        className={clsx("w-full sm:w-96 bg-[var(--bg-card)] h-full shadow-2xl flex flex-col transition-colors duration-300", isRTL ? "animate-slide-in" : "animate-slide-in-left")}
         onClick={(e) => e.stopPropagation()}
         dir={t.dir}
       >
 
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-slate-900 z-10 border-b border-gray-200 dark:border-slate-700 p-4 flex justify-between items-center shadow-sm">
+        <div className="sticky top-0 bg-[var(--bg-card)] z-10 border-b border-[var(--border-primary)] p-4 flex justify-between items-center shadow-sm">
           <div className="flex items-center gap-3">
             <img
               src="/mushaf_logo_v2.png?v=10"
               alt="Logo"
               className="w-10 h-10 rounded-full border border-amber-500/30"
             />
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">{t.indexTitle}</h2>
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">{t.indexTitle}</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors">
             <X size={24} />
@@ -388,7 +388,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900">
+        <div className="flex border-b border-[var(--border-primary)] bg-[var(--bg-secondary)]">
           <button
             onClick={() => setActiveTab('surah')}
             className={clsx(
