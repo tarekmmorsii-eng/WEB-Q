@@ -2527,7 +2527,7 @@ export default function App() {
           onOpenOffline={handleOpenOfflineSettings}
           onOpenReciterSelection={openAudioPlayer}
           isVisible={showUi}
-          isEnabled={settings.bottomBar.showSideMenu !== false && !settings.prayerMode}
+          isEnabled={settings.bottomBar.showSideMenu !== false}
           isRTL={isRTL}
           onOpenShare={() => setIsShareModalOpen(true)}
         />
