@@ -2406,27 +2406,27 @@ export default function App() {
           !isTouchDevice && (
             <>
               <button
-                id="prev-page-btn"
-                onClick={handlePrevPage}
-                disabled={currentPage <= 1}
-                className={clsx(
-                  "hidden lg:flex fixed top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0",
-                  "left-6" // Always on left for Mushaf 'Previous' (going right)
-                )}
-              >
-                <ChevronRight size={32} />
-              </button>
-
-              <button
                 id="next-page-btn"
                 onClick={handleNextPage}
                 disabled={currentPage >= TOTAL_PAGES}
                 className={clsx(
                   "hidden lg:flex fixed top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0",
-                  "right-24" // Always on right for Mushaf 'Next' (going left)
+                  "left-6" // Next page goes left in Arabic
                 )}
               >
                 <ChevronLeft size={32} />
+              </button>
+
+              <button
+                id="prev-page-btn"
+                onClick={handlePrevPage}
+                disabled={currentPage <= 1}
+                className={clsx(
+                  "hidden lg:flex fixed top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 text-amber-800 dark:text-amber-500 shadow-lg hover:bg-amber-100 dark:hover:bg-slate-700 transition-all disabled:opacity-0",
+                  "right-24" // Previous page goes right in Arabic
+                )}
+              >
+                <ChevronRight size={32} />
               </button>
             </>
           )
