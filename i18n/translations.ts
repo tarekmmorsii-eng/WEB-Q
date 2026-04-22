@@ -444,6 +444,16 @@ export interface Translations {    dir: string;
     tourTutorialsDesc: string;
     tourPrayerModeTitle: string;
     tourPrayerModeDesc: string;
+    recitationSettings: string;
+    fromSurah: string;
+    toSurah: string;
+    ayahText: string;
+    playVerseGroup: string;
+    playEachAyah: string;
+    playbackSpeed: string;
+    playOnlySelectedRange: string;
+    apply: string;
+    reciters: Record<string, string>;
 }
 
 import ar from '../src/assets/i18n/ar.json';

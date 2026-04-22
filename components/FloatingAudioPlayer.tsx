@@ -173,7 +173,7 @@ export default function FloatingAudioPlayer({
                             {loading ? (
                                 <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500">
                                     <Loader2 className="animate-spin" size={14} md:size={16} />
-                                    <span>{currentLanguage === 'ar' ? 'جاري...' : 'Loading...'}</span>
+                                    <span>{t.loading || 'Loading...'}</span>
                                 </div>
                             ) : (
                                 <select
@@ -194,7 +194,7 @@ export default function FloatingAudioPlayer({
                                 >
                                     {reciters.map(r => (
                                         <option key={r.id} value={r.id} className="bg-slate-800 text-white text-xs md:text-sm">
-                                            {currentLanguage === 'ar' ? r.nameAr : r.nameEn}
+                                            {currentLanguage === 'ar' ? r.nameAr : (t.reciters && t.reciters[r.id] ? t.reciters[r.id] : r.nameEn)}
                                         </option>
                                     ))}
                                 </select>

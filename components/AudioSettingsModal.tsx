@@ -78,7 +78,7 @@ export default function AudioSettingsModal({
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-3 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)]">
                     <h2 className="text-xl font-bold text-amber-500">
-                        {currentLanguage === 'ar' ? 'إعدادات التلاوة' : 'Recitation Settings'}
+                        {t.recitationSettings || 'Recitation Settings'}
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-[var(--text-primary)] opacity-50 hover:opacity-100">
                         <X size={18} />
@@ -91,7 +91,7 @@ export default function AudioSettingsModal({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs text-[var(--text-primary)] opacity-40 block">
-                                    {currentLanguage === 'ar' ? 'من سورة' : 'From Surah'}
+                                    {t.fromSurah || 'From Surah'}
                                 </label>
                                 <select 
                                     value={startSurah}
@@ -107,12 +107,12 @@ export default function AudioSettingsModal({
                                     }}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-500 transition-colors text-[var(--text-primary)]"
                                 >
-                                    {SURAHS.map(s => <option key={s.number} value={s.number}>{s.number}. {s.name}</option>)}
+                                    {SURAHS.map(s => <option key={s.number} value={s.number}>{s.number}. {t.surahNames[s.number - 1] || s.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs text-[var(--text-primary)] opacity-40 block">
-                                    {currentLanguage === 'ar' ? 'آية' : 'Ayah'}
+                                    {t.ayahText || 'Ayah'}
                                 </label>
                                 <select 
                                     value={startAyah}
@@ -136,7 +136,7 @@ export default function AudioSettingsModal({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs text-[var(--text-primary)] opacity-40 block">
-                                    {currentLanguage === 'ar' ? 'إلى سورة' : 'To Surah'}
+                                    {t.toSurah || 'To Surah'}
                                 </label>
                                 <select 
                                     value={endSurah}
@@ -153,13 +153,13 @@ export default function AudioSettingsModal({
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-500 transition-colors text-[var(--text-primary)]"
                                 >
                                     {SURAHS.filter(s => s.number >= startSurah).map(s => (
-                                        <option key={s.number} value={s.number}>{s.number}. {s.name}</option>
+                                        <option key={s.number} value={s.number}>{s.number}. {t.surahNames[s.number - 1] || s.name}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs text-[var(--text-primary)] opacity-40 block">
-                                    {currentLanguage === 'ar' ? 'آية' : 'Ayah'}
+                                    {t.ayahText || 'Ayah'}
                                 </label>
                                 <select 
                                     value={endAyah}
@@ -181,7 +181,7 @@ export default function AudioSettingsModal({
                     {/* Group Repetitions */}
                     <div className="space-y-3">
                         <label className="text-sm font-semibold text-[var(--text-primary)] opacity-70">
-                            {currentLanguage === 'ar' ? 'تشغيل مجموعة الآيات:' : 'Play Verse Group:'}
+                            {t.playVerseGroup || 'Play Verse Group:'}
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {GROUP_REP_OPTIONS.map(opt => (
@@ -204,7 +204,7 @@ export default function AudioSettingsModal({
                     {/* Ayah Repetitions */}
                     <div className="space-y-3">
                         <label className="text-sm font-semibold text-[var(--text-primary)] opacity-70">
-                            {currentLanguage === 'ar' ? 'تشغيل كل آية:' : 'Play Each Ayah:'}
+                            {t.playEachAyah || 'Play Each Ayah:'}
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {AYAH_REP_OPTIONS.map(opt => (
@@ -227,7 +227,7 @@ export default function AudioSettingsModal({
                     {/* Speed Selector */}
                     <div className="space-y-3">
                         <label className="text-sm font-semibold text-[var(--text-primary)] opacity-70">
-                            {currentLanguage === 'ar' ? 'سرعة التشغيل:' : 'Playback Speed:'}
+                            {t.playbackSpeed || 'Playback Speed:'}
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {SPEED_OPTIONS.map(opt => (
@@ -262,7 +262,7 @@ export default function AudioSettingsModal({
                             "text-sm font-semibold transition-colors",
                             useRangeOnly ? "text-[var(--text-primary)]" : "text-[var(--text-primary)] opacity-50 group-hover:opacity-100"
                         )}>
-                            {currentLanguage === 'ar' ? 'شغل ما تم اختياره من الآيات فقط' : 'Play only selected range'}
+                            {t.playOnlySelectedRange || 'Play only selected range'}
                         </span>
                     </button>
 
@@ -274,7 +274,7 @@ export default function AudioSettingsModal({
                         })}
                         className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-bold py-3 rounded-xl shadow-xl transition-all active:scale-[0.98] mt-2"
                     >
-                        {currentLanguage === 'ar' ? 'تطبيق' : 'Apply'}
+                        {t.apply || 'Apply'}
                     </button>
                 </div>
             </div>
