@@ -67,9 +67,44 @@ export function useWordByWordAudio() {
 
     }, [stopAudio]);
 
+    const preCacheWords = useCallback(async (words: ActiveWord[]) => {
+        const CACHE_NAME = 'quran-core-v2026-03-30-V1';
+        const BATCH_SIZE = 10;
+        
+        try {
+            const cache = await caches.open(CACHE_NAME);
+            
+            for (let i = 0; i < words.length; i += BATCH_SIZE) {
+                const batch = words.slice(i, i + BATCH_SIZE);
+                const promises = batch.map(async (w) => {
+                    const surahStr = String(w.surah).padStart(3, '0');
+                    const ayahStr = String(w.ayah).padStart(3, '0');
+                    const wordStr = String(w.word).padStart(3, '0');
+                    const url = `https://audio.qurancdn.com/wbw/${surahStr}_${ayahStr}_${wordStr}.mp3`;
+                    
+                    try {
+                        const response = await caches.match(url);
+                        if (!response) {
+                            const fetchResponse = await fetch(url);
+                            if (fetchResponse.ok) {
+                                await cache.put(url, fetchResponse);
+                            }
+                        }
+                    } catch (err) {
+                        console.error(`Failed to cache word audio: ${url}`, err);
+                    }
+                });
+                await Promise.all(promises);
+            }
+        } catch (err) {
+            console.error("Failed to open cache or pre-cache words:", err);
+        }
+    }, []);
+
     return {
         activeWord,
         playWordAudio,
-        stopAudio
+        stopAudio,
+        preCacheWords
     };
 }

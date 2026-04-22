@@ -11,6 +11,7 @@ import HowToUseGuide from './HowToUseGuide';
 import VerseCalculatorModal from './VerseCalculatorModal';
 import VisitorCounter from './VisitorCounter';
 import { useOfflineManager } from '../hooks/useOfflineManager';
+import AudioDownloadModal from './AudioDownloadModal';
 
 interface SettingsProps {
     isOpen: boolean;
@@ -58,6 +59,7 @@ export default function Settings({
 
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
+    const [showAudioDownload, setShowAudioDownload] = useState(false);
 
     // Accordion open states for each section
     const [openSound, setOpenSound] = useState(false);
@@ -825,6 +827,21 @@ export default function Settings({
                                                 )}
                                             </div>
 
+                                            <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-2">
+                                                <button
+                                                    onClick={() => setShowAudioDownload(true)}
+                                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-[0.98]"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <Volume2 size={20} className="text-amber-600 dark:text-amber-500" />
+                                                        <span className="font-medium text-gray-900 dark:text-white">
+                                                            {currentLanguage === 'ar' ? 'تحميل الصوتيات (اختياري)' : 'Download Audio (Optional)'}
+                                                        </span>
+                                                    </div>
+                                                    <ChevronDown size={18} className="text-gray-500 -rotate-90 rtl:rotate-90" />
+                                                </button>
+                                            </div>
+
                                         </div>
                                     </div>
                                 )}
@@ -1021,6 +1038,11 @@ export default function Settings({
                 }}
                 currentLanguage={currentLanguage}
                 memorizationRatings={memorizationRatings}
+            />
+            <AudioDownloadModal 
+                isOpen={showAudioDownload} 
+                onClose={() => setShowAudioDownload(false)} 
+                language={currentLanguage} 
             />
         </div >
 

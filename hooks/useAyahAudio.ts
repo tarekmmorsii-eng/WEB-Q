@@ -191,11 +191,25 @@ export function useAyahAudio() {
       try {
         const cache = await caches.open('quran-audio-v2');
         const bitrate = reciterBestBitrate.current[reciterID] || 64; // Default to 64 for pre-caching safety
-        for (const num of ayahGlobalNumbers) {
-            const url = `https://cdn.islamic.network/quran/audio/${bitrate}/${reciterID}/${num}.mp3`;
-            fetch(url, { mode: 'no-cors' }).then(res => {
-                if (res.ok) cache.put(url, res);
-            }).catch(() => {});
+        
+        const BATCH_SIZE = 10;
+        for (let i = 0; i < ayahGlobalNumbers.length; i += BATCH_SIZE) {
+            const batch = ayahGlobalNumbers.slice(i, i + BATCH_SIZE);
+            const promises = batch.map(async (num) => {
+                const url = `https://cdn.islamic.network/quran/audio/${bitrate}/${reciterID}/${num}.mp3`;
+                try {
+                    const response = await caches.match(url);
+                    if (!response) {
+                        const fetchResponse = await fetch(url, { mode: 'no-cors' });
+                        if (fetchResponse.type === 'opaque' || fetchResponse.ok) {
+                            await cache.put(url, fetchResponse);
+                        }
+                    }
+                } catch (err) {
+                    console.error(`Failed to cache audio: ${url}`, err);
+                }
+            });
+            await Promise.all(promises);
         }
       } catch (e) {
           console.error("Caching failed: ", e);
