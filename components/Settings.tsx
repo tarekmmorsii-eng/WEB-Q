@@ -776,6 +776,7 @@ export default function Settings({
 
                                                 {/* Download/Update Mushaf Button */}
                                                 <button
+                                                    id="tour-download-btn"
                                                     onClick={handleDownloadAllData}
                                                     disabled={isDownloading || hasOfflineData}
                                                     className={clsx(
@@ -858,6 +859,7 @@ export default function Settings({
                                         </button>
 
                                         <button
+                                            id="tour-tutorials-btn"
                                             onClick={() => setShowHelpModal(true)}
                                             className="w-full flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800"
                                         >

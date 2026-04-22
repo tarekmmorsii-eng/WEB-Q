@@ -164,6 +164,7 @@ export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerMod
             )}
 
             <button
+                id="tour-prayer-mode-floating"
                 onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
                 onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
                 onMouseUp={handleEnd}

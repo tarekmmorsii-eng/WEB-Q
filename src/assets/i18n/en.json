@@ -544,5 +544,13 @@
     "tourMutashabihatDescShort": "View Mutashabihat with the verse",
     "tourAssessment": "Memorization strength rating:",
     "tourBookmark": "Add a bookmark for the verse",
-    "tourViewMutashabihat": "View Mutashabihat with the verse"
+    "tourViewMutashabihat": "View Mutashabihat with the verse",
+    "tourAudioPlayerTitle": "Audio Player",
+    "tourAudioPlayerDesc": "Listen to Quran recitations by various reciters, with playback speed and verse repetition controls.",
+    "tourDownloadAppTitle": "Download App",
+    "tourDownloadAppDesc": "Install the site on your mobile device to work like an app, and browse the full Mushaf offline.",
+    "tourTutorialsTitle": "App Tutorials",
+    "tourTutorialsDesc": "A special section containing video tutorials and guides explaining all the app features in detail.",
+    "tourPrayerModeTitle": "Prayer Mode",
+    "tourPrayerModeDesc": "This button is for Prayer Mode; when enabled, a floating button appears to help you reveal the next word during recitation."
 }

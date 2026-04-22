@@ -79,6 +79,7 @@ export default function FloatingAudioPlayer({
 
     return (
         <div 
+            id="tour-audio-player"
             className={clsx(
                 "fixed z-[1000] transition-all duration-700 ease-in-out flex items-center pointer-events-auto shadow-2xl overflow-hidden",
                 isSticky 

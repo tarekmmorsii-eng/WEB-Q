@@ -83,6 +83,7 @@ export const startTour = (t: Translations, stepIndex: number = 0, onExit?: () =>
     const driverObj = driver({
         showProgress: false,
         animate: true,
+        padding: 10,
         steps: [
             {
                 element: '#tour-btn-SHOW_ALL',
@@ -219,7 +220,7 @@ export const startTour = (t: Translations, stepIndex: number = 0, onExit?: () =>
     </ul>
 </div>`,
                     side: "bottom",
-                    align: 'start',
+                    align: 'center',
                     showButtons: ['next', 'previous', 'close'],
                     nextBtnText: t.tourNext,
                     prevBtnText: t.tourPrevious,
@@ -257,7 +258,7 @@ export const startTour = (t: Translations, stepIndex: number = 0, onExit?: () =>
     </div>
 </div>`,
                     side: "bottom",
-                    align: 'start',
+                    align: 'center',
                     showButtons: ['next', 'previous', 'close'],
                     nextBtnText: t.tourNext,
                     prevBtnText: t.tourPrevious,
@@ -356,6 +357,54 @@ export const startTour = (t: Translations, stepIndex: number = 0, onExit?: () =>
                     title: t.tourLongPressTitle,
                     description: t.tourLongPressDesc,
                     side: "bottom",
+                    align: 'center',
+                    showButtons: ['next', 'previous', 'close'],
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
+                }
+            },
+            {
+                element: '#tour-audio-btn-floating',
+                popover: {
+                    title: t.tourAudioPlayerTitle,
+                    description: t.tourAudioPlayerDesc,
+                    side: "left",
+                    align: 'center',
+                    showButtons: ['next', 'previous', 'close'],
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
+                }
+            },
+            {
+                element: '#tour-download-btn-floating',
+                popover: {
+                    title: t.tourDownloadAppTitle,
+                    description: t.tourDownloadAppDesc,
+                    side: "left",
+                    align: 'center',
+                    showButtons: ['next', 'previous', 'close'],
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
+                }
+            },
+            {
+                element: '#tour-help-btn-floating',
+                popover: {
+                    title: t.tourTutorialsTitle,
+                    description: t.tourTutorialsDesc,
+                    side: "left",
+                    align: 'center',
+                    showButtons: ['next', 'previous', 'close'],
+                    nextBtnText: t.tourNext,
+                    prevBtnText: t.tourPrevious,
+                }
+            },
+            {
+                element: '#tour-prayer-mode-btn button',
+                popover: {
+                    title: t.tourPrayerModeTitle,
+                    description: t.tourPrayerModeDesc,
+                    side: "top",
                     align: 'center',
                     showButtons: ['next', 'previous', 'close'],
                     nextBtnText: t.tourNext,

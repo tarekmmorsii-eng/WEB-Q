@@ -2246,14 +2246,14 @@ export default function App() {
             "fixed bottom-0 left-0 right-0 z-[60] border-t p-3 flex items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-all duration-500 ease-in-out",
             // Desktop: sidebar on right for LTR, left for RTL
             isRTL
-              ? "lg:top-0 lg:left-0 lg:bottom-0 lg:right-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-r lg:shadow-[4px_0_6px_-1px_rgba(0,0,0,0.1)]"
-              : "lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-l lg:shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)]",
+              ? "lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-l lg:shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)]"
+              : "lg:top-0 lg:left-0 lg:bottom-0 lg:right-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-r lg:shadow-[4px_0_6px_-1px_rgba(0,0,0,0.1)]",
             settings.bottomBar.showPageNavigation ? "justify-between lg:justify-center" : "justify-center",
             showUi
               ? "translate-y-0 opacity-100 lg:translate-x-0"
               : isRTL
-                ? "translate-y-full opacity-0 lg:translate-y-0 lg:-translate-x-full lg:opacity-0 pointer-events-none"
-                : "translate-y-full opacity-0 lg:translate-y-0 lg:translate-x-full lg:opacity-0 pointer-events-none"
+                ? "translate-y-full opacity-0 lg:translate-y-0 lg:translate-x-full lg:opacity-0 pointer-events-none"
+                : "translate-y-full opacity-0 lg:translate-y-0 lg:-translate-x-full lg:opacity-0 pointer-events-none"
           )}
           style={{
             backgroundColor: currentTheme.colors.cardBg,
@@ -2301,28 +2301,30 @@ export default function App() {
             )}
 
             {settings.bottomBar.showPrayerMode && (
-              <button
-                onClick={() => setSettings(prev => ({ ...prev, prayerMode: !prev.prayerMode }))}
-                className={clsx(
-                  "flex flex-col items-center transition-all duration-300",
-                  settings.prayerMode ? "text-amber-600 dark:text-amber-500 scale-110" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
-                )}
-              >
-                {/* Custom icon resembling the floating prayer mode circle */}
-                <div className="relative w-5 h-5 mb-0.5 flex items-center justify-center">
-                  <div className={clsx(
-                    "absolute inset-0 rounded-full border-2 transition-all duration-300",
-                    settings.prayerMode ? "border-current scale-110" : "border-current"
-                  )} />
-                  <div className={clsx(
-                    "w-2 h-2 rounded-full transition-all duration-300",
-                    settings.prayerMode 
-                      ? "bg-current shadow-[0_0_8px_rgba(245,158,11,0.6)]" 
-                      : "bg-current"
-                  )} />
-                </div>
-                <span className="text-[10px] whitespace-nowrap">{t.prayerMode}</span>
-              </button>
+              <div id="tour-prayer-mode-btn">
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, prayerMode: !prev.prayerMode }))}
+                  className={clsx(
+                    "flex flex-col items-center transition-all duration-300",
+                    settings.prayerMode ? "text-amber-600 dark:text-amber-500 scale-110" : "text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400"
+                  )}
+                >
+                  {/* Custom icon resembling the floating prayer mode circle */}
+                  <div className="relative w-5 h-5 mb-0.5 flex items-center justify-center">
+                    <div className={clsx(
+                      "absolute inset-0 rounded-full border-2 transition-all duration-300",
+                      settings.prayerMode ? "border-current scale-110" : "border-current"
+                    )} />
+                    <div className={clsx(
+                      "w-2 h-2 rounded-full transition-all duration-300",
+                      settings.prayerMode 
+                        ? "bg-current shadow-[0_0_8px_rgba(245,158,11,0.6)]" 
+                        : "bg-current"
+                    )} />
+                  </div>
+                  <span className="text-[10px] whitespace-nowrap">{t.prayerMode}</span>
+                </button>
+              </div>
             )}
 
             {settings.bottomBar.showBookmark && (

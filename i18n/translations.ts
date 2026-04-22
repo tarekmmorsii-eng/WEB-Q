@@ -436,6 +436,14 @@ export interface Translations {    dir: string;
     tourAssessment: string;
     tourBookmark: string;
     tourViewMutashabihat: string;
+    tourAudioPlayerTitle: string;
+    tourAudioPlayerDesc: string;
+    tourDownloadAppTitle: string;
+    tourDownloadAppDesc: string;
+    tourTutorialsTitle: string;
+    tourTutorialsDesc: string;
+    tourPrayerModeTitle: string;
+    tourPrayerModeDesc: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';

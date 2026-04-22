@@ -98,11 +98,12 @@ interface AyahSeparatorProps {
     language?: string;
     mutashabihatType?: 'none' | 'inside' | 'outside' | 'both';
     onMutashabihatClick?: (e: React.MouseEvent) => void;
+    id?: string;
 }
 
 const AyahSeparator: React.FC<AyahSeparatorProps> = ({
     surahNumber, ayahNumber, accentColor, rating, deviceType = 'desktop', orientation = 'portrait', language = 'ar',
-    mutashabihatType = 'none', onMutashabihatClick
+    mutashabihatType = 'none', onMutashabihatClick, id
 }) => {
     const arabicNumber = formatNumber(ayahNumber, language);
     const digitCount = ayahNumber.toString().length;
@@ -119,6 +120,7 @@ const AyahSeparator: React.FC<AyahSeparatorProps> = ({
 
     return (
         <span translate="no" className="notranslate ayah-separator-container"
+            id={id}
             data-surah={surahNumber}
             data-ayah={ayahNumber}
             onClick={onMutashabihatClick}
@@ -1546,6 +1548,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                                 }
                                                                 return (
                                                                     <AyahSeparator
+                                                                        id={isActive && word.surah === 1 && word.ayah === 1 ? 'tour-ayah-number' : undefined}
                                                                         surahNumber={word.surah}
                                                                         ayahNumber={word.ayah}
                                                                         accentColor={accentColor}
