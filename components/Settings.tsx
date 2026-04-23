@@ -37,6 +37,7 @@ interface SettingsProps {
     highlightHelp?: boolean;
     highlightOffline?: boolean;
     onOpenShare?: () => void;
+    onOpenAudioDownload?: () => void;
 }
 
 export default function Settings({
@@ -50,7 +51,8 @@ export default function Settings({
     onStartInteractiveTour,
     highlightHelp = false,
     highlightOffline = false,
-    onOpenShare
+    onOpenShare,
+    onOpenAudioDownload
 }: SettingsProps) {
     const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
     const t = translations[currentLanguage];
@@ -61,7 +63,6 @@ export default function Settings({
 
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
-    const [showAudioDownload, setShowAudioDownload] = useState(false);
 
     // Accordion open states for each section
     const [openSound, setOpenSound] = useState(false);
@@ -674,11 +675,10 @@ export default function Settings({
                                 )}
                             </section>
 
-                            {!isNative && (
-                                <section
-                                    ref={offlineSectionRef}
-                                    className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden transition-all duration-500"
-                                >
+                            <section
+                                ref={offlineSectionRef}
+                                className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden transition-all duration-500"
+                            >
                                     <button
                                         onClick={() => setOpenOffline(v => !v)}
                                         className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
@@ -695,7 +695,7 @@ export default function Settings({
                                     {openOffline && (
                                         <div className="p-4 space-y-4">
 
-                                            {hasUpdate && !isStandalone && (
+                                            {!isNative && hasUpdate && !isStandalone && (
                                                 <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
                                                     <div className="flex items-center justify-between gap-4">
                                                         <div className="flex items-center gap-3">
@@ -726,115 +726,123 @@ export default function Settings({
                                                 </div>
 
                                                 <div className="space-y-3">
-                                                    {/* Step 1 Label */}
-                                                    <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
-                                                        {t.step1 || (currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1')}
-                                                    </div>
-                                                    {/* Install App Button - Always persistent per user request */}
-                                                    <button
-                                                        onClick={hasUpdate && isStandalone ? onUpdateApp : (isStandalone ? undefined : handleInstallApp)}
-                                                        disabled={(!hasUpdate && isStandalone) || isInstalling}
-                                                        className={clsx(
-                                                            "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
-                                                            hasUpdate
-                                                                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 active:scale-[0.98]"
-                                                                : isStandalone
-                                                                    ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 cursor-default"
-                                                                    : "bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 hover:bg-amber-200 dark:hover:bg-amber-900/50 border-transparent active:scale-[0.98]",
-                                                            ((!hasUpdate && isStandalone) || isInstalling) && "opacity-60 cursor-not-allowed"
-                                                        )}
-                                                    >
-                                                        <div className="flex flex-col items-start text-right">
-                                                            <span className="font-medium text-amber-900 dark:text-amber-100">
-                                                                {hasUpdate
-                                                                    ? (currentLanguage === 'ar' ? 'تحديث التطبيق متوفر' : 'App update available')
-                                                                    : isStandalone
-                                                                        ? (currentLanguage === 'ar' ? 'التطبيق مثبت على جهازك' : 'App is installed on your device')
-                                                                        : (isInstalling ? (currentLanguage === 'ar' ? 'جاري بدء التثبيت...' : 'Starting install...') : t.installApp)
-                                                                }
-                                                            </span>
-                                                            <span className="text-[10px] opacity-70">
-                                                                {hasUpdate
-                                                                    ? (currentLanguage === 'ar' ? 'اضغط لتثبيت أحدث الميزات والإصلاحات البرمجية' : 'Click to install the latest features and fixes')
-                                                                    : isStandalone
-                                                                        ? (currentLanguage === 'ar' ? 'أي كود جديد سنحدثه لك هنا' : 'We will update any new code for you here')
-                                                                        : (currentLanguage === 'ar' ? 'تثبيت الإطار البرمجي للوصول السريع' : 'Install the app frame for fast access')
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                        {isInstalling ? (
-                                                            <Loader2 size={24} className="text-amber-600 dark:text-amber-400 animate-spin" />
-                                                        ) : hasUpdate ? (
-                                                            <div className="relative">
-                                                                <Download size={24} className="text-blue-600 dark:text-blue-500 animate-bounce" />
-                                                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                                                    {!isNative && (
+                                                        <>
+                                                            {/* Step 1 Label */}
+                                                            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
+                                                                {t.step1 || (currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1')}
                                                             </div>
-                                                        ) : isStandalone ? (
-                                                            <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
-                                                        ) : (
-                                                            <Download size={24} className="text-amber-600 dark:text-amber-500" />
-                                                        )}
-                                                    </button>
-
-                                                    {/* Step 2 Label */}
-                                                    <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
-                                                        {t.step2 || (currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2')}
-                                                    </div>
-
-                                                    {/* Download/Update Mushaf Button */}
-                                                    <button
-                                                        id="tour-download-btn"
-                                                        onClick={handleDownloadAllData}
-                                                        disabled={isDownloading || hasOfflineData}
-                                                        className={clsx(
-                                                            "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
-                                                            isDownloading
-                                                                ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
-                                                                : hasOfflineData
-                                                                    ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 cursor-default"
-                                                                    : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
-                                                        )}
-                                                    >
-                                                        <div className="flex flex-col items-start text-right">
-                                                            <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
-                                                                {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
-                                                            </span>
-                                                            <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
-                                                                {isDownloading
-                                                                    ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
-                                                                    : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                        {isDownloading ? (
-                                                            <Loader2 size={24} className="animate-spin text-blue-600" />
-                                                        ) : hasOfflineData ? (
-                                                            <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
-                                                        ) : (
-                                                            <Download size={24} className="text-blue-600 dark:text-blue-400" />
-                                                        )}
-                                                    </button>
-
-                                                    {/* Progress Bar */}
-                                                    {downloadProgress !== null && (
-                                                        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
-                                                            <div
-                                                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                                                style={{ width: `${downloadProgress}%` }}
-                                                            ></div>
-                                                        </div>
+                                                            {/* Install App Button - Always persistent per user request */}
+                                                            <button
+                                                                onClick={hasUpdate && isStandalone ? onUpdateApp : (isStandalone ? undefined : handleInstallApp)}
+                                                                disabled={(!hasUpdate && isStandalone) || isInstalling}
+                                                                className={clsx(
+                                                                    "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
+                                                                    hasUpdate
+                                                                        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 active:scale-[0.98]"
+                                                                        : isStandalone
+                                                                            ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 cursor-default"
+                                                                            : "bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 hover:bg-amber-200 dark:hover:bg-amber-900/50 border-transparent active:scale-[0.98]",
+                                                                    ((!hasUpdate && isStandalone) || isInstalling) && "opacity-60 cursor-not-allowed"
+                                                                )}
+                                                            >
+                                                                <div className="flex flex-col items-start text-right">
+                                                                    <span className="font-medium text-amber-900 dark:text-amber-100">
+                                                                        {hasUpdate
+                                                                            ? (currentLanguage === 'ar' ? 'تحديث التطبيق متوفر' : 'App update available')
+                                                                            : isStandalone
+                                                                                ? (currentLanguage === 'ar' ? 'التطبيق مثبت على جهازك' : 'App is installed on your device')
+                                                                                : (isInstalling ? (currentLanguage === 'ar' ? 'جاري بدء التثبيت...' : 'Starting install...') : t.installApp)
+                                                                        }
+                                                                    </span>
+                                                                    <span className="text-[10px] opacity-70">
+                                                                        {hasUpdate
+                                                                            ? (currentLanguage === 'ar' ? 'اضغط لتثبيت أحدث الميزات والإصلاحات البرمجية' : 'Click to install the latest features and fixes')
+                                                                            : isStandalone
+                                                                                ? (currentLanguage === 'ar' ? 'أي كود جديد سنحدثه لك هنا' : 'We will update any new code for you here')
+                                                                                : (currentLanguage === 'ar' ? 'تثبيت الإطار البرمجي للوصول السريع' : 'Install the app frame for fast access')
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                {isInstalling ? (
+                                                                    <Loader2 size={24} className="text-amber-600 dark:text-amber-400 animate-spin" />
+                                                                ) : hasUpdate ? (
+                                                                    <div className="relative">
+                                                                        <Download size={24} className="text-blue-600 dark:text-blue-500 animate-bounce" />
+                                                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                                                                    </div>
+                                                                ) : isStandalone ? (
+                                                                    <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
+                                                                ) : (
+                                                                    <Download size={24} className="text-amber-600 dark:text-amber-500" />
+                                                                )}
+                                                            </button>
+                                                        </>
                                                     )}
 
-                                                    {downloadProgress === 100 && (
-                                                        <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
-                                                            {t.downloadSuccess}
-                                                        </div>
+                                                    {!isNative && (
+                                                        <>
+                                                            {/* Step 2 Label */}
+                                                            <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
+                                                                {t.step2 || (currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2')}
+                                                            </div>
+
+                                                            {/* Download/Update Mushaf Button */}
+                                                            <button
+                                                                id="tour-download-btn"
+                                                                onClick={handleDownloadAllData}
+                                                                disabled={isDownloading || hasOfflineData}
+                                                                className={clsx(
+                                                                    "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
+                                                                    isDownloading
+                                                                        ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
+                                                                        : hasOfflineData
+                                                                            ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 cursor-default"
+                                                                            : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
+                                                                )}
+                                                            >
+                                                                <div className="flex flex-col items-start text-right">
+                                                                    <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
+                                                                        {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
+                                                                    </span>
+                                                                    <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
+                                                                        {isDownloading
+                                                                            ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
+                                                                            : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                {isDownloading ? (
+                                                                    <Loader2 size={24} className="animate-spin text-blue-600" />
+                                                                ) : hasOfflineData ? (
+                                                                    <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
+                                                                ) : (
+                                                                    <Download size={24} className="text-blue-600 dark:text-blue-400" />
+                                                                )}
+                                                            </button>
+
+                                                            {/* Progress Bar */}
+                                                            {downloadProgress !== null && (
+                                                                <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
+                                                                    <div
+                                                                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                                                        style={{ width: `${downloadProgress}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                            )}
+
+                                                            {downloadProgress === 100 && (
+                                                                <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
+                                                                    {t.downloadSuccess}
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
 
                                                 <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-2">
                                                     <button
-                                                        onClick={() => setShowAudioDownload(true)}
+                                                        onClick={onOpenAudioDownload}
                                                         className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-[0.98]"
                                                     >
                                                         <div className="flex items-center gap-3">
@@ -851,7 +859,7 @@ export default function Settings({
                                         </div>
                                     )}
                                 </section>
-                            )}
+                            <div className="pt-4 border-t border-gray-100 dark:border-slate-700" />
 
 
                             {/* Help Section - Accordion */}
@@ -1065,11 +1073,7 @@ export default function Settings({
                 currentLanguage={currentLanguage}
                 memorizationRatings={memorizationRatings}
             />
-            <AudioDownloadModal 
-                isOpen={showAudioDownload} 
-                onClose={() => setShowAudioDownload(false)} 
-                language={currentLanguage} 
-            />
+
         </div >
 
     );

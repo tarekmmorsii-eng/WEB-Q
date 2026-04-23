@@ -25,6 +25,7 @@ import HowToUseGuide from './components/HowToUseGuide';
 import newMa3anyPosData from './src/data/ma3any/new_ma3any_pos.json';
 import SocialShareModal from './components/SocialShareModal';
 import FloatingSideMenu from './components/FloatingSideMenu';
+import AudioDownloadModal from './components/AudioDownloadModal';
 
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
 import { Mutashabiha } from './types';
@@ -295,6 +296,7 @@ export default function App() {
   const [audioModeActive, setAudioModeActive] = useState(false);
   const [playingAyahId, setPlayingAyahId] = useState<string | null>(null);
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+  const [isAudioDownloadOpen, setIsAudioDownloadOpen] = useState(false);
 
   // Advanced Audio Settings
   const [audioSettings, setAudioSettings] = useState({
@@ -2314,7 +2316,7 @@ export default function App() {
 
             <BottomBarFeedbackButton t={t} />
 
-            {settings.bottomBar.showFullscreen && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
+            {settings.bottomBar.showFullscreen && !isNative && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
               <button
                 onClick={toggleFullScreen}
                 className="flex flex-col items-center text-amber-800 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
@@ -2539,12 +2541,19 @@ export default function App() {
           highlightHelp={highlightSettingsHelp}
           highlightOffline={highlightOffline}
           onOpenShare={handleOpenShare}
+          onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
         />
 
         <SocialShareModal
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           currentLanguage={settings.language as Language}
+        />
+
+        <AudioDownloadModal 
+          isOpen={isAudioDownloadOpen} 
+          onClose={() => setIsAudioDownloadOpen(false)} 
+          language={settings.language} 
         />
 
         <FloatingSideMenu
@@ -2557,6 +2566,7 @@ export default function App() {
           isEnabled={settings.bottomBar.showSideMenu !== false}
           isRTL={isRTL}
           onOpenShare={handleOpenShare}
+          onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
         />
 
 

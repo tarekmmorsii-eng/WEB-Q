@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, HelpCircle, Share2, PlayCircle } from 'lucide-react';
+import { Download, HelpCircle, Share2, PlayCircle, Headphones } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
 import { useOfflineManager } from '../hooks/useOfflineManager';
@@ -13,6 +13,7 @@ interface FloatingSideMenuProps {
     onOpenOffline: () => void;
     onOpenReciterSelection?: () => void;
     onOpenShare?: () => void;
+    onOpenAudioDownload?: () => void;
     isVisible?: boolean;
     isEnabled?: boolean;
     isRTL?: boolean;
@@ -25,6 +26,7 @@ export default function FloatingSideMenu({
     onOpenOffline,
     onOpenReciterSelection,
     onOpenShare,
+    onOpenAudioDownload,
     isVisible = true,
     isEnabled = true,
     isRTL = false
@@ -55,23 +57,28 @@ export default function FloatingSideMenu({
                 <PlayCircle size={24} />
             </button>
 
-            {/* Download Button - Hide on Native */}
-            {!isNative && (
-                <button
-                    id="tour-download-btn-floating"
-                    onClick={handleDownloadClick}
-                    disabled={isDownloading || (isStandalone && hasOfflineData) || !isVisible}
-                    className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r' : 'rounded-l-xl border-y border-l'} border-amber-500/30 flex items-center justify-center shadow-lg transition-all ${isDownloading
-                        ? 'bg-amber-100 text-amber-500 cursor-wait'
-                        : (isStandalone && hasOfflineData)
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : 'bg-[var(--bg-card)] text-amber-600 hover:bg-[var(--bg-secondary)] hover:w-14'
-                        }`}
-                    title={t.installAndDownload}
-                >
+            {/* Download Button - Repurposed for Audio on Native */}
+            <button
+                id="tour-download-btn-floating"
+                onClick={isNative ? onOpenAudioDownload : handleDownloadClick}
+                disabled={(!isNative && (isDownloading || (isStandalone && hasOfflineData))) || !isVisible}
+                className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r' : 'rounded-l-xl border-y border-l'} border-amber-500/30 flex items-center justify-center shadow-lg transition-all ${!isNative && isDownloading
+                    ? 'bg-amber-100 text-amber-500 cursor-wait'
+                    : (!isNative && isStandalone && hasOfflineData)
+                        ? 'bg-emerald-50 text-emerald-600'
+                        : 'bg-[var(--bg-card)] text-amber-600 hover:bg-[var(--bg-secondary)] hover:w-14'
+                    }`}
+                title={isNative ? (currentLanguage === 'ar' ? 'تحميل التلاوات' : 'Download Recitations') : t.installAndDownload}
+            >
+                {isNative ? (
+                    <div className="relative">
+                        <Headphones size={24} />
+                        <Download size={12} className="absolute -bottom-1 -right-1 bg-[var(--bg-card)] rounded-full" />
+                    </div>
+                ) : (
                     <Download size={24} className={isDownloading ? 'animate-bounce' : ''} />
-                </button>
-            )}
+                )}
+            </button>
 
             {/* Help Button */}
             <button

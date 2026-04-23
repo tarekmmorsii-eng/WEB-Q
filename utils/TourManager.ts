@@ -1,6 +1,8 @@
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { Translations } from "../i18n/translations";
+import { Capacitor } from '@capacitor/core';
+const isNative = Capacitor.isNativePlatform();
 
 // Helper function to hide/show the line under the ayah number
 const toggleAyahUnderline = (show: boolean) => {
@@ -378,8 +380,10 @@ export const startTour = (t: Translations, stepIndex: number = 0, onExit?: () =>
             {
                 element: '#tour-download-btn-floating',
                 popover: {
-                    title: t.tourDownloadAppTitle,
-                    description: t.tourDownloadAppDesc,
+                    title: isNative ? (t.dir === 'rtl' ? 'تحميل التلاوات' : 'Download Recitations') : t.tourDownloadAppTitle,
+                    description: isNative 
+                        ? (t.dir === 'rtl' ? 'تحميل التلاوات: من هنا يمكنك تحميل أصوات القراء المفضلة لديك للاستماع إليها لاحقاً بدون إنترنت' : 'Download Recitations: From here you can download your favorite reciters to listen later offline.')
+                        : t.tourDownloadAppDesc,
                     side: "left",
                     align: 'center',
                     showButtons: ['next', 'previous', 'close'],
