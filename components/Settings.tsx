@@ -238,14 +238,28 @@ export default function Settings({
     }
 
     const quickAccessButtons: QuickAccessButton[] = [
-
         { icon: Menu, label: t.index, onClick: onOpenIndex },
-        { icon: Search, label: t.search, onClick: onOpenSearch },
         { icon: BarChart3, label: t.memorizationStats, onClick: onOpenMemorization },
         { icon: PlayCircle, label: currentLanguage === 'ar' ? 'تلاوة الآيات' : 'Ayah Recitation', onClick: onOpenReciterSelection },
         { icon: Bell, label: t.notifications, onClick: onOpenNotifications },
         { icon: FileWarning, label: t.similarVersesAlert, onClick: onOpenMutashabihat },
         { icon: Calculator, label: t.verseCalculatorTitle, onClick: () => setShowVerseCalculator(true), keepOpen: true },
+        ...(!isNative && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) ? [{
+            icon: Maximize,
+            label: t.fullscreen,
+            onClick: () => {
+                const doc = document as any;
+                const docEl = document.documentElement as any;
+                const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement;
+                if (!isFullscreen) {
+                    if (docEl.requestFullscreen) docEl.requestFullscreen();
+                    else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+                } else {
+                    if (doc.exitFullscreen) doc.exitFullscreen();
+                    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+                }
+            }
+        }] : [])
     ];
 
 
@@ -368,29 +382,17 @@ export default function Settings({
                                 <span className="text-sm text-[var(--text-primary)]">{t.bookmark}</span>
                             </button>
 
-                            {/* Fullscreen Toggle (hide on iOS and Native) */}
-                            {!isNative && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
-                                <button
-                                    onClick={() => {
-                                        const doc = document as any;
-                                        const docEl = document.documentElement as any;
-                                        const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement;
-
-                                        if (!isFullscreen) {
-                                            if (docEl.requestFullscreen) docEl.requestFullscreen();
-                                            else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-                                        } else {
-                                            if (doc.exitFullscreen) doc.exitFullscreen();
-                                            else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
-                                        }
-                                        onClose();
-                                    }}
-                                    className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
-                                >
-                                    <Maximize size={24} className="text-amber-600" />
-                                    <span className="text-sm text-[var(--text-primary)]">{t.fullscreen}</span>
-                                </button>
-                            )}
+                            {/* Search Button (Completes the 4-button row) */}
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    onOpenSearch?.();
+                                }}
+                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
+                            >
+                                <Search size={24} className="text-amber-600" />
+                                <span className="text-sm text-[var(--text-primary)]">{t.search}</span>
+                            </button>
                         </div>
 
                         {/* More Settings Toggle Button */}
