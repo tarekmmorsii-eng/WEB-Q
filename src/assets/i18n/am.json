@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "ድምጽ ያውርዱ (አማራጭ)",
+    "downloadManager": "የማውረድ አቀናባሪ",
+    "saveOfflineDesc": "ያለ በይነመረብ ለመጠቀም ያስቀምጡ",
+    "fullRecitations": "ሙሉ ንባብ",
+    "wordsAudio": "የቃላት ድምጽ",
+    "selectReciter": "አንባቢ ይምረጡ",
+    "alreadyDownloaded": "ቀድሞውኑ ወርዷል",
+    "downloading": "በማውረድ ላይ...",
+    "downloadSurah": "ሱራ ያውርዱ",
+    "downloaded": "ወርዷል",
+    "downloadAction": "ያውርዱ",
+    "wordMeaningsNote": "ማስታወሻ፡ (የቁርኣን የቃላት ትርጉሞች እና ተፍሲር በአረብኛ ብቻ ናቸው)"
 }

@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Kurura Amajwi (Bihitamo)",
+    "downloadManager": "Ubuyobozi bwo Kurura",
+    "saveOfflineDesc": "Bika kugira ngo ubikoreshe udafite interineti",
+    "fullRecitations": "Gusoma Byose",
+    "wordsAudio": "Amajwi y'Amagambo",
+    "selectReciter": "Hitamo Umusomyi",
+    "alreadyDownloaded": "Byamaze Gukururwa",
+    "downloading": "Birakururwa...",
+    "downloadSurah": "Kurura Surah",
+    "downloaded": "Byakururwe",
+    "downloadAction": "Kurura",
+    "wordMeaningsNote": "Icyitonderwa: (Ubusobanuro bw'amagambo ya Korowani na tafsir ni mu Cyarabu gusa)"
 }

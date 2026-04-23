@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "ஆடியோவைப் பதிவிறக்கு (விருப்பத்தேர்வு)",
+    "downloadManager": "பதிவிறக்க மேலாளர்",
+    "saveOfflineDesc": "ஆஃப்லைனில் பயன்படுத்த சேமி",
+    "fullRecitations": "முழுமையான ஓதல்",
+    "wordsAudio": "வார்த்தை ஆடியோ",
+    "selectReciter": "ஓதுபவரைத் தேர்ந்தெடு",
+    "alreadyDownloaded": "ஏற்கனவே பதிவிறக்கப்பட்டது",
+    "downloading": "பதிவிறக்குகிறது...",
+    "downloadSurah": "அத்தியாயத்தைப் பதிவிறக்கு",
+    "downloaded": "பதிவிறக்கப்பட்டது",
+    "downloadAction": "பதிவிறக்கு",
+    "wordMeaningsNote": "குறிப்பு: (குர்ஆன் வார்த்தை அர்த்தங்கள் மற்றும் தப்சீர் அரபு மொழியில் மட்டுமே உள்ளன)"
 }

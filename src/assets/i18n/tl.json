@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "I-download ang Audio (Opsiyonal)",
+    "downloadManager": "Download Manager",
+    "saveOfflineDesc": "I-save para sa offline na paggamit",
+    "fullRecitations": "Buong Pagbabasa",
+    "wordsAudio": "Audio ng mga Salita",
+    "selectReciter": "Pumili ng Mambabasa",
+    "alreadyDownloaded": "Na-download Na",
+    "downloading": "Dina-download...",
+    "downloadSurah": "I-download ang Surah",
+    "downloaded": "Na-download",
+    "downloadAction": "I-download",
+    "wordMeaningsNote": "Tandaan: (Ang mga kahulugan ng salita sa Quran at tafsir ay sa wikang Arabe lamang)"
 }

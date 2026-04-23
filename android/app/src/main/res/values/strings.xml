@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mushaf Al-Murajaa</string>
+    <string name="title_activity_main">Mushaf Al-Murajaa</string>
+    <string name="package_name">com.tarteel.mushaf</string>
+    <string name="custom_url_scheme">com.tarteel.mushaf</string>
+</resources>

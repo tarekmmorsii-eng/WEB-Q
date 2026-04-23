@@ -187,10 +187,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 <div className="p-6 pb-4 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] flex justify-between items-center">
                     <div>
                         <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                            {isArabic ? 'إدارة التحميلات' : 'Download Manager'}
+                            {t.downloadManager || 'Download Manager'}
                         </h2>
                         <p className="text-[var(--text-primary)] opacity-60 text-xs mt-1">
-                            {isArabic ? 'حفظ الملفات للعمل بدون إنترنت' : 'Save files for offline use'}
+                            {t.saveOfflineDesc || 'Save files for offline use'}
                         </p>
                     </div>
                     <button
@@ -213,7 +213,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                         )}
                     >
                         <Volume2 size={16} />
-                        {isArabic ? 'التلاوات الكاملة' : 'Full Recitations'}
+                        {t.fullRecitations || 'Full Recitations'}
                     </button>
                     <button
                         onClick={() => setActiveTab('words')}
@@ -225,7 +225,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                         )}
                     >
                         <BookOpen size={16} />
-                        {isArabic ? 'صوت الكلمات' : 'Words Audio'}
+                        {t.wordsAudio || 'Words Audio'}
                     </button>
                 </div>
 
@@ -237,7 +237,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                         <div className="space-y-5">
                             <div>
                                 <label className="block text-sm font-bold text-[var(--text-primary)] mb-2">
-                                    {isArabic ? 'اختر القارئ' : 'Select Reciter'}
+                                    {t.selectReciter || 'Select Reciter'}
                                 </label>
                                 <select
                                     value={selectedReciter}
@@ -246,7 +246,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                 >
                                     {reciters.map(reciter => (
                                         <option key={reciter.id} value={reciter.id}>
-                                            {isArabic ? reciter.nameAr : reciter.nameEn}
+                                            {isArabic ? reciter.nameAr : (t.reciters && t.reciters[reciter.id] ? t.reciters[reciter.id] : reciter.nameEn)}
                                         </option>
                                     ))}
                                 </select>
@@ -254,7 +254,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
                             <div>
                                 <label className="block text-sm font-bold text-[var(--text-primary)] mb-2">
-                                    {isArabic ? 'اختر السورة' : 'Select Surah'}
+                                    {t.selectSurah || 'Select Surah'}
                                 </label>
                                 <select
                                     value={selectedSurah}
@@ -273,7 +273,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                 {downloadedFullSurahs.has(selectedSurah) ? (
                                     <div className="w-full py-4 rounded-xl flex items-center justify-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800">
                                         <CheckCircle size={20} />
-                                        <span className="font-bold">{isArabic ? 'محملة مسبقاً' : 'Already Downloaded'}</span>
+                                        <span className="font-bold">{t.alreadyDownloaded || 'Already Downloaded'}</span>
                                     </div>
                                 ) : (
                                     <button
@@ -289,12 +289,12 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                         {isDownloadingFull ? (
                                             <>
                                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                {isArabic ? 'جاري التحميل...' : 'Downloading...'}
+                                                {t.downloading || 'Downloading...'}
                                             </>
                                         ) : (
                                             <>
                                                 <Download size={20} />
-                                                {isArabic ? 'تحميل السورة' : 'Download Surah'}
+                                                {t.downloadSurah || 'Download Surah'}
                                             </>
                                         )}
                                     </button>
@@ -324,7 +324,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                         {isDownloaded ? (
                                             <div className="flex items-center gap-1 text-green-500 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-800/50">
                                                 <CheckCircle size={16} />
-                                                <span className="text-xs font-bold">{isArabic ? 'محملة' : 'Downloaded'}</span>
+                                                <span className="text-xs font-bold">{t.downloaded || 'Downloaded'}</span>
                                             </div>
                                         ) : (
                                             <button
@@ -342,7 +342,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                                 ) : (
                                                     <Download size={14} />
                                                 )}
-                                                {isArabic ? 'تحميل' : 'Download'}
+                                                {t.downloadAction || 'Download'}
                                             </button>
                                         )}
                                     </div>

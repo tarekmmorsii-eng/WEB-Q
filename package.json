@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
     "better-sqlite3": "^12.5.0",
     "clsx": "^2.1.1",
     "driver.js": "^1.4.0",
@@ -22,6 +24,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.1",
     "@playwright/test": "^1.58.2",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.0",

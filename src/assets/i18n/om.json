@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Sagalee Buufadhu (Filannoo)",
+    "downloadManager": "Bulchaa Buufannaa",
+    "saveOfflineDesc": "Toora ala itti fayyadamuuf ol kaa'i",
+    "fullRecitations": "Qara'aa Guutuu",
+    "wordsAudio": "Sagalee Jechootaa",
+    "selectReciter": "Qara'aa Filadhu",
+    "alreadyDownloaded": "Duraan Buufameera",
+    "downloading": "Buufamaa jira...",
+    "downloadSurah": "Suuraa Buufadhu",
+    "downloaded": "Buufameera",
+    "downloadAction": "Buufadhu",
+    "wordMeaningsNote": "Hubachiisa: (Hiikni jechoota Qur'aanaa fi tafsiirni Afaan Arabaatiin qofa)"
 }

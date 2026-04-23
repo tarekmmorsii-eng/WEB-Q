@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Gba Ohun Gbigbọ (Eyi ti a le yan)",
+    "downloadManager": "Oluṣakoso Gbigba",
+    "saveOfflineDesc": "Fi pamọ fun lilo lai si intanẹẹti",
+    "fullRecitations": "Kika Kikun",
+    "wordsAudio": "Ohun Awọn Ọrọ",
+    "selectReciter": "Yan Oluka",
+    "alreadyDownloaded": "Ti Gba Tẹlẹ",
+    "downloading": "N gba...",
+    "downloadSurah": "Gba Surah",
+    "downloaded": "Ti gba",
+    "downloadAction": "Gba",
+    "wordMeaningsNote": "Akiyesi: (Awon itumo oro Kuran ati tafsir wa ni ede Larubawa nikan)"
 }

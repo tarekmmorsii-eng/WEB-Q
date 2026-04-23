@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "ශ්‍රව්‍ය බාගන්න (විකල්ප)",
+    "downloadManager": "බාගැනීම් කළමනාකරු",
+    "saveOfflineDesc": "නොබැඳි භාවිතය සඳහා සුරකින්න",
+    "fullRecitations": "සම්පූර්ණ පාරායනය",
+    "wordsAudio": "වචන ශ්‍රව්‍ය",
+    "selectReciter": "පාරායනකරු තෝරන්න",
+    "alreadyDownloaded": "දැනටමත් බාගෙන ඇත",
+    "downloading": "බාගනිමින්...",
+    "downloadSurah": "සූරාව බාගන්න",
+    "downloaded": "බාගෙන ඇත",
+    "downloadAction": "බාගන්න",
+    "wordMeaningsNote": "සටහන: (කුර්ආන් වචන අර්ථ සහ තෆ්සීර් අරාබි භාෂාවෙන් පමණක් ඇත)"
 }

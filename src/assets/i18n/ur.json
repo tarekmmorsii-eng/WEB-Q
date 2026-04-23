@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "سعود الشریم",
         "ar.parhizgar": "شہریار پرہیزگار",
         "ar.aymansowaid": "ایمن سوید"
-    }
+    },
+    "downloadAudioOptional": "آڈیو ڈاؤن لوڈ کریں (اختیاری)",
+    "downloadManager": "ڈاؤن لوڈ مینیجر",
+    "saveOfflineDesc": "آف لائن استعمال کے لیے محفوظ کریں",
+    "fullRecitations": "مکمل تلاوت",
+    "wordsAudio": "الفاظ کی آڈیو",
+    "selectReciter": "قاری کا انتخاب کریں",
+    "alreadyDownloaded": "پہلے ہی ڈاؤن لوڈ ہو چکا ہے",
+    "downloading": "ڈاؤن لوڈ ہو رہا ہے...",
+    "downloadSurah": "سورۃ ڈاؤن لوڈ کریں",
+    "downloaded": "ڈاؤن لوڈ ہو گیا",
+    "downloadAction": "ڈاؤن لوڈ",
+    "wordMeaningsNote": "نوٹ: (قرآن کے الفاظ کے معنی اور تفسیر صرف عربی میں ہیں)"
 }

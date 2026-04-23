@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "سعود الشریم",
         "ar.parhizgar": "شهریار پرهیزگار",
         "ar.aymansowaid": "ایمن سوید"
-    }
+    },
+    "downloadAudioOptional": "دانلود صوت (اختیاری)",
+    "downloadManager": "مدیریت دانلودها",
+    "saveOfflineDesc": "ذخیره برای استفاده آفلاین",
+    "fullRecitations": "تلاوت‌های کامل",
+    "wordsAudio": "صوت کلمات",
+    "selectReciter": "انتخاب قاری",
+    "alreadyDownloaded": "قبلاً دانلود شده",
+    "downloading": "در حال دانلود...",
+    "downloadSurah": "دانلود سوره",
+    "downloaded": "دانلود شد",
+    "downloadAction": "دانلود",
+    "wordMeaningsNote": "توجه: (معانی کلمات قرآن و تفسیر فقط به زبان عربی است)"
 }

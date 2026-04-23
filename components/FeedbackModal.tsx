@@ -3,6 +3,8 @@ import { X, Send, Bug, FileText, Smartphone, MessageSquare, Settings } from 'luc
 import clsx from 'clsx';
 import { useFeedback } from '../contexts/FeedbackContext';
 import { translations, Language } from '../i18n/translations';
+import { Capacitor } from '@capacitor/core';
+const isNative = Capacitor.isNativePlatform();
 
 const getFeedbackTypes = (t: any) => [
     { id: 'interface_notes', label: t.feedbackInterfaceNotes, icon: Smartphone, color: 'text-purple-500 bg-purple-50' },
@@ -195,14 +197,14 @@ const FeedbackModal = () => {
                                         <option value="Lighting (Day/Night)">{language === 'ar' ? '7. الإضاءة (ليلي/نهاري)' : '7. Lighting (Day/Night)'}</option>
                                         <option value="Prayer Mode">{language === 'ar' ? '8. وضع الصلاة' : '8. Prayer Mode'}</option>
                                         <option value="Bookmark">{language === 'ar' ? '9. المرجعية' : '9. Bookmark'}</option>
-                                        <option value="Fullscreen">{language === 'ar' ? '10. ملء الشاشة' : '10. Fullscreen'}</option>
+                                        {!isNative && <option value="Fullscreen">{language === 'ar' ? '10. ملء الشاشة' : '10. Fullscreen'}</option>}
                                         <option value="Language">{language === 'ar' ? '11. اللغة' : '11. Language'}</option>
                                         <option value="Themes">{language === 'ar' ? '12. الألوان والسمات' : '12. Themes'}</option>
                                         <option value="Stop Signs Color">{language === 'ar' ? '13. تلوين علامات الوقف' : '13. Stop Signs Color'}</option>
                                         <option value="Mutashabihat Indicators">{language === 'ar' ? '14. إظهار علامات المتشابهات' : '14. Mutashabihat Indicators'}</option>
                                         <option value="Sound Settings">{language === 'ar' ? '15. إعدادات الصوت' : '15. Sound Settings'}</option>
                                         <option value="Bottom Bar Customization">{language === 'ar' ? '16. تخصيص القائمة السفلية' : '16. Bottom Bar Customization'}</option>
-                                        <option value="Offline Work">{language === 'ar' ? '17. العمل بدون إنترنت' : '17. Offline Work'}</option>
+                                        {!isNative && <option value="Offline Work">{language === 'ar' ? '17. العمل بدون إنترنت' : '17. Offline Work'}</option>}
                                         <option value="Contact">{language === 'ar' ? '18. التواصل' : '18. Contact'}</option>
                                         <option value="Other">{language === 'ar' ? '19. أخرى' : '19. Other'}</option>
                                     </select>

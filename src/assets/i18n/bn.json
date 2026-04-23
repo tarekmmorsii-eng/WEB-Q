@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "সাউদ আল-শুরাইম",
         "ar.parhizgar": "শাহরিয়ার পারহিজগার",
         "ar.aymansowaid": "আইমান সুওয়াইদ"
-    }
+    },
+    "downloadAudioOptional": "অডিও ডাউনলোড করুন (ঐচ্ছিক)",
+    "downloadManager": "ডাউনলোড ম্যানেজার",
+    "saveOfflineDesc": "অফলাইনে ব্যবহারের জন্য সংরক্ষণ করুন",
+    "fullRecitations": "সম্পূর্ণ তেলাওয়াত",
+    "wordsAudio": "শব্দ অডিও",
+    "selectReciter": "তেলাওয়াতকারী নির্বাচন করুন",
+    "alreadyDownloaded": "ইতিমধ্যে ডাউনলোড করা হয়েছে",
+    "downloading": "ডাউনলোড হচ্ছে...",
+    "downloadSurah": "সূরা ডাউনলোড করুন",
+    "downloaded": "ডাউনলোড হয়েছে",
+    "downloadAction": "ডাউনলোড করুন",
+    "wordMeaningsNote": "নোট: (কুরআনের শব্দের অর্থ এবং তাফসির শুধুমাত্র আরবিতে)"
 }

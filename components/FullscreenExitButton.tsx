@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Minimize, X } from 'lucide-react';
 import clsx from 'clsx';
+import { Capacitor } from '@capacitor/core';
+const isNative = Capacitor.isNativePlatform();
 
 interface FullscreenExitButtonProps {
     onDismiss: () => void;
@@ -9,6 +11,7 @@ interface FullscreenExitButtonProps {
 }
 
 export default function FullscreenExitButton({ onDismiss, currentPage, t }: FullscreenExitButtonProps) {
+    if (isNative) return null;
     const [position, setPosition] = useState({
         x: 20, // Initial Position: Top Left
         y: 85  // Adjusted to be safely between line 1 and 2

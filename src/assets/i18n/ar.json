@@ -559,5 +559,17 @@
     "playEachAyah": "تشغيل كل آية:",
     "playbackSpeed": "سرعة التشغيل:",
     "playOnlySelectedRange": "شغل ما تم اختياره من الآيات فقط",
-    "apply": "تطبيق"
+    "apply": "تطبيق",
+    "downloadAudioOptional": "تحميل الصوتيات (اختياري)",
+    "downloadManager": "إدارة التحميلات",
+    "saveOfflineDesc": "حفظ الملفات للعمل بدون إنترنت",
+    "fullRecitations": "التلاوات الكاملة",
+    "wordsAudio": "صوت الكلمات",
+    "selectReciter": "اختر القارئ",
+    "alreadyDownloaded": "محملة مسبقاً",
+    "downloading": "جاري التحميل...",
+    "downloadSurah": "تحميل السورة",
+    "downloaded": "محملة",
+    "downloadAction": "تحميل",
+    "wordMeaningsNote": "ملاحظة: (معاني كلمات القرآن والتفسير باللغة العربية فقط)"
 }

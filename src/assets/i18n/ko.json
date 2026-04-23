@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "사우드 아쉬 슈라임",
         "ar.parhizgar": "샤흐리야르 파르히즈가르",
         "ar.aymansowaid": "아이만 스와이드"
-    }
+    },
+    "downloadAudioOptional": "오디오 다운로드 (선택)",
+    "downloadManager": "다운로드 관리자",
+    "saveOfflineDesc": "오프라인 사용을 위해 저장",
+    "fullRecitations": "전체 낭송",
+    "wordsAudio": "단어별 오디오",
+    "selectReciter": "낭송자 선택",
+    "alreadyDownloaded": "이미 다운로드됨",
+    "downloading": "다운로드 중...",
+    "downloadSurah": "수라 다운로드",
+    "downloaded": "다운로드 완료",
+    "downloadAction": "다운로드",
+    "wordMeaningsNote": "참고: (꾸란 단어 의미와 타프시르는 아랍어로만 제공됩니다)"
 }

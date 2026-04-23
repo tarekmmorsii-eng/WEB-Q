@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Audioni Yuklab Olish (Ixtiyoriy)",
+    "downloadManager": "Yuklamalar",
+    "saveOfflineDesc": "Oflayn ishlash uchun saqlash",
+    "fullRecitations": "To'liq Tilovatlar",
+    "wordsAudio": "So'zma-so'z Audio",
+    "selectReciter": "Qorini Tanlang",
+    "alreadyDownloaded": "Allaqachon yuklangan",
+    "downloading": "Yuklanmoqda...",
+    "downloadSurah": "Surani Yuklab Olish",
+    "downloaded": "Yuklangan",
+    "downloadAction": "Yuklab olish",
+    "wordMeaningsNote": "Eslatma: (Qur'on so'zlarining ma'nolari va tafsir faqat arab tilida)"
 }

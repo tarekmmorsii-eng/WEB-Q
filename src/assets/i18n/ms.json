@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Muat Turun Audio (Pilihan)",
+    "downloadManager": "Pengurus Muat Turun",
+    "saveOfflineDesc": "Simpan fail untuk luar talian",
+    "fullRecitations": "Bacaan Penuh",
+    "wordsAudio": "Audio Perkataan",
+    "selectReciter": "Pilih Qari",
+    "alreadyDownloaded": "Telah Dimuat Turun",
+    "downloading": "Memuat Turun...",
+    "downloadSurah": "Muat Turun Surah",
+    "downloaded": "Dimuat Turun",
+    "downloadAction": "Muat Turun",
+    "wordMeaningsNote": "Nota: (Makna perkataan al-Quran dan tafsir hanya dalam bahasa Arab)"
 }

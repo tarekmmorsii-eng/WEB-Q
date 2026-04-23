@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Unduh Audio (Opsional)",
+    "downloadManager": "Manajer Unduhan",
+    "saveOfflineDesc": "Simpan file untuk penggunaan offline",
+    "fullRecitations": "Tilawah Penuh",
+    "wordsAudio": "Audio Per Kata",
+    "selectReciter": "Pilih Qari",
+    "alreadyDownloaded": "Sudah Diunduh",
+    "downloading": "Mengunduh...",
+    "downloadSurah": "Unduh Surah",
+    "downloaded": "Diunduh",
+    "downloadAction": "Unduh",
+    "wordMeaningsNote": "Catatan: (Makna kata Al-Qur'an dan tafsir hanya dalam bahasa Arab)"
 }

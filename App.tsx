@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { flushSync } from 'react-dom';
+import { Capacitor } from '@capacitor/core';
+const isNative = Capacitor.isNativePlatform();
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperClass } from 'swiper';
@@ -1090,6 +1092,29 @@ export default function App() {
       });
     }, 500);
   };
+
+  const handleOpenShare = useCallback(async () => {
+    if (isNative) {
+      try {
+        const title = settings.language === 'ar' ? 'مشاركة التطبيق' : 'Share App';
+        const text = settings.language === 'ar' 
+          ? 'قم بتحميل تطبيق المصحف الإلكتروني للقرآن الكريم' 
+          : 'Download the electronic Quran app';
+        const url = window.location.origin;
+
+        await navigator.share({
+          title,
+          text,
+          url
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        setIsShareModalOpen(true);
+      }
+    } else {
+      setIsShareModalOpen(true);
+    }
+  }, [settings.language]);
 
   const handleStartInteractiveTour = () => {
     // Close settings modal if it's open
@@ -2513,7 +2538,7 @@ export default function App() {
           onStartInteractiveTour={handleStartInteractiveTour}
           highlightHelp={highlightSettingsHelp}
           highlightOffline={highlightOffline}
-          onOpenShare={() => setIsShareModalOpen(true)}
+          onOpenShare={handleOpenShare}
         />
 
         <SocialShareModal
@@ -2531,7 +2556,7 @@ export default function App() {
           isVisible={showUi}
           isEnabled={settings.bottomBar.showSideMenu !== false}
           isRTL={isRTL}
-          onOpenShare={() => setIsShareModalOpen(true)}
+          onOpenShare={handleOpenShare}
         />
 
 

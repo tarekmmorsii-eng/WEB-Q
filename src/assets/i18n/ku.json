@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Deng Dakêşin (Dildarî)",
+    "downloadManager": "Gerînendeyê Dakêşan",
+    "saveOfflineDesc": "Ji bo offline hilîne",
+    "fullRecitations": "Xwendinên Tev",
+    "wordsAudio": "Dengê Peyvan",
+    "selectReciter": "Xwendevan Hilbijêre",
+    "alreadyDownloaded": "Berê Dakêşandiye",
+    "downloading": "Tê dakêşandin...",
+    "downloadSurah": "Sûreyê Dakêşin",
+    "downloaded": "Hat Dakêşandin",
+    "downloadAction": "Dakêşin",
+    "wordMeaningsNote": "Nîşe: (Wateyên peyvên Quranê û tefsîr tenê bi erebî ne)"
 }

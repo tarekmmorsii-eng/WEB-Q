@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "沙特·舒莱姆",
         "ar.parhizgar": "帕尔希兹加尔",
         "ar.aymansowaid": "艾曼·苏韦德"
-    }
+    },
+    "downloadAudioOptional": "下载音频 (可选)",
+    "downloadManager": "下载管理器",
+    "saveOfflineDesc": "保存文件以供离线使用",
+    "fullRecitations": "完整诵读",
+    "wordsAudio": "逐字音频",
+    "selectReciter": "选择诵读者",
+    "alreadyDownloaded": "已下载",
+    "downloading": "正在下载...",
+    "downloadSurah": "下载古兰经",
+    "downloaded": "已下载",
+    "downloadAction": "下载",
+    "wordMeaningsNote": "注：（古兰经词义和塔夫西尔仅提供阿拉伯语版本）"
 }

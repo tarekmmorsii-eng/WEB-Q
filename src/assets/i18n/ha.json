@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Zazzage Sauti (Zabi)",
+    "downloadManager": "Mai Kula Da Zazzagewa",
+    "saveOfflineDesc": "Ajiye don amfani ba tare da intanet ba",
+    "fullRecitations": "Cikakken Karatu",
+    "wordsAudio": "Sautin Kalmomi",
+    "selectReciter": "Zabi Mai Karatu",
+    "alreadyDownloaded": "An Riga An Zazzage",
+    "downloading": "Ana Zazzagewa...",
+    "downloadSurah": "Zazzage Sura",
+    "downloaded": "An Zazzage",
+    "downloadAction": "Zazzage",
+    "wordMeaningsNote": "Lura: (Ma'anonin kalmomin Alkur'ani da tafsiri suna cikin Larabci ne kawai)"
 }

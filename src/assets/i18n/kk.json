@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Аудио жүктеу (Міндетті емес)",
+    "downloadManager": "Жүктеулер менеджері",
+    "saveOfflineDesc": "Офлайн пайдалану үшін сақтау",
+    "fullRecitations": "Толық оқулар",
+    "wordsAudio": "Сөз аудиосы",
+    "selectReciter": "Қариді таңдаңыз",
+    "alreadyDownloaded": "Қазірдің өзінде жүктелген",
+    "downloading": "Жүктелуде...",
+    "downloadSurah": "Сүрені жүктеу",
+    "downloaded": "Жүктелді",
+    "downloadAction": "Жүктеу",
+    "wordMeaningsNote": "Ескертпе: (Құран сөздерінің мағыналары мен тәпсір тек араб тілінде)"
 }

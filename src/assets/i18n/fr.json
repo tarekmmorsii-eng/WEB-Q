@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Télécharger Audio (Optionnel)",
+    "downloadManager": "Gestionnaire",
+    "saveOfflineDesc": "Enregistrer pour le mode hors ligne",
+    "fullRecitations": "Récitations Complètes",
+    "wordsAudio": "Audio par Mot",
+    "selectReciter": "Sélectionnez Récitateur",
+    "alreadyDownloaded": "Déjà Téléchargé",
+    "downloading": "Téléchargement...",
+    "downloadSurah": "Télécharger Sourate",
+    "downloaded": "Téléchargé",
+    "downloadAction": "Télécharger",
+    "wordMeaningsNote": "Note : (La signification des mots du Coran et le tafsir sont en arabe uniquement)"
 }

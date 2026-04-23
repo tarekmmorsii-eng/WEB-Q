@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube, Share2, PlayCircle } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+const isNative = Capacitor.isNativePlatform();
 import { useFeedback } from '../contexts/FeedbackContext';
 
 import clsx from 'clsx';
@@ -366,8 +368,8 @@ export default function Settings({
                                 <span className="text-sm text-[var(--text-primary)]">{t.bookmark}</span>
                             </button>
 
-                            {/* Fullscreen Toggle (hide on iOS) */}
-                            {!(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
+                            {/* Fullscreen Toggle (hide on iOS and Native) */}
+                            {!isNative && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) && (
                                 <button
                                     onClick={() => {
                                         const doc = document as any;
@@ -509,7 +511,7 @@ export default function Settings({
                                     />
                                 </label>
 
-                                <div className="p-4 bg-[var(--bg-secondary)] rounded-lg mt-3">
+                                <div className="p-4 bg-[var(--bg-secondary)] rounded-lg mt-3 flex flex-col">
                                     <label className="flex items-center justify-between cursor-pointer">
                                         <span className="text-[var(--text-primary)] font-medium">
                                             {t.quranWordMeanings}
@@ -521,6 +523,9 @@ export default function Settings({
                                             className="w-5 h-5 text-amber-600 rounded focus:ring-2 focus:ring-amber-500"
                                         />
                                     </label>
+                                    <p className="text-xs text-[var(--text-primary)] opacity-60 mt-2">
+                                        {t.wordMeaningsNote || 'ملاحظة: (معاني كلمات القرآن والتفسير باللغة العربية فقط)'}
+                                    </p>
                                 </div>
 
                                 {/* Floating Side Menu Toggle */}
@@ -647,7 +652,7 @@ export default function Settings({
                                             { key: 'showDarkMode' as keyof BottomBarSettings, label: t.darkMode + ' / ' + t.lightMode },
                                             { key: 'showBookmark' as keyof BottomBarSettings, label: t.bookmark },
                                             { key: 'showPrayerMode' as keyof BottomBarSettings, label: t.prayerMode },
-                                            { key: 'showFullscreen' as keyof BottomBarSettings, label: t.fullscreen },
+                                            ...(!isNative ? [{ key: 'showFullscreen' as keyof BottomBarSettings, label: t.fullscreen }] : []),
                                             { key: 'showPageNavigation' as keyof BottomBarSettings, label: t.pageNavigation },
                                         ].map(({ key, label }) => (
                                             <label
@@ -667,185 +672,184 @@ export default function Settings({
                                 )}
                             </section>
 
-
-
-                            {/* Offline Manager - Accordion */}
-                            <section
-                                ref={offlineSectionRef}
-                                className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden transition-all duration-500"
-                            >
-                                <button
-                                    onClick={() => setOpenOffline(v => !v)}
-                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                            {!isNative && (
+                                <section
+                                    ref={offlineSectionRef}
+                                    className="border border-gray-100 dark:border-slate-700 rounded-xl overflow-hidden transition-all duration-500"
                                 >
-                                    <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-                                        <Download size={20} />
-                                        {t.offlineMode}
-                                        {hasUpdate && (
-                                            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse inline-block" />
-                                        )}
-                                    </span>
-                                    {openOffline ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
-                                </button>
-                                {openOffline && (
-                                    <div className="p-4 space-y-4">
+                                    <button
+                                        onClick={() => setOpenOffline(v => !v)}
+                                        className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                            <Download size={20} />
+                                            {t.offlineMode}
+                                            {hasUpdate && (
+                                                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse inline-block" />
+                                            )}
+                                        </span>
+                                        {openOffline ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+                                    </button>
+                                    {openOffline && (
+                                        <div className="p-4 space-y-4">
 
-                                        {hasUpdate && !isStandalone && (
-                                            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
-                                                <div className="flex items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
-                                                            <Download size={20} className="text-blue-600 dark:text-blue-400" />
+                                            {hasUpdate && !isStandalone && (
+                                                <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
+                                                    <div className="flex items-center justify-between gap-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
+                                                                <Download size={20} className="text-blue-600 dark:text-blue-400" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-blue-900 dark:text-blue-100 text-sm">{t.updateAvailable}</p>
+                                                                <p className="text-xs text-blue-700 dark:text-blue-300">{t.updateDescription}</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="font-bold text-blue-900 dark:text-blue-100 text-sm">{t.updateAvailable}</p>
-                                                            <p className="text-xs text-blue-700 dark:text-blue-300">{t.updateDescription}</p>
-                                                        </div>
+                                                        <button
+                                                            onClick={onUpdateApp}
+                                                            className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-lg active:scale-95 transition-all whitespace-nowrap"
+                                                        >
+                                                            {t.updateNow}
+                                                        </button>
                                                     </div>
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-4">
+                                                {/* Main Note about two-step process */}
+                                                <div className="p-3 bg-amber-50/50 dark:bg-amber-900/10 border-r-4 border-amber-500 rounded text-xs text-amber-900 dark:text-amber-100 font-medium">
+                                                    {t.noteInstallationSteps || (currentLanguage === 'ar'
+                                                        ? 'ملاحظة: التثبيت يتم على خطوتين: الخطوة الأولى: تثبيت التطبيق والخطوة الثانية: تحديث وحفظ المصحف كاملاً.'
+                                                        : 'Note: Installation is done in two steps: Step 1: Install the app, and Step 2: Update and save the full Mushaf.')}
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    {/* Step 1 Label */}
+                                                    <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
+                                                        {t.step1 || (currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1')}
+                                                    </div>
+                                                    {/* Install App Button - Always persistent per user request */}
                                                     <button
-                                                        onClick={onUpdateApp}
-                                                        className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-lg active:scale-95 transition-all whitespace-nowrap"
+                                                        onClick={hasUpdate && isStandalone ? onUpdateApp : (isStandalone ? undefined : handleInstallApp)}
+                                                        disabled={(!hasUpdate && isStandalone) || isInstalling}
+                                                        className={clsx(
+                                                            "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
+                                                            hasUpdate
+                                                                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 active:scale-[0.98]"
+                                                                : isStandalone
+                                                                    ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 cursor-default"
+                                                                    : "bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 hover:bg-amber-200 dark:hover:bg-amber-900/50 border-transparent active:scale-[0.98]",
+                                                            ((!hasUpdate && isStandalone) || isInstalling) && "opacity-60 cursor-not-allowed"
+                                                        )}
                                                     >
-                                                        {t.updateNow}
+                                                        <div className="flex flex-col items-start text-right">
+                                                            <span className="font-medium text-amber-900 dark:text-amber-100">
+                                                                {hasUpdate
+                                                                    ? (currentLanguage === 'ar' ? 'تحديث التطبيق متوفر' : 'App update available')
+                                                                    : isStandalone
+                                                                        ? (currentLanguage === 'ar' ? 'التطبيق مثبت على جهازك' : 'App is installed on your device')
+                                                                        : (isInstalling ? (currentLanguage === 'ar' ? 'جاري بدء التثبيت...' : 'Starting install...') : t.installApp)
+                                                                }
+                                                            </span>
+                                                            <span className="text-[10px] opacity-70">
+                                                                {hasUpdate
+                                                                    ? (currentLanguage === 'ar' ? 'اضغط لتثبيت أحدث الميزات والإصلاحات البرمجية' : 'Click to install the latest features and fixes')
+                                                                    : isStandalone
+                                                                        ? (currentLanguage === 'ar' ? 'أي كود جديد سنحدثه لك هنا' : 'We will update any new code for you here')
+                                                                        : (currentLanguage === 'ar' ? 'تثبيت الإطار البرمجي للوصول السريع' : 'Install the app frame for fast access')
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        {isInstalling ? (
+                                                            <Loader2 size={24} className="text-amber-600 dark:text-amber-400 animate-spin" />
+                                                        ) : hasUpdate ? (
+                                                            <div className="relative">
+                                                                <Download size={24} className="text-blue-600 dark:text-blue-500 animate-bounce" />
+                                                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                                                            </div>
+                                                        ) : isStandalone ? (
+                                                            <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
+                                                        ) : (
+                                                            <Download size={24} className="text-amber-600 dark:text-amber-500" />
+                                                        )}
+                                                    </button>
+
+                                                    {/* Step 2 Label */}
+                                                    <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
+                                                        {t.step2 || (currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2')}
+                                                    </div>
+
+                                                    {/* Download/Update Mushaf Button */}
+                                                    <button
+                                                        id="tour-download-btn"
+                                                        onClick={handleDownloadAllData}
+                                                        disabled={isDownloading || hasOfflineData}
+                                                        className={clsx(
+                                                            "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
+                                                            isDownloading
+                                                                ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
+                                                                : hasOfflineData
+                                                                    ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 cursor-default"
+                                                                    : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
+                                                        )}
+                                                    >
+                                                        <div className="flex flex-col items-start text-right">
+                                                            <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
+                                                                {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
+                                                            </span>
+                                                            <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
+                                                                {isDownloading
+                                                                    ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
+                                                                    : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        {isDownloading ? (
+                                                            <Loader2 size={24} className="animate-spin text-blue-600" />
+                                                        ) : hasOfflineData ? (
+                                                            <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
+                                                        ) : (
+                                                            <Download size={24} className="text-blue-600 dark:text-blue-400" />
+                                                        )}
+                                                    </button>
+
+                                                    {/* Progress Bar */}
+                                                    {downloadProgress !== null && (
+                                                        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
+                                                            <div
+                                                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                                                style={{ width: `${downloadProgress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    )}
+
+                                                    {downloadProgress === 100 && (
+                                                        <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
+                                                            {t.downloadSuccess}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-2">
+                                                    <button
+                                                        onClick={() => setShowAudioDownload(true)}
+                                                        className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-[0.98]"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Volume2 size={20} className="text-amber-600 dark:text-amber-500" />
+                                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                                {t.downloadAudioOptional || 'Download Audio (Optional)'}
+                                                            </span>
+                                                        </div>
+                                                        <ChevronDown size={18} className="text-gray-500 -rotate-90 rtl:rotate-90" />
                                                     </button>
                                                 </div>
+
                                             </div>
-                                        )}
-
-                                        <div className="space-y-4">
-                                            {/* Main Note about two-step process */}
-                                            <div className="p-3 bg-amber-50/50 dark:bg-amber-900/10 border-r-4 border-amber-500 rounded text-xs text-amber-900 dark:text-amber-100 font-medium">
-                                                {t.noteInstallationSteps || (currentLanguage === 'ar'
-                                                    ? 'ملاحظة: التثبيت يتم على خطوتين: الخطوة الأولى: تثبيت التطبيق والخطوة الثانية: تحديث وحفظ المصحف كاملاً.'
-                                                    : 'Note: Installation is done in two steps: Step 1: Install the app, and Step 2: Update and save the full Mushaf.')}
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                {/* Step 1 Label */}
-                                                <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
-                                                    {t.step1 || (currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1')}
-                                                </div>
-                                                {/* Install App Button - Always persistent per user request */}
-                                                <button
-                                                    onClick={hasUpdate && isStandalone ? onUpdateApp : (isStandalone ? undefined : handleInstallApp)}
-                                                    disabled={(!hasUpdate && isStandalone) || isInstalling}
-                                                    className={clsx(
-                                                        "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
-                                                        hasUpdate
-                                                            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 active:scale-[0.98]"
-                                                            : isStandalone
-                                                                ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 cursor-default"
-                                                                : "bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 hover:bg-amber-200 dark:hover:bg-amber-900/50 border-transparent active:scale-[0.98]",
-                                                        ((!hasUpdate && isStandalone) || isInstalling) && "opacity-60 cursor-not-allowed"
-                                                    )}
-                                                >
-                                                    <div className="flex flex-col items-start text-right">
-                                                        <span className="font-medium text-amber-900 dark:text-amber-100">
-                                                            {hasUpdate
-                                                                ? (currentLanguage === 'ar' ? 'تحديث التطبيق متوفر' : 'App update available')
-                                                                : isStandalone
-                                                                    ? (currentLanguage === 'ar' ? 'التطبيق مثبت على جهازك' : 'App is installed on your device')
-                                                                    : (isInstalling ? (currentLanguage === 'ar' ? 'جاري بدء التثبيت...' : 'Starting install...') : t.installApp)
-                                                            }
-                                                        </span>
-                                                        <span className="text-[10px] opacity-70">
-                                                            {hasUpdate
-                                                                ? (currentLanguage === 'ar' ? 'اضغط لتثبيت أحدث الميزات والإصلاحات البرمجية' : 'Click to install the latest features and fixes')
-                                                                : isStandalone
-                                                                    ? (currentLanguage === 'ar' ? 'أي كود جديد سنحدثه لك هنا' : 'We will update any new code for you here')
-                                                                    : (currentLanguage === 'ar' ? 'تثبيت الإطار البرمجي للوصول السريع' : 'Install the app frame for fast access')
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                    {isInstalling ? (
-                                                        <Loader2 size={24} className="text-amber-600 dark:text-amber-400 animate-spin" />
-                                                    ) : hasUpdate ? (
-                                                        <div className="relative">
-                                                            <Download size={24} className="text-blue-600 dark:text-blue-500 animate-bounce" />
-                                                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                                                        </div>
-                                                    ) : isStandalone ? (
-                                                        <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
-                                                    ) : (
-                                                        <Download size={24} className="text-amber-600 dark:text-amber-500" />
-                                                    )}
-                                                </button>
-
-                                                {/* Step 2 Label */}
-                                                <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
-                                                    {t.step2 || (currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2')}
-                                                </div>
-
-                                                {/* Download/Update Mushaf Button */}
-                                                <button
-                                                    id="tour-download-btn"
-                                                    onClick={handleDownloadAllData}
-                                                    disabled={isDownloading || hasOfflineData}
-                                                    className={clsx(
-                                                        "w-full flex items-center justify-between p-4 rounded-lg transition-all border-2",
-                                                        isDownloading
-                                                            ? "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 cursor-wait"
-                                                            : hasOfflineData
-                                                                ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500/30 cursor-default"
-                                                                : "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 hover:border-blue-500 cursor-pointer active:scale-[0.98]"
-                                                    )}
-                                                >
-                                                    <div className="flex flex-col items-start text-right">
-                                                        <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
-                                                            {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
-                                                        </span>
-                                                        <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
-                                                            {isDownloading
-                                                                ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
-                                                                : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                    {isDownloading ? (
-                                                        <Loader2 size={24} className="animate-spin text-blue-600" />
-                                                    ) : hasOfflineData ? (
-                                                        <Check size={24} className="text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-500" />
-                                                    ) : (
-                                                        <Download size={24} className="text-blue-600 dark:text-blue-400" />
-                                                    )}
-                                                </button>
-
-                                                {/* Progress Bar */}
-                                                {downloadProgress !== null && (
-                                                    <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
-                                                        <div
-                                                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                                            style={{ width: `${downloadProgress}%` }}
-                                                        ></div>
-                                                    </div>
-                                                )}
-
-                                                {downloadProgress === 100 && (
-                                                    <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
-                                                        {t.downloadSuccess}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-2">
-                                                <button
-                                                    onClick={() => setShowAudioDownload(true)}
-                                                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-[0.98]"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Volume2 size={20} className="text-amber-600 dark:text-amber-500" />
-                                                        <span className="font-medium text-gray-900 dark:text-white">
-                                                            {currentLanguage === 'ar' ? 'تحميل الصوتيات (اختياري)' : 'Download Audio (Optional)'}
-                                                        </span>
-                                                    </div>
-                                                    <ChevronDown size={18} className="text-gray-500 -rotate-90 rtl:rotate-90" />
-                                                </button>
-                                            </div>
-
                                         </div>
-                                    </div>
-                                )}
-                            </section>
+                                    )}
+                                </section>
+                            )}
 
 
                             {/* Help Section - Accordion */}
@@ -946,20 +950,36 @@ export default function Settings({
                                 </div>
                             </section>
 
-                            {/* Visitor Counter - Inside More Settings */}
-                            {/* Standalone Share App Section */}
+                            {/* Share Section */}
                             <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
                                 <button
-                                    onClick={onOpenShare}
+                                    onClick={async () => {
+                                        if (isNative && navigator.share) {
+                                            try {
+                                                await navigator.share({
+                                                    title: currentLanguage === 'ar' ? 'تطبيق مصحف المراجعة' : 'Mushaf App',
+                                                    text: currentLanguage === 'ar' ? 'تطبيق رائع للمراجعة والحفظ' : 'An amazing app for Quran memorization',
+                                                    url: window.location.origin
+                                                });
+                                            } catch (err) {
+                                                console.error('Error sharing:', err);
+                                                onOpenShare?.();
+                                            }
+                                        } else {
+                                            onOpenShare?.();
+                                        }
+                                    }}
                                     className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-slate-800 border-2 border-amber-500/20 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98] shadow-sm group"
                                 >
                                     <div className="flex flex-col items-start text-right">
                                         <span className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <Share2 size={18} className="text-amber-600 dark:text-amber-500" />
-                                            {t.shareApp || (currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App')}
+                                            {isNative 
+                                                ? (currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App')
+                                                : (t.shareApp || (currentLanguage === 'ar' ? 'مشاركة الموقع' : 'Share Website'))}
                                         </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            {t.shareAppDesc || (currentLanguage === 'ar' ? 'شارك رابط التطبيق مع أصدقائك' : 'Share the app link with friends')}
+                                            {currentLanguage === 'ar' ? 'شارك التطبيق مع أصدقائك' : 'Share the app with friends'}
                                         </span>
                                     </div>
                                     <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-full group-hover:scale-110 transition-transform">
@@ -967,34 +987,38 @@ export default function Settings({
                                     </div>
                                 </button>
 
-                                {/* QR Code Section */}
-                                <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm">
-                                    <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                                        {currentLanguage === 'ar' ? 'رمز الاستجابة السريعة (QR)' : 'Scan QR Code'}
-                                    </h4>
-                                    <div className="relative p-2 bg-white rounded-lg shadow-inner border border-gray-100">
-                                        <img 
-                                            src="/qr_code.jpg" 
-                                            alt="QR Code" 
-                                            className="w-48 h-48 object-contain rounded-sm"
-                                        />
-                                        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500 rounded-tl-sm -translate-x-1 -translate-y-1" />
-                                        <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500 rounded-tr-sm translate-x-1 -translate-y-1" />
-                                        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500 rounded-bl-sm -translate-x-1 translate-y-1" />
-                                        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500 rounded-br-sm translate-x-1 translate-y-1" />
+                                {/* QR Code Section - Hide on Native */}
+                                {!isNative && (
+                                    <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm">
+                                        <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                                            {currentLanguage === 'ar' ? 'رمز الاستجابة السريعة (QR)' : 'Scan QR Code'}
+                                        </h4>
+                                        <div className="relative p-2 bg-white rounded-lg shadow-inner border border-gray-100">
+                                            <img 
+                                                src="/qr_code.jpg" 
+                                                alt="QR Code" 
+                                                className="w-48 h-48 object-contain rounded-sm"
+                                            />
+                                            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500 rounded-tl-sm -translate-x-1 -translate-y-1" />
+                                            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500 rounded-tr-sm translate-x-1 -translate-y-1" />
+                                            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500 rounded-bl-sm -translate-x-1 translate-y-1" />
+                                            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500 rounded-br-sm translate-x-1 translate-y-1" />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </section>
 
-                            <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
-                                <VisitorCounter t={t} language={currentLanguage} />
+                            {!isNative && (
+                                <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                    <VisitorCounter t={t} language={currentLanguage} />
 
-                                <div className="mt-6 pb-2 text-center">
-                                    <p className="text-[10px] text-gray-400 dark:text-slate-500 font-mono opacity-50">
-                                        Version 1.2.7 • 2026.02.24 • Optimized
-                                    </p>
+                                    <div className="mt-6 pb-2 text-center">
+                                        <p className="text-[10px] text-gray-400 dark:text-slate-500 font-mono opacity-50">
+                                            Version 1.2.7 • 2026.02.24 • Optimized
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </>
                     )}
                 </div>

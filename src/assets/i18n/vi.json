@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Tải Âm Thanh (Tùy chọn)",
+    "downloadManager": "Quản Lý Tải Xuống",
+    "saveOfflineDesc": "Lưu để sử dụng ngoại tuyến",
+    "fullRecitations": "Tụng Đầy Đủ",
+    "wordsAudio": "Âm Thanh Theo Từ",
+    "selectReciter": "Chọn Người Đọc",
+    "alreadyDownloaded": "Đã Tải Xuống",
+    "downloading": "Đang tải...",
+    "downloadSurah": "Tải Surah",
+    "downloaded": "Đã tải",
+    "downloadAction": "Tải Xuống",
+    "wordMeaningsNote": "Lưu ý: (Ý nghĩa từ của Kinh Qur'an và tafsir chỉ bằng tiếng Ả Rập)"
 }

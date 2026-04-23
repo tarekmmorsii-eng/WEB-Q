@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "ऑडियो डाउनलोड करें (वैकल्पिक)",
+    "downloadManager": "डाउनलोड प्रबंधक",
+    "saveOfflineDesc": "ऑफ़लाइन उपयोग के लिए सहेजें",
+    "fullRecitations": "पूर्ण तिलावत",
+    "wordsAudio": "शब्द ऑडियो",
+    "selectReciter": "कारी चुनें",
+    "alreadyDownloaded": "पहले से डाउनलोड किया गया",
+    "downloading": "डाउनलोड हो रहा है...",
+    "downloadSurah": "सूरह डाउनलोड करें",
+    "downloaded": "डाउनलोड हो गया",
+    "downloadAction": "डाउनलोड करें",
+    "wordMeaningsNote": "नोट: (कुरान के शब्दों के अर्थ और तफ़सीर केवल अरबी में हैं)"
 }

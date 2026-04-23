@@ -1,5 +1,7 @@
 import React from 'react';
 import { Download, HelpCircle, Share2, PlayCircle } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+const isNative = Capacitor.isNativePlatform();
 import { useOfflineManager } from '../hooks/useOfflineManager';
 import { Language, translations } from '../i18n/translations';
 import { Theme } from '../constants/themes';
@@ -53,21 +55,23 @@ export default function FloatingSideMenu({
                 <PlayCircle size={24} />
             </button>
 
-            {/* Download Button */}
-            <button
-                id="tour-download-btn-floating"
-                onClick={handleDownloadClick}
-                disabled={isDownloading || (isStandalone && hasOfflineData) || !isVisible}
-                className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r' : 'rounded-l-xl border-y border-l'} border-amber-500/30 flex items-center justify-center shadow-lg transition-all ${isDownloading
-                    ? 'bg-amber-100 text-amber-500 cursor-wait'
-                    : (isStandalone && hasOfflineData)
-                        ? 'bg-emerald-50 text-emerald-600'
-                        : 'bg-[var(--bg-card)] text-amber-600 hover:bg-[var(--bg-secondary)] hover:w-14'
-                    }`}
-                title={t.installAndDownload}
-            >
-                <Download size={24} className={isDownloading ? 'animate-bounce' : ''} />
-            </button>
+            {/* Download Button - Hide on Native */}
+            {!isNative && (
+                <button
+                    id="tour-download-btn-floating"
+                    onClick={handleDownloadClick}
+                    disabled={isDownloading || (isStandalone && hasOfflineData) || !isVisible}
+                    className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r' : 'rounded-l-xl border-y border-l'} border-amber-500/30 flex items-center justify-center shadow-lg transition-all ${isDownloading
+                        ? 'bg-amber-100 text-amber-500 cursor-wait'
+                        : (isStandalone && hasOfflineData)
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-[var(--bg-card)] text-amber-600 hover:bg-[var(--bg-secondary)] hover:w-14'
+                        }`}
+                    title={t.installAndDownload}
+                >
+                    <Download size={24} className={isDownloading ? 'animate-bounce' : ''} />
+                </button>
+            )}
 
             {/* Help Button */}
             <button

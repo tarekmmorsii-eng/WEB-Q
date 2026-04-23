@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Preuzmi Audio (Opcionalno)",
+    "downloadManager": "Menadžer Preuzimanja",
+    "saveOfflineDesc": "Sačuvaj za offline upotrebu",
+    "fullRecitations": "Potpuno Učenje",
+    "wordsAudio": "Audio po Riječima",
+    "selectReciter": "Odaberi Učača",
+    "alreadyDownloaded": "Već Preuzeto",
+    "downloading": "Preuzimanje...",
+    "downloadSurah": "Preuzmi Suru",
+    "downloaded": "Preuzeto",
+    "downloadAction": "Preuzmi",
+    "wordMeaningsNote": "Napomena: (Značenja riječi Kur'ana i tefsir su samo na arapskom jeziku)"
 }

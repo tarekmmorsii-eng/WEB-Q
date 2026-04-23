@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Pakua Sauti (Hiari)",
+    "downloadManager": "Kidhibiti cha Upakuaji",
+    "saveOfflineDesc": "Hifadhi kwa matumizi bila mtandao",
+    "fullRecitations": "Usomaji Kamili",
+    "wordsAudio": "Sauti ya Maneno",
+    "selectReciter": "Chagua Msomaji",
+    "alreadyDownloaded": "Imeshapakuliwa",
+    "downloading": "Inapakua...",
+    "downloadSurah": "Pakua Sura",
+    "downloaded": "Imepakuliwa",
+    "downloadAction": "Pakua",
+    "wordMeaningsNote": "Kumbuka: (Maana ya maneno ya Quran na tafsir ni kwa Kiarabu pekee)"
 }

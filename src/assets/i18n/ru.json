@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Сауд Аш-Шурайм",
         "ar.parhizgar": "Шахрияр Пархизгар",
         "ar.aymansowaid": "Айман Сувейд"
-    }
+    },
+    "downloadAudioOptional": "Скачать аудио (Опционально)",
+    "downloadManager": "Менеджер загрузок",
+    "saveOfflineDesc": "Сохранить для офлайн использования",
+    "fullRecitations": "Полные чтения",
+    "wordsAudio": "Аудио по словам",
+    "selectReciter": "Выберите чтеца",
+    "alreadyDownloaded": "Уже скачано",
+    "downloading": "Скачивание...",
+    "downloadSurah": "Скачать суру",
+    "downloaded": "Скачано",
+    "downloadAction": "Скачать",
+    "wordMeaningsNote": "Примечание: (Значения слов Корана и тафсир только на арабском языке)"
 }

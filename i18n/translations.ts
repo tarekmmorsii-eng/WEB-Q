@@ -454,6 +454,18 @@ export interface Translations {    dir: string;
     playOnlySelectedRange: string;
     apply: string;
     reciters: Record<string, string>;
+    downloadAudioOptional: string;
+    downloadManager: string;
+    saveOfflineDesc: string;
+    fullRecitations: string;
+    wordsAudio: string;
+    selectReciter: string;
+    alreadyDownloaded: string;
+    downloading: string;
+    downloadSurah: string;
+    downloaded: string;
+    downloadAction: string;
+    wordMeaningsNote: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';

@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "サウード・アッシュ＝シュライム",
         "ar.parhizgar": "シャフリヤール・パルヒズガール",
         "ar.aymansowaid": "アイマン・スワイド"
-    }
+    },
+    "downloadAudioOptional": "音声ダウンロード（任意）",
+    "downloadManager": "ダウンロード管理",
+    "saveOfflineDesc": "オフライン用に保存",
+    "fullRecitations": "全体読誦",
+    "wordsAudio": "単語別音声",
+    "selectReciter": "朗誦者の選択",
+    "alreadyDownloaded": "ダウンロード済み",
+    "downloading": "ダウンロード中...",
+    "downloadSurah": "スーラのダウンロード",
+    "downloaded": "ダウンロード済",
+    "downloadAction": "ダウンロード",
+    "wordMeaningsNote": "注記：（コーランの単語の意味とタフシールはアラビア語のみです）"
 }

@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Shkarko Audio (Opsionale)",
+    "downloadManager": "Menaxheri i Shkarkimeve",
+    "saveOfflineDesc": "Ruaj për përdorim jashtë linje",
+    "fullRecitations": "Recitime të Plota",
+    "wordsAudio": "Audio e Fjalëve",
+    "selectReciter": "Zgjidh Recituesin",
+    "alreadyDownloaded": "Tashmë i Shkarkuar",
+    "downloading": "Duke u shkarkuar...",
+    "downloadSurah": "Shkarko Suren",
+    "downloaded": "U shkarkua",
+    "downloadAction": "Shkarko",
+    "wordMeaningsNote": "Shënim: (Kuptimet e fjalëve të Kuranit dhe tefsiri janë vetëm në arabisht)"
 }

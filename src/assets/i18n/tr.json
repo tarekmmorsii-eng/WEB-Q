@@ -577,5 +577,17 @@
         "ar.saoodshuraym": "Saud Al-Shuraim",
         "ar.parhizgar": "Shahriar Parhizgar",
         "ar.aymansowaid": "Ayman Sowaid"
-    }
+    },
+    "downloadAudioOptional": "Sesleri İndir (İsteğe Bağlı)",
+    "downloadManager": "İndirme Yöneticisi",
+    "saveOfflineDesc": "Çevrimdışı kullanım için kaydet",
+    "fullRecitations": "Tam Hatimler",
+    "wordsAudio": "Kelime Kelime Ses",
+    "selectReciter": "Hafız Seç",
+    "alreadyDownloaded": "Zaten İndirildi",
+    "downloading": "İndiriliyor...",
+    "downloadSurah": "Sureyi İndir",
+    "downloaded": "İndirildi",
+    "downloadAction": "İndir",
+    "wordMeaningsNote": "Not: (Kur'an kelime anlamları ve tefsir sadece Arapçadır)"
 }
