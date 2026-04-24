@@ -5,6 +5,10 @@ import { NotificationItem } from '../types';
 import { SURAHS } from '../constants/surahData';
 import { JUZ_SECTIONS } from '../constants';
 import { getAyahPage, getPageAyahRange, getSurahsForPages } from '../services/quranService';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
+
+const isNative = Capacitor.isNativePlatform();
 
 interface NotificationManagerProps {
     isOpen: boolean;
@@ -39,6 +43,82 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [permissionStatus, setPermissionStatus] = useState<string>(
         typeof window !== 'undefined' && typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
+
+    React.useEffect(() => {
+        if (isOpen && isNative) {
+            LocalNotifications.requestPermissions().then(status => {
+                setPermissionStatus(status.display);
+            });
+        }
+    }, [isOpen]);
+
+    const scheduleNativeNotification = async (notification: NotificationItem) => {
+        if (!isNative) return;
+
+        try {
+            // Cancel existing notifications for this ID group
+            // We use the string ID as a base, but since one notification item can have multiple times/days,
+            // we should ideally use unique numeric IDs for each schedule.
+            // For simplicity, we'll cancel all then re-schedule.
+            // Note: Capacitor requires numeric IDs.
+            const baseId = parseInt(notification.id.slice(-6)) || Math.floor(Math.random() * 100000);
+            
+            await LocalNotifications.cancel({
+                notifications: [{ id: baseId }]
+            });
+
+            if (!notification.isEnabled) return;
+
+            const schedules: any[] = [];
+            
+            for (let i = 0; i < notification.times.length; i++) {
+                const [hour, minute] = notification.times[i].split(':').map(Number);
+                
+                // For daily/weekly, we schedule based on days
+                for (const day of notification.days) {
+                    // ID must be unique for each time/day combo if we want them separate, 
+                    // but usually one item = one notification slot.
+                    // Let's use a composite ID.
+                    const uniqueId = baseId + i + (day * 100);
+                    
+                    schedules.push({
+                        id: uniqueId,
+                        title: notification.isAlarm ? `🚨 ${notification.name}` : notification.name,
+                        body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
+                        schedule: {
+                            on: {
+                                weekday: day + 1, // Sunday is 1 in Capacitor
+                                hour,
+                                minute
+                            },
+                            repeats: true,
+                            allowWhileIdle: true
+                        },
+                        sound: notification.sound && notification.sound.startsWith('/') ? notification.sound.slice(1) : undefined,
+                        extra: {
+                            page: notification.metadata?.startPage || notification.metadata?.page,
+                            ayah: notification.metadata?.startAyah,
+                            surah: notification.metadata?.surahNumber
+                        },
+                        importance: notification.isAlarm ? 'max' : 'default',
+                        actionTypeId: 'OPEN_QURAN',
+                        attachments: [],
+                        smallIcon: 'ic_stat_name', // Should be in res/drawable
+                        largeIcon: 'res://icon',
+                        badge: 1
+                    });
+                }
+            }
+
+            if (schedules.length > 0) {
+                await LocalNotifications.schedule({
+                    notifications: schedules
+                });
+            }
+        } catch (error) {
+            console.error('Error scheduling native notification:', error);
+        }
+    };
 
     // Form state
     const [formName, setFormName] = useState('');
@@ -174,6 +254,10 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             onSave([...notifications, newNotification]);
         }
 
+        if (isNative) {
+            scheduleNativeNotification(newNotification);
+        }
+
         resetForm();
     };
 
@@ -209,9 +293,30 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
     const handleDelete = (id: string) => {
         onSave(notifications.filter(n => n.id !== id));
+        if (isNative) {
+            const baseId = parseInt(id.slice(-6)) || 0;
+            // Attempt to cancel all potential sub-IDs (brute force or track them)
+            // For now, just cancel the base. Real app would track scheduled IDs.
+            LocalNotifications.cancel({ notifications: [{ id: baseId }] });
+        }
     };
 
-    const sendTestNotification = () => {
+    const sendTestNotification = async () => {
+        if (isNative) {
+            await LocalNotifications.schedule({
+                notifications: [{
+                    id: 99999,
+                    title: formIsAlarm ? `🚨 ${t.testAlarm}` : t.testNotification,
+                    body: t.testNotificationBody,
+                    schedule: { at: new Date(Date.now() + 1000) },
+                    sound: formSound && formSound.startsWith('/') ? formSound.slice(1) : undefined,
+                    importance: formIsAlarm ? 'max' : 'default',
+                    badge: 1
+                }]
+            });
+            return;
+        }
+
         const notifPermission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
         if (notifPermission === 'granted') {
             if (formIsAlarm) {

@@ -26,6 +26,7 @@ import newMa3anyPosData from './src/data/ma3any/new_ma3any_pos.json';
 import SocialShareModal from './components/SocialShareModal';
 import FloatingSideMenu from './components/FloatingSideMenu';
 import AudioDownloadModal from './components/AudioDownloadModal';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
 import { Mutashabiha } from './types';
@@ -619,6 +620,33 @@ export default function App() {
       setIsMemorizationStatsOpen(true);
     } else if (window.location.pathname === '/index') {
       setIsIndexOpen(true);
+    }
+  }, []);
+
+  // Handle Native Notifications
+  useEffect(() => {
+    if (isNative) {
+      // Clear badges on start
+      LocalNotifications.removeAllDeliveredNotifications();
+      LocalNotifications.setCount({ count: 0 });
+
+      // Listen for notification clicks
+      const listener = LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+        const { extra } = action.notification;
+        if (extra && extra.page) {
+          setCurrentPage(extra.page);
+          if (extra.ayah !== undefined && extra.surah !== undefined) {
+            setHighlightedAyah({ surah: extra.surah, ayah: extra.ayah });
+          } else {
+            setHighlightedAyah(null);
+          }
+          setIsNotificationOpen(false);
+        }
+      });
+
+      return () => {
+        listener.remove();
+      };
     }
   }, []);
 
