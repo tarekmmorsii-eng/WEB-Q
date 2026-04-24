@@ -628,11 +628,13 @@ export default function App() {
     if (isNative) {
       // Clear badges on start
       LocalNotifications.removeAllDeliveredNotifications();
-      try {
-        await LocalNotifications.setCount({ count: 0 });
-      } catch (e) {
-        console.warn('Badge count not supported on this platform', e);
-      }
+      (async () => {
+        try {
+          await LocalNotifications.setCount({ count: 0 });
+        } catch (e) {
+          console.warn('Badge count not supported on this platform', e);
+        }
+      })();
 
       // Listen for notification clicks
       const listener = LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
