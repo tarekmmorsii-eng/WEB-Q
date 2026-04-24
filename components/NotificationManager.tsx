@@ -69,6 +69,17 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
             if (!notification.isEnabled) return;
 
+            // Create notification channel for Android (essential for high-priority alerts)
+            await LocalNotifications.createChannel({
+                id: 'quran_alarms',
+                name: 'Quran Alarms & Notifications',
+                description: 'Notifications for daily Quran reading and memorization',
+                importance: 5, // MAX importance
+                visibility: 1, // PUBLIC
+                vibration: true,
+                sound: 'islamic_song.mp3' // Default channel sound
+            });
+
             const schedules: any[] = [];
             
             for (let i = 0; i < notification.times.length; i++) {
@@ -94,6 +105,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             repeats: true,
                             allowWhileIdle: true
                         },
+                        channelId: 'quran_alarms',
                         sound: notification.sound && notification.sound.startsWith('/') ? notification.sound.slice(1) : undefined,
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
@@ -303,12 +315,21 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
     const sendTestNotification = async () => {
         if (isNative) {
+            // Ensure channel exists for test
+            await LocalNotifications.createChannel({
+                id: 'quran_alarms',
+                name: 'Quran Alarms & Notifications',
+                importance: 5,
+                visibility: 1
+            });
+
             await LocalNotifications.schedule({
                 notifications: [{
                     id: 99999,
                     title: formIsAlarm ? `🚨 ${t.testAlarm}` : t.testNotification,
                     body: t.testNotificationBody,
-                    schedule: { at: new Date(Date.now() + 1000) },
+                    schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true }, // Exactly 2 seconds
+                    channelId: 'quran_alarms',
                     sound: formSound && formSound.startsWith('/') ? formSound.slice(1) : undefined,
                     importance: formIsAlarm ? 'max' : 'default',
                     badge: 1
