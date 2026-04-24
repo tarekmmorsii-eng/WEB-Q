@@ -71,12 +71,13 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
             // Create notification channel for Android (essential for high-priority alerts)
             await LocalNotifications.createChannel({
-                id: 'quran_critical_alarm_v1',
+                id: 'quran_critical_alarm_v2',
                 name: 'Quran Critical Alarms',
                 description: 'High priority notifications for Quran reading',
                 importance: 5, // MAX importance
                 visibility: 1, // PUBLIC
-                vibration: true
+                vibration: true,
+                sound: 'default' // Ensure default system sound is used
             });
 
             const schedules: any[] = [];
@@ -86,26 +87,33 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                 
                 // For daily/weekly, we schedule based on days
                 for (const day of notification.days) {
-                    // ID must be unique for each time/day combo if we want them separate, 
-                    // but usually one item = one notification slot.
-                    // Let's use a composite ID.
                     const uniqueId = baseId + i + (day * 100);
                     
+                    // Calculate next occurrence for the given weekday and time
+                    const now = new Date();
+                    const nextDate = new Date();
+                    nextDate.setHours(hour, minute, 0, 0);
+                    
+                    // day 0 is Sunday in JS and DAYS, but Capacitor schedule.on.weekday: 1 is Sunday.
+                    // My code uses day (0-6) from notification.days.
+                    let daysUntil = (day - now.getDay() + 7) % 7;
+                    if (daysUntil === 0 && nextDate <= now) {
+                        daysUntil = 7;
+                    }
+                    nextDate.setDate(now.getDate() + daysUntil);
+
                     schedules.push({
                         id: uniqueId,
                         title: notification.isAlarm ? `🚨 ${notification.name}` : notification.name,
                         body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
                         schedule: {
-                            on: {
-                                weekday: day + 1, // Sunday is 1 in Capacitor
-                                hour,
-                                minute
-                            },
+                            at: nextDate,
                             repeats: true,
+                            every: 'week',
                             allowWhileIdle: true
                         },
-                        channelId: 'quran_critical_alarm_v1',
-                        sound: notification.sound && notification.sound.startsWith('/') ? notification.sound.slice(1) : undefined,
+                        channelId: 'quran_critical_alarm_v2',
+                        sound: notification.isAlarm ? 'default' : (notification.sound && notification.sound.startsWith('/') ? notification.sound.slice(1) : 'default'),
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
@@ -316,10 +324,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         if (isNative) {
             // Ensure channel exists for test
             await LocalNotifications.createChannel({
-                id: 'quran_critical_alarm_v1',
+                id: 'quran_critical_alarm_v2',
                 name: 'Quran Critical Alarms',
                 importance: 5,
-                visibility: 1
+                visibility: 1,
+                sound: 'default'
             });
 
             await LocalNotifications.schedule({
@@ -328,8 +337,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                     title: formIsAlarm ? `🚨 ${t.testAlarm}` : t.testNotification,
                     body: t.testNotificationBody,
                     schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true }, // Exactly 2 seconds
-                    channelId: 'quran_critical_alarm_v1',
-                    sound: formSound && formSound.startsWith('/') ? formSound.slice(1) : undefined,
+                    channelId: 'quran_critical_alarm_v2',
+                    sound: 'default',
                     importance: formIsAlarm ? 'max' : 'default',
                     badge: 1
                 }]
