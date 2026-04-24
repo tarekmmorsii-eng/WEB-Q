@@ -1083,12 +1083,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const isTabLandscape = deviceType === 'tablet' && orientation === 'landscape';
         let paddingValue = '10px 5px'; // Minimized side padding
         if (deviceType === 'tablet') {
-            paddingValue = orientation === 'portrait' ? '50px 70px' : '10px 15px 120px 15px';
+            paddingValue = orientation === 'portrait' ? '50px 70px' : '15px 20px 20px 20px';
         }
         return {
             width: '100%',
-            maxWidth: isTabLandscape ? '1100px' : '800px',
-            minHeight: '100dvh',
+            maxWidth: isTabLandscape ? '1200px' : '800px',
+            height: '100%',
+            minHeight: '100%',
             padding: paddingValue,
             marginLeft: 'auto',
             marginRight: 'auto',
@@ -1157,8 +1158,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     const fontSizeClass = useMemo(() => {
         if (deviceType === 'desktop') return 'clamp(1.6rem, 2.2vw, 2.22rem)';
-        if (deviceType === 'mobile') return isMobileLandscape ? '25px' : 'min(2.8vh, 5.2vw)'; // Maximized font size
-        if (deviceType === 'tablet') return isTabletLandscape ? '34px' : '21px';
+        if (deviceType === 'mobile') return isMobileLandscape ? 'clamp(1.1rem, 5.5vh, 1.5rem)' : 'min(2.8vh, 5.2vw)'; 
+        if (deviceType === 'tablet') return isTabletLandscape ? 'clamp(1.5rem, 5.8vh, 2.1rem)' : '21px';
         return '21px';
     }, [deviceType, isMobileLandscape, isTabletLandscape]);
 
@@ -1364,7 +1365,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 })()}
             </div>
 
-            <div ref={linesContainerRef} className="quran-lines-container flex-grow flex flex-col w-full px-[1%]" style={{ direction: 'rtl', height: '100%', minHeight: '100%' }}>
+            <div ref={linesContainerRef} className="quran-lines-container flex-1 flex flex-col w-full px-[1%]" style={{ direction: 'rtl' }}>
                 {pageData.lines.map((line, idx) => (
                     <div key={`${idx}-${mode}-${toggleState}`}
                         data-line-type={line.lineType}

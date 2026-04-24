@@ -2080,7 +2080,7 @@ export default function App() {
         onClosePrayerMode={() => setSettings(prev => ({ ...prev, prayerMode: false }))}
       />
       <div
-        className="h-[100dvh] lg:h-screen w-full flex flex-col relative overflow-auto transition-colors duration-300"
+        className="h-screen w-full flex flex-col relative overflow-hidden transition-colors duration-300"
         style={{
           backgroundColor: currentTheme.colors.background,
           color: currentTheme.colors.text,
