@@ -71,13 +71,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
             // Create notification channel for Android (essential for high-priority alerts)
             await LocalNotifications.createChannel({
-                id: 'quran_alarms',
-                name: 'Quran Alarms & Notifications',
-                description: 'Notifications for daily Quran reading and memorization',
+                id: 'quran_critical_alarm_v1',
+                name: 'Quran Critical Alarms',
+                description: 'High priority notifications for Quran reading',
                 importance: 5, // MAX importance
                 visibility: 1, // PUBLIC
-                vibration: true,
-                sound: 'islamic_song.mp3' // Default channel sound
+                vibration: true
             });
 
             const schedules: any[] = [];
@@ -105,7 +104,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             repeats: true,
                             allowWhileIdle: true
                         },
-                        channelId: 'quran_alarms',
+                        channelId: 'quran_critical_alarm_v1',
                         sound: notification.sound && notification.sound.startsWith('/') ? notification.sound.slice(1) : undefined,
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
@@ -317,8 +316,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         if (isNative) {
             // Ensure channel exists for test
             await LocalNotifications.createChannel({
-                id: 'quran_alarms',
-                name: 'Quran Alarms & Notifications',
+                id: 'quran_critical_alarm_v1',
+                name: 'Quran Critical Alarms',
                 importance: 5,
                 visibility: 1
             });
@@ -329,7 +328,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                     title: formIsAlarm ? `🚨 ${t.testAlarm}` : t.testNotification,
                     body: t.testNotificationBody,
                     schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true }, // Exactly 2 seconds
-                    channelId: 'quran_alarms',
+                    channelId: 'quran_critical_alarm_v1',
                     sound: formSound && formSound.startsWith('/') ? formSound.slice(1) : undefined,
                     importance: formIsAlarm ? 'max' : 'default',
                     badge: 1
