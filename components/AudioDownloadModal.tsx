@@ -24,7 +24,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     const [activeTab, setActiveTab] = useState<'full' | 'words'>('full');
     
     // Tab 1 state
-    const [selectedReciter, setSelectedReciter] = useState<string>('ar.alafasy');
+    const [selectedReciter, setSelectedReciter] = useState<string>('ar.husary');
     const [selectedSurah, setSelectedSurah] = useState<number>(1);
     const [isDownloadingFull, setIsDownloadingFull] = useState(false);
     const [downloadedFullSurahs, setDownloadedFullSurahs] = useState<Set<number>>(new Set());
@@ -261,11 +261,15 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                     onChange={(e) => setSelectedSurah(parseInt(e.target.value))}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all appearance-none"
                                 >
-                                    {SURAHS.map(surah => (
-                                        <option key={surah.number} value={surah.number}>
-                                            {surah.number}. {isArabic ? surah.name : (t.surahNames[surah.number - 1] || surah.name)}
-                                        </option>
-                                    ))}
+                                    {SURAHS.map(surah => {
+                                        const isDownloaded = downloadedFullSurahs.has(surah.number);
+                                        return (
+                                            <option key={surah.number} value={surah.number}>
+                                                {surah.number}. {isArabic ? surah.name : (t.surahNames[surah.number - 1] || surah.name)}
+                                                {isDownloaded ? ' ✓' : ''}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
 

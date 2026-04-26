@@ -56,7 +56,14 @@ export function useAyahAudio() {
           const url = `https://cdn.islamic.network/quran/audio/${currentBitrate}/${reciterID}/${globalAyahNumber}.mp3`;
           
           // Smart Check: Offline + Not in Cache
-          const inCache = await isUrlInCache(url);
+          let cachedResponse: Response | undefined;
+          try {
+              const cache = await caches.open('quran-audio-v2');
+              cachedResponse = await cache.match(url);
+          } catch (e) { /* ignore */ }
+
+          const inCache = !!cachedResponse;
+
           if (!navigator.onLine && !inCache) {
               // Dispatch event for App.tsx to show a toast
               window.dispatchEvent(new CustomEvent('showToast', { 
@@ -67,12 +74,19 @@ export function useAyahAudio() {
           }
 
           let audio: HTMLAudioElement;
-          
-          // Use preloaded audio if it matches
-          if (preloadAudioRef.current && preloadAudioRef.current.src === url) {
+          let objectUrl: string | null = null;
+
+          if (inCache && cachedResponse) {
+              // Priority 1: Play from Cache (100% Offline Priority)
+              const blob = await cachedResponse.blob();
+              objectUrl = URL.createObjectURL(blob);
+              audio = new Audio(objectUrl);
+          } else if (preloadAudioRef.current && preloadAudioRef.current.src === url) {
+              // Priority 2: Use preloaded audio
               audio = preloadAudioRef.current;
               preloadAudioRef.current = null;
           } else {
+              // Priority 3: Fetch from Network
               audio = new Audio(url);
           }
           
@@ -95,17 +109,20 @@ export function useAyahAudio() {
           audio.onended = () => {
               // Success! Remember this bitrate for next time
               reciterBestBitrate.current[reciterID] = currentBitrate;
+              if (objectUrl) URL.revokeObjectURL(objectUrl); // Clean up
               resolve();
           };
 
           audio.onerror = () => {
               console.warn(`Bitrate ${currentBitrate} failed for ${reciterID}, trying next...`);
+              if (objectUrl) URL.revokeObjectURL(objectUrl); // Clean up
               tryPlay(bitrateIndex + 1);
           };
 
           audioRef.current = audio;
           audio.play().catch((err) => {
               console.warn("Autoplay/Play failed, switching to next bitrate if possible...", err);
+              if (objectUrl) URL.revokeObjectURL(objectUrl); // Clean up
               tryPlay(bitrateIndex + 1);
           });
       };
