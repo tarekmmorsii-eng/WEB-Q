@@ -842,7 +842,10 @@ export default function Settings({
 
                                                 <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-2">
                                                     <button
-                                                        onClick={onOpenAudioDownload}
+                                                        onClick={() => {
+                                                            onClose();
+                                                            onOpenAudioDownload?.();
+                                                        }}
                                                         className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-[0.98]"
                                                     >
                                                         <div className="flex items-center gap-3">

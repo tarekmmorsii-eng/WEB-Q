@@ -25,7 +25,7 @@ export function useAyahAudio() {
 
   // تشغيل آية واحدة مخصصة (وإرجاع Promise للانتظار)
   const playAyahAudio = useCallback((globalAyahNumber: number, reciterID: string, playbackRate: number = 1.0, nextGlobalAyahNumber?: number): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       // إيقاف أي صوت سابق
       if (audioRef.current) {
         audioRef.current.pause();
@@ -35,8 +35,17 @@ export function useAyahAudio() {
       // 1. Determine which bitrate to try
       const cachedBitrate = reciterBestBitrate.current[reciterID];
       const bitratesToTry = cachedBitrate ? [cachedBitrate] : [128, 64];
+
+      // Helper to check if a URL is in Cache API
+      const isUrlInCache = async (url: string) => {
+        try {
+          const cache = await caches.open('quran-audio-v2');
+          const match = await cache.match(url);
+          return !!match;
+        } catch (e) { return false; }
+      };
       
-      const tryPlay = (bitrateIndex: number) => {
+      const tryPlay = async (bitrateIndex: number) => {
           if (bitrateIndex >= bitratesToTry.length) {
               console.error(`All bitrates failed for reciter ${reciterID}`);
               resolve();
@@ -46,6 +55,17 @@ export function useAyahAudio() {
           const currentBitrate = bitratesToTry[bitrateIndex];
           const url = `https://cdn.islamic.network/quran/audio/${currentBitrate}/${reciterID}/${globalAyahNumber}.mp3`;
           
+          // Smart Check: Offline + Not in Cache
+          const inCache = await isUrlInCache(url);
+          if (!navigator.onLine && !inCache) {
+              // Dispatch event for App.tsx to show a toast
+              window.dispatchEvent(new CustomEvent('showToast', { 
+                  detail: { message: 'لا يوجد إنترنت وهذا الملف غير محمل مسبقاً', type: 'error' } 
+              }));
+              resolve();
+              return;
+          }
+
           let audio: HTMLAudioElement;
           
           // Use preloaded audio if it matches
@@ -154,8 +174,25 @@ export function useAyahAudio() {
         for (let current = currentSettings.startGlobalAyah; current <= currentSettings.endGlobalAyah; current++) {
             if (!isPlayingRef.current) break;
             
-            onAyahChange(current);
-            setCurrentGlobalAyah(current);
+            // Smart Highlighting Logic: Check if available before highlighting
+            const currentBitrate = reciterBestBitrate.current[currentSettings.reciterId] || 64;
+            const url = `https://cdn.islamic.network/quran/audio/${currentBitrate}/${currentSettings.reciterId}/${current}.mp3`;
+            
+            const checkAvailability = async () => {
+                if (navigator.onLine) return true;
+                try {
+                    const cache = await caches.open('quran-audio-v2');
+                    const match = await cache.match(url);
+                    return !!match;
+                } catch (e) { return false; }
+            };
+
+            const isAvailable = await checkAvailability();
+            
+            if (isAvailable) {
+                onAyahChange(current);
+                setCurrentGlobalAyah(current);
+            }
             
             let ayahRep = 0;
             while (isPlayingRef.current) {
@@ -174,6 +211,8 @@ export function useAyahAudio() {
                 }
 
                 await playAyahAudio(current, liveSettings.reciterId, liveSettings.playbackRate, nextAyah);
+                // If it skipped (offline + not in cache), we should break the repetition loop for this ayah
+                if (!navigator.onLine && !isAvailable) break;
                 ayahRep++;
             }
         }

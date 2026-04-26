@@ -144,6 +144,16 @@ export default function App() {
     };
   }, []);
 
+  // Handle Global Toast Events (from hooks)
+  useEffect(() => {
+    const handleToastEvent = (e: any) => {
+      const { message } = e.detail;
+      if (message) setToastMessage(message);
+    };
+    window.addEventListener('showToast', handleToastEvent);
+    return () => window.removeEventListener('showToast', handleToastEvent);
+  }, []);
+
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
       const saved = localStorage.getItem('quran_app_settings');

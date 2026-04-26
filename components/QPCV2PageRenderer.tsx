@@ -1376,10 +1376,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             line.isCentered ? "justify-center force-center" : "justify-between"
                         )}
                         style={{
-                            flex: isSpecialPage ? '0 1 auto' : '1 1 0px',
-                            height: isSpecialPage ? 'auto' : 'auto',
-                            minHeight: isSpecialPage ? 'auto' : '0',
-                            maxHeight: isSpecialPage ? 'none' : 'none',
+                            flex: (isSpecialPage || orientation === 'landscape') ? '0 0 auto' : '1 1 0px',
+                            height: (isSpecialPage || orientation === 'landscape') ? 'auto' : 'auto',
+                            minHeight: (isSpecialPage || orientation === 'landscape') ? 'auto' : '0',
+                            maxHeight: 'none',
                             fontFamily: fontName,
                             direction: 'rtl',
                             lineHeight: isSpecialPage ? '1.4' : lineHeightVal,
