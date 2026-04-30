@@ -65,10 +65,19 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             let totalBytes = 0;
             
             for (const req of keys) {
-                const res = await cache.match(req);
-                if (res) {
-                    const blob = await res.blob();
-                    totalBytes += blob.size;
+                try {
+                    const res = await cache.match(req);
+                    if (res) {
+                        const contentType = res.headers.get('Content-Type') || '';
+                        if (contentType.includes('text/html')) continue;
+
+                        const blob = await res.blob();
+                        if (blob.size < 1024) continue; // Skip files < 1KB
+                        
+                        totalBytes += blob.size;
+                    }
+                } catch (err) {
+                    console.warn(`Failed to read blob for ${req.url}`, err);
                 }
             }
             
@@ -88,23 +97,44 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             try {
                 const cache = await caches.open('quran-audio-v2');
                 
+                // Helper to detect and PURGE 404 HTML pages saved as MP3
+                const isValidAudioAndClean = async (url: string, res: Response | undefined) => {
+                    if (!res) return false;
+                    const type = res.headers.get('Content-Type') || '';
+                    if (type.includes('text/html')) {
+                        console.warn(`[Purge] Deleting HTML error page from audio cache: ${url}`);
+                        await cache.delete(url);
+                        return false;
+                    }
+                    // Optional: check size if blob is already read or use headers if available
+                    // For now, type is the safest bet
+                    return true;
+                };
+
                 if (activeTab === 'full') {
                     const verifiedFull = new Set<number>();
                     let startGlobal = 1;
                     for (let surahNum = 1; surahNum <= 114; surahNum++) {
                         const ayahCount = SURAHS[surahNum - 1].ayahCount;
                         
-                        // Create an array of promises for ALL ayahs in this surah
-                        const ayahPromises = [];
+                        const ayahPairs = [];
                         for (let i = 0; i < ayahCount; i++) {
                             const url = buildAudioUrl(selectedReciter, startGlobal + i);
-                            ayahPromises.push(cache.match(url, { ignoreSearch: true }));
+                            if (url) {
+                                ayahPairs.push({ url, res: await cache.match(url, { ignoreSearch: true }) });
+                            } else {
+                                ayahPairs.push({ url: '', res: undefined });
+                            }
                         }
                         
-                        const results = await Promise.all(ayahPromises);
-                        const allFound = results.every(res => res !== undefined);
+                        let allValid = true;
+                        for (const pair of ayahPairs) {
+                            if (!pair.res || !(await isValidAudioAndClean(pair.url, pair.res))) {
+                                allValid = false;
+                            }
+                        }
                         
-                        if (allFound) {
+                        if (allValid) {
                             verifiedFull.add(surahNum);
                         }
                         startGlobal += ayahCount;
@@ -113,10 +143,19 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                     setDownloadedFullSurahs(verifiedFull);
                 } else if (activeTab === 'words') {
                     const keys = await cache.keys();
-                    const wbwUrls = keys.map(k => k.url).filter(url => url.includes('/wbw/'));
+                    // In addition to URL check, we must filter out invalid blobs
+                    const validWbwUrls: string[] = [];
+                    for (const req of keys) {
+                        if (req.url.includes('/wbw/')) {
+                            const res = await cache.match(req);
+                            if (await isValidAudioAndClean(req.url, res)) {
+                                validWbwUrls.push(req.url);
+                            }
+                        }
+                    }
                     
                     const surahFileCounts = new Map<number, number>();
-                    for (const url of wbwUrls) {
+                    for (const url of validWbwUrls) {
                         const match = url.match(/\/wbw\/(\d+)_/);
                         if (match) {
                             const surahNum = parseInt(match[1], 10);
@@ -126,12 +165,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                     
                     const verifiedWords = new Set<number>();
                     
-                    // Only verify surahs that have files in the cache
                     for (const [surahNum, fileCount] of surahFileCounts.entries()) {
                         const surahInfo = SURAHS.find(s => s.number === surahNum);
                         if (!surahInfo) continue;
                         
-                        // We must get the texts to know the exact expected word count
                         const ayahRefs = Array.from({ length: surahInfo.ayahCount }, (_, i) => ({
                             surahNumber: surahNum,
                             ayahNumber: i + 1
@@ -213,6 +250,14 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             }
         } catch (error) {
             console.error("Failed to download full surah", error);
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { 
+                    message: isArabic 
+                        ? 'عذراً، فشل التحميل. بعض ملفات هذا القارئ غير متوفرة على السيرفر.' 
+                        : 'Sorry, download failed. Some files for this reciter are not available on the server.', 
+                    type: 'error' 
+                }
+            }));
         } finally {
             setIsDownloadingFull(false);
         }
@@ -286,6 +331,14 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             setDownloadedWordsSurahs(prev => new Set(prev).add(surahNumber));
         } catch (error) {
             console.error("Failed to download words", error);
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { 
+                    message: isArabic 
+                        ? 'عذراً، فشل تحميل كلمات السورة.' 
+                        : 'Sorry, failed to download Surah words.', 
+                    type: 'error' 
+                }
+            }));
         } finally {
             setDownloadingWordsSurahs(prev => {
                 const newSet = new Set(prev);
@@ -372,8 +425,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all appearance-none"
                                 >
                                     {reciters.map(reciter => (
-                                        <option key={reciter.id} value={reciter.id}>
-                                            {isArabic ? reciter.nameAr : (t.reciters && t.reciters[reciter.id] ? t.reciters[reciter.id] : reciter.nameEn)}
+                                        <option key={reciter.id} value={reciter.id} disabled={reciter.disabled}>
+                                            {t.reciters && t.reciters[reciter.id] ? t.reciters[reciter.id] : reciter.name}
                                         </option>
                                     ))}
                                 </select>

@@ -26,7 +26,7 @@ export default function Toast({ message, onClose, duration = 2000, actions }: To
     if (!message) return null;
 
     return (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5 duration-300 w-max max-w-[95vw]">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-top-5 duration-300 w-max max-w-[95vw]">
             <div className="bg-slate-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/10 text-sm font-medium flex items-center gap-4">
                 <div className="flex items-center gap-2">
                     <span className="flex-1 text-center">{message}</span>

@@ -243,27 +243,23 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
 
       for (const num of ayahGlobalNumbers) {
           const url = buildAudioUrl(reciterID, num);
-          try {
-              const existing = await audioCache.match(url);
-              if (existing) continue;
+          const existing = await audioCache.match(url);
+          if (existing) continue;
 
-              const response = await fetch(url, { mode: 'cors' });
-
-              if (response.ok) {
-                  // CORS success — store as fresh readable blob response
-                  const blob = await response.blob();
-                  const fresh = new Response(blob, {
-                      status: 200,
-                      headers: { 'Content-Type': 'audio/mpeg' }
-                  });
-                  await audioCache.put(url, fresh);
-              } else {
-                  // Fallback: store as-is (might be opaque for unknown reciters)
-                  await audioCache.put(url, response.clone());
-              }
-          } catch (err) {
-              console.error(`[preCacheAudio] ayah ${num}:`, err);
+          const response = await fetch(url, { mode: 'cors' });
+          
+          // Security Fix: Prevent caching 404 HTML error pages as audio
+          const contentType = response.headers.get('Content-Type') || '';
+          if (!response.ok || contentType.includes('text/html')) {
+              throw new Error(`Invalid audio response: ${response.status} (${contentType})`);
           }
+
+          const blob = await response.blob();
+          const fresh = new Response(blob, {
+              status: 200,
+              headers: { 'Content-Type': 'audio/mpeg' }
+          });
+          await audioCache.put(url, fresh);
       }
   }, []);
 

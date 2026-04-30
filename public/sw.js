@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-03-30-V2'; // Force update for new audio domain
+const CACHE_VERSION = 'v2026-04-30-V3'; // Force update for new reciters list
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
@@ -159,6 +159,12 @@ async function cacheAllDataSafely(reportProgress = false) {
                         const cached = await task.cache.match(task.url);
                         if (!cached) {
                             const res = await fetchWithRetry(task.url);
+                            // Security Fix: Prevent caching 404 HTML error pages as valid data
+                            const contentType = res.headers.get('Content-Type') || '';
+                            if (!res.ok || contentType.includes('text/html')) {
+                                console.warn(`[SW] Skipping invalid response for ${task.url}: Status ${res.status}, Type: ${contentType}`);
+                                continue;
+                            }
                             await task.cache.put(task.url, res);
                         }
                         successfulTasks++;

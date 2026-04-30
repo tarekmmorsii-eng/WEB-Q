@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { STATIC_RECITERS } from '../services/reciterService';
+import { RECITERS_LIST } from '../services/reciterService';
 
 export interface Reciter {
     id: string;
-    nameAr: string;
-    nameEn: string;
+    name: string;
+    disabled?: boolean;
 }
 
 const CACHE_KEY = 'quran_reciters_v2'; 
@@ -28,7 +28,7 @@ const QURANCOM_ID_TO_INTERNAL: Record<number, string> = {
 };
 
 export function useReciters() {
-    const [reciters, setReciters] = useState<Reciter[]>(STATIC_RECITERS);
+    const [reciters, setReciters] = useState<Reciter[]>(RECITERS_LIST);
     const [loading, setLoading] = useState(false);
 
     // We no longer fetch from the API since we have the definitive static list

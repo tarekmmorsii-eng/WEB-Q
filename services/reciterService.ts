@@ -17,30 +17,55 @@ const CDN_QURANIC = 'https://everyayah.com/data';
  * Discovered by querying: api.quran.com/api/v4/recitations/{id}/by_ayah/1
  */
 export const RECITER_URL_MAP: Record<string, string> = {
+  "sep_murattal": "",
   "husary": "/Husary_128kbps",
-  "husary_mujawwad": "/Husary_Mujawwad_128kbps",
-  "husary_muallim": "/Husary_Muallim_128kbps",
   "abdul_basit": "/Abdul_Basit_Murattal_192kbps",
-  "abdul_basit_mujawwad": "/Abdul_Basit_Mujawwad_128kbps",
   "minshawy": "/Minshawy_Murattal_128kbps",
-  "minshawy_mujawwad": "/Minshawy_Mujawwad_192kbps",
   "alafasy": "/Alafasy_128kbps",
-  "shatri": "/Abu_Bakr_Ash-Shaatree_128kbps",
-  "ghamdi": "/Saad_Al_Ghamdi_128kbps",
-  "maher": "/MaherAlMuaiqly_128kbps",
+  "maher": "/MaherAlMuaiqly128kbps",
   "sudais": "/Abdurrahmaan_As-Sudais_192kbps",
+  "yasser": "/Yasser_Ad-Dussary_128kbps",
+  "qatami": "/Nasser_Alqatami_128kbps",
+  "ghamdi": "/Ghamadi_40kbps",
   "shuraym": "/Saood_ash-Shuraym_128kbps",
-  "yaser": "/Yasser_Ad-Dussary_128kbps", 
-  "ajamy": "/Ahmed_ibn_Ali_al-Ajamy_128kbps",
-  "tablawi": "/Mohammad_al_Tablaway_128kbps",
+  "ajamy": "/ahmed_ibn_ali_al_ajamy_128kbps",
   "rifai": "/Hani_Rifai_192kbps",
   "juhany": "/Abdullaah_3awwaad_Al-Juhaynee_128kbps",
   "hudhaify": "/Hudhaify_128kbps",
   "ayyoub": "/Muhammad_Ayyoub_128kbps",
   "basfar": "/Abdullah_Basfar_192kbps",
-  "qatami": "/Nasser_Alqatami_128kbps",
+  "banna": "/mahmoud_ali_al_banna_32kbps",
+  "mustafa_ismail": "/Mustafa_Ismail_48kbps",
+  "tablawi": "/Mohammad_al_Tablaway_128kbps",
   "ali_jaber": "/Ali_Jaber_64kbps",
-  "fares_abbad": "/Fares_Abbad_64kbps"
+  "fares_abbad": "/Fares_Abbad_64kbps",
+  "qahtani": "/Khaalid_Abdullaah_al-Qahtaanee_192kbps",
+  "jibreel": "/Muhammad_Jibreel_128kbps",
+  "matroud": "/Abdullah_Matroud_128kbps",
+  "budair": "/Salah_Al_Budair_128kbps",
+  "bukhatir": "/Salaah_AbdulRahman_Bukhatir_128kbps",
+  "akhdar": "/Ibrahim_Akhdar_32kbps",
+  "ahmed_neana": "/Ahmed_Neana_128kbps",
+  "akram_alaqimy": "/Akram_AlAlaqimy_128kbps",
+  "ali_hajjaj": "/Ali_Hajjaj_AlSuesy_128kbps",
+  "abdulkareem": "/Muhammad_AbdulKareem_128kbps",
+  "muhsin_qasim": "/Muhsin_Al_Qasim_192kbps",
+  "sahl_yassin": "/Sahl_Yassin_128kbps",
+  "aziz_alili": "/aziz_alili_128kbps",
+  "karim_mansoori": "/Karim_Mansoori_40kbps",
+  "parhizgar": "/Parhizgar_48kbps",
+  "nabil_rifai": "/Nabil_Rifa3i_48kbps",
+  "yaser_salamah": "/Yaser_Salamah_128kbps",
+  "khalifa_tunaiji": "/khalefa_al_tunaiji_64kbps",
+  "shatri": "/Abu_Bakr_Ash-Shaatree_128kbps",
+  
+  "sep_mujawwad": "",
+  "husary_mujawwad": "/Husary_128kbps_Mujawwad",
+  "abdul_basit_mujawwad": "/Abdul_Basit_Mujawwad_128kbps",
+  "minshawy_mujawwad": "/Minshawy_Mujawwad_192kbps",
+  "husary_muallim": "/Husary_Muallim_128kbps",
+  "minshawy_teacher": "/Minshawy_Teacher_128kbps",
+  "sowaid": "/Ayman_Sowaid_64kbps"
 };
 
 /**
@@ -75,54 +100,82 @@ export function globalToSurahAyah(global: number): { surah: number; ayah: number
  * @returns           Absolute CORS-enabled audio URL
  */
 export function buildAudioUrl(reciterID: string, globalNum: number): string {
-    const path = RECITER_URL_MAP[reciterID];
+    try {
+        const path = RECITER_URL_MAP[reciterID];
 
-    if (!path) {
-        throw new Error(`Reciter ID '${reciterID}' not found in RECITER_URL_MAP.`);
+        if (!path) {
+            return ""; // Safe return for separators, missing IDs or null paths
+        }
+
+        const { surah, ayah } = globalToSurahAyah(globalNum);
+        const s = String(surah).padStart(3, '0');
+        const a = String(ayah).padStart(3, '0');
+        const fileName = `${s}${a}.mp3`;
+        
+        const baseUrl = 'https://everyayah.com/data';
+        
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        const cleanPath = normalizedPath.endsWith('/') ? normalizedPath.slice(0, -1) : normalizedPath;
+        
+        return baseUrl + cleanPath + "/" + fileName;
+    } catch (error) {
+        console.warn(`[buildAudioUrl] Error building URL for ${reciterID}:`, error);
+        return "";
     }
-
-    const { surah, ayah } = globalToSurahAyah(globalNum);
-    const s = String(surah).padStart(3, '0');
-    const a = String(ayah).padStart(3, '0');
-    const fileName = `${s}${a}.mp3`;
-    
-    // Explicitly construct absolute URL using string concatenation as requested
-    const baseUrl = 'https://everyayah.com/data';
-    
-    // Ensure path starts with / and ends without /
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-    const cleanPath = normalizedPath.endsWith('/') ? normalizedPath.slice(0, -1) : normalizedPath;
-    
-    return baseUrl + cleanPath + "/" + fileName;
 }
 
 /**
  * Static reciter list with Arabic/English names — used as offline fallback
  * and to populate the reciter selector UI.
  */
-export const STATIC_RECITERS = [
-    { id: 'husary',               nameAr: 'محمود خليل الحصري',              nameEn: 'Mahmoud Khalil Al-Husary' },
-    { id: 'husary_mujawwad',      nameAr: 'الحصري (مجوّد)',                  nameEn: 'Al-Husary (Mujawwad)' },
-    { id: 'husary_muallim',       nameAr: 'الحصري (معلم)',                  nameEn: 'Al-Husary (Muallim)' },
-    { id: 'abdul_basit',          nameAr: 'عبد الباسط عبد الصمد (مرتّل)',  nameEn: 'AbdulBaset AbdulSamad (Murattal)' },
-    { id: 'abdul_basit_mujawwad', nameAr: 'عبد الباسط عبد الصمد (مجوّد)', nameEn: 'AbdulBaset AbdulSamad (Mujawwad)' },
-    { id: 'minshawy',             nameAr: 'محمد صديق المنشاوي (مرتّل)',    nameEn: 'Mohamed Siddiq Al-Minshawi (Murattal)' },
-    { id: 'minshawy_mujawwad',    nameAr: 'محمد صديق المنشاوي (مجوّد)',   nameEn: 'Mohamed Siddiq Al-Minshawi (Mujawwad)' },
-    { id: 'alafasy',              nameAr: 'مشاري بن راشد العفاسي',         nameEn: 'Mishary Rashid Al-Afasy' },
-    { id: 'shatri',               nameAr: 'أبو بكر الشاطري',               nameEn: 'Abu Bakr Al-Shatri' },
-    { id: 'ghamdi',               nameAr: 'سعد الغامدي',                   nameEn: 'Saad Al Ghamdi' },
-    { id: 'maher',                nameAr: 'ماهر المعيقلي',                 nameEn: 'Maher Al Muaiqly' },
-    { id: 'sudais',               nameAr: 'عبد الرحمن السديس',              nameEn: 'Abdur-Rahman As-Sudais' },
-    { id: 'shuraym',              nameAr: 'سعود الشريم',                   nameEn: "Sa'ud Ash-Shuraym" },
-    { id: 'yaser',                nameAr: 'ياسر الدوسري',                  nameEn: 'Yasser Al-Dosari' },
-    { id: 'ajamy',                nameAr: 'أحمد بن علي العجمي',             nameEn: 'Ahmed Al-Ajamy' },
-    { id: 'tablawi',              nameAr: 'محمد الطبلاوي',                 nameEn: 'Mohamed Al-Tablawi' },
-    { id: 'rifai',                nameAr: 'هاني الرفاعي',                  nameEn: 'Hani Ar-Rifai' },
-    { id: 'juhany',               nameAr: 'عبدالله الجهني',                  nameEn: 'Abdullah Al-Juhany' },
-    { id: 'hudhaify',             nameAr: 'علي الحذيفي',                   nameEn: 'Ali Al-Hudhaify' },
-    { id: 'ayyoub',               nameAr: 'محمد أيوب',                     nameEn: 'Muhammad Ayyoub' },
-    { id: 'basfar',               nameAr: 'عبد الله بصفر',                  nameEn: 'Abdullah Basfar' },
-    { id: 'qatami',               nameAr: 'ناصر القطامي',                  nameEn: 'Nasser Al Qatami' },
-    { id: 'ali_jaber',            nameAr: 'علي جابر',                      nameEn: 'Ali Jaber' },
-    { id: 'fares_abbad',          nameAr: 'فارس عباد',                     nameEn: 'Fares Abbad' }
+export const RECITERS_LIST = [
+  { id: "sep_murattal", name: "────── التلاوات المرتلة ──────", disabled: true },
+  { id: "husary", name: "محمود خليل الحصري" },
+  { id: "abdul_basit", name: "عبد الباسط عبد الصمد" },
+  { id: "minshawy", name: "محمد صديق المنشاوي" },
+  { id: "alafasy", name: "مشاري بن راشد العفاسي" },
+  { id: "maher", name: "ماهر المعيقلي" },
+  { id: "sudais", name: "عبد الرحمن السديس" },
+  { id: "yasser", name: "ياسر الدوسري" },
+  { id: "qatami", name: "ناصر القطامي" },
+  { id: "ghamdi", name: "سعد الغامدي" },
+  { id: "shuraym", name: "سعود الشريم" },
+  { id: "ajamy", name: "أحمد بن علي العجمي" },
+  { id: "rifai", name: "هاني الرفاعي" },
+  { id: "juhany", name: "عبد الله الجهني" },
+  { id: "hudhaify", name: "علي الحذيفي" },
+  { id: "ayyoub", name: "محمد أيوب" },
+  { id: "basfar", name: "عبد الله بصفر" },
+  { id: "banna", name: "محمود علي البنا" },
+  { id: "mustafa_ismail", name: "مصطفى إسماعيل" },
+  { id: "tablawi", name: "محمد محمود الطبلاوي" },
+  { id: "ali_jaber", name: "علي جابر" },
+  { id: "fares_abbad", name: "فارس عباد" },
+  { id: "qahtani", name: "خالد القحطاني" },
+  { id: "jibreel", name: "محمد جبريل" },
+  { id: "matroud", name: "عبد الله المطرود" },
+  { id: "budair", name: "صلاح البدير" },
+  { id: "bukhatir", name: "صلاح بو خاطر" },
+  { id: "akhdar", name: "إبراهيم الأخضر" },
+  { id: "ahmed_neana", name: "أحمد نعينع" },
+  { id: "akram_alaqimy", name: "أكرم العلاقمي" },
+  { id: "ali_hajjaj", name: "علي حجاج السويسي" },
+  { id: "abdulkareem", name: "محمد عبد الكريم" },
+  { id: "muhsin_qasim", name: "عبد المحسن القاسم" },
+  { id: "sahl_yassin", name: "سهل ياسين" },
+  { id: "aziz_alili", name: "عزيز عليلي" },
+  { id: "karim_mansoori", name: "كريم منصوري" },
+  { id: "parhizgar", name: "شهريار برهيزغار" },
+  { id: "nabil_rifai", name: "نبيل الرفاعي" },
+  { id: "yaser_salamah", name: "ياسر سلامة" },
+  { id: "khalifa_tunaiji", name: "خليفة الطنيجي" },
+  { id: "shatri", name: "أبو بكر الشاطري" },
+
+  { id: "sep_mujawwad", name: "────── مجود وتعليمي ──────", disabled: true },
+  { id: "husary_mujawwad", name: "محمود خليل الحصري (مجود)" },
+  { id: "abdul_basit_mujawwad", name: "عبد الباسط عبد الصمد (مجود)" },
+  { id: "minshawy_mujawwad", name: "محمد صديق المنشاوي (مجود)" },
+  { id: "husary_muallim", name: "محمود خليل الحصري (المصحف المعلم)" },
+  { id: "minshawy_teacher", name: "محمد صديق المنشاوي (المصحف المعلم)" },
+  { id: "sowaid", name: "أيمن سويد (تعليمي)" }
 ];

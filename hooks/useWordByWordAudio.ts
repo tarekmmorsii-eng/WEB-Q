@@ -52,24 +52,21 @@ export function useWordByWordAudio() {
                 const batch = words.slice(i, i + BATCH_SIZE);
                 await Promise.all(batch.map(async (w) => {
                     const url = generateAudioUrl(w.surah, w.ayah, w.word);
-                    try {
-                        const existing = await cache.match(url);
-                        if (existing) return;
+                    const existing = await cache.match(url);
+                    if (existing) return;
 
-                        const response = await fetch(url, { mode: 'cors' });
-                        if (response.ok) {
-                            const blob = await response.blob();
-                            const fresh = new Response(blob, {
-                                status: 200,
-                                headers: { 'Content-Type': 'audio/mpeg' }
-                            });
-                            await cache.put(url, fresh);
-                        } else {
-                            // Fallback: blind cache if CORS fails for some reason
-                            await cache.put(url, response.clone());
-                        }
-                    } catch (err) {
-                        console.error(`[preCacheWords] ${url}:`, err);
+                    const response = await fetch(url, { mode: 'cors' });
+                    const contentType = response.headers.get('Content-Type') || '';
+                    
+                    if (response.ok && !contentType.includes('text/html')) {
+                        const blob = await response.blob();
+                        const fresh = new Response(blob, {
+                            status: 200,
+                            headers: { 'Content-Type': 'audio/mpeg' }
+                        });
+                        await cache.put(url, fresh);
+                    } else {
+                        throw new Error(`Invalid response for word ${url}: ${response.status} (${contentType})`);
                     }
                 }));
             }

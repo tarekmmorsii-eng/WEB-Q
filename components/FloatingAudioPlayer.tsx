@@ -101,11 +101,11 @@ export default function FloatingAudioPlayer({
                         {currentContext && (
                             <div 
                                 className="text-[10px] text-amber-500/80 font-bold px-2 text-center uppercase tracking-wider w-full overflow-hidden text-ellipsis whitespace-nowrap"
-                                title={reciters.find(r => r.id === selectedReciterId) ? `${currentLanguage === 'ar' ? reciters.find(r => r.id === selectedReciterId)?.nameAr : reciters.find(r => r.id === selectedReciterId)?.nameEn} • ${currentContext}` : currentContext}
+                                title={reciters.find(r => r.id === selectedReciterId) ? `${reciters.find(r => r.id === selectedReciterId)?.name} • ${currentContext}` : currentContext}
                             >
                                 {(() => {
                                     const r = reciters.find(rec => rec.id === selectedReciterId);
-                                    const rName = r ? (currentLanguage === 'ar' ? r.nameAr : r.nameEn) : '';
+                                    const rName = r ? r.name : '';
                                     return rName ? `${rName} • ${currentContext}` : currentContext;
                                 })()}
                             </div>
@@ -200,8 +200,8 @@ export default function FloatingAudioPlayer({
                                     }}
                                 >
                                     {reciters.map(r => (
-                                        <option key={r.id} value={r.id} className="bg-slate-800 text-white text-xs md:text-sm">
-                                            {currentLanguage === 'ar' ? r.nameAr : (t.reciters && t.reciters[r.id] ? t.reciters[r.id] : r.nameEn)}
+                                        <option key={r.id} value={r.id} className="bg-slate-800 text-white text-xs md:text-sm" disabled={r.disabled}>
+                                            {t.reciters && t.reciters[r.id] ? t.reciters[r.id] : r.name}
                                         </option>
                                     ))}
                                 </select>
