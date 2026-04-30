@@ -64,34 +64,77 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
     // Verify download status against the REAL cache
     useEffect(() => {
-        if (!isOpen || activeTab !== 'full') return;
+        if (!isOpen) return;
 
         const verify = async () => {
             try {
                 const cache = await caches.open('quran-audio-v2');
-                const verified = new Set<number>();
                 
-                let startGlobal = 1;
-                for (let surahNum = 1; surahNum <= 114; surahNum++) {
-                    const ayahCount = SURAHS[surahNum - 1].ayahCount;
-                    
-                    // Create an array of promises for ALL ayahs in this surah
-                    const ayahPromises = [];
-                    for (let i = 0; i < ayahCount; i++) {
-                        const url = buildAudioUrl(selectedReciter, startGlobal + i);
-                        ayahPromises.push(cache.match(url, { ignoreSearch: true }));
+                if (activeTab === 'full') {
+                    const verifiedFull = new Set<number>();
+                    let startGlobal = 1;
+                    for (let surahNum = 1; surahNum <= 114; surahNum++) {
+                        const ayahCount = SURAHS[surahNum - 1].ayahCount;
+                        
+                        // Create an array of promises for ALL ayahs in this surah
+                        const ayahPromises = [];
+                        for (let i = 0; i < ayahCount; i++) {
+                            const url = buildAudioUrl(selectedReciter, startGlobal + i);
+                            ayahPromises.push(cache.match(url, { ignoreSearch: true }));
+                        }
+                        
+                        const results = await Promise.all(ayahPromises);
+                        const allFound = results.every(res => res !== undefined);
+                        
+                        if (allFound) {
+                            verifiedFull.add(surahNum);
+                        }
+                        startGlobal += ayahCount;
                     }
-                    
-                    const results = await Promise.all(ayahPromises);
-                    const allFound = results.every(res => res !== undefined);
-                    
-                    if (allFound) {
-                        verified.add(surahNum);
-                    }
-                    startGlobal += ayahCount;
-                }
 
-                setDownloadedFullSurahs(verified);
+                    setDownloadedFullSurahs(verifiedFull);
+                } else if (activeTab === 'words') {
+                    const keys = await cache.keys();
+                    const wbwUrls = keys.map(k => k.url).filter(url => url.includes('/wbw/'));
+                    
+                    const surahFileCounts = new Map<number, number>();
+                    for (const url of wbwUrls) {
+                        const match = url.match(/\/wbw\/(\d+)_/);
+                        if (match) {
+                            const surahNum = parseInt(match[1], 10);
+                            surahFileCounts.set(surahNum, (surahFileCounts.get(surahNum) || 0) + 1);
+                        }
+                    }
+                    
+                    const verifiedWords = new Set<number>();
+                    
+                    // Only verify surahs that have files in the cache
+                    for (const [surahNum, fileCount] of surahFileCounts.entries()) {
+                        const surahInfo = SURAHS.find(s => s.number === surahNum);
+                        if (!surahInfo) continue;
+                        
+                        // We must get the texts to know the exact expected word count
+                        const ayahRefs = Array.from({ length: surahInfo.ayahCount }, (_, i) => ({
+                            surahNumber: surahNum,
+                            ayahNumber: i + 1
+                        }));
+                        const ayahTexts = await getAyahTexts(ayahRefs);
+                        
+                        let expectedCount = 0;
+                        for (let i = 1; i <= surahInfo.ayahCount; i++) {
+                            const text = ayahTexts.get(`${surahNum}-${i}`);
+                            if (text) {
+                                expectedCount += text.split(' ').length + 2;
+                            }
+                        }
+                        
+                        if (expectedCount > 0 && fileCount >= expectedCount) {
+                            verifiedWords.add(surahNum);
+                        }
+                    }
+                    setDownloadedWordsSurahs(verifiedWords);
+                }
+                
                 updateCacheSize();
             } catch (err) {
                 console.error("Cache API failed, cannot verify downloads", err);
@@ -100,8 +143,6 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
         verify();
     }, [selectedReciter, isOpen, activeTab]);
-
-
 
     const checkCacheStatus = async () => {
         // This is now redundant but keeping it empty or removing it to avoid errors if called elsewhere

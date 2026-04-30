@@ -41,44 +41,6 @@ export function useWordByWordAudio() {
         setActiveWord(null);
     }, []);
 
-    const playWordAudio = useCallback(async (surah: number, ayah: number, word: number) => {
-        stopAudio();
-        const url = generateAudioUrl(surah, ayah, word);
-
-        if (navigator.onLine) {
-            // Online: play directly
-            const audio = new Audio(url);
-            audio.onended = () => setActiveWord(null);
-            audio.onerror = () => { setActiveWord(null); };
-            audioRef.current = audio;
-            setActiveWord({ surah, ayah, word });
-            audio.play().catch(() => setActiveWord(null));
-            return;
-        }
-
-        // Offline: check quran-audio-v2 directly (caches.match may miss opaque responses)
-        let cached: Response | undefined;
-        try {
-            const cache = await caches.open('quran-audio-v2');
-            cached = (await cache.match(url)) ?? undefined;
-        } catch { /* ignore */ }
-
-        if (!cached) {
-            window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { message: 'هذا الصوت غير محمل — يحتاج اتصال بالإنترنت', type: 'error' }
-            }));
-            return;
-        }
-        // Pass URL directly — SW intercepts and serves from quran-audio-v2
-        // No crossOrigin: opaque responses fail with crossorigin="anonymous"
-        const audio = new Audio(url);
-        audio.onended = () => setActiveWord(null);
-        audio.onerror = () => setActiveWord(null);
-        audioRef.current = audio;
-        setActiveWord({ surah, ayah, word });
-        try { await audio.play(); } catch (e) { console.log('[word play] failed:', e); setActiveWord(null); }
-    }, [stopAudio]);
-
     const preCacheWords = useCallback(async (words: ActiveWord[]) => {
         // audio.qurancdn.com supports CORS ✅
         // We use 'cors' mode to get readable responses (not opaque)
@@ -115,6 +77,47 @@ export function useWordByWordAudio() {
             console.error('[preCacheWords] failed:', err);
         }
     }, []);
+
+    const playWordAudio = useCallback(async (surah: number, ayah: number, word: number) => {
+        stopAudio();
+        const url = generateAudioUrl(surah, ayah, word);
+
+        if (navigator.onLine) {
+            // Passive Caching: Fetch and cache in the background while playing online
+            preCacheWords([{ surah, ayah, word }]).catch(() => {});
+
+            // Online: play directly
+            const audio = new Audio(url);
+            audio.onended = () => setActiveWord(null);
+            audio.onerror = () => { setActiveWord(null); };
+            audioRef.current = audio;
+            setActiveWord({ surah, ayah, word });
+            audio.play().catch(() => setActiveWord(null));
+            return;
+        }
+
+        // Offline: check quran-audio-v2 directly (caches.match may miss opaque responses)
+        let cached: Response | undefined;
+        try {
+            const cache = await caches.open('quran-audio-v2');
+            cached = (await cache.match(url)) ?? undefined;
+        } catch { /* ignore */ }
+
+        if (!cached) {
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { message: 'هذا الصوت غير محمل — يحتاج اتصال بالإنترنت', type: 'error' }
+            }));
+            return;
+        }
+        // Pass URL directly — SW intercepts and serves from quran-audio-v2
+        // No crossOrigin: opaque responses fail with crossorigin="anonymous"
+        const audio = new Audio(url);
+        audio.onended = () => setActiveWord(null);
+        audio.onerror = () => setActiveWord(null);
+        audioRef.current = audio;
+        setActiveWord({ surah, ayah, word });
+        try { await audio.play(); } catch (e) { console.log('[word play] failed:', e); setActiveWord(null); }
+    }, [stopAudio, preCacheWords]);
 
     return {
         activeWord,
