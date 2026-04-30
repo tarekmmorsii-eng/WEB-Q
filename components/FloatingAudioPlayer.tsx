@@ -96,11 +96,18 @@ export default function FloatingAudioPlayer({
                 
                 {showControls ? (
                     /* --- FULL CONTROL BAR VIEW --- */
-                    <div className="flex flex-col gap-1 w-full">
-                        {/* Context info (Surah Name - Ayah Number) */}
+                    <div className="flex flex-col gap-1 w-full min-w-0">
+                        {/* Context info (Reciter • Surah Name - Ayah Number) */}
                         {currentContext && (
-                            <div className="text-[10px] text-amber-500/80 font-bold px-2 text-center uppercase tracking-wider">
-                                {currentContext}
+                            <div 
+                                className="text-[10px] text-amber-500/80 font-bold px-2 text-center uppercase tracking-wider w-full overflow-hidden text-ellipsis whitespace-nowrap"
+                                title={reciters.find(r => r.id === selectedReciterId) ? `${currentLanguage === 'ar' ? reciters.find(r => r.id === selectedReciterId)?.nameAr : reciters.find(r => r.id === selectedReciterId)?.nameEn} • ${currentContext}` : currentContext}
+                            >
+                                {(() => {
+                                    const r = reciters.find(rec => rec.id === selectedReciterId);
+                                    const rName = r ? (currentLanguage === 'ar' ? r.nameAr : r.nameEn) : '';
+                                    return rName ? `${rName} • ${currentContext}` : currentContext;
+                                })()}
                             </div>
                         )}
                         <div className={clsx("flex items-center gap-1.5 md:gap-4 w-full justify-center py-0.5 md:py-1", isRTL ? "flex-row-reverse" : "flex-row")}>

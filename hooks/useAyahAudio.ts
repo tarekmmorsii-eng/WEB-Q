@@ -120,6 +120,11 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
               setIsPlayingSeq(false);
               isPlayingRef.current = false;
               setIsPaused(false);
+              if (!navigator.onLine && !inCache) {
+                  if (onAudioError) onAudioError('لا يوجد إنترنت، وهذا الملف غير محمل مسبقاً');
+              } else if (navigator.onLine) {
+                  if (onAudioError) onAudioError('عذراً، تلاوة هذا القارئ غير متوفرة حالياً (خطأ في الرابط).');
+              }
               resolve();
           };
 
@@ -132,7 +137,13 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
               setIsPlayingSeq(false);
               isPlayingRef.current = false;
               setIsPaused(false);
-              if (onAudioError) onAudioError('لا يوجد انترنت و هذا الملف غير محمل مسبقا');
+              
+              if (!navigator.onLine && !inCache) {
+                  if (onAudioError) onAudioError('لا يوجد إنترنت، وهذا الملف غير محمل مسبقاً');
+              } else if (navigator.onLine) {
+                  if (onAudioError) onAudioError('عذراً، تلاوة هذا القارئ غير متوفرة حالياً (خطأ في الرابط).');
+              }
+              
               resolve();
           }
       };

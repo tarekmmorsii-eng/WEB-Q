@@ -12,19 +12,19 @@ const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /** Maps Quran.com numeric recitation ID → our internal string ID */
 const QURANCOM_ID_TO_INTERNAL: Record<number, string> = {
-    7:  'ar.alafasy',
-    6:  'ar.husary',
-    12: 'ar.husarymujawwad',
-    3:  'ar.sudais',
-    2:  'ar.abdulbasitmurattal',
-    1:  'ar.abdulbasitmujawwad',
-    4:  'ar.shatri',
-    9:  'ar.minshawi',
-    8:  'ar.minshawimujawwad',
-    10: 'ar.shuraym',
-    5:  'ar.hanirifai',
-    11: 'ar.tablawi',
-    19: 'ar.ajamy'
+    7:  'alafasy',
+    6:  'husary',
+    12: 'husary_muallim',
+    3:  'sudais',
+    2:  'abdul_basit',
+    1:  'abdul_basit_mujawwad',
+    4:  'shatri',
+    9:  'minshawy',
+    8:  'minshawy_mujawwad',
+    10: 'shuraym',
+    5:  'rifai',
+    11: 'tablawi',
+    19: 'ajamy'
 };
 
 export function useReciters() {

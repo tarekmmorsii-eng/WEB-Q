@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-03-30-V1'; // Force update for new logo and manifest
+const CACHE_VERSION = 'v2026-03-30-V2'; // Force update for new audio domain
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
@@ -322,9 +322,7 @@ self.addEventListener('fetch', (event) => {
     // verses.quran.com and mirrors.quranicaudio.com support CORS → responses are readable
     // Audio elements may send Range requests → use URL-only match (ignores headers)
     const isAudioCDN =
-        url.hostname === 'verses.quran.com' ||
-        url.hostname === 'mirrors.quranicaudio.com' ||
-        url.hostname === 'cdn.islamic.network' ||     // legacy fallback
+        url.hostname === 'everyayah.com' ||
         url.hostname === 'audio.qurancdn.com';         // word-by-word CDN
 
     if (isAudioCDN) {

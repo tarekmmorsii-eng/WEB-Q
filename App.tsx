@@ -311,7 +311,22 @@ export default function App() {
   const [isMemorizationStatsOpen, setIsMemorizationStatsOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [selectedReciterId, setSelectedReciterId] = useState<string>(() => localStorage.getItem('selected_reciter_id') || 'ar.husary');
+  const [selectedReciterId, setSelectedReciterId] = useState<string>(() => {
+    const stored = localStorage.getItem('selected_reciter_id');
+    if (!stored) return 'husary';
+    if (stored.startsWith('ar.')) {
+        const keyMap: Record<string, string> = {
+            'ar.alafasy': 'alafasy', 'ar.husary': 'husary', 'ar.husarymujawwad': 'husary_muallim',
+            'ar.sudais': 'sudais', 'ar.abdulbasitmurattal': 'abdul_basit', 'ar.abdulbasitmujawwad': 'abdul_basit_mujawwad',
+            'ar.minshawi': 'minshawy', 'ar.minshawimujawwad': 'minshawy_mujawwad', 'ar.shuraym': 'shuraym',
+            'ar.hanirifai': 'rifai', 'ar.tablawi': 'tablawi', 'ar.ajamy': 'ajamy', 'ar.shatri': 'shatri',
+            'ar.maher': 'maher', 'ar.dosari': 'yaser', 'ar.qatami': 'qatami', 'ar.fares': 'fares_abbad',
+            'ar.ghamdi': 'ghamdi', 'ar.alijaber': 'ali_jaber'
+        };
+        return keyMap[stored] || 'husary';
+    }
+    return stored;
+  });
   const [audioModeActive, setAudioModeActive] = useState(false);
   const [playingAyahId, setPlayingAyahId] = useState<string | null>(null);
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
