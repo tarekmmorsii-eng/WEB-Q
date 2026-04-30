@@ -39,6 +39,24 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     const [downloadedWordsSurahs, setDownloadedWordsSurahs] = useState<Set<number>>(new Set());
     const [cacheSizeMB, setCacheSizeMB] = useState<string>('0.00');
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+    const [showWbwTip, setShowWbwTip] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === 'words') {
+            const currentViews = parseInt(localStorage.getItem('wbw_tip_views') || '0', 10);
+            if (currentViews <= 3) {
+                setShowWbwTip(true);
+                localStorage.setItem('wbw_tip_views', (currentViews + 1).toString());
+            }
+        } else {
+            setShowWbwTip(false);
+        }
+    }, [activeTab]);
+
+    const handleDismissWbwTip = () => {
+        localStorage.setItem('wbw_tip_views', '4');
+        setShowWbwTip(false);
+    };
 
     const updateCacheSize = async () => {
         try {
@@ -419,6 +437,27 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                     {/* Tab 2: Words Audio */}
                     {activeTab === 'words' && (
                         <div className="space-y-3">
+                            {showWbwTip && (
+                                <div className="mb-4 p-4 rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 flex flex-col gap-3 animate-scale-in">
+                                    <div className="flex items-start gap-3">
+                                        <div className="text-amber-500 text-lg">💡</div>
+                                        <p className="text-sm text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
+                                            {isArabic 
+                                                ? 'تلميح لتوفير المساحة: لا داعي لتحميل السورة كاملة! يمكنك الاكتفاء بالاستماع للكلمات الصعبة أثناء القراءة، وسيقوم التطبيق بحفظها تلقائياً للعمل بدون إنترنت.'
+                                                : 'Space-saving tip: No need to download the full Surah! You can just listen to the difficult words while reading, and they will be automatically saved for offline use.'}
+                                        </p>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button 
+                                            onClick={handleDismissWbwTip}
+                                            className="px-4 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-lg transition-colors border border-amber-500/20"
+                                        >
+                                            {isArabic ? 'قد فهمت' : 'Got it'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {SURAHS.map(surah => {
                                 const isDownloaded = downloadedWordsSurahs.has(surah.number);
                                 const isDownloading = downloadingWordsSurahs.has(surah.number);
