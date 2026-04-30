@@ -119,7 +119,12 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 export default function App() {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const ayahAudio = useAyahAudio();
+  const ayahAudio = useAyahAudio({
+    onAudioError: (msg: string) => {
+      setToastMessage(msg);
+      setPlayingAyahId(null);
+    }
+  });
 
   useEffect(() => {
     const checkTouch = () => {
@@ -151,7 +156,10 @@ export default function App() {
       if (message) setToastMessage(message);
     };
     window.addEventListener('showToast', handleToastEvent);
-    return () => window.removeEventListener('showToast', handleToastEvent);
+    
+    return () => {
+      window.removeEventListener('showToast', handleToastEvent);
+    };
   }, []);
 
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -376,12 +384,6 @@ export default function App() {
   }, [pageData?.number]);
 
   // Pre-cache audio for current page
-  useEffect(() => {
-      if (pageData && pageData.ayahs && audioModeActive) {
-          const nums = pageData.ayahs.map(a => getGlobalAyahNumber(a.surah?.number || 1, a.numberInSurah)).filter(n => n > 0);
-          ayahAudio.preCacheAudio(nums, selectedReciterId);
-      }
-  }, [pageData, audioModeActive, selectedReciterId, ayahAudio.preCacheAudio]);
 
   useEffect(() => {
      localStorage.setItem('selected_reciter_id', selectedReciterId);

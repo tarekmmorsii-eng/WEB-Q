@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
+import { buildAudioUrl } from '../services/reciterService';
+
 
 export interface PlayerSettings {
     startGlobalAyah: number;
@@ -9,7 +11,11 @@ export interface PlayerSettings {
     playbackRate: number;
 }
 
-export function useAyahAudio() {
+export interface UseAyahAudioProps {
+    onAudioError?: (msg: string) => void;
+}
+
+export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const preloadAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlayingSeq, setIsPlayingSeq] = useState(false);
@@ -32,104 +38,109 @@ export function useAyahAudio() {
         audioRef.current.removeAttribute('src');
       }
 
-      // 1. Determine which bitrate to try
-      const cachedBitrate = reciterBestBitrate.current[reciterID];
-      const bitratesToTry = cachedBitrate ? [cachedBitrate] : [128, 64];
+      // Build URL using Quran.com CDN (CORS-enabled: verses.quran.com)
+      const url = buildAudioUrl(reciterID, globalAyahNumber);
+      const nextUrl = nextGlobalAyahNumber ? buildAudioUrl(reciterID, nextGlobalAyahNumber) : null;
 
-      // Helper to check if a URL is in Cache API
-      const isUrlInCache = async (url: string) => {
+      // Helper to check if URL is in quran-audio-v2 cache
+      const isUrlInCache = async (u: string) => {
         try {
           const cache = await caches.open('quran-audio-v2');
-          const match = await cache.match(url);
+          const match = await cache.match(u);
           return !!match;
-        } catch (e) { return false; }
+        } catch { return false; }
       };
       
-      const tryPlay = async (bitrateIndex: number) => {
-          if (bitrateIndex >= bitratesToTry.length) {
-              console.error(`All bitrates failed for reciter ${reciterID}`);
-              resolve();
-              return;
-          }
-
-          const currentBitrate = bitratesToTry[bitrateIndex];
-          const url = `https://cdn.islamic.network/quran/audio/${currentBitrate}/${reciterID}/${globalAyahNumber}.mp3`;
-          
-          // Smart Check: Offline + Not in Cache
-          let cachedResponse: Response | undefined;
-          try {
-              const cache = await caches.open('quran-audio-v2');
-              cachedResponse = await cache.match(url);
-          } catch (e) { /* ignore */ }
-
-          const inCache = !!cachedResponse;
+      const tryPlay = async () => {
+          const inCache = await isUrlInCache(url);
 
           if (!navigator.onLine && !inCache) {
-              // Dispatch event for App.tsx to show a toast
-              window.dispatchEvent(new CustomEvent('showToast', { 
-                  detail: { message: 'لا يوجد إنترنت وهذا الملف غير محمل مسبقاً', type: 'error' } 
-              }));
+              if (onAudioError) {
+                  onAudioError('لا يوجد إنترنت، وهذا الملف غير محمل مسبقاً');
+              } else {
+                  window.dispatchEvent(new CustomEvent('showToast', { 
+                      detail: { message: 'لا يوجد إنترنت، وهذا الملف غير محمل مسبقاً', type: 'error' } 
+                  }));
+              }
+              setIsPlayingSeq(false);
+              isPlayingRef.current = false;
+              setIsPaused(false);
               resolve();
               return;
           }
 
           let audio: HTMLAudioElement;
-          let objectUrl: string | null = null;
 
-          if (inCache && cachedResponse) {
-              // Priority 1: Play from Cache (100% Offline Priority)
-              const blob = await cachedResponse.blob();
-              objectUrl = URL.createObjectURL(blob);
-              audio = new Audio(objectUrl);
-          } else if (preloadAudioRef.current && preloadAudioRef.current.src === url) {
-              // Priority 2: Use preloaded audio
-              audio = preloadAudioRef.current;
-              preloadAudioRef.current = null;
+          if (inCache) {
+              audio = new Audio(url); // SW serves cached response
           } else {
-              // Priority 3: Fetch from Network
-              audio = new Audio(url);
+              // Passive Caching: Fetch and cache in the background while playing online
+              preCacheAudio([globalAyahNumber], reciterID).catch(() => {});
+              
+              if (preloadAudioRef.current && preloadAudioRef.current.src === url) {
+                  audio = preloadAudioRef.current;
+                  preloadAudioRef.current = null;
+              } else {
+                  audio = new Audio(url);
+              }
           }
-          
+
           audio.playbackRate = playbackRate;
           
           let preloaded = false;
           audio.ontimeupdate = () => {
-              // Gapless Strategy: Preload the next audio file 1.5 seconds before this one ends
-              if (nextGlobalAyahNumber && !preloaded && audio.duration && (audio.duration - audio.currentTime < 1.5)) {
+              if (nextUrl && !preloaded && audio.duration && (audio.duration - audio.currentTime < 1.5)) {
                   preloaded = true;
-                  // Use the same bitrate for next ayah
-                  const nextUrl = `https://cdn.islamic.network/quran/audio/${currentBitrate}/${reciterID}/${nextGlobalAyahNumber}.mp3`;
                   const nextAudio = new Audio(nextUrl);
-                  nextAudio.preload = "auto";
+                  nextAudio.preload = 'auto';
                   nextAudio.load();
                   preloadAudioRef.current = nextAudio;
               }
           };
 
           audio.onended = () => {
-              // Success! Remember this bitrate for next time
-              reciterBestBitrate.current[reciterID] = currentBitrate;
-              if (objectUrl) URL.revokeObjectURL(objectUrl); // Clean up
+              // User explicitly requested to halt on 0-byte (duration 0) cached files
+              if (audio.duration === 0 || isNaN(audio.duration)) {
+                  if (onAudioError) {
+                      onAudioError('الملف الصوتي تالف أو غير متاح');
+                  } else {
+                      window.dispatchEvent(new CustomEvent('showToast', { 
+                          detail: { message: 'الملف الصوتي تالف أو غير متاح', type: 'error' } 
+                      }));
+                  }
+                  setIsPlayingSeq(false);
+                  isPlayingRef.current = false;
+                  setIsPaused(false);
+              }
               resolve();
           };
 
           audio.onerror = () => {
-              console.warn(`Bitrate ${currentBitrate} failed for ${reciterID}, trying next...`);
-              if (objectUrl) URL.revokeObjectURL(objectUrl); // Clean up
-              tryPlay(bitrateIndex + 1);
+              console.warn(`[useAyahAudio] Audio error for ${url}`);
+              setIsPlayingSeq(false);
+              isPlayingRef.current = false;
+              setIsPaused(false);
+              resolve();
           };
 
           audioRef.current = audio;
-          audio.play().catch((err) => {
-              console.warn("Autoplay/Play failed, switching to next bitrate if possible...", err);
-              if (objectUrl) URL.revokeObjectURL(objectUrl); // Clean up
-              tryPlay(bitrateIndex + 1);
-          });
+          try {
+              await audio.play();
+          } catch (e) {
+              console.log('[audio.play] failed or interrupted:', e);
+              // CRITICAL FIX: Stop highlighting and progression immediately if audio fails
+              setIsPlayingSeq(false);
+              isPlayingRef.current = false;
+              setIsPaused(false);
+              if (onAudioError) onAudioError('لا يوجد انترنت و هذا الملف غير محمل مسبقا');
+              resolve();
+          }
       };
 
-      tryPlay(0);
+      tryPlay();
     });
   }, []);
+
 
 
   const pauseAudio = useCallback(() => {
@@ -155,81 +166,53 @@ export function useAyahAudio() {
     if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.removeAttribute('src');
+        audioRef.current.load();
         audioRef.current = null;
     }
     if (preloadAudioRef.current) {
+        preloadAudioRef.current.pause();
         preloadAudioRef.current.removeAttribute('src');
+        preloadAudioRef.current.load();
         preloadAudioRef.current = null;
     }
   }, []);
 
-  const updateRuntimeSettings = useCallback((settings: Partial<PlayerSettings>) => {
-      if (runtimeSettingsRef.current) {
-          runtimeSettingsRef.current = { ...runtimeSettingsRef.current, ...settings };
-          // Apply playback rate immediately if audio is playing
-          if (audioRef.current && settings.playbackRate !== undefined) {
-              audioRef.current.playbackRate = settings.playbackRate;
-          }
-      }
+  const updateRuntimeSettings = useCallback((settings: PlayerSettings) => {
+    runtimeSettingsRef.current = settings;
   }, []);
 
   const playSequence = useCallback(async (
       settings: PlayerSettings,
-      onAyahChange: (globalNum: number) => void
+      onAyahChange?: (globalNum: number) => void
   ) => {
+    if (isPlayingRef.current) return;
+    
+    isPlayingRef.current = true;
     setIsPlayingSeq(true);
     setIsPaused(false);
-    isPlayingRef.current = true;
-    runtimeSettingsRef.current = { ...settings };
-    
+    runtimeSettingsRef.current = settings;
+
     let groupRep = 0;
-    while (isPlayingRef.current) {
-        // Use Ref for dynamic repetition count
-        const currentSettings = runtimeSettingsRef.current || settings;
-        if (currentSettings.groupRepetitions !== -1 && groupRep >= currentSettings.groupRepetitions) break;
-
-        for (let current = currentSettings.startGlobalAyah; current <= currentSettings.endGlobalAyah; current++) {
-            if (!isPlayingRef.current) break;
-            
-            // Smart Highlighting Logic: Check if available before highlighting
-            const currentBitrate = reciterBestBitrate.current[currentSettings.reciterId] || 64;
-            const url = `https://cdn.islamic.network/quran/audio/${currentBitrate}/${currentSettings.reciterId}/${current}.mp3`;
-            
-            const checkAvailability = async () => {
-                if (navigator.onLine) return true;
-                try {
-                    const cache = await caches.open('quran-audio-v2');
-                    const match = await cache.match(url);
-                    return !!match;
-                } catch (e) { return false; }
-            };
-
-            const isAvailable = await checkAvailability();
-            
-            if (isAvailable) {
-                onAyahChange(current);
-                setCurrentGlobalAyah(current);
-            }
-            
+    while (isPlayingRef.current && (settings.groupRepetitions === -1 || groupRep < settings.groupRepetitions)) {
+        for (let current = settings.startGlobalAyah; isPlayingRef.current && current <= settings.endGlobalAyah; current++) {
             let ayahRep = 0;
-            while (isPlayingRef.current) {
+            while (isPlayingRef.current && (settings.ayahRepetitions === -1 || ayahRep < settings.ayahRepetitions)) {
+                setCurrentGlobalAyah(current);
+                if (onAyahChange) onAyahChange(current);
+                
+                // Read live settings
                 const liveSettings = runtimeSettingsRef.current || settings;
-                if (liveSettings.ayahRepetitions !== -1 && ayahRep >= liveSettings.ayahRepetitions) break;
-
-                let nextAyah: number | undefined = undefined;
-                if (liveSettings.ayahRepetitions === -1 || ayahRep === liveSettings.ayahRepetitions - 1) {
-                    if (current < liveSettings.endGlobalAyah) {
-                        nextAyah = current + 1;
-                    } else if (liveSettings.groupRepetitions === -1 || groupRep < liveSettings.groupRepetitions - 1) {
+                
+                let nextAyah: number | undefined;
+                if (current < liveSettings.endGlobalAyah) {
+                    nextAyah = current + 1;
+                } else {
+                    if (liveSettings.groupRepetitions === -1 || groupRep + 1 < liveSettings.groupRepetitions) {
                         nextAyah = liveSettings.startGlobalAyah;
                     }
-                } else {
-                    nextAyah = current;
                 }
 
                 await playAyahAudio(current, liveSettings.reciterId, liveSettings.playbackRate, nextAyah);
-                // If it skipped (offline + not in cache), we should break the repetition loop for this ayah
-                if (!navigator.onLine && !isAvailable) break;
                 ayahRep++;
             }
         }
@@ -244,31 +227,32 @@ export function useAyahAudio() {
   }, [playAyahAudio]);
 
   const preCacheAudio = useCallback(async (ayahGlobalNumbers: number[], reciterID: string) => {
-      try {
-        const cache = await caches.open('quran-audio-v2');
-        const bitrate = reciterBestBitrate.current[reciterID] || 64; // Default to 64 for pre-caching safety
-        
-        const BATCH_SIZE = 10;
-        for (let i = 0; i < ayahGlobalNumbers.length; i += BATCH_SIZE) {
-            const batch = ayahGlobalNumbers.slice(i, i + BATCH_SIZE);
-            const promises = batch.map(async (num) => {
-                const url = `https://cdn.islamic.network/quran/audio/${bitrate}/${reciterID}/${num}.mp3`;
-                try {
-                    const response = await caches.match(url);
-                    if (!response) {
-                        const fetchResponse = await fetch(url, { mode: 'no-cors' });
-                        if (fetchResponse.type === 'opaque' || fetchResponse.ok) {
-                            await cache.put(url, fetchResponse);
-                        }
-                    }
-                } catch (err) {
-                    console.error(`Failed to cache audio: ${url}`, err);
-                }
-            });
-            await Promise.all(promises);
-        }
-      } catch (e) {
-          console.error("Caching failed: ", e);
+      // verses.quran.com supports CORS — we can use cors mode and store readable responses
+      const audioCache = await caches.open('quran-audio-v2');
+
+      for (const num of ayahGlobalNumbers) {
+          const url = buildAudioUrl(reciterID, num);
+          try {
+              const existing = await audioCache.match(url);
+              if (existing) continue;
+
+              const response = await fetch(url, { mode: 'cors' });
+
+              if (response.ok) {
+                  // CORS success — store as fresh readable blob response
+                  const blob = await response.blob();
+                  const fresh = new Response(blob, {
+                      status: 200,
+                      headers: { 'Content-Type': 'audio/mpeg' }
+                  });
+                  await audioCache.put(url, fresh);
+              } else {
+                  // Fallback: store as-is (might be opaque for unknown reciters)
+                  await audioCache.put(url, response.clone());
+              }
+          } catch (err) {
+              console.error(`[preCacheAudio] ayah ${num}:`, err);
+          }
       }
   }, []);
 

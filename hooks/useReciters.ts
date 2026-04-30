@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { STATIC_RECITERS } from '../services/reciterService';
 
 export interface Reciter {
     id: string;
@@ -6,70 +7,33 @@ export interface Reciter {
     nameEn: string;
 }
 
-const CACHE_KEY = 'quran_audio_reciters_cache';
+const CACHE_KEY = 'quran_reciters_v2'; 
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+/** Maps Quran.com numeric recitation ID → our internal string ID */
+const QURANCOM_ID_TO_INTERNAL: Record<number, string> = {
+    7:  'ar.alafasy',
+    6:  'ar.husary',
+    12: 'ar.husarymujawwad',
+    3:  'ar.sudais',
+    2:  'ar.abdulbasitmurattal',
+    1:  'ar.abdulbasitmujawwad',
+    4:  'ar.shatri',
+    9:  'ar.minshawi',
+    8:  'ar.minshawimujawwad',
+    10: 'ar.shuraym',
+    5:  'ar.hanirifai',
+    11: 'ar.tablawi',
+    19: 'ar.ajamy'
+};
+
 export function useReciters() {
-    const [reciters, setReciters] = useState<Reciter[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [reciters, setReciters] = useState<Reciter[]>(STATIC_RECITERS);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        const fetchReciters = async () => {
-            try {
-                // Check cache first
-                const cachedData = localStorage.getItem(CACHE_KEY);
-                if (cachedData) {
-                    const parsed = JSON.parse(cachedData);
-                    if (Date.now() - parsed.timestamp < CACHE_EXPIRY) {
-                        setReciters(parsed.data);
-                        setLoading(false);
-                        return;
-                    }
-                }
-
-                // Fetch from API
-                const res = await fetch('https://api.alquran.cloud/v1/edition?format=audio&language=ar');
-                const json = await res.json();
-                
-                if (json.code === 200 && json.data) {
-                    const mapped: Reciter[] = json.data.map((r: any) => ({
-                        id: r.identifier,
-                        nameAr: r.name,
-                        nameEn: r.englishName
-                    }));
-                    
-                    // Add some hardcoded fallbacks just in case the API misses common ones
-                    const ensureExists = (id: string, ar: string, en: string) => {
-                        if (!mapped.find(x => x.id === id)) {
-                            mapped.unshift({ id, nameAr: ar, nameEn: en });
-                        }
-                    };
-                    
-                    ensureExists('ar.alafasy', 'مشاري العفاسي', 'Mishary Al-Afasy');
-                    ensureExists('ar.husary', 'محمود خليل الحصري', 'Mahmoud Khalil Al-Husary');
-                    
-                    setReciters(mapped);
-                    localStorage.setItem(CACHE_KEY, JSON.stringify({
-                        timestamp: Date.now(),
-                        data: mapped
-                    }));
-                }
-            } catch (error) {
-                console.error("Failed to fetch reciters", error);
-                // Fallback to manual list if network fails and cache is empty
-                setReciters([
-                    { id: 'ar.alafasy', nameAr: 'مشاري العفاسي', nameEn: 'Mishary Al-Afasy' },
-                    { id: 'ar.husary', nameAr: 'محمود خليل الحصري', nameEn: 'Mahmoud Khalil Al-Husary' },
-                    { id: 'ar.husarymujawwad', nameAr: 'الحصري (مجود)', nameEn: 'Al-Husary (Mujawwad)' },
-                    { id: 'ar.abdulbasitmurattal', nameAr: 'عبد الباسط عبد الصمد', nameEn: 'Abdulbasit Abdulsamad' },
-                ]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchReciters();
-    }, []);
+    // We no longer fetch from the API since we have the definitive static list
+    // of supported reciters that work perfectly with our audio mapping.
+    // This ensures consistency and prevents broken audio links from API changes.
 
     return { reciters, loading };
 }

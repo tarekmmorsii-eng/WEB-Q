@@ -57,7 +57,8 @@ self.addEventListener('activate', (event) => {
             caches.keys().then((keys) => {
                 return Promise.all(
                     keys.map((key) => {
-                        if (key !== FONTS_CACHE && key !== CORE_CACHE) {
+                        // Protect audio cache from deletion in addition to fonts and core
+                        if (key !== FONTS_CACHE && key !== CORE_CACHE && key !== 'quran-audio-v2') {
                             console.log('[SW] Deleting old cache:', key);
                             return caches.delete(key);
                         }
@@ -311,6 +312,31 @@ self.addEventListener('fetch', (event) => {
                         cache.put(event.request, networkResponse.clone());
                     }
                     return networkResponse;
+                });
+            })
+        );
+        return;
+    }
+
+    // C. Quran Audio CDNs — Cache First (CORS-enabled)
+    // verses.quran.com and mirrors.quranicaudio.com support CORS → responses are readable
+    // Audio elements may send Range requests → use URL-only match (ignores headers)
+    const isAudioCDN =
+        url.hostname === 'verses.quran.com' ||
+        url.hostname === 'mirrors.quranicaudio.com' ||
+        url.hostname === 'cdn.islamic.network' ||     // legacy fallback
+        url.hostname === 'audio.qurancdn.com';         // word-by-word CDN
+
+    if (isAudioCDN) {
+        event.respondWith(
+            caches.open('quran-audio-v2').then(async (cache) => {
+                // URL-only + ignoreSearch — finds response despite Range headers
+                const cachedResponse = await cache.match(event.request.url, { ignoreSearch: true });
+                if (cachedResponse) return cachedResponse;
+
+                // Not cached — fetch from network and return (plays online)
+                return fetch(event.request).catch(() => {
+                    return new Response('Audio not available offline', { status: 503 });
                 });
             })
         );

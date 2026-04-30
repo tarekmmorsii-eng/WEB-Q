@@ -41,63 +41,78 @@ export function useWordByWordAudio() {
         setActiveWord(null);
     }, []);
 
-    const playWordAudio = useCallback((surah: number, ayah: number, word: number) => {
-        // Stop any currently playing audio
+    const playWordAudio = useCallback(async (surah: number, ayah: number, word: number) => {
         stopAudio();
-
         const url = generateAudioUrl(surah, ayah, word);
+
+        if (navigator.onLine) {
+            // Online: play directly
+            const audio = new Audio(url);
+            audio.onended = () => setActiveWord(null);
+            audio.onerror = () => { setActiveWord(null); };
+            audioRef.current = audio;
+            setActiveWord({ surah, ayah, word });
+            audio.play().catch(() => setActiveWord(null));
+            return;
+        }
+
+        // Offline: check quran-audio-v2 directly (caches.match may miss opaque responses)
+        let cached: Response | undefined;
+        try {
+            const cache = await caches.open('quran-audio-v2');
+            cached = (await cache.match(url)) ?? undefined;
+        } catch { /* ignore */ }
+
+        if (!cached) {
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { message: 'هذا الصوت غير محمل — يحتاج اتصال بالإنترنت', type: 'error' }
+            }));
+            return;
+        }
+        // Pass URL directly — SW intercepts and serves from quran-audio-v2
+        // No crossOrigin: opaque responses fail with crossorigin="anonymous"
         const audio = new Audio(url);
-
-        audio.onended = () => {
-            setActiveWord(null);
-        };
-
-        audio.onerror = () => {
-            console.error("Audio failed to load:", url);
-            setActiveWord(null);
-        };
-
+        audio.onended = () => setActiveWord(null);
+        audio.onerror = () => setActiveWord(null);
         audioRef.current = audio;
         setActiveWord({ surah, ayah, word });
-
-        audio.play().catch(err => {
-            console.error("Audio playback failed:", err);
-            setActiveWord(null);
-        });
-
+        try { await audio.play(); } catch (e) { console.log('[word play] failed:', e); setActiveWord(null); }
     }, [stopAudio]);
 
     const preCacheWords = useCallback(async (words: ActiveWord[]) => {
-        const CACHE_NAME = 'quran-core-v2026-03-30-V1';
+        // audio.qurancdn.com supports CORS ✅
+        // We use 'cors' mode to get readable responses (not opaque)
+        const CACHE_NAME = 'quran-audio-v2';
         const BATCH_SIZE = 10;
-        
         try {
             const cache = await caches.open(CACHE_NAME);
-            
             for (let i = 0; i < words.length; i += BATCH_SIZE) {
                 const batch = words.slice(i, i + BATCH_SIZE);
-                const promises = batch.map(async (w) => {
-                    const surahStr = String(w.surah).padStart(3, '0');
-                    const ayahStr = String(w.ayah).padStart(3, '0');
-                    const wordStr = String(w.word).padStart(3, '0');
-                    const url = `https://audio.qurancdn.com/wbw/${surahStr}_${ayahStr}_${wordStr}.mp3`;
-                    
+                await Promise.all(batch.map(async (w) => {
+                    const url = generateAudioUrl(w.surah, w.ayah, w.word);
                     try {
-                        const response = await caches.match(url);
-                        if (!response) {
-                            const fetchResponse = await fetch(url);
-                            if (fetchResponse.ok) {
-                                await cache.put(url, fetchResponse);
-                            }
+                        const existing = await cache.match(url);
+                        if (existing) return;
+
+                        const response = await fetch(url, { mode: 'cors' });
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const fresh = new Response(blob, {
+                                status: 200,
+                                headers: { 'Content-Type': 'audio/mpeg' }
+                            });
+                            await cache.put(url, fresh);
+                        } else {
+                            // Fallback: blind cache if CORS fails for some reason
+                            await cache.put(url, response.clone());
                         }
                     } catch (err) {
-                        console.error(`Failed to cache word audio: ${url}`, err);
+                        console.error(`[preCacheWords] ${url}:`, err);
                     }
-                });
-                await Promise.all(promises);
+                }));
             }
         } catch (err) {
-            console.error("Failed to open cache or pre-cache words:", err);
+            console.error('[preCacheWords] failed:', err);
         }
     }, []);
 

@@ -7,6 +7,11 @@ import { useAyahAudio } from '../hooks/useAyahAudio';
 import { useWordByWordAudio, ActiveWord } from '../hooks/useWordByWordAudio';
 import { getAyahTexts } from '../utils/ayahTextHelper';
 import { translations, Language } from '../i18n/translations';
+import { buildAudioUrl } from '../services/reciterService';
+
+
+
+
 
 interface AudioDownloadModalProps {
     isOpen: boolean;
@@ -32,70 +37,75 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     // Tab 2 state
     const [downloadingWordsSurahs, setDownloadingWordsSurahs] = useState<Set<number>>(new Set());
     const [downloadedWordsSurahs, setDownloadedWordsSurahs] = useState<Set<number>>(new Set());
+    const [cacheSizeMB, setCacheSizeMB] = useState<string>('0.00');
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-    useEffect(() => {
-        if (isOpen) {
-            checkCacheStatus();
-        }
-    }, [isOpen]);
-
-    const checkCacheStatus = async () => {
+    const updateCacheSize = async () => {
         try {
-            // Check Word-by-Word Cache
-            const wbwCache = await caches.open('quran-core-v2026-03-30-V1');
-            const wbwKeys = await wbwCache.keys();
-            const wbwUrls = wbwKeys.map(req => req.url);
-
-            const newDownloadedWords = new Set<number>();
-            SURAHS.forEach(surah => {
-                const surahStr = String(surah.number).padStart(3, '0');
-                const lastAyahStr = String(surah.ayahCount).padStart(3, '0');
-                
-                // Smart sync: check first word of first ayah and first word of last ayah
-                const hasFirstWord = wbwUrls.some(url => url.includes(`/wbw/${surahStr}_001_001.mp3`));
-                const hasLastAyahWord = wbwUrls.some(url => url.includes(`/wbw/${surahStr}_${lastAyahStr}_001.mp3`));
-                
-                if (hasFirstWord && hasLastAyahWord) {
-                    newDownloadedWords.add(surah.number);
+            const cache = await caches.open('quran-audio-v2');
+            const keys = await cache.keys();
+            let totalBytes = 0;
+            
+            for (const req of keys) {
+                const res = await cache.match(req);
+                if (res) {
+                    const blob = await res.blob();
+                    totalBytes += blob.size;
                 }
-            });
-            setDownloadedWordsSurahs(newDownloadedWords);
-
-            // Check Full Recitation Cache
-            const audioCache = await caches.open('quran-audio-v2');
-            const audioKeys = await audioCache.keys();
-            const audioUrls = audioKeys.map(req => req.url);
-
-            const newDownloadedFull = new Set<number>();
-            SURAHS.forEach(surah => {
-                // Determine the starting global ayah number for this surah
-                let startGlobal = 1;
-                for (let i = 0; i < surah.number - 1; i++) {
-                    startGlobal += SURAHS[i].ayahCount;
-                }
-                const lastGlobal = startGlobal + surah.ayahCount - 1;
-                
-                // Check if both the first and last ayah of this surah for the current reciter are downloaded
-                const hasFirstAyah = audioUrls.some(url => url.includes(`/${selectedReciter}/${startGlobal}.mp3`));
-                const hasLastAyah = audioUrls.some(url => url.includes(`/${selectedReciter}/${lastGlobal}.mp3`));
-                
-                if (hasFirstAyah && hasLastAyah) {
-                    newDownloadedFull.add(surah.number);
-                }
-            });
-            setDownloadedFullSurahs(newDownloadedFull);
-
+            }
+            
+            const mb = (totalBytes / (1024 * 1024)).toFixed(2);
+            setCacheSizeMB(mb);
         } catch (e) {
-            console.error("Cache check failed", e);
+            console.error('Failed to calculate cache size', e);
+            setCacheSizeMB('0.00');
         }
     };
 
-    // Re-check full audio cache when reciter changes
+    // Verify download status against the REAL cache
     useEffect(() => {
-        if (isOpen && activeTab === 'full') {
-            checkCacheStatus();
-        }
+        if (!isOpen || activeTab !== 'full') return;
+
+        const verify = async () => {
+            try {
+                const cache = await caches.open('quran-audio-v2');
+                const verified = new Set<number>();
+                
+                let startGlobal = 1;
+                for (let surahNum = 1; surahNum <= 114; surahNum++) {
+                    const ayahCount = SURAHS[surahNum - 1].ayahCount;
+                    
+                    // Create an array of promises for ALL ayahs in this surah
+                    const ayahPromises = [];
+                    for (let i = 0; i < ayahCount; i++) {
+                        const url = buildAudioUrl(selectedReciter, startGlobal + i);
+                        ayahPromises.push(cache.match(url, { ignoreSearch: true }));
+                    }
+                    
+                    const results = await Promise.all(ayahPromises);
+                    const allFound = results.every(res => res !== undefined);
+                    
+                    if (allFound) {
+                        verified.add(surahNum);
+                    }
+                    startGlobal += ayahCount;
+                }
+
+                setDownloadedFullSurahs(verified);
+                updateCacheSize();
+            } catch (err) {
+                console.error("Cache API failed, cannot verify downloads", err);
+            }
+        };
+
+        verify();
     }, [selectedReciter, isOpen, activeTab]);
+
+
+
+    const checkCacheStatus = async () => {
+        // This is now redundant but keeping it empty or removing it to avoid errors if called elsewhere
+    };
 
     const handleBackdropClick = (e: React.MouseEvent) => {
         if (e.target === e.currentTarget) {
@@ -109,6 +119,14 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             const surahInfo = SURAHS.find(s => s.number === selectedSurah);
             if (!surahInfo) return;
 
+            // Guard: must have internet to download
+            if (!navigator.onLine) {
+                window.dispatchEvent(new CustomEvent('showToast', {
+                    detail: { message: 'لا يوجد اتصال بالإنترنت. يرجى الاتصال ثم المحاولة مجدداً.', type: 'error' }
+                }));
+                return;
+            }
+
             let startGlobal = 1;
             for (let i = 0; i < selectedSurah - 1; i++) {
                 startGlobal += SURAHS[i].ayahCount;
@@ -120,7 +138,20 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             }
 
             await preCacheAudio(ayahGlobalNumbers, selectedReciter);
-            setDownloadedFullSurahs(prev => new Set(prev).add(selectedSurah));
+
+            // Verify the first ayah is in cache (same key as preCacheAudio uses)
+            const cache = await caches.open('quran-audio-v2');
+            const firstAyahUrl = buildAudioUrl(selectedReciter, startGlobal);
+            const confirmed = await cache.match(firstAyahUrl);
+
+
+            if (confirmed) {
+                setDownloadedFullSurahs(prev => new Set(prev).add(selectedSurah));
+            } else {
+                window.dispatchEvent(new CustomEvent('showToast', {
+                    detail: { message: 'فشل التحميل — تحقق من اتصالك بالإنترنت', type: 'error' }
+                }));
+            }
         } catch (error) {
             console.error("Failed to download full surah", error);
         } finally {
@@ -128,7 +159,40 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
         }
     };
 
+    const handleClearCache = async () => {
+
+        try {
+            // Only delete the audio cache as requested
+            await caches.delete('quran-audio-v2');
+
+            // Clear legacy audio tracking from localStorage to avoid inconsistency
+            for (const key of Object.keys(localStorage)) {
+                if (key.includes('downloaded') || key.includes('audio')) {
+                    localStorage.removeItem(key);
+                }
+            }
+            
+            // Update UI State immediately without reloading
+            setDownloadedFullSurahs(new Set());
+            setDownloadedWordsSurahs(new Set());
+            setCacheSizeMB('0.00');
+            setShowConfirmDelete(false);
+            
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { message: isArabic ? 'تم مسح الذاكرة المؤقتة بنجاح' : 'Audio cache cleared successfully', type: 'success' }
+            }));
+        } catch (e) {
+            console.error("Failed to clear caches", e);
+        }
+    };
+
     const handleDownloadWords = async (surahNumber: number) => {
+        if (!navigator.onLine) {
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { message: 'لا يوجد اتصال بالإنترنت', type: 'error' }
+            }));
+            return;
+        }
         setDownloadingWordsSurahs(prev => new Set(prev).add(surahNumber));
         try {
             const surahInfo = SURAHS.find(s => s.number === surahNumber);
@@ -241,7 +305,11 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                 </label>
                                 <select
                                     value={selectedReciter}
-                                    onChange={(e) => setSelectedReciter(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedReciter(e.target.value);
+                                        setSelectedSurah(1); // Force immediate reset to Fatiha
+                                        setDownloadedFullSurahs(new Set()); // Clear status immediately before rescan
+                                    }}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all appearance-none"
                                 >
                                     {reciters.map(reciter => (
@@ -266,7 +334,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                         return (
                                             <option key={surah.number} value={surah.number}>
                                                 {surah.number}. {isArabic ? surah.name : (t.surahNames[surah.number - 1] || surah.name)}
-                                                {isDownloaded ? ' ✓' : ''}
+                                                {isDownloaded ? ` ✓ (${'تم تحميلها'})` : ''}
                                             </option>
                                         );
                                     })}
@@ -354,8 +422,50 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                             })}
                         </div>
                     )}
+                    <div className="mt-8 pt-4 border-t border-[var(--border-primary)]">
+                        <button
+                            onClick={() => setShowConfirmDelete(true)}
+                            className="w-full py-3 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all flex items-center justify-center gap-2 text-sm font-bold"
+                        >
+                            <X size={18} />
+                            {isArabic ? `مسح الذاكرة المؤقتة (${cacheSizeMB} MB)` : `Clear Audio Cache (${cacheSizeMB} MB)`}
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Custom Confirmation Modal */}
+            {showConfirmDelete && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col animate-scale-in">
+                        <div className="p-6 text-center">
+                            <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <X size={24} />
+                            </div>
+                            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
+                                {isArabic ? 'تأكيد الحذف' : 'Confirm Deletion'}
+                            </h3>
+                            <p className="text-sm text-[var(--text-secondary)]">
+                                {isArabic ? 'هل أنت متأكد من مسح جميع التلاوات المحملة؟ ستحتاج إلى إنترنت لتحميلها مجدداً.' : 'Are you sure you want to clear all downloaded audio? You will need internet to download them again.'}
+                            </p>
+                        </div>
+                        <div className="flex border-t border-[var(--border-primary)]">
+                            <button
+                                onClick={() => setShowConfirmDelete(false)}
+                                className="flex-1 py-4 text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--bg-body)] transition-colors border-l border-[var(--border-primary)]"
+                            >
+                                {isArabic ? 'إلغاء' : 'Cancel'}
+                            </button>
+                            <button
+                                onClick={handleClearCache}
+                                className="flex-1 py-4 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                            >
+                                {isArabic ? 'نعم، امسح التنزيلات' : 'Yes, clear downloads'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
