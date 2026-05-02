@@ -293,7 +293,7 @@ export async function getProcessedMutashabihat(): Promise<Mutashabiha[]> {
 
     try {
         // 1. Load Custom Data (Dynamically from src/data/custom_mutashabihat/*.txt)
-        const customModules = import.meta.glob('/src/data/custom_mutashabihat/*.txt', { as: 'raw', eager: true });
+        const customModules = import.meta.glob('../src/data/custom_mutashabihat/*_generated.txt', { query: '?raw', import: 'default', eager: true });
         const customData: Mutashabiha[] = [];
 
         Object.entries(customModules).forEach(([path, content]) => {

@@ -268,7 +268,6 @@ div[data-atlas] {
 .mushaf-page-qpc[data-device-type="mobile"][data-orientation="portrait"] [class*="qpc-font-page-"],
 .mushaf-page-qpc[data-device-type="mobile"][data-orientation="portrait"] .qpc-v2-text {
   font-size: min(2.8vh, 5.2vw) !important;
-  /* Increased font size utilizing saved space */
   line-height: normal !important;
   height: 100% !important;
   display: inline-flex;
@@ -276,7 +275,6 @@ div[data-atlas] {
   justify-content: center !important;
   text-align: center !important;
   word-spacing: -8px !important;
-  /* Tighter spacing to fit larger font */
   margin: 0 !important;
   padding: 0 !important;
 }

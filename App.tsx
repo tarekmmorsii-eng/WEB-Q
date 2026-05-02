@@ -50,6 +50,7 @@ import { THEMES, getThemeById } from './constants/themes';
 import { startTour } from './utils/TourManager';
 
 import { useAyahAudio } from './hooks/useAyahAudio';
+import { useWakeLock } from './hooks/useWakeLock';
 import FloatingAudioPlayer from './components/FloatingAudioPlayer';
 import AuthModal from './components/AuthModal';
 import AudioSettingsModal from './components/AudioSettingsModal';
@@ -90,10 +91,10 @@ const ModalMonitor: React.FC<{
 
 const DEFAULT_SETTINGS: AppSettings = {
   language: 'ar',
-  theme: 'calm-night',
+  theme: 'classic-mushaf',
   textBrightness: 100,
   backgroundBrightness: 0,
-  soundEnabled: true,
+  soundEnabled: false,
   bottomBar: {
     showIndex: true,
     showSearch: false,
@@ -119,12 +120,16 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 export default function App() {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isLandscapeMode, setIsLandscapeMode] = useState(false);
   const ayahAudio = useAyahAudio({
     onAudioError: (msg: string) => {
       setToastMessage(msg);
       setPlayingAyahId(null);
     }
   });
+
+  // ⭐ Wake Lock: إضاءة الشاشة - ساعة واحدة عند الفتح + دائم أثناء التلاوة
+  useWakeLock(ayahAudio.isPlayingSeq);
 
   useEffect(() => {
     const checkTouch = () => {
@@ -135,7 +140,17 @@ export default function App() {
     };
 
     checkTouch();
+
+    const checkOrientation = () => {
+      const landscape = window.matchMedia('(orientation: landscape)').matches;
+      const isMobileOrTablet = window.innerWidth <= 1440;
+      setIsLandscapeMode(landscape && isMobileOrTablet);
+    };
+
+    checkOrientation();
     window.addEventListener('resize', checkTouch);
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
 
     // Disable Context Menu (Right Click) globally for Native feeling
     const handleContextMenu = (e: MouseEvent) => {
@@ -145,6 +160,8 @@ export default function App() {
 
     return () => {
       window.removeEventListener('resize', checkTouch);
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
       window.removeEventListener('contextmenu', handleContextMenu);
     };
   }, []);
@@ -178,7 +195,7 @@ export default function App() {
         // Validate theme - if old theme doesn't exist, use default
         const themeExists = THEMES.some(t => t.id === parsed.theme);
         if (!themeExists) {
-          parsed.theme = 'calm-night';
+          parsed.theme = 'classic-mushaf';
         }
 
         // Migration: Enable prayer mode for existing users (one-time)
@@ -2109,7 +2126,10 @@ export default function App() {
         onClosePrayerMode={() => setSettings(prev => ({ ...prev, prayerMode: false }))}
       />
       <div
-        className="h-screen w-full flex flex-col relative overflow-hidden transition-colors duration-300"
+        className={clsx(
+          "w-full flex flex-col relative transition-colors duration-300",
+          isLandscapeMode ? "h-auto overflow-auto" : "h-[100dvh] overflow-hidden"
+        )}
         style={{
           backgroundColor: currentTheme.colors.background,
           color: currentTheme.colors.text,

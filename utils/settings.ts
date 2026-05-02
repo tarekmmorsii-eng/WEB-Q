@@ -2,10 +2,10 @@ import { AppSettings } from '../types';
 
 export const DEFAULT_SETTINGS: AppSettings = {
     language: 'ar',
-    theme: 'warm-beige',
+    theme: 'classic-mushaf',
     textBrightness: 100,
     backgroundBrightness: 0,
-    soundEnabled: true,
+    soundEnabled: false,
     bottomBar: {
         showIndex: true,
         showSearch: true,
