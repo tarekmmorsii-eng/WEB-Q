@@ -104,6 +104,8 @@ export default function AudioSettingsModal({
                                             setEndSurah(val);
                                             setEndAyah(1);
                                         }
+                                        // ⭐ تفعيل تلقائي: تغيير "من سورة" يفعّل تشغيل النطاق
+                                        setUseRangeOnly(true);
                                     }}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-500 transition-colors text-[var(--text-primary)]"
                                 >
@@ -123,6 +125,8 @@ export default function AudioSettingsModal({
                                         if (startSurah === endSurah && endAyah < val) {
                                             setEndAyah(val);
                                         }
+                                        // ⭐ تفعيل تلقائي: تغيير "من آية" يفعّل تشغيل النطاق
+                                        setUseRangeOnly(true);
                                     }}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-500 transition-colors text-[var(--text-primary)]"
                                 >
@@ -149,6 +153,8 @@ export default function AudioSettingsModal({
                                         } else {
                                             setEndAyah(1);
                                         }
+                                        // ⭐ تفعيل تلقائي: تغيير "إلى سورة" يفعّل تشغيل النطاق
+                                        setUseRangeOnly(true);
                                     }}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-500 transition-colors text-[var(--text-primary)]"
                                 >
@@ -163,7 +169,11 @@ export default function AudioSettingsModal({
                                 </label>
                                 <select 
                                     value={endAyah}
-                                    onChange={(e) => setEndAyah(Number(e.target.value))}
+                                    onChange={(e) => {
+                                        setEndAyah(Number(e.target.value));
+                                        // ⭐ تفعيل تلقائي: تغيير "إلى آية" يفعّل تشغيل النطاق
+                                        setUseRangeOnly(true);
+                                    }}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-500 transition-colors text-[var(--text-primary)]"
                                 >
                                     {Array.from({ length: getAyahCount(endSurah) }, (_, i) => i + 1)
@@ -187,7 +197,11 @@ export default function AudioSettingsModal({
                             {GROUP_REP_OPTIONS.map(opt => (
                                 <button
                                     key={opt}
-                                    onClick={() => setGroupRepetitions(opt)}
+                                    onClick={() => {
+                                        setGroupRepetitions(opt);
+                                        // ⭐ تفعيل تلقائي: تغيير تكرار المجموعة يفعّل تشغيل النطاق
+                                        setUseRangeOnly(true);
+                                    }}
                                     className={clsx(
                                         "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border",
                                         groupRepetitions === opt 
@@ -210,7 +224,11 @@ export default function AudioSettingsModal({
                             {AYAH_REP_OPTIONS.map(opt => (
                                 <button
                                     key={opt}
-                                    onClick={() => setAyahRepetitions(opt)}
+                                    onClick={() => {
+                                        setAyahRepetitions(opt);
+                                        // ⭐ تفعيل تلقائي: تغيير تكرار الآيات يفعّل تشغيل النطاق
+                                        setUseRangeOnly(true);
+                                    }}
                                     className={clsx(
                                         "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border",
                                         ayahRepetitions === opt 

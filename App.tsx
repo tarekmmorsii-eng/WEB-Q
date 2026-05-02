@@ -358,7 +358,7 @@ export default function App() {
       groupRepetitions: 1,
       ayahRepetitions: 1,
       playbackRate: 1.0,
-      useRangeOnly: true
+      useRangeOnly: false  // ← الوضع الافتراضي: تشغيل مستمر (لا يتوقف عند نهاية النطاق)
   });
 
   // Sync audio settings range with current page
@@ -2819,7 +2819,12 @@ export default function App() {
                         ayahAudio.pauseAudio();
                     }
                 } else {
-                    startPagePlayback(selectedReciterId);
+                    // ⭐ زر التشغيل الرئيسي: تشغيل مستمر دائماً (يتجاهل تشغيل النطاق المحدود)
+                    setAudioSettings(prev => ({ ...prev, useRangeOnly: false }));
+                    startPagePlayback(selectedReciterId, {
+                        ...audioSettings,
+                        useRangeOnly: false
+                    });
                 }
             }}
             onStop={() => {
@@ -2839,7 +2844,8 @@ export default function App() {
                             startPagePlayback(undefined, {
                                 ...audioSettings,
                                 startSurah: dest.surahNumber,
-                                startAyah: dest.ayahNumber
+                                startAyah: dest.ayahNumber,
+                                useRangeOnly: false  // ⭐ استمرار التشغيل بعد التخطي
                             });
                         }, 100);
                     }
@@ -2858,7 +2864,8 @@ export default function App() {
                             startPagePlayback(undefined, {
                                 ...audioSettings,
                                 startSurah: dest.surahNumber,
-                                startAyah: dest.ayahNumber
+                                startAyah: dest.ayahNumber,
+                                useRangeOnly: false  // ⭐ استمرار التشغيل بعد التخطي
                             });
                         }, 100);
                     }
