@@ -1,9 +1,23 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { cacheAudioBlob, getAudioBlob } from '../services/audioCacheService';
 
 export interface ActiveWord {
     surah: number;
     ayah: number;
     word: number;
+}
+
+/**
+ * Creates an audio element from a Blob using Object URL.
+ * Works on ALL mobile browsers — no Range Request issues.
+ */
+function createAudioFromBlob(blob: Blob): HTMLAudioElement {
+    const objectUrl = URL.createObjectURL(blob);
+    const audio = new Audio(objectUrl);
+    audio.addEventListener('loadeddata', () => {
+        URL.revokeObjectURL(objectUrl);
+    }, { once: true });
+    return audio;
 }
 
 export function useWordByWordAudio() {
@@ -42,33 +56,17 @@ export function useWordByWordAudio() {
     }, []);
 
     const preCacheWords = useCallback(async (words: ActiveWord[]) => {
-        // audio.qurancdn.com supports CORS ✅
-        // We use 'cors' mode to get readable responses (not opaque)
-        const CACHE_NAME = 'quran-audio-v2';
+        // Use IndexedDB Blob Storage — works on mobile browsers
         const BATCH_SIZE = 10;
         try {
-            const cache = await caches.open(CACHE_NAME);
             for (let i = 0; i < words.length; i += BATCH_SIZE) {
                 const batch = words.slice(i, i + BATCH_SIZE);
-                await Promise.all(batch.map(async (w) => {
-                    const url = generateAudioUrl(w.surah, w.ayah, w.word);
-                    const existing = await cache.match(url);
-                    if (existing) return;
-
-                    const response = await fetch(url, { mode: 'cors' });
-                    const contentType = response.headers.get('Content-Type') || '';
-                    
-                    if (response.ok && !contentType.includes('text/html')) {
-                        const blob = await response.blob();
-                        const fresh = new Response(blob, {
-                            status: 200,
-                            headers: { 'Content-Type': 'audio/mpeg' }
-                        });
-                        await cache.put(url, fresh);
-                    } else {
-                        throw new Error(`Invalid response for word ${url}: ${response.status} (${contentType})`);
-                    }
-                }));
+                await Promise.allSettled(
+                    batch.map(async (w) => {
+                        const url = generateAudioUrl(w.surah, w.ayah, w.word);
+                        await cacheAudioBlob(url);
+                    })
+                );
             }
         } catch (err) {
             console.error('[preCacheWords] failed:', err);
@@ -79,11 +77,35 @@ export function useWordByWordAudio() {
         stopAudio();
         const url = generateAudioUrl(surah, ayah, word);
 
+        // ─── Step 1: Try IndexedDB Blob Cache ──────────────────────
+        try {
+            const cachedBlob = await getAudioBlob(url);
+            
+            if (cachedBlob) {
+                // ✅ Blob found → create Object URL for guaranteed local playback
+                const audio = createAudioFromBlob(cachedBlob);
+                audio.onended = () => setActiveWord(null);
+                audio.onerror = () => setActiveWord(null);
+                audioRef.current = audio;
+                setActiveWord({ surah, ayah, word });
+                try { 
+                    await audio.play(); 
+                } catch (e) { 
+                    console.log('[word play] blob play failed:', e); 
+                    setActiveWord(null); 
+                }
+                return;
+            }
+        } catch (err) {
+            console.warn('[useWordByWordAudio] IndexedDB lookup failed:', err);
+        }
+
+        // ─── Step 2: Not in cache → check network ─────────────────
         if (navigator.onLine) {
             // Passive Caching: Fetch and cache in the background while playing online
             preCacheWords([{ surah, ayah, word }]).catch(() => {});
 
-            // Online: play directly
+            // Online: play directly from network
             const audio = new Audio(url);
             audio.onended = () => setActiveWord(null);
             audio.onerror = () => { setActiveWord(null); };
@@ -93,27 +115,10 @@ export function useWordByWordAudio() {
             return;
         }
 
-        // Offline: check quran-audio-v2 directly (caches.match may miss opaque responses)
-        let cached: Response | undefined;
-        try {
-            const cache = await caches.open('quran-audio-v2');
-            cached = (await cache.match(url)) ?? undefined;
-        } catch { /* ignore */ }
-
-        if (!cached) {
-            window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { message: 'هذا الصوت غير محمل — يحتاج اتصال بالإنترنت', type: 'error' }
-            }));
-            return;
-        }
-        // Pass URL directly — SW intercepts and serves from quran-audio-v2
-        // No crossOrigin: opaque responses fail with crossorigin="anonymous"
-        const audio = new Audio(url);
-        audio.onended = () => setActiveWord(null);
-        audio.onerror = () => setActiveWord(null);
-        audioRef.current = audio;
-        setActiveWord({ surah, ayah, word });
-        try { await audio.play(); } catch (e) { console.log('[word play] failed:', e); setActiveWord(null); }
+        // Offline and not cached
+        window.dispatchEvent(new CustomEvent('showToast', {
+            detail: { message: 'هذا الصوت غير محمل — يحتاج اتصال بالإنترنت', type: 'error' }
+        }));
     }, [stopAudio, preCacheWords]);
 
     return {

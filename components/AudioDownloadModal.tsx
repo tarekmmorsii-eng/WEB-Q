@@ -8,8 +8,12 @@ import { useWordByWordAudio, ActiveWord } from '../hooks/useWordByWordAudio';
 import { getAyahTexts } from '../utils/ayahTextHelper';
 import { translations, Language } from '../i18n/translations';
 import { buildAudioUrl } from '../services/reciterService';
-
-
+import { 
+    isAudioCached, 
+    getAudioCacheSize, 
+    getAllCachedKeys, 
+    clearAllAudioCache 
+} from '../services/audioCacheService';
 
 
 
@@ -29,7 +33,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     const [activeTab, setActiveTab] = useState<'full' | 'words'>('full');
     
     // Tab 1 state
-    const [selectedReciter, setSelectedReciter] = useState<string>('ar.husary');
+    const [selectedReciter, setSelectedReciter] = useState<string>('husary');
     const [selectedSurah, setSelectedSurah] = useState<number>(1);
     const [isDownloadingFull, setIsDownloadingFull] = useState(false);
     const [downloadedFullSurahs, setDownloadedFullSurahs] = useState<Set<number>>(new Set());
@@ -60,27 +64,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
     const updateCacheSize = async () => {
         try {
-            const cache = await caches.open('quran-audio-v2');
-            const keys = await cache.keys();
-            let totalBytes = 0;
-            
-            for (const req of keys) {
-                try {
-                    const res = await cache.match(req);
-                    if (res) {
-                        const contentType = res.headers.get('Content-Type') || '';
-                        if (contentType.includes('text/html')) continue;
-
-                        const blob = await res.blob();
-                        if (blob.size < 1024) continue; // Skip files < 1KB
-                        
-                        totalBytes += blob.size;
-                    }
-                } catch (err) {
-                    console.warn(`Failed to read blob for ${req.url}`, err);
-                }
-            }
-            
+            const totalBytes = await getAudioCacheSize();
             const mb = (totalBytes / (1024 * 1024)).toFixed(2);
             setCacheSizeMB(mb);
         } catch (e) {
@@ -89,52 +73,29 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
         }
     };
 
-    // Verify download status against the REAL cache
+    // Verify download status against IndexedDB
     useEffect(() => {
         if (!isOpen) return;
 
         const verify = async () => {
             try {
-                const cache = await caches.open('quran-audio-v2');
-                
-                // Helper to detect and PURGE 404 HTML pages saved as MP3
-                const isValidAudioAndClean = async (url: string, res: Response | undefined) => {
-                    if (!res) return false;
-                    const type = res.headers.get('Content-Type') || '';
-                    if (type.includes('text/html')) {
-                        console.warn(`[Purge] Deleting HTML error page from audio cache: ${url}`);
-                        await cache.delete(url);
-                        return false;
-                    }
-                    // Optional: check size if blob is already read or use headers if available
-                    // For now, type is the safest bet
-                    return true;
-                };
-
                 if (activeTab === 'full') {
                     const verifiedFull = new Set<number>();
                     let startGlobal = 1;
+                    
                     for (let surahNum = 1; surahNum <= 114; surahNum++) {
                         const ayahCount = SURAHS[surahNum - 1].ayahCount;
+                        let allCached = true;
                         
-                        const ayahPairs = [];
                         for (let i = 0; i < ayahCount; i++) {
                             const url = buildAudioUrl(selectedReciter, startGlobal + i);
-                            if (url) {
-                                ayahPairs.push({ url, res: await cache.match(url, { ignoreSearch: true }) });
-                            } else {
-                                ayahPairs.push({ url: '', res: undefined });
+                            if (!url || !(await isAudioCached(url))) {
+                                allCached = false;
+                                break;
                             }
                         }
                         
-                        let allValid = true;
-                        for (const pair of ayahPairs) {
-                            if (!pair.res || !(await isValidAudioAndClean(pair.url, pair.res))) {
-                                allValid = false;
-                            }
-                        }
-                        
-                        if (allValid) {
+                        if (allCached) {
                             verifiedFull.add(surahNum);
                         }
                         startGlobal += ayahCount;
@@ -142,20 +103,14 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
                     setDownloadedFullSurahs(verifiedFull);
                 } else if (activeTab === 'words') {
-                    const keys = await cache.keys();
-                    // In addition to URL check, we must filter out invalid blobs
-                    const validWbwUrls: string[] = [];
-                    for (const req of keys) {
-                        if (req.url.includes('/wbw/')) {
-                            const res = await cache.match(req);
-                            if (await isValidAudioAndClean(req.url, res)) {
-                                validWbwUrls.push(req.url);
-                            }
-                        }
-                    }
+                    // Get all cached keys from IndexedDB
+                    const allKeys = await getAllCachedKeys();
+                    
+                    // Filter wbw URLs
+                    const wbwKeys = allKeys.filter(k => k.includes('/wbw/'));
                     
                     const surahFileCounts = new Map<number, number>();
-                    for (const url of validWbwUrls) {
+                    for (const url of wbwKeys) {
                         const match = url.match(/\/wbw\/(\d+)_/);
                         if (match) {
                             const surahNum = parseInt(match[1], 10);
@@ -192,16 +147,12 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 
                 updateCacheSize();
             } catch (err) {
-                console.error("Cache API failed, cannot verify downloads", err);
+                console.error("IndexedDB verification failed", err);
             }
         };
 
         verify();
     }, [selectedReciter, isOpen, activeTab]);
-
-    const checkCacheStatus = async () => {
-        // This is now redundant but keeping it empty or removing it to avoid errors if called elsewhere
-    };
 
     const handleBackdropClick = (e: React.MouseEvent) => {
         if (e.target === e.currentTarget) {
@@ -235,14 +186,13 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
             await preCacheAudio(ayahGlobalNumbers, selectedReciter);
 
-            // Verify the first ayah is in cache (same key as preCacheAudio uses)
-            const cache = await caches.open('quran-audio-v2');
+            // Verify the first ayah is in IndexedDB
             const firstAyahUrl = buildAudioUrl(selectedReciter, startGlobal);
-            const confirmed = await cache.match(firstAyahUrl);
-
+            const confirmed = await isAudioCached(firstAyahUrl);
 
             if (confirmed) {
                 setDownloadedFullSurahs(prev => new Set(prev).add(selectedSurah));
+                updateCacheSize();
             } else {
                 window.dispatchEvent(new CustomEvent('showToast', {
                     detail: { message: 'فشل التحميل — تحقق من اتصالك بالإنترنت', type: 'error' }
@@ -264,19 +214,21 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     };
 
     const handleClearCache = async () => {
-
         try {
-            // Only delete the audio cache as requested
+            // Clear IndexedDB audio cache
+            await clearAllAudioCache();
+
+            // Also clear legacy Cache API audio cache if it exists
             await caches.delete('quran-audio-v2');
 
-            // Clear legacy audio tracking from localStorage to avoid inconsistency
+            // Clear legacy audio tracking from localStorage
             for (const key of Object.keys(localStorage)) {
                 if (key.includes('downloaded') || key.includes('audio')) {
                     localStorage.removeItem(key);
                 }
             }
             
-            // Update UI State immediately without reloading
+            // Update UI State immediately
             setDownloadedFullSurahs(new Set());
             setDownloadedWordsSurahs(new Set());
             setCacheSizeMB('0.00');
@@ -315,8 +267,6 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             for (let i = 1; i <= surahInfo.ayahCount; i++) {
                 const text = ayahTexts.get(`${surahNumber}-${i}`);
                 if (text) {
-                    // Split by spaces to get approximate word count. 
-                    // Add +2 buffer because sometimes audio splits differ slightly from text spaces.
                     const count = text.split(' ').length + 2;
                     for (let w = 1; w <= count; w++) {
                         wordsToCache.push({ surah: surahNumber, ayah: i, word: w });
@@ -324,11 +274,12 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 }
             }
 
-            // 3. call preCacheWords
+            // 3. Call preCacheWords (now uses IndexedDB)
             await preCacheWords(wordsToCache);
 
             // 4. Update UI
             setDownloadedWordsSurahs(prev => new Set(prev).add(surahNumber));
+            updateCacheSize();
         } catch (error) {
             console.error("Failed to download words", error);
             window.dispatchEvent(new CustomEvent('showToast', {
@@ -419,8 +370,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                     value={selectedReciter}
                                     onChange={(e) => {
                                         setSelectedReciter(e.target.value);
-                                        setSelectedSurah(1); // Force immediate reset to Fatiha
-                                        setDownloadedFullSurahs(new Set()); // Clear status immediately before rescan
+                                        setSelectedSurah(1);
+                                        setDownloadedFullSurahs(new Set());
                                     }}
                                     className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all appearance-none"
                                 >

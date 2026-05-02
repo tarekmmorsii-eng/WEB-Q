@@ -324,24 +324,19 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // C. Quran Audio CDNs — Cache First (CORS-enabled)
-    // verses.quran.com and mirrors.quranicaudio.com support CORS → responses are readable
-    // Audio elements may send Range requests → use URL-only match (ignores headers)
+    // C. Quran Audio CDNs — Pass through (network only)
+    // Audio caching is now handled by IndexedDB Blob Storage (audioCacheService.ts)
+    // which uses URL.createObjectURL() for guaranteed mobile browser compatibility.
+    // The old Cache API approach failed on mobile due to Range Request issues.
     const isAudioCDN =
         url.hostname === 'everyayah.com' ||
-        url.hostname === 'audio.qurancdn.com';         // word-by-word CDN
+        url.hostname === 'audio.qurancdn.com';
 
     if (isAudioCDN) {
+        // Just fetch from network — IndexedDB handles caching separately
         event.respondWith(
-            caches.open('quran-audio-v2').then(async (cache) => {
-                // URL-only + ignoreSearch — finds response despite Range headers
-                const cachedResponse = await cache.match(event.request.url, { ignoreSearch: true });
-                if (cachedResponse) return cachedResponse;
-
-                // Not cached — fetch from network and return (plays online)
-                return fetch(event.request).catch(() => {
-                    return new Response('Audio not available offline', { status: 503 });
-                });
+            fetch(event.request).catch(() => {
+                return new Response('Audio not available offline', { status: 503 });
             })
         );
         return;

@@ -58,6 +58,33 @@
 | السمة (theme) | `calm-night` (داكن) | `classic-mushaf` (فاتح) |
 | صوت التقليب (soundEnabled) | `true` (مفعّل) | `false` (معطّل) |
 
+## 🔊 نظام التخزين المؤقت للصوتيات (Audio Caching System)
+
+### المشكلة
+كان نظام التخزين المؤقت للصوتيات يعتمد على **Cache API** عبر **Service Worker**، وهو يعمل بنجاح على متصفحات سطح المكتب. لكنه **يفشل على متصفحات الموبايل** لأن:
+- متصفحات الهواتف ترسل **Range Requests** لتشغيل الصوت
+- الـ Service Worker لا يتعامل مع Range Requests بشكل صحيح
+- الروابط المباشرة تحتاج اتصال إنترنت حتى لو كان الملف مخزناً مؤقتاً
+
+### الحل المُطبّق: IndexedDB Blob Storage
+تم الانتقال من Cache API إلى **IndexedDB** مع **Object URLs**:
+
+1. **طريقة الحفظ:** يتم جلب الملف الصوتي كـ `Blob` وحفظه في `IndexedDB` مباشرة.
+2. **التشغيل المحلي:** عند طلب تشغيل الآية، يُستخرج الـ Blob ويُنشأ رابط محلي `URL.createObjectURL(blob)` ويُمرر لمشغل الصوت. هذا يجبر المتصفح على قراءة الملف **محلياً بدون إنترنت**.
+3. **التوافق الكامل:** يعمل على جميع المنصات (Desktop + Mobile Web).
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `services/audioCacheService.ts` | **جديد** — خدمة IndexedDB لتخزين واسترجاع Blobs |
+| `hooks/useAyahAudio.ts` | معدّل — يستخدم IndexedDB + `createObjectURL` للتشغيل |
+| `hooks/useWordByWordAudio.ts` | معدّل — يستخدم IndexedDB + `createObjectURL` للتشغيل |
+| `components/AudioDownloadModal.tsx` | معدّل — يتحقق من IndexedDB لحالة التحميل |
+| `public/sw.js` | معدّل — تم إزالة منطق Cache API للصوت (IndexedDB يتولى ذلك الآن) |
+
+### خطة المستقبل (Native App)
+- إضافة دعم **Capacitor Filesystem** لنسخة التطبيق الأصلي (Native App) لضمان تغطية جميع المنصات.
+
 ## 📝 ملاحظات إضافية
 - يمكنك إيجاد تفاصيل بنية المشروع وآلية عمل المتشابهات وإعدادات التطبيقات في مجلد `.agent`.
 - التطبيق يدعم الواجهة العربية بالكامل كاستجابة لمتطلبات وتفضيلات المستخدمين.
