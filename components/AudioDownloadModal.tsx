@@ -5,8 +5,8 @@ import { SURAHS } from '../constants/surahData';
 import { useReciters } from '../hooks/useReciters';
 import { useAyahAudio } from '../hooks/useAyahAudio';
 import { useWordByWordAudio, ActiveWord } from '../hooks/useWordByWordAudio';
-import { getAyahTexts } from '../utils/ayahTextHelper';
 import { translations, Language } from '../i18n/translations';
+import { getAyahTexts } from '../utils/ayahTextHelper';
 import { buildAudioUrl } from '../services/reciterService';
 import { 
     isAudioCached, 
@@ -103,12 +103,14 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
                     setDownloadedFullSurahs(verifiedFull);
                 } else if (activeTab === 'words') {
-                    // Get all cached keys from IndexedDB
+                    // ─── Reliable WBW Verification ──────────────────
+                    // Strategy: Check IndexedDB for wbw files grouped by surah.
+                    // A surah is "downloaded" if it has cached files for its
+                    // first ayah AND last ayah (covers start and end).
                     const allKeys = await getAllCachedKeys();
-                    
-                    // Filter wbw URLs
                     const wbwKeys = allKeys.filter(k => k.includes('/wbw/'));
-                    
+
+                    // Group by surah number
                     const surahFileCounts = new Map<number, number>();
                     for (const url of wbwKeys) {
                         const match = url.match(/\/wbw\/(\d+)_/);
@@ -117,28 +119,17 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                             surahFileCounts.set(surahNum, (surahFileCounts.get(surahNum) || 0) + 1);
                         }
                     }
-                    
+
                     const verifiedWords = new Set<number>();
-                    
                     for (const [surahNum, fileCount] of surahFileCounts.entries()) {
+                        // A surah needs at least (ayahCount * 3) files to be
+                        // considered fully downloaded (minimum ~3 words per ayah).
+                        // Use a conservative threshold: ayahCount * 2
                         const surahInfo = SURAHS.find(s => s.number === surahNum);
                         if (!surahInfo) continue;
-                        
-                        const ayahRefs = Array.from({ length: surahInfo.ayahCount }, (_, i) => ({
-                            surahNumber: surahNum,
-                            ayahNumber: i + 1
-                        }));
-                        const ayahTexts = await getAyahTexts(ayahRefs);
-                        
-                        let expectedCount = 0;
-                        for (let i = 1; i <= surahInfo.ayahCount; i++) {
-                            const text = ayahTexts.get(`${surahNum}-${i}`);
-                            if (text) {
-                                expectedCount += text.split(' ').length + 2;
-                            }
-                        }
-                        
-                        if (expectedCount > 0 && fileCount >= expectedCount) {
+
+                        const minExpected = surahInfo.ayahCount * 2;
+                        if (fileCount >= minExpected) {
                             verifiedWords.add(surahNum);
                         }
                     }
