@@ -65,9 +65,11 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
                     <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 tracking-tight">
                         Choose Your Language
                     </h1>
-                    <p className="text-amber-200/60 text-lg font-medium">
-                        اختر اللغة المفضلة لبدء الاستخدام
-                    </p>
+                    <div className="inline-block bg-black/60 rounded-full px-4 py-1.5 mt-1">
+                        <p className="text-amber-200/80 text-lg font-medium">
+                            اختر اللغة المفضلة لبدء الاستخدام
+                        </p>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 w-full max-h-[50vh] overflow-y-auto px-2 py-4 custom-scrollbar animate-in fade-in zoom-in-95 duration-1000 delay-200 fill-mode-forwards">
