@@ -57,38 +57,67 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
         try {
             // Cancel existing notifications for this ID group
-            // We use the string ID as a base, but since one notification item can have multiple times/days,
-            // we should ideally use unique numeric IDs for each schedule.
-            // For simplicity, we'll cancel all then re-schedule.
-            // Note: Capacitor requires numeric IDs.
             const baseId = parseInt(notification.id.slice(-6)) || Math.floor(Math.random() * 100000);
             
-            await LocalNotifications.cancel({
-                notifications: [{ id: baseId }]
-            });
+            // Cancel all possible sub-IDs for this notification
+            const cancelIds: { id: number }[] = [];
+            for (let i = 0; i < 7; i++) { // max 7 days
+                for (let j = 0; j < notification.times.length; j++) {
+                    cancelIds.push({ id: baseId + j + (i * 100) });
+                }
+            }
+            await LocalNotifications.cancel({ notifications: cancelIds });
 
             if (!notification.isEnabled) return;
 
-            // Create notification channel for Android (essential for high-priority alerts)
+            // Create HIGH PRIORITY notification channel for Android
+            // This is CRITICAL for heads-up notifications and sound on Android 8+
             await LocalNotifications.createChannel({
                 id: 'quran_critical_alarm_v1',
                 name: 'Quran Critical Alarms',
-                description: 'High priority notifications for Quran reading',
-                importance: 5, // MAX importance
-                visibility: 1, // PUBLIC
-                vibration: true
+                description: 'High priority notifications for Quran reading - sound and vibration enabled',
+                importance: 5, // IMPORTANCE_MAX = 5 (shows as heads-up, with sound)
+                visibility: 1, // VISIBILITY_PUBLIC
+                vibration: true,
+                sound: 'islamic_song.mp3',
+                lights: true,
+                lightColor: '#D97706'
             });
+
+            // Create a secondary channel for non-alarm notifications
+            await LocalNotifications.createChannel({
+                id: 'quran_regular_v1',
+                name: 'Quran Reminders',
+                description: 'Regular Quran reading reminders',
+                importance: 4, // IMPORTANCE_HIGH = 4 (heads-up notification)
+                visibility: 1,
+                vibration: true,
+                sound: 'paper_slide.wav',
+                lights: true,
+                lightColor: '#D97706'
+            });
+
+            // Determine the best sound URI for Android
+            const getNativeSound = (): string | undefined => {
+                if (!notification.sound) return undefined;
+                // For Android, use res:// references for files in res/raw/
+                if (notification.sound.includes('islamic_song')) return 'islamic_song.mp3';
+                if (notification.sound.includes('paper-slide') || notification.sound.includes('paper_slide')) return 'paper_slide.wav';
+                // Custom data-uri sounds can't be used natively, fallback to default
+                if (notification.sound.startsWith('data:')) return undefined;
+                // Strip leading slash for native
+                return notification.sound.startsWith('/') ? notification.sound.slice(1) : notification.sound;
+            };
+
+            const nativeSound = getNativeSound();
+            const channelId = notification.isAlarm ? 'quran_critical_alarm_v1' : 'quran_regular_v1';
 
             const schedules: any[] = [];
             
             for (let i = 0; i < notification.times.length; i++) {
                 const [hour, minute] = notification.times[i].split(':').map(Number);
                 
-                // For daily/weekly, we schedule based on days
                 for (const day of notification.days) {
-                    // ID must be unique for each time/day combo if we want them separate, 
-                    // but usually one item = one notification slot.
-                    // Let's use a composite ID.
                     const uniqueId = baseId + i + (day * 100);
                     
                     schedules.push({
@@ -97,24 +126,26 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
                         schedule: {
                             on: {
-                                weekday: day + 1, // Sunday is 1 in Capacitor
+                                weekday: day + 1, // Sunday = 1 in Capacitor
                                 hour,
                                 minute
                             },
                             repeats: true,
-                            allowWhileIdle: true
+                            allowWhileIdle: true // CRITICAL: bypass Doze Mode and fire on time
                         },
-                        channelId: 'quran_critical_alarm_v1',
-                        sound: notification.sound && notification.sound.startsWith('/') ? notification.sound.slice(1) : undefined,
+                        channelId: channelId,
+                        sound: nativeSound,
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
                             surah: notification.metadata?.surahNumber
                         },
-                        importance: notification.isAlarm ? 'max' : 'default',
+                        // Don't auto-dismiss alarm notifications - they stay visible
+                        autoCancel: !notification.isAlarm,
+                        ongoing: false,
                         actionTypeId: 'OPEN_QURAN',
                         attachments: [],
-                        smallIcon: 'ic_stat_name', // Should be in res/drawable
+                        smallIcon: 'ic_stat_name',
                         largeIcon: 'res://icon',
                         badge: 1
                     });
@@ -322,16 +353,20 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                 visibility: 1
             });
 
+            // Determine test sound for native
+            const testSound = formSound && formSound.includes('islamic_song') ? 'islamic_song.mp3' :
+                formSound && (formSound.includes('paper-slide') || formSound.includes('paper_slide')) ? 'paper_slide.wav' :
+                formSound && formSound.startsWith('/') ? formSound.slice(1) : undefined;
+
             await LocalNotifications.schedule({
                 notifications: [{
                     id: 99999,
                     title: formIsAlarm ? `🚨 ${t.testAlarm}` : t.testNotification,
                     body: t.testNotificationBody,
-                    schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true }, // Exactly 2 seconds
-                    channelId: 'quran_critical_alarm_v1',
-                    sound: formSound && formSound.startsWith('/') ? formSound.slice(1) : undefined,
-                    importance: formIsAlarm ? 'max' : 'default',
-                    badge: 1
+                    schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true },
+                    channelId: formIsAlarm ? 'quran_critical_alarm_v1' : 'quran_regular_v1',
+                    sound: testSound,
+                    autoCancel: !formIsAlarm
                 }]
             });
             return;
@@ -431,11 +466,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             <span className="block text-amber-600 dark:text-amber-400 mb-1">
                                                                 {notification.name.includes(t.juz) ? (
                                                                     <>
-                                                                        {t.hizb} {notification.metadata.hizb}، {t.surah} {t.surahNames[JUZ_SECTIONS[(notification.metadata.hizb - 1) * 4].surahNum - 1]}
+                                                                        {t.hizb} {notification.metadata.hizb ?? ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.hizb ?? 1) - 1) * 4]?.surahNum - 1] ?? ''}
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        {t.juz} {notification.metadata.juz}، {t.surah} {t.surahNames[JUZ_SECTIONS[(notification.metadata.juz - 1) * 8].surahNum - 1]}
+                                                                        {t.juz} {notification.metadata.juz ?? ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.juz ?? 1) - 1) * 8]?.surahNum - 1] ?? ''}
                                                                     </>
                                                                 )}
                                                             </span>
