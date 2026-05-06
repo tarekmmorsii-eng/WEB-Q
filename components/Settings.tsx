@@ -241,7 +241,7 @@ export default function Settings({
     const quickAccessButtons: QuickAccessButton[] = [
         { icon: Menu, label: t.index, onClick: onOpenIndex },
         { icon: BarChart3, label: t.memorizationStats, onClick: onOpenMemorization },
-        { icon: PlayCircle, label: currentLanguage === 'ar' ? 'تلاوة الآيات' : 'Ayah Recitation', onClick: onOpenReciterSelection },
+        { icon: PlayCircle, label: t.ayahRecitation, onClick: onOpenReciterSelection },
         { icon: Bell, label: t.notifications, onClick: onOpenNotifications },
         { icon: FileWarning, label: t.similarVersesAlert, onClick: onOpenMutashabihat },
         { icon: Calculator, label: t.verseCalculatorTitle, onClick: () => setShowVerseCalculator(true), keepOpen: true },
@@ -458,14 +458,14 @@ export default function Settings({
                                         <div className="w-8 h-8 rounded-full bg-green-200 border-2 border-[var(--bg-card)]" />
                                     </div>
                                     <span className="font-medium text-[var(--text-primary)] opacity-70 group-hover:opacity-100">
-                                        {t.selectTheme || 'اختر نمط الألوان'}
+                                        {t.selectTheme}
                                     </span>
                                 </button>
 
                                 {/* Color Stop Signs Toggle */}
                                 <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer mt-4">
                                     <span className="text-[var(--text-primary)] flex items-center gap-2">
-                                        {t.colorStopSigns || 'تلوين علامات الوقف'}
+                                        {t.colorStopSigns}
                                         <span className="text-3xl text-amber-600 font-serif mx-4 gap-4 flex items-center">
                                             <span>ۘ</span> <span>ۚ</span> <span>ۖ</span> <span>ۗ</span> <span>ۙ</span> <span>ۛ</span>
                                         </span>
@@ -485,10 +485,10 @@ export default function Settings({
                                     <div className="flex items-center gap-4">
                                         <div className="flex flex-col">
                                             <span className="text-[var(--text-primary)] font-medium">
-                                                {currentLanguage === 'ar' ? t.showSimilarVersesIndicators : 'Show Mutashabihat Indicators'}
+                                                {t.showSimilarVersesIndicators}
                                             </span>
                                             <span className="text-xs text-[var(--text-primary)] opacity-50">
-                                                {currentLanguage === 'ar' ? t.similarVersesIndicatorsDesc : 'Colored lines under ayah numbers'}
+                                                {t.similarVersesIndicatorsDesc}
                                             </span>
                                         </div>
 
@@ -527,7 +527,7 @@ export default function Settings({
                                         />
                                     </label>
                                     <p className="text-xs text-[var(--text-primary)] opacity-60 mt-2">
-                                        {t.wordMeaningsNote || 'ملاحظة: (معاني كلمات القرآن والتفسير باللغة العربية فقط)'}
+                                        {t.wordMeaningsNote}
                                     </p>
                                 </div>
 
@@ -535,7 +535,7 @@ export default function Settings({
                                 <div className="p-4 bg-[var(--bg-secondary)] rounded-lg mt-3">
                                     <label className="flex items-center justify-between cursor-pointer">
                                         <span className="text-[var(--text-primary)] font-medium">
-                                            {t.sideMenu || 'القائمة الجانبية العائمة'}
+                                            {t.sideMenu}
                                         </span>
                                         <input
                                             type="checkbox"
@@ -720,9 +720,7 @@ export default function Settings({
                                             <div className="space-y-4">
                                                 {/* Main Note about two-step process */}
                                                 <div className="p-3 bg-amber-50/50 dark:bg-amber-900/10 border-r-4 border-amber-500 rounded text-xs text-amber-900 dark:text-amber-100 font-medium">
-                                                    {t.noteInstallationSteps || (currentLanguage === 'ar'
-                                                        ? 'ملاحظة: التثبيت يتم على خطوتين: الخطوة الأولى: تثبيت التطبيق والخطوة الثانية: تحديث وحفظ المصحف كاملاً.'
-                                                        : 'Note: Installation is done in two steps: Step 1: Install the app, and Step 2: Update and save the full Mushaf.')}
+                                                    {t.noteInstallationSteps}
                                                 </div>
 
                                                 <div className="space-y-3">
@@ -730,7 +728,7 @@ export default function Settings({
                                                         <>
                                                             {/* Step 1 Label */}
                                                             <div className="text-[11px] font-bold text-amber-700 dark:text-amber-500 px-1 uppercase tracking-wider">
-                                                                {t.step1 || (currentLanguage === 'ar' ? 'الخطوة الأولى' : 'Step 1')}
+                                                                {t.step1}
                                                             </div>
                                                             {/* Install App Button - Always persistent per user request */}
                                                             <button
@@ -749,18 +747,18 @@ export default function Settings({
                                                                 <div className="flex flex-col items-start text-right">
                                                                     <span className="font-medium text-amber-900 dark:text-amber-100">
                                                                         {hasUpdate
-                                                                            ? (currentLanguage === 'ar' ? 'تحديث التطبيق متوفر' : 'App update available')
+                                                                            ? t.appUpdateAvailableAlt
                                                                             : isStandalone
-                                                                                ? (currentLanguage === 'ar' ? 'التطبيق مثبت على جهازك' : 'App is installed on your device')
-                                                                                : (isInstalling ? (currentLanguage === 'ar' ? 'جاري بدء التثبيت...' : 'Starting install...') : t.installApp)
+                                                                                ? t.appInstalledAlt
+                                                                                : (isInstalling ? t.startingInstallAlt : t.installApp)
                                                                         }
                                                                     </span>
                                                                     <span className="text-[10px] opacity-70">
                                                                         {hasUpdate
-                                                                            ? (currentLanguage === 'ar' ? 'اضغط لتثبيت أحدث الميزات والإصلاحات البرمجية' : 'Click to install the latest features and fixes')
+                                                                            ? t.clickToInstallLatestAlt
                                                                             : isStandalone
-                                                                                ? (currentLanguage === 'ar' ? 'أي كود جديد سنحدثه لك هنا' : 'We will update any new code for you here')
-                                                                                : (currentLanguage === 'ar' ? 'تثبيت الإطار البرمجي للوصول السريع' : 'Install the app frame for fast access')
+                                                                                ? t.weWillUpdateCodeAlt
+                                                                                : t.installFrameAlt
                                                                         }
                                                                     </span>
                                                                 </div>
@@ -784,7 +782,7 @@ export default function Settings({
                                                         <>
                                                             {/* Step 2 Label */}
                                                             <div className="text-[11px] font-bold text-blue-700 dark:text-blue-500 px-1 pt-2 uppercase tracking-wider">
-                                                                {t.step2 || (currentLanguage === 'ar' ? 'الخطوة الثانية' : 'Step 2')}
+                                                                {t.step2}
                                                             </div>
 
                                                             {/* Download/Update Mushaf Button */}
@@ -803,12 +801,12 @@ export default function Settings({
                                                             >
                                                                 <div className="flex flex-col items-start text-right">
                                                                     <span className={clsx("font-medium", hasOfflineData ? "text-emerald-900 dark:text-emerald-100" : "text-gray-900 dark:text-white")}>
-                                                                        {isDownloading ? t.updatingMushaf : (hasOfflineData ? (currentLanguage === 'ar' ? 'المصحف محدّث ومحفوظ كاملًا' : 'Mushaf is fully updated & saved') : t.downloadMushaf)}
+                                                                        {isDownloading ? t.updatingMushaf : (hasOfflineData ? t.mushafUpdatedSaved : t.downloadMushaf)}
                                                                     </span>
                                                                     <span className={clsx("text-xs mt-1", hasOfflineData ? "text-emerald-700 dark:text-emerald-400 opacity-70" : "text-gray-500 dark:text-gray-400")}>
                                                                         {isDownloading
                                                                             ? t.waitUpdating.replace('{percent}', downloadProgress?.toString() || '0')
-                                                                            : (hasOfflineData ? (currentLanguage === 'ar' ? 'يمكنك التصفح والمراجعة بدون إنترنت الآن' : 'You can browse and review offline now') : t.downloadMushafDescription)
+                                                                            : (hasOfflineData ? t.browseOfflineNowAlt : t.downloadMushafDescription)
                                                                         }
                                                                     </span>
                                                                 </div>
@@ -851,7 +849,7 @@ export default function Settings({
                                                         <div className="flex items-center gap-3">
                                                             <Volume2 size={20} className="text-amber-600 dark:text-amber-500" />
                                                             <span className="font-medium text-gray-900 dark:text-white">
-                                                                {t.downloadAudioOptional || 'Download Audio (Optional)'}
+                                                                {t.downloadAudioOptional}
                                                             </span>
                                                         </div>
                                                         <ChevronDown size={18} className="text-gray-500 -rotate-90 rtl:rotate-90" />
@@ -873,7 +871,7 @@ export default function Settings({
                                 >
                                     <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
                                         <HelpCircle size={20} />
-                                        {t.help || 'المساعدة والتعليمات'}
+                                        {t.help}
                                     </span>
                                     {openHelp ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
                                 </button>
@@ -887,7 +885,7 @@ export default function Settings({
                                             className="w-full flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-100 dark:border-indigo-800 mb-3"
                                         >
                                             <span className="font-medium text-indigo-800 dark:text-indigo-200">
-                                                {currentLanguage === 'ar' ? 'جولة افتراضية للشرح' : 'Interactive Tour'}
+                                                {t.interactiveTour}
                                             </span>
                                             <PlayCircle size={20} className="text-indigo-600 dark:text-indigo-400" />
                                         </button>
@@ -923,7 +921,7 @@ export default function Settings({
                             <section>
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Mail size={20} />
-                                    {t.contact || 'للتواصل'}
+                                    {t.contact}
                                 </h3>
                                 <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center gap-2 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                                     <a
@@ -939,7 +937,7 @@ export default function Settings({
                             <section className="mt-6">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Globe size={20} />
-                                    {t.followUs || (currentLanguage === 'ar' ? 'تابعنا' : 'Follow Us')}
+                                    {t.followUs}
                                 </h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     <a
@@ -949,7 +947,7 @@ export default function Settings({
                                         className="flex flex-col items-center justify-center p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors border border-red-100 dark:border-red-900/30"
                                     >
                                         <Youtube size={28} className="mb-2" />
-                                        <span className="font-medium text-sm">YouTube</span>
+<span className="font-medium text-sm">{t.youtube}</span>
                                     </a>
                                     <a
                                         href="https://www.facebook.com/share/1Aodps7HFw/"
@@ -958,7 +956,7 @@ export default function Settings({
                                         className="flex flex-col items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors border border-blue-100 dark:border-blue-900/30"
                                     >
                                         <Facebook size={28} className="mb-2" />
-                                        <span className="font-medium text-sm">Facebook</span>
+<span className="font-medium text-sm">{t.facebook}</span>
                                     </a>
                                 </div>
                             </section>
@@ -970,8 +968,8 @@ export default function Settings({
                                         if (isNative && navigator.share) {
                                             try {
                                                 await navigator.share({
-                                                    title: currentLanguage === 'ar' ? 'تطبيق مصحف المراجعة' : 'Mushaf App',
-                                                    text: currentLanguage === 'ar' ? 'تطبيق رائع للمراجعة والحفظ' : 'An amazing app for Quran memorization',
+                                                    title: t.mushafApp,
+                                                    text: t.amazingApp,
                                                     url: window.location.origin
                                                 });
                                             } catch (err) {
@@ -988,11 +986,11 @@ export default function Settings({
                                         <span className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <Share2 size={18} className="text-amber-600 dark:text-amber-500" />
                                             {isNative 
-                                                ? (currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App')
-                                                : (t.shareApp || (currentLanguage === 'ar' ? 'مشاركة الموقع' : 'Share Website'))}
+                                                ? t.shareAppNative
+                                                : t.shareWebsite}
                                         </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            {currentLanguage === 'ar' ? 'شارك التطبيق مع أصدقائك' : 'Share the app with friends'}
+                                            {t.shareAppWithFriends}
                                         </span>
                                     </div>
                                     <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-full group-hover:scale-110 transition-transform">
@@ -1004,7 +1002,7 @@ export default function Settings({
                                 {!isNative && (
                                     <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm">
                                         <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                                            {currentLanguage === 'ar' ? 'رمز الاستجابة السريعة (QR)' : 'Scan QR Code'}
+                                            {t.qrCode}
                                         </h4>
                                         <div className="relative p-2 bg-white rounded-lg shadow-inner border border-gray-100">
                                             <img 

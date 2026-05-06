@@ -7,6 +7,7 @@ import { JUZ_SECTIONS } from '../constants';
 import { getAyahPage, getPageAyahRange, getSurahsForPages } from '../services/quranService';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
+import { localizeNumber, formatTimeLocalized } from '../i18n/translations';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -485,7 +486,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                                 className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--bg-card)] rounded text-sm text-[var(--text-primary)]"
                                                             >
                                                                 <Clock size={14} />
-                                                                {time}
+                                                                {formatTimeLocalized(time, language as any, t)}
                                                             </span>
                                                         ))}
                                                         {notification.isAlarm && (
@@ -649,7 +650,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             >
                                                 {SURAHS.map(surah => (
                                                     <option key={surah.number} value={surah.number}>
-                                                        {surah.number}. {t.surahNames[surah.number - 1]}
+                                                        {localizeNumber(surah.number, language as any)}. {t.surahNames[surah.number - 1]}
                                                     </option>
                                                 ))}
                                             </select>
@@ -937,9 +938,9 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         // Ensure End >= Start
                                                         if (formEndPage < val) {
                                                             setFormEndPage(val);
-                                                            setFormName(t.fromPageToPage.replace('{from}', val.toString()).replace('{to}', val.toString()));
+                                                            setFormName(t.fromPageToPage.replace('{from}', localizeNumber(val, language as any)).replace('{to}', localizeNumber(val, language as any)));
                                                         } else {
-                                                            setFormName(t.fromPageToPage.replace('{from}', val.toString()).replace('{to}', formEndPage.toString()));
+                                                            setFormName(t.fromPageToPage.replace('{from}', localizeNumber(val, language as any)).replace('{to}', localizeNumber(formEndPage, language as any)));
                                                         }
                                                     }}
                                                     className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -960,7 +961,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onBlur={() => {
                                                         const val = Math.min(604, Math.max(formStartPage, formEndPage || formStartPage));
                                                         setFormEndPage(val);
-                                                        setFormName(t.fromPageToPage.replace('{from}', formStartPage.toString()).replace('{to}', val.toString()));
+                                                        setFormName(t.fromPageToPage.replace('{from}', localizeNumber(formStartPage, language as any)).replace('{to}', localizeNumber(val, language as any)));
                                                     }}
                                                     className={clsx(
                                                         "w-full px-4 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500",

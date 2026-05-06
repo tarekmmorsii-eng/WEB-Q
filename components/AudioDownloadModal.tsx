@@ -160,7 +160,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             // Guard: must have internet to download
             if (!navigator.onLine) {
                 window.dispatchEvent(new CustomEvent('showToast', {
-                    detail: { message: 'لا يوجد اتصال بالإنترنت. يرجى الاتصال ثم المحاولة مجدداً.', type: 'error' }
+                    detail: { message: t.noConnectionRetry, type: 'error' }
                 }));
                 return;
             }
@@ -186,18 +186,16 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 updateCacheSize();
             } else {
                 window.dispatchEvent(new CustomEvent('showToast', {
-                    detail: { message: 'فشل التحميل — تحقق من اتصالك بالإنترنت', type: 'error' }
+                    detail: { message: t.downloadFailed, type: 'error' }
                 }));
             }
         } catch (error) {
             console.error("Failed to download full surah", error);
             window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { 
-                    message: isArabic 
-                        ? 'عذراً، فشل التحميل. بعض ملفات هذا القارئ غير متوفرة على السيرفر.' 
-                        : 'Sorry, download failed. Some files for this reciter are not available on the server.', 
-                    type: 'error' 
-                }
+                    detail: { 
+                        message: t.downloadFailedServer, 
+                        type: 'error' 
+                    }
             }));
         } finally {
             setIsDownloadingFull(false);
@@ -226,7 +224,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             setShowConfirmDelete(false);
             
             window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { message: isArabic ? 'تم مسح الذاكرة المؤقتة بنجاح' : 'Audio cache cleared successfully', type: 'success' }
+                detail: { message: t.audioCacheCleared, type: 'success' }
             }));
         } catch (e) {
             console.error("Failed to clear caches", e);
@@ -236,7 +234,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     const handleDownloadWords = async (surahNumber: number) => {
         if (!navigator.onLine) {
             window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { message: 'لا يوجد اتصال بالإنترنت', type: 'error' }
+                detail: { message: t.noConnection, type: 'error' }
             }));
             return;
         }
@@ -274,12 +272,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
         } catch (error) {
             console.error("Failed to download words", error);
             window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { 
-                    message: isArabic 
-                        ? 'عذراً، فشل تحميل كلمات السورة.' 
-                        : 'Sorry, failed to download Surah words.', 
-                    type: 'error' 
-                }
+                    detail: { 
+                        message: t.failedDownloadWords, 
+                        type: 'error' 
+                    }
             }));
         } finally {
             setDownloadingWordsSurahs(prev => {
@@ -305,10 +301,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 <div className="p-6 pb-4 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] flex justify-between items-center">
                     <div>
                         <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                            {t.downloadManager || 'Download Manager'}
+                            {t.downloadManager}
                         </h2>
                         <p className="text-[var(--text-primary)] opacity-60 text-xs mt-1">
-                            {t.saveOfflineDesc || 'Save files for offline use'}
+                            {t.saveOfflineDesc}
                         </p>
                     </div>
                     <button
@@ -331,7 +327,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                         )}
                     >
                         <Volume2 size={16} />
-                        {t.fullRecitations || 'Full Recitations'}
+                        {t.fullRecitations}
                     </button>
                     <button
                         onClick={() => setActiveTab('words')}
@@ -343,7 +339,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                         )}
                     >
                         <BookOpen size={16} />
-                        {t.wordsAudio || 'Words Audio'}
+                        {t.wordsAudio}
                     </button>
                 </div>
 
@@ -355,7 +351,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                         <div className="space-y-5">
                             <div>
                                 <label className="block text-sm font-bold text-[var(--text-primary)] mb-2">
-                                    {t.selectReciter || 'Select Reciter'}
+                                    {t.selectReciter}
                                 </label>
                                 <select
                                     value={selectedReciter}
@@ -376,7 +372,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
                             <div>
                                 <label className="block text-sm font-bold text-[var(--text-primary)] mb-2">
-                                    {t.selectSurah || 'Select Surah'}
+                                    {t.selectSurah}
                                 </label>
                                 <select
                                     value={selectedSurah}
@@ -388,7 +384,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                         return (
                                             <option key={surah.number} value={surah.number}>
                                                 {surah.number}. {isArabic ? surah.name : (t.surahNames[surah.number - 1] || surah.name)}
-                                                {isDownloaded ? ` ✓ (${'تم تحميلها'})` : ''}
+                                                {isDownloaded ? ` ✓ (${t.alreadyDownloadedLabel})` : ''}
                                             </option>
                                         );
                                     })}
@@ -399,7 +395,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                 {downloadedFullSurahs.has(selectedSurah) ? (
                                     <div className="w-full py-4 rounded-xl flex items-center justify-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800">
                                         <CheckCircle size={20} />
-                                        <span className="font-bold">{t.alreadyDownloaded || 'Already Downloaded'}</span>
+                                        <span className="font-bold">{t.alreadyDownloaded}</span>
                                     </div>
                                 ) : (
                                     <button
@@ -415,12 +411,12 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                         {isDownloadingFull ? (
                                             <>
                                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                {t.downloading || 'Downloading...'}
+                                                {t.downloading}
                                             </>
                                         ) : (
                                             <>
                                                 <Download size={20} />
-                                                {t.downloadSurah || 'Download Surah'}
+                                                {t.downloadSurah}
                                             </>
                                         )}
                                     </button>
@@ -437,9 +433,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                     <div className="flex items-start gap-3">
                                         <div className="text-amber-500 text-lg">💡</div>
                                         <p className="text-sm text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
-                                            {isArabic 
-                                                ? 'تلميح لتوفير المساحة: لا داعي لتحميل السورة كاملة! يمكنك الاكتفاء بالاستماع للكلمات الصعبة أثناء القراءة، وسيقوم التطبيق بحفظها تلقائياً للعمل بدون إنترنت.'
-                                                : 'Space-saving tip: No need to download the full Surah! You can just listen to the difficult words while reading, and they will be automatically saved for offline use.'}
+                                            {t.spaceSavingTip}
                                         </p>
                                     </div>
                                     <div className="flex justify-end">
@@ -447,7 +441,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                             onClick={handleDismissWbwTip}
                                             className="px-4 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-lg transition-colors border border-amber-500/20"
                                         >
-                                            {isArabic ? 'قد فهمت' : 'Got it'}
+                                            {t.gotIt}
                                         </button>
                                     </div>
                                 </div>
@@ -471,7 +465,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                         {isDownloaded ? (
                                             <div className="flex items-center gap-1 text-green-500 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-800/50">
                                                 <CheckCircle size={16} />
-                                                <span className="text-xs font-bold">{t.downloaded || 'Downloaded'}</span>
+                                                <span className="text-xs font-bold">{t.downloaded}</span>
                                             </div>
                                         ) : (
                                             <button
@@ -489,7 +483,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                                 ) : (
                                                     <Download size={14} />
                                                 )}
-                                                {t.downloadAction || 'Download'}
+                                                {t.downloadAction}
                                             </button>
                                         )}
                                     </div>
@@ -503,7 +497,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                             className="w-full py-3 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all flex items-center justify-center gap-2 text-sm font-bold"
                         >
                             <X size={18} />
-                            {isArabic ? `مسح الذاكرة المؤقتة (${cacheSizeMB} MB)` : `Clear Audio Cache (${cacheSizeMB} MB)`}
+                            {t.clearAudioCache.replace('{{size}}', cacheSizeMB)}
                         </button>
                     </div>
                 </div>
@@ -518,10 +512,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                 <X size={24} />
                             </div>
                             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
-                                {isArabic ? 'تأكيد الحذف' : 'Confirm Deletion'}
+                                {t.confirmDeletion}
                             </h3>
                             <p className="text-sm text-[var(--text-secondary)]">
-                                {isArabic ? 'هل أنت متأكد من مسح جميع التلاوات المحملة؟ ستحتاج إلى إنترنت لتحميلها مجدداً.' : 'Are you sure you want to clear all downloaded audio? You will need internet to download them again.'}
+                                {t.confirmDeleteCacheMsg}
                             </p>
                         </div>
                         <div className="flex border-t border-[var(--border-primary)]">
@@ -529,13 +523,13 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                 onClick={() => setShowConfirmDelete(false)}
                                 className="flex-1 py-4 text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--bg-body)] transition-colors border-l border-[var(--border-primary)]"
                             >
-                                {isArabic ? 'إلغاء' : 'Cancel'}
+                                {t.cancel}
                             </button>
                             <button
                                 onClick={handleClearCache}
                                 className="flex-1 py-4 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
                             >
-                                {isArabic ? 'نعم، امسح التنزيلات' : 'Yes, clear downloads'}
+                                {t.yesClearDownloads}
                             </button>
                         </div>
                     </div>

@@ -5,7 +5,8 @@ export type Language =
     | 'kk' | 'ku' | 'vi' | 'tl' | 'hi' | 'ta' | 'si' | 'am' | 'yo' | 'om'
     | 'rw';
 
-export interface Translations {    dir: string;
+export interface Translations {
+    dir: string;
     index: string;
     search: string;
     memorizationStats: string;
@@ -55,6 +56,8 @@ export interface Translations {    dir: string;
     cancel: string;
     close: string;
     loading: string;
+    stop: string;
+    repeatMode: string;
     error: string;
     firstWordHidden: string;
     firstWordShown: string;
@@ -429,6 +432,8 @@ export interface Translations {    dir: string;
     hideRatedVerses: string;
     shareAppDesc: string;
     followUs: string;
+    youtube: string;
+    facebook: string;
     tourAyahNumberDescText: string;
     tourMemorizationPwr: string;
     tourBookmarkDesc: string;
@@ -466,6 +471,46 @@ export interface Translations {    dir: string;
     downloaded: string;
     downloadAction: string;
     wordMeaningsNote: string;
+    ayahRecitation: string;
+    interactiveTour: string;
+    gotIt: string;
+    spaceSavingTip: string;
+    clearAudioCache: string;
+    confirmDeletion: string;
+    confirmDeleteCacheMsg: string;
+    yesClearDownloads: string;
+    noConnection: string;
+    noConnectionRetry: string;
+    downloadFailed: string;
+    downloadFailedServer: string;
+    audioCacheCleared: string;
+    failedDownloadWords: string;
+    alreadyDownloadedLabel: string;
+    shareAppNative: string;
+    shareAppDescNative: string;
+    shareAppWithFriends: string;
+    shareWebsite: string;
+    qrCode: string;
+    appUpdateAvailableAlt: string;
+    appInstalledAlt: string;
+    startingInstallAlt: string;
+    clickToInstallLatestAlt: string;
+    weWillUpdateCodeAlt: string;
+    installFrameAlt: string;
+    mushafUpdatedSaved: string;
+    browseOfflineNowAlt: string;
+    mushafApp: string;
+    amazingApp: string;
+    copyLink: string;
+    otherOptions: string;
+    linkCopied: string;
+    mushafAlMurajaa: string;
+    amLabel: string;
+    pmLabel: string;
+    reciterSectionMurattal: string;
+    reciterSectionMujawwad: string;
+    confirmDeleteTitle: string;
+    internetRequiredDownload: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';
@@ -533,6 +578,31 @@ export const translations: Record<Language, Translations> = {
     om: om as Translations,
     rw: rw as Translations,
 };
+
+/**
+ * Format a number based on the current language.
+ * Arabic uses Eastern Arabic numerals (١٢٣), others use Western (123).
+ */
+export function localizeNumber(num: number | string, language: Language): string {
+    const str = String(num);
+    if (language === 'ar') return str; // Arabic UI already uses ١٢٣ via browser/font
+    return str; // All other languages use standard 123
+}
+
+/**
+ * Format a time string (HH:MM) to include AM/PM label based on language.
+ * Arabic: ٥:٣٠ ص | English: 5:30 AM
+ */
+export function formatTimeLocalized(time24: string, language: Language, t: Translations): string {
+    const [h, m] = time24.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return time24;
+    const isAr = language === 'ar';
+    const amLabel = t.amLabel || (isAr ? 'ص' : 'AM');
+    const pmLabel = t.pmLabel || (isAr ? 'م' : 'PM');
+    const period = h >= 12 ? pmLabel : amLabel;
+    const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
+}
 
 export const LANGUAGE_NAMES: Record<Language, string> = {
     ar: 'العربية',

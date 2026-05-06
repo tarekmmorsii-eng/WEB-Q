@@ -158,3 +158,48 @@
 - يمكنك إيجاد تفاصيل بنية المشروع وآلية عمل المتشابهات وإعدادات التطبيقات في مجلد `.agent`.
 - التطبيق يدعم الواجهة العربية بالكامل كاستجابة لمتطلبات وتفضيلات المستخدمين.
 - **ميزة معاني الكلمات (قيد التطوير - مسودة):** تم البدء في بناء نظام ذكي لاستخراج وعرض معاني الكلمات من صور مفصلة. تم حفظ الكود والأدوات والبيانات الأولية كمسودة في فرع مستقل باسم `feature/ma3any-draft`. لمزيد من التفاصيل وكيفية استئناف العمل عليها مستقبلاً، يرجى مراجعة ملف `i do it\استخراج معاني القرآن.md`.
+
+---
+
+## 🌍 تحديث نظام الترجمة وتعدد اللغات (i18n QA Fix) — 2026-05-04
+
+### ملخص العملية
+تم إجراء فحص جودة شامل لنظام الترجمة واكتشاف نصوص ثابتة (Hardcoded) وأرقام لا تستجيب لتغيير اللغة، وتم إصلاحها جميعاً.
+
+### ✅ أولاً: النصوص الثابتة في واجهة المستخدم (UI Strings)
+| الملف | النصوص المُصلَحة |
+|-------|-----------------|
+| `components/Settings.tsx` | `'Ayah Recitation'`, `'Show Mutashabihat Indicators'`, `'Colored lines under ayah numbers'`, `'Interactive Tour'`, `'Follow Us'`, `'YouTube'`, `'Facebook'`, `'Share App'`, `'Share the app with friends'` |
+| `components/AudioDownloadModal.tsx` | `'Space-saving tip...'`, `'Got it'`, رسالة تحذير Word Audio, `'Clear Audio Cache'` مع دعم المتغير `{{size}}` |
+| `components/SocialShareModal.tsx` | عنوان ونصوص المشاركة |
+
+### ✅ ثانياً: مصفوفة أسماء القراء (Reciters Array)
+- **إصلاح حرج:** كانت مفاتيح القراء في JSON تبدأ بـ `ar.xxx` لكن المكونات تستخدم `r.id` (مثل `alafasy`). تم توحيد المفاتيح لتتطابق مع معرفات `RECITERS_LIST` في `services/reciterService.ts`.
+- تم إضافة أسماء القراء بالإنجليزية والعربية لجميع اللغات (47 قارئ)
+- الملفات: `src/assets/i18n/*.json`, `components/FloatingAudioPlayer.tsx`, `components/AudioDownloadModal.tsx`
+- أسماء القراء: الحصري، عبد الباسط، المنشاوي، العفاسي، المعيقلي، السديس، الدوسري، القطامي، الغامدي، الشريم، العجمي، الرفاعي، الجهني، الحذيفي، محمد أيوب، بصفر، البنا، مصطفى إسماعيل، و29 قارئ إضافي
+
+### ✅ ثالثاً: توطين الأرقام والوقت
+| الدالة | الوصف |
+|--------|-------|
+| `localizeNumber()` | تحويل الأرقام حسب اللغة (عربية هندية ١٢٣ vs إنجليزية 123) |
+| `formatTimeLocalized()` | تنسيق الوقت مع ص/م أو AM/PM حسب اللغة |
+
+- تم تطبيقها في `components/NotificationManager.tsx` لأرقام السور والصفحات وعرض الوقت
+
+### ✅ رابعاً: ملفات اللغة المحدثة (31 لغة)
+تمت إضافة مفاتيح الترجمة الجديدة في جميع اللغات (ar, en, id, ms, ur, bn, tr, fa, ha, fr, es, de, ru, sw, zh, ko, ja, bs, sq, uz, kk, ku, vi, tl, hi, ta, si, am, yo, om, rw)
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `i18n/translations.ts` | إضافة واجهة Translations + دوال `localizeNumber` و `formatTimeLocalized` |
+| `src/assets/i18n/*.json` (31 ملف) | إضافة مفاتيح الترجمة الجديدة |
+| `components/Settings.tsx` | استبدال النصوص الثابتة بمفاتيح الترجمة |
+| `components/AudioDownloadModal.tsx` | استبدال النصوص الثابتة + دعم `{{size}}` |
+| `components/SocialShareModal.tsx` | استبدال نصوص المشاركة |
+| `hooks/useReciters.ts` | تحويل أسماء القراء لمفاتيح ترجمة |
+| `components/FloatingAudioPlayer.tsx` | إصلاح أسماء القراء في العنوان والقائمة المنسدلة + إزالة جميع fallbacks |
+| `components/FloatingSideMenu.tsx` | إصلاح نصوص أزرار التلاوة والتحميل + إزالة جميع fallbacks |
+| `services/reciterService.ts` | المصدر الرئيسي لقائمة القراء (RECITERS_LIST) |
+| `components/NotificationManager.tsx` | توطين الأرقام والوقت |

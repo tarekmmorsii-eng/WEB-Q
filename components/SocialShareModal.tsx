@@ -24,10 +24,8 @@ export default function SocialShareModal({
     
     if (!isOpen) return null;
 
-    const defaultTitle = currentLanguage === 'ar' ? 'مصحف المراجعة' : 'Mushaf Al-Murajaa';
-    const defaultText = currentLanguage === 'ar' 
-        ? 'تطبيق مصحف المراجعة: رفيقك في مسيرتك لحفظ القرآن الكريم وتثبيته. يوفر أدوات متقدمة لاختبار الحفظ، ومراجعة المتشابهات اللفظية، ومعرفة معاني الكلمات بسهولة.' 
-        : 'Mushaf Al-Murajaa App: Your companion in memorizing and solidifying the Holy Quran. It provides advanced tools for testing memorization, reviewing verbal similarities, and understanding word meanings easily.';
+    const defaultTitle = t.mushafAlMurajaa;
+    const defaultText = t.shareAppDescNative;
 
     const finalTitle = shareTitle || defaultTitle;
     const finalText = shareText || defaultText;
@@ -67,7 +65,7 @@ export default function SocialShareModal({
     const handleCopyLink = async () => {
         try {
             await navigator.clipboard.writeText(shareUrl);
-            alert(currentLanguage === 'ar' ? 'تم نسخ الرابط بنجاح' : 'Link copied successfully');
+            alert(t.linkCopied);
         } catch (err) {
             console.error('Failed to copy:', err);
         }
@@ -97,7 +95,7 @@ export default function SocialShareModal({
                 {/* Header */}
                 <div className="p-4 border-b border-[var(--border-primary)] flex justify-between items-center bg-[var(--bg-secondary)]">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                        {currentLanguage === 'ar' ? 'مشاركة التطبيق' : 'Share App'}
+                        {t.shareAppNative}
                     </h3>
                     <button onClick={onClose} className="p-1 hover:bg-[var(--border-primary)] rounded-full transition-colors">
                         <X size={20} className="text-[var(--text-primary)] opacity-60" />
@@ -131,7 +129,7 @@ export default function SocialShareModal({
                             className="w-full flex items-center justify-center gap-3 p-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-all font-medium"
                         >
                             <Copy size={20} className="text-amber-600" />
-                            <span>{currentLanguage === 'ar' ? 'نسخ الرابط' : 'Copy Link'}</span>
+                            <span>{t.copyLink}</span>
                         </button>
 
                         {navigator.share && (
@@ -140,7 +138,7 @@ export default function SocialShareModal({
                                 className="w-full flex items-center justify-center gap-3 p-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 shadow-lg shadow-amber-600/20 transition-all font-bold"
                             >
                                 <Share size={20} />
-                                <span>{currentLanguage === 'ar' ? 'خيارات أخرى' : 'Other Options'}</span>
+                                <span>{t.otherOptions}</span>
                             </button>
                         )}
                     </div>
@@ -149,9 +147,7 @@ export default function SocialShareModal({
                 {/* Footer Message */}
                 <div className="p-4 bg-[var(--bg-secondary)] text-center">
                     <p className="text-[10px] text-[var(--text-primary)] opacity-50 px-4">
-                        {currentLanguage === 'ar' 
-                            ? 'انشر الخير.. شارك التطبيق مع من تحب' 
-                            : 'Spread the goodness.. Share the app with your loved ones'}
+                        {t.shareAppDescNative}
                     </p>
                 </div>
             </div>

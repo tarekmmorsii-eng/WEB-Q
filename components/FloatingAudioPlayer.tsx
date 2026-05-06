@@ -101,11 +101,11 @@ export default function FloatingAudioPlayer({
                         {currentContext && (
                             <div 
                                 className="text-[10px] text-amber-500/80 font-bold px-2 text-center uppercase tracking-wider w-full overflow-hidden text-ellipsis whitespace-nowrap"
-                                title={reciters.find(r => r.id === selectedReciterId) ? `${reciters.find(r => r.id === selectedReciterId)?.name} • ${currentContext}` : currentContext}
+                                title={reciters.find(r => r.id === selectedReciterId) ? `${t.reciters && t.reciters[reciters.find(r => r.id === selectedReciterId)!.id] ? t.reciters[reciters.find(r => r.id === selectedReciterId)!.id] : reciters.find(r => r.id === selectedReciterId)?.name} • ${currentContext}` : currentContext}
                             >
                                 {(() => {
                                     const r = reciters.find(rec => rec.id === selectedReciterId);
-                                    const rName = r ? r.name : '';
+                                    const rName = r ? (t.reciters && t.reciters[r.id] ? t.reciters[r.id] : r.name) : '';
                                     return rName ? `${rName} • ${currentContext}` : currentContext;
                                 })()}
                             </div>
@@ -113,12 +113,12 @@ export default function FloatingAudioPlayer({
                         <div className={clsx("flex items-center gap-1.5 md:gap-4 w-full justify-center py-0.5 md:py-1", isRTL ? "flex-row-reverse" : "flex-row")}>
 
                         {/* Stop Button */}
-                        <button onClick={onStop} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-60 hover:opacity-100 transition-colors" title={t.stop || 'Stop'}>
+                        <button onClick={onStop} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-60 hover:opacity-100 transition-colors" title={t.stop}>
                             <Square size={16} md:size={18} fill="currentColor" />
                         </button>
 
                         {/* Previous Button */}
-                        <button onClick={onPrevious} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-60 hover:opacity-100 transition-colors" title={t.previous || 'Previous'}>
+                        <button onClick={onPrevious} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-60 hover:opacity-100 transition-colors" title={t.previous}>
                             <SkipBack size={18} md:size={20} fill="currentColor" />
                         </button>
 
@@ -131,7 +131,7 @@ export default function FloatingAudioPlayer({
                         </button>
 
                         {/* Next Button */}
-                        <button onClick={onNext} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-60 hover:opacity-100 transition-colors" title={t.next || 'Next'}>
+                        <button onClick={onNext} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-60 hover:opacity-100 transition-colors" title={t.next}>
                             <SkipForward size={18} md:size={20} fill="currentColor" />
                         </button>
 
@@ -139,7 +139,7 @@ export default function FloatingAudioPlayer({
                         <button 
                             onClick={onToggleRepeat}
                             className="flex items-center gap-0.5 md:gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[9px] md:text-[10px] font-bold text-[var(--text-primary)] opacity-40 hover:bg-[var(--bg-primary)] hover:opacity-100 transition-all active:scale-95"
-                            title={t.repeatMode || 'Repeat Mode'}
+                            title={t.repeatMode}
                         >
                             <Repeat size={10} md:size={12} />
                             <span>{ayahRepetitions === -1 ? '∞' : ayahRepetitions}</span>
@@ -149,7 +149,7 @@ export default function FloatingAudioPlayer({
                         <button 
                             onClick={onToggleSpeed}
                             className="flex items-center gap-0.5 md:gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[9px] md:text-[10px] font-bold text-cyan-400 hover:bg-cyan-400/10 transition-all active:scale-95"
-                            title={t.playbackSpeed || 'Playback Speed'}
+                            title={t.playbackSpeed}
                         >
                             <Gauge size={10} md:size={12} />
                             <span>{playbackRate}x</span>
@@ -180,7 +180,7 @@ export default function FloatingAudioPlayer({
                             {loading ? (
                                 <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500">
                                     <Loader2 className="animate-spin" size={14} md:size={16} />
-                                    <span>{t.loading || 'Loading...'}</span>
+                                    <span>{t.loading}</span>
                                 </div>
                             ) : (
                                 <select

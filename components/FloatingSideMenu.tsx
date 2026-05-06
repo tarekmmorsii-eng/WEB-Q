@@ -52,7 +52,7 @@ export default function FloatingSideMenu({
                 onClick={onOpenReciterSelection}
                 disabled={!isVisible}
                 className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r border-amber-500/30' : 'rounded-l-xl border-y border-l border-amber-500/30'} flex items-center justify-center bg-[var(--bg-card)] text-amber-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14`}
-                title={currentLanguage === 'ar' ? 'تلاوة الآيات' : 'Ayah Recitation'}
+                title={t.ayahRecitation}
             >
                 <PlayCircle size={24} />
             </button>
@@ -68,7 +68,7 @@ export default function FloatingSideMenu({
                         ? 'bg-emerald-50 text-emerald-600'
                         : 'bg-[var(--bg-card)] text-amber-600 hover:bg-[var(--bg-secondary)] hover:w-14'
                     }`}
-                title={isNative ? (currentLanguage === 'ar' ? 'تحميل التلاوات' : 'Download Recitations') : t.installAndDownload}
+                title={t.installAndDownload}
             >
                 {isNative ? (
                     <div className="relative">
@@ -86,7 +86,7 @@ export default function FloatingSideMenu({
                 onClick={onOpenHelp}
                 disabled={!isVisible}
                 className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r border-indigo-500/30' : 'rounded-l-xl border-y border-l border-indigo-500/30'} flex items-center justify-center bg-[var(--bg-card)] text-indigo-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14`}
-                title={t.help || 'المساعدة'}
+                title={t.help}
             >
                 <HelpCircle size={24} />
             </button>
