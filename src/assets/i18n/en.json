@@ -609,7 +609,7 @@
     "abdul_basit_mujawwad": "Abdul Basit Abdul Samad (Mujawwad)",
     "minshawy_mujawwad": "Al-Minshawi (Mujawwad)",
     "husary_muallim": "Mahmoud Khalil Al-Husary (Teacher)",
-    "minshawy_teacher": "Mohammed Siddiq Al-Minshawi (Teacher)",
+    "minshawy_teacher": "Muhammad Siddiq Al-Minshawi (Teacher)",
     "sowaid": "Ayman Sowaid (Teaching)"
   },
   "downloadAudioOptional": "Download Audio (Optional)",
@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad & Educational ──────",
   "confirmDeleteTitle": "Confirm",
   "internetRequiredDownload": "(Internet required for download)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Line Spacing",
   "stop": "Stop",
   "repeatMode": "Repeat Mode",
   "youtube": "YouTube",
