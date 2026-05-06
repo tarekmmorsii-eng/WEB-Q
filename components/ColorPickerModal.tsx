@@ -43,7 +43,7 @@ export default function ColorPickerModal({ isOpen, onClose, currentThemeId, onSe
                         {t.chooseColor}
                     </span>
                     <div className="text-[var(--text-primary)] opacity-50 text-xs mt-1">
-                        {t.index === 'Index' ? currentTheme?.name : currentTheme?.nameAr}
+                        {currentTheme ? (t as any)[`themeName_${currentTheme.id.replace(/-/g, '_')}`] || currentTheme.name : ''}
                     </div>
                 </div>
 
@@ -90,7 +90,7 @@ export default function ColorPickerModal({ isOpen, onClose, currentThemeId, onSe
                                         : "border-[var(--border-primary)] hover:border-gray-400 hover:scale-105"
                                 )}
                                 style={{ backgroundColor: theme.colors.background }}
-                                title={theme.nameAr}
+                                title={(t as any)[`themeName_${theme.id.replace(/-/g, '_')}`] || theme.name}
                             >
                                 {/* Center Dot / Checkmark */}
                                 <div className="flex items-center justify-center w-full h-full">

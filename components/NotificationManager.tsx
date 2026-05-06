@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Upload } from 'lucide-react';
 import clsx from 'clsx';
 import { NotificationItem } from '../types';
@@ -168,6 +168,24 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [formType, setFormType] = useState<'daily' | 'weekly'>('daily');
     const [formDays, setFormDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
     const [formTimes, setFormTimes] = useState<string[]>(['08:00']);
+    const timeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    const handleTimeClick = (index: number) => {
+        const input = timeInputRefs.current[index];
+        if (input) {
+            try {
+                if (typeof input.showPicker === 'function') {
+                    input.showPicker();
+                } else {
+                    input.focus();
+                    input.click();
+                }
+            } catch (e) {
+                input.focus();
+            }
+        }
+    };
+
     const [formIsAlarm, setFormIsAlarm] = useState(true);
     const [formSound, setFormSound] = useState<string>('/islamic_song.mp3');
 
@@ -1046,20 +1064,35 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 </div>
                             )}
 
-                            {/* Times */}
+                            {/* Times - Invisible Overlay Pattern */}
                             <div>
                                 <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
                                     {t.notificationTimes}
                                 </label>
                                 <div className="space-y-2">
                                     {formTimes.map((time, index) => (
-                                        <div key={index} className="flex gap-2">
-                                            <input
-                                                type="time"
-                                                value={time}
-                                                onChange={(e) => handleTimeChange(index, e.target.value)}
-                                                className="flex-1 px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                            />
+                                        <div key={index} className="flex gap-2 items-center">
+                                            {/* Clickable wrapper - opens native picker via showPicker() */}
+                                            <div
+                                                className="relative flex-1 cursor-pointer"
+                                                onClick={() => handleTimeClick(index)}
+                                            >
+                                                {/* Visual display - localized time */}
+                                                <div className="px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center font-bold min-h-[42px] flex items-center justify-center gap-2 select-none">
+                                                    <Clock size={16} className="opacity-50" />
+                                                    <span>{time ? formatTimeLocalized(time, language as any, t) : '--:--'}</span>
+                                                </div>
+                                                {/* Hidden native input - positioned off-screen, controlled via ref */}
+                                                <input
+                                                    ref={el => { timeInputRefs.current[index] = el; }}
+                                                    type="time"
+                                                    value={time}
+                                                    onChange={(e) => handleTimeChange(index, e.target.value)}
+                                                    className="opacity-0 absolute w-0 h-0 overflow-hidden"
+                                                    style={{ fontSize: '16px' }}
+                                                    tabIndex={-1}
+                                                />
+                                            </div>
                                             {formTimes.length > 1 && (
                                                 <button
                                                     onClick={() => handleRemoveTime(index)}

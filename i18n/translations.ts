@@ -511,6 +511,22 @@ export interface Translations {
     reciterSectionMujawwad: string;
     confirmDeleteTitle: string;
     internetRequiredDownload: string;
+    themeName_classic_mushaf: string;
+    themeName_antique_paper: string;
+    themeName_calm_night: string;
+    themeName_nature: string;
+    themeName_almond_paper: string;
+    themeName_wheat_paper: string;
+    themeName_papyrus: string;
+    themeName_clear_sky: string;
+    themeName_midnight: string;
+    themeName_calm_lake: string;
+    themeName_silver_cloud: string;
+    themeName_calm_charcoal: string;
+    themeName_slate_gray: string;
+    themeName_lavender: string;
+    themeName_calm_peach: string;
+    themeName_morning_sun: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';
@@ -590,18 +606,43 @@ export function localizeNumber(num: number | string, language: Language): string
 }
 
 /**
- * Format a time string (HH:MM) to include AM/PM label based on language.
- * Arabic: ٥:٣٠ ص | English: 5:30 AM
+ * Locale mapping for Intl.DateTimeFormat
+ */
+const LOCALE_MAP: Record<Language, string> = {
+    ar: 'ar-SA', en: 'en-US', id: 'id-ID', ms: 'ms-MY', ur: 'ur-PK',
+    bn: 'bn-BD', tr: 'tr-TR', fa: 'fa-IR', ha: 'ha-NG', fr: 'fr-FR',
+    es: 'es-ES', de: 'de-DE', ru: 'ru-RU', sw: 'sw-KE', zh: 'zh-CN',
+    ko: 'ko-KR', ja: 'ja-JP', bs: 'bs-BA', sq: 'sq-AL', uz: 'uz-UZ',
+    kk: 'kk-KZ', ku: 'ckb-IR', vi: 'vi-VN', tl: 'fil-PH', hi: 'hi-IN',
+    ta: 'ta-IN', si: 'si-LK', am: 'am-ET', yo: 'yo-NG', om: 'om-ET',
+    rw: 'rw-RW'
+};
+
+/**
+ * Format a time string (HH:MM) localized for the current language.
+ * Uses Intl.DateTimeFormat for proper locale-aware formatting.
+ * Arabic: ٥:٣٠ ص | English: 5:30 AM | Bengali: ৫:৩০ AM
  */
 export function formatTimeLocalized(time24: string, language: Language, t: Translations): string {
     const [h, m] = time24.split(':').map(Number);
     if (isNaN(h) || isNaN(m)) return time24;
-    const isAr = language === 'ar';
-    const amLabel = t.amLabel || (isAr ? 'ص' : 'AM');
-    const pmLabel = t.pmLabel || (isAr ? 'م' : 'PM');
-    const period = h >= 12 ? pmLabel : amLabel;
-    const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
+
+    try {
+        const locale = LOCALE_MAP[language] || 'en-US';
+        const date = new Date(2000, 0, 1, h, m, 0);
+        return new Intl.DateTimeFormat(locale, {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }).format(date);
+    } catch {
+        // Fallback: use amLabel/pmLabel from translations
+        const amLabel = t.amLabel || 'AM';
+        const pmLabel = t.pmLabel || 'PM';
+        const period = h >= 12 ? pmLabel : amLabel;
+        const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
+    }
 }
 
 export const LANGUAGE_NAMES: Record<Language, string> = {

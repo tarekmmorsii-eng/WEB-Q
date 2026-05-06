@@ -256,3 +256,131 @@
 |-------|-------|
 | `src/assets/i18n/en.json` | تصحيح `lineSpacing` إلى `"Line Spacing"` |
 | `scripts/qa_translation_audit.cjs` | إعادة كتابة كاملة: قراءة من JSON + قائمة استثناءات + تقرير مفصل |
+
+---
+
+## 🎉 إنجاز الترجمة الكاملة — 0 أخطاء (2026-05-06)
+
+### الهدف المُحقَّق
+✅ **30 لغة × 666 مفتاح = 19,980 قيمة مترجمة — بدون أي خطأ واحد!**
+
+### نتائج الفحص النهائي (QA Final Report)
+| المؤشر | القيمة |
+|--------|--------|
+| اللغات المفحوصة | **30** |
+| اللغات المكتملة 100% | **30 ✅** |
+| اللغات بمشاكل | **0 ❌** |
+| مفاتيح مفقودة | **0** |
+| قيم فارغة | **0** |
+| قيم غير مترجمة | **0** |
+| إجمالي المشاكل | **0** 🎯 |
+
+### مراحل التنفيذ
+
+#### المرحلة 1: علاج القيم الفارغة في العربية (ar.json)
+- تعبئة 3 مفاتيح فارغة: `startRuleDesc`, `endRuleDesc`, `middleRuleDesc`
+
+#### المرحلة 2: الترجمة الآلية بالجمل (MyMemory API)
+تم إنشاء 3 سكريبتات للترجمة الآلية عبر MyMemory Translation API:
+1. **`scripts/auto_translate_all.cjs`** — الجولة الأولى: ترجمة 11 لغة (AM, BN, HA, HI, KO, KU, RW, SQ, SW, TA, OM)
+2. **`scripts/auto_translate_round2.cjs`** — الجولة الثانية: معالجة اللغات المتبقية
+3. **`scripts/auto_translate_round3.cjs`** — الجولة الثالثة: معالجة BS, ID, JA, KK, KO, KU, MS, OM, RU, RW, SI, SQ, SW, TA, TL, TR, UR, UZ, VI, YO, ZH
+
+#### المرحلة 3: الترجمة اليدوية (AI Direct Translation)
+عندما وصل API للحد اليومي، تم إنشاء سكريبت ترجمة يدوية للـ 94 مفتاح المتبقية:
+- **`scripts/fix_remaining_manual.cjs`** — ترجمة مباشرة لـ 8 لغات (MS: 1, OM: 3, SI: 1, TL: 3, UZ: 14, VI: 24, YO: 24, ZH: 24)
+
+### اللغات المدعومة (30 لغة)
+| الرمز | اللغة | الحالة |
+|-------|-------|--------|
+| ar | العربية | ✅ 100% |
+| en | English | ✅ 100% |
+| id | Bahasa Indonesia | ✅ 100% |
+| ms | Bahasa Melayu | ✅ 100% |
+| ur | اردو | ✅ 100% |
+| bn | বাংলা | ✅ 100% |
+| tr | Türkçe | ✅ 100% |
+| fa | فارسی | ✅ 100% |
+| ha | Hausa | ✅ 100% |
+| fr | Français | ✅ 100% |
+| es | Español | ✅ 100% |
+| de | Deutsch | ✅ 100% |
+| ru | Русский | ✅ 100% |
+| sw | Kiswahili | ✅ 100% |
+| zh | 中文 | ✅ 100% |
+| ko | 한국어 | ✅ 100% |
+| ja | 日本語 | ✅ 100% |
+| bs | Bosanski | ✅ 100% |
+| sq | Shqip | ✅ 100% |
+| uz | Oʻzbekcha | ✅ 100% |
+| kk | Қазақша | ✅ 100% |
+| ku | کوردی | ✅ 100% |
+| vi | Tiếng Việt | ✅ 100% |
+| tl | Tagalog | ✅ 100% |
+| hi | हिन्दी | ✅ 100% |
+| ta | தமிழ் | ✅ 100% |
+| si | සිංහල | ✅ 100% |
+| am | አማርኛ | ✅ 100% |
+| yo | Yorùbá | ✅ 100% |
+| om | Afaan Oromoo | ✅ 100% |
+
+### سكريبتات الترجمة المستخدمة
+| الملف | الوصف |
+|-------|-------|
+| `scripts/auto_translate_all.cjs` | ترجمة آلية بالجمل عبر MyMemory API (جولة 1) |
+| `scripts/auto_translate_round2.cjs` | ترجمة آلية (جولة 2) |
+| `scripts/auto_translate_round3.cjs` | ترجمة آلية (جولة 3) |
+| `scripts/fix_remaining_manual.cjs` | ترجمة يدوية مباشرة للـ 94 مفتاح المتبقي |
+ | `scripts/qa_translation_audit.cjs` | سكريبت فحص جودة الترجمات |
+
+---
+
+## 🎨 إصلاح النصوص الثابتة وتوطين الوقت — 2026-05-06
+
+### المشكلة
+بعد مراجعة بصرية للتطبيق، تم اكتشاف:
+1. **شاشة الألوان (ColorPickerModal):** أسماء الثيمات (مثل "المصحف الكلاسيكي") كانت مكتوبة بشكل ثابت في الكود وتظهر بالعربية حتى عند اختيار لغة أخرى.
+2. **تنسيق الوقت (formatTimeLocalized):** الأوقات كانت تظهر دائماً بالأرقام العربية وحرف "ص/م" في جميع اللغات.
+
+### الحلول المُطبّقة
+
+#### 1. توطين أسماء الثيمات (16 ثيم)
+- تم إنشاء 16 مفتاح ترجمة جديد: `themeName_classic_mushaf`, `themeName_antique_paper`, `themeName_calm_night`, `themeName_nature`, `themeName_almond_paper`, `themeName_wheat_paper`, `themeName_papyrus`, `themeName_clear_sky`, `themeName_midnight`, `themeName_calm_lake`, `themeName_silver_cloud`, `themeName_calm_charcoal`, `themeName_slate_gray`, `themeName_lavender`, `themeName_calm_peach`, `themeName_morning_sun`
+- تمت ترجمتها لجميع اللغات الـ 31 (16 × 31 = 496 قيمة جديدة)
+- تم تحديث `ColorPickerModal.tsx` لاستخدام `t()` بدل النصوص الثابتة
+
+#### 2. إصلاح تنسيق الوقت باستخدام `Intl.DateTimeFormat`
+- تم تعديل دالة `formatTimeLocalized()` في `i18n/translations.ts`
+- **الطريقة الجديدة:** تستخدم `Intl.DateTimeFormat` مع الـ locale المناسب لكل لغة
+  - العربية: `٥:٣٠ ص` (أرقام هندية + ص/م)
+  - الإنجليزية: `5:30 AM` (أرقام لاتينية + AM/PM)
+  - البنغالية: `৫:৩০ AM` (أرقام بنغالية + AM/PM)
+  - وغيرها حسب اللغة
+- **خطة بديلة (fallback):** في حالة فشل Intl، تستخدم `amLabel`/`pmLabel` من ملفات JSON
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/ColorPickerModal.tsx` | استبدال `theme.nameAr` و `theme.name` بـ `(t as any)[themeName_xxx]` |
+| `i18n/translations.ts` | إضافة 16 حقل جديد في واجهة Translations + تحديث `formatTimeLocalized()` بـ `Intl.DateTimeFormat` + إضافة `LOCALE_MAP` |
+| `src/assets/i18n/*.json` (31 ملف) | إضافة 16 مفتاح ترجمة لكل لغة |
+| `scripts/add_theme_names.cjs` | **جديد** — سكريبت لإضافة أسماء الثيمات لجميع ملفات JSON |
+
+---
+
+### التحديث 6: إصلاح تنسيق الوقت في شاشة الإشعارات (تاريخ: مايو 2026)
+
+#### المشكلة
+شاشة الإشعارات كانت تستخدم `<input type="time">` وهو عنصر متصفح أصلي يتبع لغة النظام/المتصفح وليس لغة التطبيق. لذلك حتى عند تغيير اللغة للإنجليزية أو البنغالية، كانت الأوقات تظل بالتنسيق العربي (أرقام هندية + ص/م).
+
+#### الحل المُنفّذ: نمط "Invisible Overlay"
+1. **واجهة مرئية (Visual Display):** صندوق `<div>` بتصميم جميل يعرض الوقت المترجم حصرياً عبر `formatTimeLocalized()`:
+   - العربية: `٥:٠٠ ص` | الإنجليزية: `5:00 AM` | البنغالية: `৫:০০ AM`
+2. **حقل أصلي مخفي (Invisible Native Input):** `<input type="time">` شفاف تماماً (`opacity: 0`) وموضوع فوق الواجهة المرئية بـ `position: absolute` + `inset: 0`
+3. **النتيجة:** المستخدم يرى الوقت مترجماً بشكل مثالي، وعند الضغط يفتح المنتقي الأصلي (Native Picker) لنظام التشغيل
+4. **ربط عرض الأوقات المحفوظة** في بطاقات الإشعارات بدالة `formatTimeLocalized()`
+
+#### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/NotificationManager.tsx` | تطبيق نمط Invisible Overlay: واجهة مرئية مترجمة + حقل وقت أصلي شفاف فوقها |

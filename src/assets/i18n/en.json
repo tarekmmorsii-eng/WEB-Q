@@ -668,5 +668,21 @@
   "stop": "Stop",
   "repeatMode": "Repeat Mode",
   "youtube": "YouTube",
-  "facebook": "Facebook"
+  "facebook": "Facebook",
+  "themeName_classic_mushaf": "Classic Mushaf",
+  "themeName_antique_paper": "Antique Paper",
+  "themeName_calm_night": "Calm Night",
+  "themeName_nature": "Nature",
+  "themeName_almond_paper": "Almond Paper",
+  "themeName_wheat_paper": "Wheat Paper",
+  "themeName_papyrus": "Papyrus",
+  "themeName_clear_sky": "Clear Sky",
+  "themeName_midnight": "Midnight",
+  "themeName_calm_lake": "Calm Lake",
+  "themeName_silver_cloud": "Silver Cloud",
+  "themeName_calm_charcoal": "Calm Charcoal",
+  "themeName_slate_gray": "Slate Gray",
+  "themeName_lavender": "Lavender",
+  "themeName_calm_peach": "Calm Peach",
+  "themeName_morning_sun": "Morning Sun"
 }
