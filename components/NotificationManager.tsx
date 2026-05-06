@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Upload } from 'lucide-react';
+import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Pause, Upload } from 'lucide-react';
 import clsx from 'clsx';
 import { NotificationItem } from '../types';
 import { SURAHS } from '../constants/surahData';
@@ -7,9 +7,15 @@ import { JUZ_SECTIONS } from '../constants';
 import { getAyahPage, getPageAyahRange, getSurahsForPages } from '../services/quranService';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
-import { localizeNumber, formatTimeLocalized } from '../i18n/translations';
+import { formatTimeLocalized } from '../i18n/translations';
 
 const isNative = Capacitor.isNativePlatform();
+
+/** Bulletproof: force Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) regardless of browser locale */
+const forceArabicNumerals = (num: number | string): string => {
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return String(num).replace(/[0-9]/g, (w) => arabicDigits[Number(w)]);
+};
 
 interface NotificationManagerProps {
     isOpen: boolean;
@@ -34,6 +40,17 @@ function SurahListSummary({ startPage, endPage, language }: { startPage: number,
 
 export default function NotificationManager({ isOpen, onClose, notifications, onSave, onNavigate, t, language }: NotificationManagerProps) {
     const isArabic = language === 'ar';
+
+    // Bulletproof localized number: forces Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) in Arabic, standard otherwise
+    const ln = (num: number): string => isArabic ? forceArabicNumerals(num) : String(num);
+
+    // Helper to parse localized number input back to standard number
+    const parseLocalizedInput = (val: string): number => {
+        if (!val) return 0;
+        const standard = val.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+        return parseInt(standard) || 0;
+    };
+
     const DAYS = [t.sunday, t.monday, t.tuesday, t.wednesday, t.thursday, t.friday, t.saturday];
     const PRESET_SOUNDS = [
         { name: t.presetIslamic, path: '/islamic_song.mp3' },
@@ -169,6 +186,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [formDays, setFormDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
     const [formTimes, setFormTimes] = useState<string[]>(['08:00']);
     const timeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
 
     const handleTimeClick = (index: number) => {
         const input = timeInputRefs.current[index];
@@ -202,6 +221,18 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [formEndPage, setFormEndPage] = useState<number>(1);
     const [formStartAyah, setFormStartAyah] = useState<number>(1);
     const [formEndAyah, setFormEndAyah] = useState<number>(7); // Default Fatiha
+
+    // Computed surah bounds for dropdown generation
+    const currentSurahData = SURAHS.find(s => s.number === formSurahNumber);
+    const surahMinPage = currentSurahData?.startPage || 1;
+    const surahNextData = SURAHS.find(s => s.number === formSurahNumber + 1);
+    const surahMaxPage = (() => {
+        if (!currentSurahData) return 604;
+        if (!surahNextData) return 604;
+        const end = surahNextData.startPage - (surahNextData.startPage > surahMinPage ? 1 : 0);
+        return Math.max(surahMinPage, end);
+    })();
+    const surahAyahCount = currentSurahData?.ayahCount || 1;
 
     // Unified handle helpers to avoid loops
     const updatePagesFromAyahs = async (surah: number, startA: number, endA: number) => {
@@ -237,6 +268,14 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
 
     const resetForm = () => {
+        // Stop audio preview if playing
+        if (audioPreviewRef.current) {
+            audioPreviewRef.current.pause();
+            audioPreviewRef.current.currentTime = 0;
+            audioPreviewRef.current = null;
+        }
+        setIsPlaying(false);
+
         setFormName('');
         setFormType('daily');
         setFormDays([0, 1, 2, 3, 4, 5, 6]);
@@ -259,6 +298,18 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         setEditingId(null);
         setShowAddForm(false);
     };
+
+    // Cleanup audio on unmount or when modal closes
+    React.useEffect(() => {
+        return () => {
+            if (audioPreviewRef.current) {
+                audioPreviewRef.current.pause();
+                audioPreviewRef.current.currentTime = 0;
+                audioPreviewRef.current = null;
+            }
+            setIsPlaying(false);
+        };
+    }, [isOpen]);
 
     const handleAddTime = () => {
         setFormTimes([...formTimes, '12:00']);
@@ -473,9 +524,9 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         {notification.category === 'surah' && notification.metadata ? (
                                                             <span className="block text-amber-600 dark:text-amber-400 mb-1">
                                                                 {notification.metadata.startAyah && notification.metadata.endAyah ?
-                                                                    `${t.fromAyah} ${notification.metadata.startAyah} ${t.toAyah} ${notification.metadata.endAyah}` : ''}
+                                                                    `${t.fromAyah} ${ln(notification.metadata.startAyah)} ${t.toAyah} ${ln(notification.metadata.endAyah)}` : ''}
                                                                 {notification.metadata.startPage && notification.metadata.endPage ?
-                                                                    ` (${t.page} ${notification.metadata.startPage} - ${notification.metadata.endPage})` : ''}
+                                                                    ` (${t.page} ${ln(notification.metadata.startPage)} - ${ln(notification.metadata.endPage)})` : ''}
                                                             </span>
                                                         ) : notification.category === 'page' && notification.metadata ? (
                                                             <span className="block text-amber-600 dark:text-amber-400 mb-1">
@@ -485,11 +536,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             <span className="block text-amber-600 dark:text-amber-400 mb-1">
                                                                 {notification.name.includes(t.juz) ? (
                                                                     <>
-                                                                        {t.hizb} {notification.metadata.hizb ?? ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.hizb ?? 1) - 1) * 4]?.surahNum - 1] ?? ''}
+                                                                        {t.hizb} {notification.metadata.hizb != null ? ln(notification.metadata.hizb) : ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.hizb ?? 1) - 1) * 4]?.surahNum - 1] ?? ''}
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        {t.juz} {notification.metadata.juz ?? ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.juz ?? 1) - 1) * 8]?.surahNum - 1] ?? ''}
+                                                                        {t.juz} {notification.metadata.juz != null ? ln(notification.metadata.juz) : ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.juz ?? 1) - 1) * 8]?.surahNum - 1] ?? ''}
                                                                     </>
                                                                 )}
                                                             </span>
@@ -668,7 +719,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             >
                                                 {SURAHS.map(surah => (
                                                     <option key={surah.number} value={surah.number}>
-                                                        {localizeNumber(surah.number, language as any)}. {t.surahNames[surah.number - 1]}
+                                                        {ln(surah.number)}. {t.surahNames[surah.number - 1]}
                                                     </option>
                                                 ))}
                                             </select>
@@ -681,61 +732,28 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     {t.pageNumbersRange}
                                                 </label>
                                                 <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        min={(() => {
-                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                            return s ? s.startPage : 1;
-                                                        })()}
-                                                        max={(() => {
-                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                            if (!s) return 604;
-                                                            const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
-                                                            return nextS ? nextS.startPage - (nextS.startPage > s.startPage ? 1 : 0) : 604;
-                                                        })()}
+                                                    <select
                                                         value={formStartPage}
                                                         onChange={(e) => {
-                                                            const val = parseInt(e.target.value) || 0;
+                                                            const val = parseInt(e.target.value);
                                                             setFormStartPage(val);
                                                             updateAyahsFromPages(formSurahNumber, val, formEndPage);
                                                         }}
-                                                        onBlur={() => {
-                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                            const minP = s ? s.startPage : 1;
-                                                            const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
-                                                            const maxP = nextS ? nextS.startPage - (nextS.startPage > (s?.startPage || 0) ? 1 : 0) : 604;
-
-                                                            const val = Math.min(maxP, Math.max(minP, formStartPage || minP));
-                                                            setFormStartPage(val);
-                                                            // Ensure end page is at least start page on blur
-                                                            if (formEndPage < val) setFormEndPage(val);
-                                                        }}
                                                         className="w-full px-2 py-2 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-center"
-                                                    />
+                                                    >
+                                                        {Array.from({ length: surahMaxPage - surahMinPage + 1 }, (_, i) => {
+                                                            const pageNum = surahMinPage + i;
+                                                            return <option key={pageNum} value={pageNum}>{ln(pageNum)}</option>;
+                                                        })}
+                                                    </select>
                                                     <span className="text-slate-400">-</span>
                                                     <div className="relative w-full">
-                                                        <input
-                                                            type="number"
-                                                            min={formStartPage}
-                                                            max={(() => {
-                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                                if (!s) return 604;
-                                                                const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
-                                                                return nextS ? nextS.startPage - (nextS.startPage > s.startPage ? 1 : 0) : 604;
-                                                            })()}
+                                                        <select
                                                             value={formEndPage}
                                                             onChange={(e) => {
-                                                                const val = parseInt(e.target.value) || 0;
+                                                                const val = parseInt(e.target.value);
                                                                 setFormEndPage(val);
                                                                 updateAyahsFromPages(formSurahNumber, formStartPage, val);
-                                                            }}
-                                                            onBlur={() => {
-                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                                const nextS = SURAHS.find(ns => ns.number === formSurahNumber + 1);
-                                                                const maxP = nextS ? nextS.startPage - (nextS.startPage > (s?.startPage || 0) ? 1 : 0) : 604;
-
-                                                                const val = Math.min(maxP, Math.max(formStartPage, formEndPage || formStartPage));
-                                                                setFormEndPage(val);
                                                             }}
                                                             className={clsx(
                                                                 "w-full px-2 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center",
@@ -743,7 +761,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                                     ? "border-red-500 ring-1 ring-red-500"
                                                                     : "border-amber-300 dark:border-slate-600"
                                                             )}
-                                                        />
+                                                        >
+                                                            {Array.from({ length: surahMaxPage - surahMinPage + 1 }, (_, i) => {
+                                                                const pageNum = surahMinPage + i;
+                                                                return <option key={pageNum} value={pageNum}>{ln(pageNum)}</option>;
+                                                            })}
+                                                        </select>
                                                         {formEndPage < formStartPage && (
                                                             <div className="absolute -bottom-5 left-0 right-0 text-center">
                                                                 <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
@@ -761,60 +784,40 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     {t.ayahNumbersRange}
                                                 </label>
                                                 <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max={(() => {
-                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                            return s ? s.ayahCount : 1;
-                                                        })()}
+                                                    <select
                                                         value={formStartAyah}
                                                         onChange={(e) => {
-                                                            const val = parseInt(e.target.value) || 0;
+                                                            const val = parseInt(e.target.value);
                                                             setFormStartAyah(val);
                                                             updatePagesFromAyahs(formSurahNumber, val, formEndAyah);
                                                             // Auto-update name
                                                             const surah = SURAHS.find(s => s.number === formSurahNumber);
                                                             if (surah) {
                                                                 const sName = t.surahNames[surah.number - 1];
-                                                                setFormName(`${t.surahPrefix} ${sName} (${val}-${formEndAyah})`);
+                                                                setFormName(`${t.surahPrefix} ${sName} (${ln(val)}-${ln(formEndAyah)})`);
                                                             }
                                                         }}
-                                                        onBlur={() => {
-                                                            const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                            const maxAyah = s ? s.ayahCount : 999;
-                                                            const val = Math.min(maxAyah, Math.max(1, formStartAyah || 1));
-                                                            setFormStartAyah(val);
-                                                            if (formEndAyah < val) setFormEndAyah(val);
-                                                        }}
                                                         className="w-full px-2 py-2 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-center"
-                                                    />
+                                                    >
+                                                        {Array.from({ length: surahAyahCount }, (_, i) => {
+                                                            const ayahNum = i + 1;
+                                                            return <option key={ayahNum} value={ayahNum}>{ln(ayahNum)}</option>;
+                                                        })}
+                                                    </select>
                                                     <span className="text-slate-400">-</span>
                                                     <div className="relative w-full">
-                                                        <input
-                                                            type="number"
-                                                            min={formStartAyah}
-                                                            max={(() => {
-                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                                return s ? s.ayahCount : 1;
-                                                            })()}
+                                                        <select
                                                             value={formEndAyah}
                                                             onChange={(e) => {
-                                                                const val = parseInt(e.target.value) || 0;
+                                                                const val = parseInt(e.target.value);
                                                                 setFormEndAyah(val);
                                                                 updatePagesFromAyahs(formSurahNumber, formStartAyah, val);
                                                                 // Auto-update name
                                                                 const surah = SURAHS.find(s => s.number === formSurahNumber);
                                                                 if (surah) {
                                                                     const sName = t.surahNames[surah.number - 1];
-                                                                    setFormName(`${t.surahPrefix} ${sName} (${formStartAyah}-${val})`);
+                                                                    setFormName(`${t.surahPrefix} ${sName} (${ln(formStartAyah)}-${ln(val)})`);
                                                                 }
-                                                            }}
-                                                            onBlur={() => {
-                                                                const s = SURAHS.find(s => s.number === formSurahNumber);
-                                                                const maxAyah = s ? s.ayahCount : 999;
-                                                                const val = Math.min(maxAyah, Math.max(formStartAyah, formEndAyah || formStartAyah));
-                                                                setFormEndAyah(val);
                                                             }}
                                                             className={clsx(
                                                                 "w-full px-2 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 text-center",
@@ -822,7 +825,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                                     ? "border-red-500 ring-1 ring-red-500"
                                                                     : "border-amber-300 dark:border-slate-600"
                                                             )}
-                                                        />
+                                                        >
+                                                            {Array.from({ length: surahAyahCount }, (_, i) => {
+                                                                const ayahNum = i + 1;
+                                                                return <option key={ayahNum} value={ayahNum}>{ln(ayahNum)}</option>;
+                                                            })}
+                                                        </select>
                                                         {formEndAyah < formStartAyah && (
                                                             <div className="absolute -bottom-5 left-0 right-0 text-center">
                                                                 <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
@@ -857,7 +865,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         setFormRub(newRub);
                                                         const sect = JUZ_SECTIONS[(val - 1) * 8];
                                                         if (sect) {
-                                                            setFormName(`${t.juz} ${val} (${sect.text})`);
+                                                            setFormName(`${t.juz} ${ln(val)} (${sect.text})`);
                                                             setFormSurahNumber(sect.surahNum || 1);
                                                             setFormStartAyah(sect.ayahNum || 1);
                                                             getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
@@ -866,7 +874,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
                                                     {[...Array(30)].map((_, i) => (
-                                                        <option key={i} value={i + 1}>{i + 1}</option>
+                                                        <option key={i} value={i + 1}>{ln(i + 1)}</option>
                                                     ))}
                                                 </select>
                                                 <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
@@ -887,7 +895,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         setFormRub(newRub);
                                                         const sect = JUZ_SECTIONS[(val - 1) * 4];
                                                         if (sect) {
-                                                            setFormName(`${t.hizb} ${val} - ${t.juz} ${newJuz} (${sect.text})`);
+                                                            setFormName(`${t.hizb} ${ln(val)} - ${t.juz} ${ln(newJuz)} (${sect.text})`);
                                                             setFormSurahNumber(sect.surahNum || 1);
                                                             setFormStartAyah(sect.ayahNum || 1);
                                                             getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
@@ -896,7 +904,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
                                                     {[...Array(60)].map((_, i) => (
-                                                        <option key={i} value={i + 1}>{i + 1}</option>
+                                                        <option key={i} value={i + 1}>{ln(i + 1)}</option>
                                                     ))}
                                                 </select>
                                                 <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
@@ -913,7 +921,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         setFormRub(absoluteRub);
                                                         const sect = JUZ_SECTIONS[absoluteRub - 1];
                                                         if (sect) {
-                                                            setFormName(`${t.rub} ${valWithinHizb} - ${t.hizb} ${formHizb} (${sect.text})`);
+                                                            setFormName(`${t.rub} ${ln(valWithinHizb)} - ${t.hizb} ${ln(formHizb)} (${sect.text})`);
                                                             setFormSurahNumber(sect.surahNum || 1);
                                                             setFormStartAyah(sect.ayahNum || 1);
                                                             getAyahPage(sect.surahNum || 1, sect.ayahNum || 1).then(setFormStartPage);
@@ -922,7 +930,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     className="w-full p-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100"
                                                 >
                                                     {[1, 2, 3, 4].map(v => (
-                                                        <option key={v} value={v}>{v}</option>
+                                                        <option key={v} value={v}>{ln(v)}</option>
                                                     ))}
                                                 </select>
                                                 <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
@@ -941,45 +949,35 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-xs text-slate-500 mb-1 block">{t.fromPage}</label>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="604"
+                                                <select
                                                     value={formStartPage}
                                                     onChange={(e) => {
-                                                        const val = parseInt(e.target.value) || 0;
-                                                        setFormStartPage(val);
-                                                    }}
-                                                    onBlur={() => {
-                                                        const val = Math.min(604, Math.max(1, formStartPage || 1));
+                                                        const val = parseInt(e.target.value);
                                                         setFormStartPage(val);
                                                         // Ensure End >= Start
                                                         if (formEndPage < val) {
                                                             setFormEndPage(val);
-                                                            setFormName(t.fromPageToPage.replace('{from}', localizeNumber(val, language as any)).replace('{to}', localizeNumber(val, language as any)));
+                                                            setFormName(t.fromPageToPage.replace('{from}', ln(val)).replace('{to}', ln(val)));
                                                         } else {
-                                                            setFormName(t.fromPageToPage.replace('{from}', localizeNumber(val, language as any)).replace('{to}', localizeNumber(formEndPage, language as any)));
+                                                            setFormName(t.fromPageToPage.replace('{from}', ln(val)).replace('{to}', ln(formEndPage)));
                                                         }
                                                     }}
                                                     className="w-full px-4 py-2 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                                    placeholder={t.startPagePlaceholder}
-                                                />
+                                                >
+                                                    {Array.from({ length: 604 }, (_, i) => {
+                                                        const pageNum = i + 1;
+                                                        return <option key={pageNum} value={pageNum}>{ln(pageNum)}</option>;
+                                                    })}
+                                                </select>
                                             </div>
                                             <div className="relative">
                                                 <label className="text-xs text-slate-500 mb-1 block">{t.toPage}</label>
-                                                <input
-                                                    type="number"
-                                                    min={formStartPage}
-                                                    max="604"
+                                                <select
                                                     value={formEndPage}
                                                     onChange={(e) => {
-                                                        const val = parseInt(e.target.value) || 0;
+                                                        const val = parseInt(e.target.value);
                                                         setFormEndPage(val);
-                                                    }}
-                                                    onBlur={() => {
-                                                        const val = Math.min(604, Math.max(formStartPage, formEndPage || formStartPage));
-                                                        setFormEndPage(val);
-                                                        setFormName(t.fromPageToPage.replace('{from}', localizeNumber(formStartPage, language as any)).replace('{to}', localizeNumber(val, language as any)));
+                                                        setFormName(t.fromPageToPage.replace('{from}', ln(formStartPage)).replace('{to}', ln(val)));
                                                     }}
                                                     className={clsx(
                                                         "w-full px-4 py-2 border rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500",
@@ -987,8 +985,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             ? "border-red-500 ring-1 ring-red-500"
                                                             : "border-amber-300 dark:border-slate-600"
                                                     )}
-                                                    placeholder={t.toPage}
-                                                />
+                                                >
+                                                    {Array.from({ length: 604 }, (_, i) => {
+                                                        const pageNum = i + 1;
+                                                        return <option key={pageNum} value={pageNum}>{ln(pageNum)}</option>;
+                                                    })}
+                                                </select>
                                                 {formEndPage < formStartPage && (
                                                     <div className="absolute -bottom-5 left-0 right-0 text-center">
                                                         <span className="text-[10px] text-red-500 font-bold bg-white dark:bg-slate-900 px-1 rounded shadow-sm border border-red-200">
@@ -1138,16 +1140,39 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                         </select>
                                         <button
                                             onClick={() => {
-                                                const audio = new Audio(formSound);
-                                                audio.play().catch((err) => {
-                                                    console.error("Preview play error:", err);
-                                                    alert(t.errorPlayingSound);
-                                                });
+                                                if (isPlaying && audioPreviewRef.current) {
+                                                    audioPreviewRef.current.pause();
+                                                    audioPreviewRef.current.currentTime = 0;
+                                                    audioPreviewRef.current = null;
+                                                    setIsPlaying(false);
+                                                } else {
+                                                    if (audioPreviewRef.current) {
+                                                        audioPreviewRef.current.pause();
+                                                        audioPreviewRef.current.currentTime = 0;
+                                                    }
+                                                    const audio = new Audio(formSound);
+                                                    audioPreviewRef.current = audio;
+                                                    audio.onended = () => {
+                                                        setIsPlaying(false);
+                                                        audioPreviewRef.current = null;
+                                                    };
+                                                    audio.play().catch((err) => {
+                                                        console.error("Preview play error:", err);
+                                                        alert(t.errorPlayingSound);
+                                                        setIsPlaying(false);
+                                                    });
+                                                    setIsPlaying(true);
+                                                }
                                             }}
-                                            className="p-2 bg-amber-100 dark:bg-slate-700 text-amber-900 dark:text-amber-100 rounded-lg hover:bg-amber-200"
-                                            title={t.previewSound}
+                                            className={clsx(
+                                                "p-2 rounded-lg transition-colors",
+                                                isPlaying
+                                                    ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200"
+                                                    : "bg-amber-100 dark:bg-slate-700 text-amber-900 dark:text-amber-100 hover:bg-amber-200"
+                                            )}
+                                            title={isPlaying ? (t.stopSound || 'إيقاف') : t.previewSound}
                                         >
-                                            <Play size={20} />
+                                            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                                         </button>
                                     </div>
 
