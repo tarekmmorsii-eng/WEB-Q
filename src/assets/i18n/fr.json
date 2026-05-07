@@ -686,5 +686,19 @@
   "themeName_calm_peach": "Pêche Calme",
   "themeName_morning_sun": "Soleil du Matin",
   "manageTranslations": "Télécharger la traduction et les sens des mots",
-  "hideTooltipHint": "Remarque : Vous pouvez masquer cette fenêtre depuis les paramètres"
+  "hideTooltipHint": "Remarque : Vous pouvez masquer cette fenêtre depuis les paramètres",
+  "builtInSubtitle": "Intégré • Mot à mot par Bashir Yunus",
+  "badgeTafsirWbw": "Tafsir + Sens des mots",
+  "badgeTafsirOnly": "Tafsir uniquement",
+  "totalLanguagesLabel": "Langues totales",
+  "downloadedLabel": "Téléchargé",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

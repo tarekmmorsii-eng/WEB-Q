@@ -686,5 +686,19 @@
   "themeName_calm_peach": "සාමකාමී පීච්",
   "themeName_morning_sun": "සුදුසු හිරු",
   "manageTranslations": "පරිවර්තනය සහ වචන අර්ථ බාගන්න",
-  "hideTooltipHint": "සටහන: ඔබට මෙම කවුළුව සැකසුම් වලින් සඟවන්න පුළුවන්"
+  "hideTooltipHint": "සටහන: ඔබට මෙම කවුළුව සැකසුම් වලින් සඟවන්න පුළුවන්",
+  "builtInSubtitle": "Built-in • Bashir Yunus විසින් වචනයෙන් වචනය තේරුම",
+  "badgeTafsirWbw": "තෆ්සීර් + වචන තේරුම්",
+  "badgeTafsirOnly": "තෆ්සීර් පමණයි",
+  "totalLanguagesLabel": "සමස්ත භාෂා",
+  "downloadedLabel": "බාගත කළා",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

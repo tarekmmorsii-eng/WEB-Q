@@ -686,5 +686,14 @@
   "themeName_calm_peach": "Pjeshkë e Qetë",
   "themeName_morning_sun": "Dielli i Mëngjesit",
   "manageTranslations": "Shkarko përkthimin dhe kuptimin e fjalëve",
-  "hideTooltipHint": "Shenim: Mund ta fshihni kete dritare nga cilësimet"
+  "hideTooltipHint": "Shenim: Mund ta fshihni kete dritare nga cilësimet",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

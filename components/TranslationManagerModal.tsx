@@ -187,7 +187,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
             // تحديث مؤشر التقدم (يحسب كلا العمليتين معاً)
             const percent = Math.round((i / 114) * 100);
             setProgressPercent(10 + percent * 0.7); // 10% -> 80%
-            setProgressMsg(`${t.downloading || 'جاري التحميل'}... ${percent}% (ترجمة + معاني)`);
+            setProgressMsg(`${t.downloading || 'Downloading...'}... ${percent}% (${t.downloadingTranslation || 'Translation'} + ${t.meaningsWord || 'Meanings'})`);
         }
 
         return { data: { surahs }, wbwData: wbwAllData };
@@ -196,7 +196,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
     // تحميل ترجمة حقيقية (مزدوج: ترجمة + معاني كلمات)
     const handleDownload = async (lang: LanguageItem) => {
         if (!lang.available) {
-            setErrorMsg(`${lang.nameAr}: ${t.internetRequired || 'غير متاح حالياً'}`);
+            setErrorMsg(`${lang.nameAr}: ${t.internetRequired || 'Not available'}`);
             setTimeout(() => setErrorMsg(''), 3000);
             return;
         }
@@ -204,7 +204,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
         setDownloadingLang(lang.code);
         setErrorMsg('');
         setProgressPercent(5);
-        setProgressMsg(`${t.downloading || 'جاري التحميل'}... 0%`);
+        setProgressMsg(`${t.downloading || 'Downloading...'}... 0%`);
 
         try {
             const edition = lang.edition;
@@ -213,19 +213,19 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
 
             if (edition.source === 'alquran-cloud') {
                 // المرحلة 1: تحميل الترجمة من Al Quran Cloud API (5% -> 35%)
-                setProgressMsg(`${t.downloading || 'جاري التحميل'}... (ترجمة الآيات)`);
+                setProgressMsg(`${t.downloading || 'Downloading...'}... (${t.downloadingTranslation || 'Verse Translation'})`);
                 translationResult = await fetchFromAlQuranCloud(edition.editionId);
 
                 // المرحلة 2: تحميل معاني الكلمات من Quran.com API v4 - فقط إذا كانت اللغة تدعمها
                 if (edition.hasWbw) {
-                    setProgressMsg(`${t.downloading || 'جاري التحميل'}... (معاني الكلمات)`);
+                    setProgressMsg(`${t.downloading || 'Downloading...'}... (${t.downloadingMeanings || 'Word Meanings'})`);
                     for (let i = 1; i <= 114; i++) {
                         const wbwSurah = await fetchWbwForSurah(i, lang.code);
                         Object.assign(wbwAllData, wbwSurah);
 
                         const percent = Math.round((i / 114) * 100);
                         setProgressPercent(35 + percent * 0.45);
-                        setProgressMsg(`${t.downloading || 'جاري التحميل'}... معاني ${percent}%`);
+                        setProgressMsg(`${t.downloading || 'Downloading...'}... ${t.meaningsWord || 'Meanings'} ${percent}%`);
                     }
                 } else {
                     // تخطي تحميل WbW - توفير الإنترنت والوقت
@@ -241,7 +241,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
 
             // المرحلة 3: حفظ البيانات (80% -> 100%)
             setProgressPercent(82);
-            setProgressMsg(`${t.saving || 'جاري الحفظ'}...`);
+            setProgressMsg(`${t.saving || 'Saving'}...`);
 
             // إضافة بيانات وصفية للترجمة
             const translationData = {
@@ -267,7 +267,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
             // حفظ معاني الكلمات (WbW) في IndexedDB
             if (Object.keys(wbwAllData).length > 0) {
                 setProgressPercent(92);
-                setProgressMsg(`${t.saving || 'جاري الحفظ'}... (معاني الكلمات)`);
+                setProgressMsg(`${t.saving || 'Saving'}... (${t.downloadingMeanings || 'Word Meanings'})`);
                 await saveWbwData({
                     languageCode: lang.code,
                     data: wbwAllData,
@@ -280,7 +280,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
 
             setProgressPercent(100);
             await refreshStored();
-            setProgressMsg(`✅ ${lang.nameAr} - ${edition.author} (${Object.keys(wbwAllData).length} آية بمعاني الكلمات)`);
+            setProgressMsg(`✅ ${lang.nameAr} - ${edition.author} (${Object.keys(wbwAllData).length} ${t.meaningsWord || 'Meanings'})`);
             setTimeout(() => {
                 setProgressMsg('');
                 setProgressPercent(0);
@@ -291,9 +291,9 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
             const errMsg = err.message || 'Unknown error';
 
             if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError') || errMsg.includes('NetWorkError')) {
-                setErrorMsg(`❌ ${t.internetRequiredDownload || 'فشل التحميل، تأكد من اتصالك بالإنترنت'}`);
+                setErrorMsg(`❌ ${t.internetRequiredDownload || 'Download failed, check your internet connection'}`);
             } else {
-                setErrorMsg(`❌ ${t.downloadFailed || 'فشل التحميل'}: ${errMsg.substring(0, 80)}`);
+                setErrorMsg(`❌ ${t.downloadFailed || 'Download failed'}: ${errMsg.substring(0, 80)}`);
             }
             setProgressPercent(0);
             setTimeout(() => setErrorMsg(''), 4000);
@@ -333,7 +333,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                     <div className="flex items-center gap-2">
                         <Globe size={22} className="text-amber-600" />
                         <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                            {t.manageTranslations || 'تحميل الترجمة ومعاني الكلمات'}
+                            {t.manageTranslations || 'Download Translation & Word Meanings'}
                         </h2>
                     </div>
                     <button
@@ -383,14 +383,14 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                                 <HardDrive size={16} className="text-amber-600" />
                             </div>
                             <div>
-                                <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">العربية</p>
+                                <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{t.arabicLangName || 'Arabic'}</p>
                                 <p className="text-xs text-amber-600 dark:text-amber-400">
-                                    أساسي - مدمج • كتاب معاني كلمات القران الكريم كلمه بكلمه لبشير يونس
+                                    {t.builtInSubtitle || 'Built-in • Word by Word Meaning by Bashir Yunus'}
                                 </p>
                             </div>
                         </div>
                         <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded-full font-bold">
-                            {t.active || 'نشط'}
+                            {t.active || 'Active'}
                         </span>
                     </div>
 
@@ -435,11 +435,11 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                                             {/* شارة توفر معاني الكلمات */}
                                             {lang.edition.hasWbw ? (
                                                 <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 rounded-full font-medium whitespace-nowrap">
-                                                    {t.wbwAvailable || 'تفسير + معاني كلمات'}
+                                                    {t.badgeTafsirWbw || 'Tafsir + Word Meanings'}
                                                 </span>
                                             ) : (
                                                 <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 rounded-full font-medium whitespace-nowrap">
-                                                    {t.wbwNotAvailable || 'تفسير فقط'}
+                                                    {t.badgeTafsirOnly || 'Tafsir only'}
                                                 </span>
                                             )}
                                         </div>
@@ -447,7 +447,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                                             {isStored
                                                 ? <span className="text-green-600 dark:text-green-400">{lang.edition.author}</span>
                                                 : !lang.available
-                                                    ? <span className="text-[10px] text-slate-300 dark:text-slate-500">{t.translationNotSupported || 'الترجمة غير متوفرة حالياً'}</span>
+                                                    ? <span className="text-[10px] text-slate-300 dark:text-slate-500">{t.translationNotSupported || 'Translation not currently available'}</span>
                                                     : <span>{lang.edition.author}</span>
                                             }
                                         </p>
@@ -457,7 +457,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                                 <div className="flex items-center gap-2">
                                     {isActive && isStored && (
                                         <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded-full font-bold">
-                                            {t.active || 'نشط'}
+                                            {t.active || 'Active'}
                                         </span>
                                     )}
 
@@ -474,7 +474,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                                         <button
                                             onClick={() => handleDelete(lang.code, lang.nameAr)}
                                             className="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors group"
-                                            title={t.delete || 'حذف'}
+                                            title={t.delete || 'Delete'}
                                         >
                                             <Trash2 size={18} className="text-red-400 group-hover:text-red-600" />
                                         </button>
@@ -487,7 +487,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                                                     ? 'hover:bg-amber-100 dark:hover:bg-amber-900/40'
                                                     : 'cursor-not-allowed opacity-40'
                                             }`}
-                                            title={lang.available ? (t.download || 'تحميل') : (t.internetRequired || 'غير متاح')}
+                                            title={lang.available ? (t.download || 'Download') : (t.internetRequired || 'Not available')}
                                         >
                                             <Download size={18} className="text-amber-500 group-hover:text-amber-700" />
                                         </button>
@@ -503,10 +503,10 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                     <div className="flex items-center justify-center gap-4 text-xs text-slate-400 dark:text-slate-500">
                         <span className="flex items-center gap-1">
                             <Wifi size={12} />
-                            {storedTranslations.size} {t.downloadedLanguages || 'لغة محملة'}
+                            {storedTranslations.size} {t.downloadedLabel || 'Downloaded'}
                         </span>
                         <span>•</span>
-                        <span>{AVAILABLE_LANGUAGES.filter(l => l.available).length} {t.totalLanguages || 'إجمالي اللغات'}</span>
+                        <span>{AVAILABLE_LANGUAGES.filter(l => l.available).length} {t.totalLanguagesLabel || 'Total Languages'}</span>
                     </div>
                     <p className="text-center text-[10px] text-slate-300 dark:text-slate-600">
                         Powered by Al Quran Cloud & FawazAhmed APIs

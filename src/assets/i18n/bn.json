@@ -686,5 +686,19 @@
   "themeName_calm_peach": "শান্ত পীচ",
   "themeName_morning_sun": "সকালের সূর্য",
   "manageTranslations": "অনুবাদ ও শব্দার্থ ডাউনলোড করুন",
-  "hideTooltipHint": "নোট: আপনি এই উইন্ডোটি সেটিংস থেকে লুকাতে পারেন"
+  "hideTooltipHint": "নোট: আপনি এই উইন্ডোটি সেটিংস থেকে লুকাতে পারেন",
+  "builtInSubtitle": "Built-in • Bashir Yunus দ্বারা শব্দে শব্দে অর্থ",
+  "badgeTafsirWbw": "তাফসির + শব্দের অর্থ",
+  "badgeTafsirOnly": "শুধুমাত্র তাফসির",
+  "totalLanguagesLabel": "মোট ভাষা",
+  "downloadedLabel": "ডাউনলোড করা হয়েছে",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

@@ -72,6 +72,15 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
         audioRef.current.removeAttribute('src');
       }
 
+      // حماية: التأكد من وجود معرف المقرئ
+      if (!reciterID) {
+        console.error('[useAyahAudio] reciterID is missing!');
+        showError('معرف المقرئ غير متوفر، يرجى إعادة اختيار المقرئ');
+        resetPlayState();
+        resolve();
+        return;
+      }
+
       const url = buildAudioUrl(reciterID, globalAyahNumber);
       const nextUrl = nextGlobalAyahNumber ? buildAudioUrl(reciterID, nextGlobalAyahNumber) : null;
 
@@ -246,8 +255,11 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
     }
   }, []);
 
-  const updateRuntimeSettings = useCallback((settings: PlayerSettings) => {
-    runtimeSettingsRef.current = settings;
+  const updateRuntimeSettings = useCallback((partialSettings: Partial<PlayerSettings>) => {
+    if (runtimeSettingsRef.current) {
+      // دمج الإعدادات الجديدة مع الحالية بدلاً من الاستبدال
+      runtimeSettingsRef.current = { ...runtimeSettingsRef.current, ...partialSettings };
+    }
   }, []);
 
   const playSequence = useCallback(async (
@@ -262,15 +274,20 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
     runtimeSettingsRef.current = settings;
 
     let groupRep = 0;
-    while (isPlayingRef.current && (settings.groupRepetitions === -1 || groupRep < settings.groupRepetitions)) {
-        for (let current = settings.startGlobalAyah; isPlayingRef.current && current <= settings.endGlobalAyah; current++) {
+    while (isPlayingRef.current) {
+        // قراءة الإعدادات الحية في كل دورة
+        const liveGroupSettings = runtimeSettingsRef.current || settings;
+        if (liveGroupSettings.groupRepetitions !== -1 && groupRep >= liveGroupSettings.groupRepetitions) break;
+
+        for (let current = settings.startGlobalAyah; isPlayingRef.current && current <= liveGroupSettings.endGlobalAyah; current++) {
             let ayahRep = 0;
-            while (isPlayingRef.current && (settings.ayahRepetitions === -1 || ayahRep < settings.ayahRepetitions)) {
+            while (isPlayingRef.current) {
+                // قراءة إعدادات التكرار الحية في كل تكرار
+                const liveSettings = runtimeSettingsRef.current || settings;
+                if (liveSettings.ayahRepetitions !== -1 && ayahRep >= liveSettings.ayahRepetitions) break;
+
                 setCurrentGlobalAyah(current);
                 if (onAyahChange) onAyahChange(current);
-                
-                // Read live settings
-                const liveSettings = runtimeSettingsRef.current || settings;
                 
                 let nextAyah: number | undefined;
                 if (current < liveSettings.endGlobalAyah) {

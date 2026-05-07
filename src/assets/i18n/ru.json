@@ -686,5 +686,14 @@
   "themeName_calm_peach": "Спокойный Персик",
   "themeName_morning_sun": "Утреннее Солнце",
   "manageTranslations": "Скачать перевод и значения слов",
-  "hideTooltipHint": "Primetchanie: Vy mozhete skryt eto okno v nastroykakh"
+  "hideTooltipHint": "Primetchanie: Vy mozhete skryt eto okno v nastroykakh",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

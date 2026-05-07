@@ -686,5 +686,14 @@
   "themeName_calm_peach": "Pishi Tulivu",
   "themeName_morning_sun": "Jua la Asubuhi",
   "manageTranslations": "Pakua tafsiri na maana ya maneno",
-  "hideTooltipHint": "Kumbuka: Unaweza kuficha dirisha hili kutoka kwa mipangilio"
+  "hideTooltipHint": "Kumbuka: Unaweza kuficha dirisha hili kutoka kwa mipangilio",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

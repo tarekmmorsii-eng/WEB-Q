@@ -686,5 +686,14 @@
   "themeName_calm_peach": "Đào Yên Bình",
   "themeName_morning_sun": "Mặt Trời Buổi Sáng",
   "manageTranslations": "Tai xuong ban dich va nghia tu",
-  "hideTooltipHint": "Luu y: Ban co the an cua so nay tu cai dat"
+  "hideTooltipHint": "Luu y: Ban co the an cua so nay tu cai dat",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

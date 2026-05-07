@@ -397,6 +397,56 @@ export default function App() {
     ayahAudio.updateRuntimeSettings({ ayahRepetitions: nextCount });
   };
 
+  // ⭐ إعادة ضبط إعدادات التلاوة إلى الوضع الافتراضي
+  const resetAudioSettings = useCallback(() => {
+      setAudioSettings(prev => ({
+          ...prev,
+          groupRepetitions: 1,
+          ayahRepetitions: 1,
+          playbackRate: 1.0,
+          useRangeOnly: false
+      }));
+  }, []);
+
+  // ⭐ Refs لتتبع تغيير المقرئ والسورة (للتفريق بين التغيير اليدوي والتلقائي)
+  const prevReciterIdRef = useRef(selectedReciterId);
+  const prevSurahRef = useRef<number | null>(null);
+  const skipSurahResetRef = useRef(false);
+
+  // ⭐ Trigger 1: إعادة ضبط عند تغيير المقرئ
+  useEffect(() => {
+      if (prevReciterIdRef.current !== selectedReciterId) {
+          console.log('[AudioReset] تغيير المقرئ - إعادة ضبط الإعدادات');
+          resetAudioSettings();
+          // إيقاف التشغيل الحالي إذا كان نشطاً
+          if (ayahAudio.isPlayingSeq) {
+              ayahAudio.stopAudio();
+              setPlayingAyahId(null);
+          }
+      }
+      prevReciterIdRef.current = selectedReciterId;
+  }, [selectedReciterId, resetAudioSettings]);
+
+  // ⭐ Trigger 2: إعادة ضبط عند تغيير السورة يدوياً (ليس تلقائياً أثناء التشغيل)
+  useEffect(() => {
+      const currentSurah = pageData?.ayahs?.[0]?.surah?.number || null;
+
+      if (prevSurahRef.current !== null && prevSurahRef.current !== currentSurah && currentSurah !== null) {
+          if (skipSurahResetRef.current) {
+              // تغيير تلقائي (برمجي) - تخطي إعادة الضبط
+              skipSurahResetRef.current = false;
+          } else if (!ayahAudio.isPlayingSeq) {
+              // تغيير يدوي من المستخدم والمشغل غير نشط - إعادة ضبط
+              console.log('[AudioReset] تغيير السورة يدوياً - إعادة ضبط الإعدادات');
+              resetAudioSettings();
+          }
+      }
+
+      if (currentSurah !== null) {
+          prevSurahRef.current = currentSurah;
+      }
+  }, [pageData, resetAudioSettings]);
+
 
 
   const isAudioNavigatingRef = useRef(false);
@@ -469,6 +519,7 @@ export default function App() {
       const targetStartPage = getAyahPageSync(currentSettings.startSurah, currentSettings.startAyah);
       if (targetStartPage && targetStartPage !== currentPageRef.current) {
           isAudioNavigatingRef.current = true;
+          skipSurahResetRef.current = true; // ⭐ تخطي إعادة الضبط عند التنقل البرمجي
           setCurrentPage(targetStartPage);
       }
 
@@ -504,6 +555,7 @@ export default function App() {
                   const targetPage = getAyahPageSync(dest.surahNumber, dest.ayahNumber);
                   if (targetPage && targetPage !== currentPageRef.current) {
                       isAudioNavigatingRef.current = true;
+                      skipSurahResetRef.current = true; // ⭐ تخطي إعادة الضبط عند التنقل البرمجي أثناء التشغيل
                       setCurrentPage(targetPage);
                   }
 
@@ -517,6 +569,12 @@ export default function App() {
               }
           });
           setPlayingAyahId(null);
+          
+          // ⭐ Trigger 3: إعادة ضبط عند انتهاء التشغيل المحدود (useRangeOnly)
+          if (currentSettings.useRangeOnly) {
+              console.log('[AudioReset] انتهى تشغيل النطاق المحدود - إعادة ضبط الإعدادات');
+              resetAudioSettings();
+          }
       }
   };
 

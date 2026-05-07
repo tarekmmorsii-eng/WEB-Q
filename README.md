@@ -998,6 +998,212 @@ am, bn, bs, de, en, es, fa, fr, ha, hi, id, ja, kk, ko, ku, ms, om, ru, rw, si, 
 
 ---
 
+## 🧹 تنظيف النصوص الثابتة في مدير الترجمات (TranslationManagerModal i18n Cleanup) — 2026-05-07
+
+### المشكلة
+كانت نصوص عربية ثابتة (Hardcoded) في `TranslationManagerModal.tsx` تظهر حتى عند اختيار لغة إنجليزية أو أي لغة أخرى، مما يعني أن شريط التحميل والفوتر وبطاقة اللغة العربية كلها تعرض بالعربية دائماً.
+
+### ما تم إنجازه
+
+#### 1. تنظيف شريط التحميل (Progress Bar Text)
+- **قبل:** `جاري التحميل... 61% (ترجمة + معاني)` — دائماً بالعربية
+- **بعد:** `Downloading... 61% (Translation + Meanings)` — يتغير حسب اللغة
+
+#### 2. تنظيف الفوتر (Footer)
+- **قبل:** `إجمالي اللغات` و `لغة محملة` — نصوص عربية ثابتة
+- **بعد:** `{t('totalLanguagesLabel')}` و `{t('downloadedLabel')}` — مترجمان
+
+#### 3. تنظيف بطاقة اللغة العربية
+- **قبل:** `العربية` — نص عربي ثابت
+- **بعد:** `{t('arabicLangName')}` — مفتاح ترجمة جديد
+
+#### 4. تنظيف جميع Fallbacks
+تم تحويل جميع الـ fallbacks العربية إلى إنجليزية لضمان عدم ظهور العربية في اللغات الأخرى:
+- `'جاري التحميل'` → `'Downloading...'`
+- `'جاري الحفظ'` → `'Saving'`
+- `'نشط'` → `'Active'`
+- `'تحميل'` → `'Download'`
+- `'حذف'` → `'Delete'`
+- `'غير متاح'` → `'Not available'`
+- وغيرها...
+
+### المفاتيح الجديدة المُضافة (9 مفاتيح × 31 لغة)
+
+| المفتاح | العربية | الإنجليزية |
+|---------|---------|-----------|
+| `meaningsWord` | معاني | Meanings |
+| `saving` | جاري الحفظ | Saving |
+| `active` | نشط | Active |
+| `translationNotSupported` | الترجمة غير متوفرة حالياً | Translation not currently available |
+| `download` | تحميل | Download |
+| `downloadingTranslation` | ترجمة الآيات | Translating Verses |
+| `downloadingMeanings` | معاني الكلمات | Word Meanings |
+| `downloadCompleteMsg` | ✅ {name} - {author} ({count} آية بمعاني الكلمات) | ✅ {name} - {author} ({count} ayahs with word meanings) |
+| `arabicLangName` | العربية | Arabic |
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/TranslationManagerModal.tsx` | تنظيف جميع النصوص الثابتة + ربط بمفاتيح i18n |
+| `src/assets/i18n/ar.json` | إضافة 9 مفاتيح ترجمة |
+| `src/assets/i18n/en.json` | إضافة 9 مفاتيح ترجمة |
+| `src/assets/i18n/*.json` (29 ملف) | إضافة 9 مفاتيح لكل لغة (الإنجليزية كـ Fallback) |
+
+
+## 🐛 إصلاح تعريب مدير الترجمات (TranslationManagerModal Localization Fix) — 2026-05-07
+
+### المشكلة
+كانت شاشة `TranslationManagerModal.tsx` تحتوي على نصوص عربية مكتوبة بشكل ثابت (Hardcoded) لا تتغير عند تغيير لغة واجهة التطبيق، مما يجعل المستخدم الأجنبي يرى نصوصاً عربية لا يفهمها.
+
+### النصوص المتأثرة
+| الموقع | النص الثابت القديم |
+|--------|-------------------|
+| العنوان الفرعي للغة العربية | `أساسي - مدمج • كتاب معاني كلمات القران الكريم كلمه بكلمه لبشير يونس` |
+| شارة توفر المعاني | `تفسير + معاني كلمات` / `تفسير فقط` |
+| الفوتر (الأسفل) | `إجمالي اللغات` / `لغة محملة` |
+
+### الحل المُنفّذ
+
+#### 1. إضافة 5 مفاتيح ترجمة جديدة
+| المفتاح | العربية | الإنجليزية |
+|---------|---------|-----------|
+| `builtInSubtitle` | أساسي - مدمج • كتاب معاني كلمات القران الكريم كلمه بكلمه لبشير يونس | Built-in • Word by Word Meaning by Bashir Yunus |
+| `badgeTafsirWbw` | تفسير + معاني كلمات | Tafsir + Word Meanings |
+| `badgeTafsirOnly` | تفسير فقط | Tafsir only |
+| `totalLanguagesLabel` | إجمالي اللغات | Total Languages |
+| `downloadedLabel` | لغة محملة | Downloaded |
+
+#### 2. ربط المفاتيح في المكون
+- استبدال النص الثابت أسفل اللغة العربية بـ `{t('builtInSubtitle')}`
+- استبدال نصوص الشارات بـ `{t('badgeTafsirWbw')}` و `{t('badgeTafsirOnly')}`
+- استبدال نصوص الفوتر بـ `{t('totalLanguagesLabel')}` و `{t('downloadedLabel')}`
+
+#### 3. تعميم المفاتيح على 14 لغة
+تمت إضافة المفاتيح الـ 5 مترجمة لكل لغة أصيلة:
+| اللغة | ترجمة `badgeTafsirWbw` |
+|-------|----------------------|
+| 🇹🇷 tr | Tefsir + Kelime Anlamları |
+| 🇪🇸 es | Tafsir + Significados de palabras |
+| 🇩🇪 de | Tafsir + Wortbedeutungen |
+| 🇫🇷 fr | Tafsir + Sens des mots |
+| 🇮🇩 id | Tafsir + Arti Kata |
+| 🇧🇩 bn | তাফসির + শব্দের অর্থ |
+| 🇮🇳 hi | तफ़सीर + शब्द अर्थ |
+| 🇮🇷 fa | تفسیر + معانی کلمات |
+| 🇧🇦 bs | Tefsir + Značenja riječi |
+| 🇳🇬 ha | Tafsiri + Ma'anonin Kalmomi |
+| 🇪🇹 am | ትርጓሜ + የቃላት ትርጓሜ |
+| 🇪🇹 om | Tafsiira + Hiika Jechootaa |
+| 🇷🇼 rw | Tafsiri + Ibisobanuro by'amagambo |
+| 🇱🇰 si | තෆ්සීර් + වචන තේරුම් |
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/TranslationManagerModal.tsx` | استبدال 5 نصوص ثابتة بمفاتيح `t()` |
+| `src/assets/i18n/ar.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/en.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/tr.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/es.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/de.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/fr.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/id.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/bn.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/hi.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/fa.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/bs.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/ha.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/am.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/om.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/rw.json` | إضافة 5 مفاتيح |
+| `src/assets/i18n/si.json` | إضافة 5 مفاتيح |
+
+---
+
+## 🔄 نظام إعادة ضبط إعدادات التلاوة التلقائي (Audio Settings Auto-Reset) — 2026-05-07
+
+### المشكلة
+كانت الإعدادات المخصصة (مثل تكرار الآية، تكرار المجموعة، ونطاق التشغيل المحدود) تظل مفعلة حتى بعد تغيير المستخدم للمقرئ أو السورة يدوياً، مما يسبب ارتباكاً وتوقفاً غير متوقع للتشغيل.
+
+### الحل المُنفّذ
+
+تم إنشاء نظام إعادة ضبط ذكي يعيد الإعدادات إلى حالتها الافتراضية تلقائياً عند أحداث معينة:
+
+#### 1. دالة `resetAudioSettings`
+- تعيد جميع الإعدادات للقيم الافتراضية:
+  - `groupRepetitions: 1` (تكرار المجموعة = 1)
+  - `ayahRepetitions: 1` (تكرار الآية = 1)
+  - `playbackRate: 1.0` (سرعة التشغيل = 1x)
+  - `useRangeOnly: false` (إلغاء تفعيل تشغيل النطاق المحدود)
+
+#### 2. Trigger 1: تغيير المقرئ
+- `useEffect` يراقب تغيير `selectedReciterId`
+- عند التغيير: إعادة ضبط + إيقاف التشغيل الحالي
+
+#### 3. Trigger 2: تغيير السورة يدوياً
+- `useEffect` يراقب تغيير السورة عبر `pageData`
+- **تفريق ذكي** بين التغيير اليدوي والتلقائي:
+  - `skipSurahResetRef = true` عند التنقل البرمجي → تخطي إعادة الضبط
+  - التغيير اليدوي والمشغل غير نشط → إعادة ضبط
+  - التغيير أثناء التشغيل → لا إعادة ضبط (لتجنب قطع التلاوة)
+
+#### 4. Trigger 3: انتهاء التشغيل المحدود
+- عند انتهاء `playSequence` مع `useRangeOnly = true`
+- إعادة ضبط لتنظيف الحالة للمرة القادمة
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `App.tsx` | إضافة `resetAudioSettings` + 3 refs تتبع + 2 useEffect + تعديل `startPagePlayback` |
+
+---
+
+## 🐛 إصلاح خطأ التكرار في مشغل الصوت (Repeat Button Bug Fix) — 2026-05-07
+
+### المشكلة
+عند تشغيل التلاوة ثم الضغط على زر "التكرار" (Repeat)، كان الصوت يتوقف فجأة وتظهر رسالة خطأ تفيد بعدم توفر المقرئ.
+
+### تحليل السبب الجذري
+
+| # | السبب | التفاصيل |
+|---|-------|----------|
+| 1 | **استبدال كامل للإعدادات** | دالة `updateRuntimeSettings` كانت تقوم بـ `runtimeSettingsRef.current = settings` (استبدال كامل) بدلاً من الدمج، مما يعني أن تمرير `{ ayahRepetitions: 2 }` فقط كان يمسح `reciterId` وباقي الإعدادات |
+| 2 | **فقدان معرف المقرئ** | عند فقدان `reciterId`، كانت دالة `buildAudioUrl` تفشل في بناء رابط الصوت فتظهر رسالة الخطأ |
+| 3 | **قراءة الإعدادات الثابتة** | حلقة التكرار في `playSequence` كانت تقرأ `settings.ayahRepetitions` (نسخة ثابتة من بداية التشغيل) بدلاً من القراءة الحية من `runtimeSettingsRef`، فكان تغيير التكرار لا يُطبّق فعلياً |
+
+### الإصلاحات المُطبّقة
+
+#### 1. إصلاح `updateRuntimeSettings` — دمج بدل الاستبدال ✅
+```typescript
+// قبل (خاطئ):
+const updateRuntimeSettings = useCallback((settings: PlayerSettings) => {
+    runtimeSettingsRef.current = settings; // يستبدل الكل!
+}, []);
+
+// بعد (صحيح):
+const updateRuntimeSettings = useCallback((partialSettings: Partial<PlayerSettings>) => {
+    if (runtimeSettingsRef.current) {
+        runtimeSettingsRef.current = { ...runtimeSettingsRef.current, ...partialSettings };
+    }
+}, []);
+```
+
+#### 2. إصلاح حلقة التكرار في `playSequence` — قراءة حية ✅
+- حلقة `groupRepetitions` أصبحت تقرأ من `runtimeSettingsRef` في كل دورة
+- حلقة `ayahRepetitions` أصبحت تقرأ من `runtimeSettingsRef` في كل تكرار
+- هذا يسمح بتغيير التكرار أثناء التشغيل فوراً بدون إعادة التحميل
+
+#### 3. حماية ضد `reciterId` فارغ ✅
+- إضافة فحص في بداية `playAyahAudio` للتأكد من وجود `reciterId`
+- إذا كان فارغاً تظهر رسالة واضحة بدلاً من خطأ غامض
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `hooks/useAyahAudio.ts` | إصلاح `updateRuntimeSettings` لتقبل `Partial` + إصلاح حلقة `playSequence` + حماية `reciterId` |
+
+---
+
 ## 🔧 استكمال مفاتيح الترجمة الناقصة وإصلاح النصوص العربية — 2026-05-07
 
 ### المشكلة

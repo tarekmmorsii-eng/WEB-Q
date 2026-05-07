@@ -686,5 +686,14 @@
   "themeName_calm_peach": "静かな桃",
   "themeName_morning_sun": "朝日",
   "manageTranslations": "翻訳と単語の意味をダウンロード",
-  "hideTooltipHint": "注：このウィンドウは設定から非表示にできます"
+  "hideTooltipHint": "注：このウィンドウは設定から非表示にできます",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

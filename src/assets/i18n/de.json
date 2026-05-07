@@ -686,5 +686,19 @@
   "themeName_calm_peach": "Ruhiger Pfirsich",
   "themeName_morning_sun": "Morgensonne",
   "manageTranslations": "Übersetzung und Wortbedeutungen herunterladen",
-  "hideTooltipHint": "Hinweis: Sie können dieses Fenster in den Einstellungen ausblenden"
+  "hideTooltipHint": "Hinweis: Sie können dieses Fenster in den Einstellungen ausblenden",
+  "builtInSubtitle": "Integriert • Wort-für-Wort-Bedeutung von Bashir Yunus",
+  "badgeTafsirWbw": "Tafsir + Wortbedeutungen",
+  "badgeTafsirOnly": "Nur Tafsir",
+  "totalLanguagesLabel": "Gesamtsprachen",
+  "downloadedLabel": "Heruntergeladen",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

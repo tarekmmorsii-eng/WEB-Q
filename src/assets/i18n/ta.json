@@ -686,5 +686,14 @@
   "themeName_calm_peach": "அமைதியான பீச்",
   "themeName_morning_sun": "காலை சூரியன்",
   "manageTranslations": "மொழிபெயர்ப்பு மற்றும் சொல் பொருளைப் பதிவிறக்கவும்",
-  "hideTooltipHint": "Kurippu: Indha saalirattai amaipukalilirunthu maraikkalam"
+  "hideTooltipHint": "Kurippu: Indha saalirattai amaipukalilirunthu maraikkalam",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }

@@ -686,5 +686,19 @@
   "themeName_calm_peach": "الخوخ الهادئ",
   "themeName_morning_sun": "شمس الصباح",
   "manageTranslations": "تحميل الترجمة ومعاني الكلمات",
-  "hideTooltipHint": "ملاحظة: يمكنك إخفاء هذه النافذة من الإعدادات"
+  "hideTooltipHint": "ملاحظة: يمكنك إخفاء هذه النافذة من الإعدادات",
+  "builtInSubtitle": "أساسي - مدمج • كتاب معاني كلمات القران الكريم كلمه بكلمه لبشير يونس",
+  "badgeTafsirWbw": "تفسير + معاني كلمات",
+  "badgeTafsirOnly": "تفسير فقط",
+  "totalLanguagesLabel": "إجمالي اللغات",
+  "downloadedLabel": "لغة محملة",
+  "meaningsWord": "معاني",
+  "saving": "جاري الحفظ",
+  "active": "نشط",
+  "translationNotSupported": "الترجمة غير متوفرة حالياً",
+  "download": "تحميل",
+  "downloadingTranslation": "ترجمة الآيات",
+  "downloadingMeanings": "معاني الكلمات",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} آية بمعاني الكلمات)",
+  "arabicLangName": "العربية"
 }

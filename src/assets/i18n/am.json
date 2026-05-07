@@ -686,5 +686,19 @@
   "themeName_calm_peach": "ሰላማዊ ፒች",
   "themeName_morning_sun": "ጠዋት ፀሐይ",
   "manageTranslations": "ትርጉም እና የቃል ትርጉሞችን አውርድ",
-  "hideTooltipHint": "ማሳሰቢያ፡ ይህንን መስኮት ከቅንብሮች ላይ ማሳየም ይችላሉ"
+  "hideTooltipHint": "ማሳሰቢያ፡ ይህንን መስኮት ከቅንብሮች ላይ ማሳየም ይችላሉ",
+  "builtInSubtitle": "Built-in • በቃል ትርጒም በባሺር ዩኑስ",
+  "badgeTafsirWbw": "ትርጓሜ + የቃላት ትርጓሜ",
+  "badgeTafsirOnly": "ትርጓሜ ብቻ",
+  "totalLanguagesLabel": "ጠቅላላ ቋንቋዎች",
+  "downloadedLabel": "የወረደ",
+  "meaningsWord": "Meanings",
+  "saving": "Saving",
+  "active": "Active",
+  "translationNotSupported": "Translation not currently available",
+  "download": "Download",
+  "downloadingTranslation": "Translating Verses",
+  "downloadingMeanings": "Word Meanings",
+  "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
+  "arabicLangName": "Arabic"
 }
