@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad & Edukatif ──────",
   "confirmDeleteTitle": "Konfirmasi",
   "internetRequiredDownload": "(Internet diperlukan untuk mengunduh)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Jarak baris",
   "stop": "Berhenti",
   "repeatMode": "Mode berulang",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Abu-abu Batu",
   "themeName_lavender": "Lavendel",
   "themeName_calm_peach": "Persik Tenang",
-  "themeName_morning_sun": "Matahari Pagi"
+  "themeName_morning_sun": "Matahari Pagi",
+  "manageTranslations": "Unduh terjemahan dan arti kata",
+  "hideTooltipHint": "Catatan: Anda dapat menyembunyikan jendela ini dari pengaturan"
 }

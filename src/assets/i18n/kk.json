@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Муджаввад және Оқыту ──────",
   "confirmDeleteTitle": "Растау",
   "internetRequiredDownload": "(Жүктеу үшін Интернет қажет)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Zhol aralygy",
   "stop": "Тоқтату",
   "repeatMode": "Қайталау режимі",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Сұр Тастан",
   "themeName_lavender": "Лаванда",
   "themeName_calm_peach": "Жайлы Шабдалы",
-  "themeName_morning_sun": "Таңғы Күн"
+  "themeName_morning_sun": "Таңғы Күн",
+  "manageTranslations": "Аударма және сөз мағыналарын жүктеу",
+  "hideTooltipHint": "Eskertu: Bul terezendi baptaulardan zhasyra alasyz"
 }

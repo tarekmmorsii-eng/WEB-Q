@@ -995,3 +995,71 @@ am, bn, bs, de, en, es, fa, fr, ha, hi, id, ja, kk, ko, ku, ms, om, ru, rw, si, 
 | `src/assets/i18n/en.json` | إضافة `manageTranslations` + `hideTooltipHint` |
 | `src/assets/i18n/tr.json` | إضافة `manageTranslations` + `hideTooltipHint` |
 | `src/assets/i18n/es.json` | إضافة `manageTranslations` + `hideTooltipHint` |
+
+---
+
+## 🔧 استكمال مفاتيح الترجمة الناقصة وإصلاح النصوص العربية — 2026-05-07
+
+### المشكلة
+1. **نصوص عربية في ملفات اللغات الأجنبية:** المفاتيح `lineSpacing`، `translationAyah`، `translationNotAvailable`، `translationAyahNotFound` كانت تحتوي على نصوص عربية في ملفات اللغات الأربع الجديدة (am, om, rw, si).
+2. **مفاتيح مفقودة:** مفتاحا `manageTranslations` و `hideTooltipHint` كانا مفقودين من 24 ملف لغة، مما كان يسبب ظهور زر الإعدادات فارغاً.
+3. **نصوص عربية في lineSpacing:** مفتاح `lineSpacing` كان يحتوي على نص عربي "تباعد الأسطر" في 10 ملفات لغات أجنبية (bn, bs, de, es, fa, fr, ha, hi, id, tr).
+
+### ما تم إنجازه
+
+#### 1. إصلاح اللغات الـ 4 الجديدة (am, om, rw, si)
+تم ترجمة المفاتيح الـ 4 المذكورة أعلاه إلى اللغة الأصلية لكل ملف:
+| المفتاح | am (أمهرية) | om (أورومو) | rw (كينياروندا) | si (سنهالية) |
+|---------|------------|------------|----------------|-------------|
+| `lineSpacing` | የመስመር ክፍተት | Adda sarara | Umwanya w'umurongo | පේළි අතර ඉඩ |
+| `translationAyah` | የአንቀጽ ትርጉም | Hiikkaa Aayyaa | Ubusobanuro bw'Agace | ආයතය පරිවර්තනය |
+| `translationNotAvailable` | ትርጉም አይቀርብም... | Hiikkaan hin jiru... | Ubusobanuro ntibuboneka... | පරිවර්තනය ලබා ගත නොහැක... |
+| `translationAyahNotFound` | የአንቀጹ ትርጉም አልተገኘም | Hiikkaan aayyaa hin argamne | Ubusobanuro w'agace ntubashije kuboneka | ආයතය පරිවර්තනය හමු නොවීය |
+
+#### 2. استكمال المفاتيح الناقصة في 24 لغة
+تم إضافة مفتاحي `manageTranslations` و `hideTooltipHint` مترجمين لـ 24 لغة:
+- bn, bs, de, fa, fr, ha, hi, id (8 لغات - تعديل يدوي)
+- ja, kk, ko, ku, ms, ru, sq, sw, ta, tl, ur, uz, vi, yo, zh (15 لغة - تعديل جماعي)
+
+#### 3. إصلاح lineSpacing العربي في 10 لغات
+تم ترجمة "تباعد الأسطر" إلى اللغة الأصلية:
+bn → লাইন ফাঁকা | bs → Razmak između redova | de → Zeilenabstand | es → Espaciado entre líneas | fa → فاصله بین خطوط | fr → Espacement entre les lignes | ha → Tazara tsakanin layuka | hi → पंक्ति रिक्ति | id → Jarak baris | tr → Satır aralığı
+
+### التحقق النهائي
+✅ **31 ملف × 4 فحوصات = 124 نقطة فحص — جميعها نجحت**
+- لا نصوص عربية في ملفات غير العربية
+- لا مفاتيح مفقودة (manageTranslations, hideTooltipHint)
+- جميع ملفات JSON صالحة (Valid JSON)
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `src/assets/i18n/am.json` | ترجمة 4 مفاتيح للأمهرية |
+| `src/assets/i18n/om.json` | ترجمة 4 مفاتيح للأورومو |
+| `src/assets/i18n/rw.json` | ترجمة 4 مفاتيح للكينياروندا |
+| `src/assets/i18n/si.json` | ترجمة 4 مفاتيح للسنهالية |
+| `src/assets/i18n/bn.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/bs.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/de.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/es.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/fa.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/fr.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/ha.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/hi.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/id.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/tr.json` | إصلاح lineSpacing |
+| `src/assets/i18n/ja.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/kk.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/ko.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/ku.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/ms.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/ru.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/sq.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/sw.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/ta.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/tl.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/ur.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/uz.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/vi.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/yo.json` | إضافة مفتاحين + إصلاح lineSpacing |
+| `src/assets/i18n/zh.json` | إضافة مفتاحين + إصلاح lineSpacing |

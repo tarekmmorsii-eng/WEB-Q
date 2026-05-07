@@ -659,7 +659,7 @@
   "confirmDeleteTitle": "确认",
   "internetRequiredDownload": "（下载需要网络）",
   "playAyah": "Play Ayah",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "行距",
   "shareAppDesc": "与朋友分享应用链接",
   "followUs": "关注我们",
   "tourMemorizationPwr": "记忆强度评分：",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "石板灰",
   "themeName_lavender": "薰衣草",
   "themeName_calm_peach": "宁静桃",
-  "themeName_morning_sun": "晨曦"
+  "themeName_morning_sun": "晨曦",
+  "manageTranslations": "下载翻译和词语含义",
+  "hideTooltipHint": "注意：您可以在设置中隐藏此窗口"
 }

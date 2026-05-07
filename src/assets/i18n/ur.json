@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── مجود اور تعلیمی ──────",
   "confirmDeleteTitle": "تصدیق کریں",
   "internetRequiredDownload": "(ڈاؤن لوڈ کے لیے انٹرنیٹ درکار ہے)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Satron ke darmiyan fasla",
   "stop": "روکیں",
   "repeatMode": "ریپیٹ موڈ",
   "youtube": "یوٹیوب",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "سلیٹ گرے",
   "themeName_lavender": "لاوینڈر",
   "themeName_calm_peach": "پر سکون آڑو",
-  "themeName_morning_sun": "صبح کی دھوپ"
+  "themeName_morning_sun": "صبح کی دھوپ",
+  "manageTranslations": "ترجمہ اور الفاظ کے معانی ڈاؤن لوڈ کریں",
+  "hideTooltipHint": "نوٹ: آپ اس ونڈو کو ترتیبات سے چھپا سکتے ہیں"
 }

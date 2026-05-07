@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad fi Barnoota ──────",
   "confirmDeleteTitle": "Mirkaneessuu",
   "internetRequiredDownload": "(Intarneetiin buufachuuf barbaachisa)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Garaagarummaa Sararaa",
   "stop": "Dhaabuu",
   "repeatMode": "Haala Irra Deebi&#39;uu",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Gurraacha Dhagaa",
   "themeName_lavender": "Laveendara",
   "themeName_calm_peach": "Qokorii Tasgabbii",
-  "themeName_morning_sun": "Adii Aftanii"
+  "themeName_morning_sun": "Adii Aftanii",
+  "manageTranslations": "Hiikkaa fi Jecha Jechetoota Fe'i",
+  "hideTooltipHint": "Hubachiisa: Kunaa dirqaa qindeessaa irraa dhoksuu ni dandeessa"
 }

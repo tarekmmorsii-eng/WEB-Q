@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── 무자와드 및 교육 ──────",
   "confirmDeleteTitle": "확인",
   "internetRequiredDownload": "(다운로드를 위해 인터넷 필요)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "줄 간격",
   "stop": "정지",
   "repeatMode": "반복 모드",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "슬레이트 그레이",
   "themeName_lavender": "라벤더",
   "themeName_calm_peach": "평온한 복숭아",
-  "themeName_morning_sun": "아침 햇살"
+  "themeName_morning_sun": "아침 햇살",
+  "manageTranslations": "번역 및 단어 뜻 다운로드",
+  "hideTooltipHint": "참고: 설정에서 이 창을 숨길 수 있습니다"
 }

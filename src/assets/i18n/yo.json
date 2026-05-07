@@ -659,7 +659,7 @@
   "confirmDeleteTitle": "Ẹri",
   "internetRequiredDownload": "(Intanẹẹti nilo fun igbasilẹ)",
   "playAyah": "Play Ayah",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Ijinna laarin awon ila",
   "shareAppDesc": "Pin ọna asopọ app pẹlu awọn ọrẹ",
   "followUs": "Tẹle Wa",
   "tourMemorizationPwr": "Oye ipo iranti:",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Awọ Arewa Apata",
   "themeName_lavender": "Lafanda",
   "themeName_calm_peach": "Peesi Ọtun",
-  "themeName_morning_sun": "Ojo Owuro"
+  "themeName_morning_sun": "Ojo Owuro",
+  "manageTranslations": "Gbe itumo ati itumo oro wole",
+  "hideTooltipHint": "Akiyesi: O le fi ferese yi pamo lati inu eto"
 }

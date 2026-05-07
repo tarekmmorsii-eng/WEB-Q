@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Muxheuued & Edukativ ──────",
   "confirmDeleteTitle": "Konfirmo",
   "internetRequiredDownload": "(Kërkohet internet për shkarkim)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Hapesira e rreshtave",
   "stop": "Ndalo",
   "repeatMode": "Modaliteti i përsëritjes",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Guri Gri",
   "themeName_lavender": "Lavanda",
   "themeName_calm_peach": "Pjeshkë e Qetë",
-  "themeName_morning_sun": "Dielli i Mëngjesit"
+  "themeName_morning_sun": "Dielli i Mëngjesit",
+  "manageTranslations": "Shkarko përkthimin dhe kuptimin e fjalëve",
+  "hideTooltipHint": "Shenim: Mund ta fshihni kete dritare nga cilësimet"
 }

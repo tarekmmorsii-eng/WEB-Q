@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad & Ilimi ──────",
   "confirmDeleteTitle": "Tabbatar",
   "internetRequiredDownload": "(Internet ana buƙata don saukewa)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Tazara tsakanin layuka",
   "stop": "Tsaya",
   "repeatMode": "Maimaita Yanayin",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Toka ta Dutsen laushi",
   "themeName_lavender": "Lavanda",
   "themeName_calm_peach": "Peshwar mai kwanciyar hankali",
-  "themeName_morning_sun": "Rana safe"
+  "themeName_morning_sun": "Rana safe",
+  "manageTranslations": "Sauke fassara da ma'anar kalmomi",
+  "hideTooltipHint": "Lura: Zaka iya ɓoye wannan taga daga saituna"
 }

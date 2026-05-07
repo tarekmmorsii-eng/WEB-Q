@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad & Éducatif ──────",
   "confirmDeleteTitle": "Confirmer",
   "internetRequiredDownload": "(Internet requis pour le téléchargement)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Espacement entre les lignes",
   "stop": "Arrêt",
   "repeatMode": "Mode répétition",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Gris Ardoise",
   "themeName_lavender": "Lavande",
   "themeName_calm_peach": "Pêche Calme",
-  "themeName_morning_sun": "Soleil du Matin"
+  "themeName_morning_sun": "Soleil du Matin",
+  "manageTranslations": "Télécharger la traduction et les sens des mots",
+  "hideTooltipHint": "Remarque : Vous pouvez masquer cette fenêtre depuis les paramètres"
 }

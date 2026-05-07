@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── මුජව්වද් හා අධ්‍යාපනය ──────",
   "confirmDeleteTitle": "තහවුරු කරන්න",
   "internetRequiredDownload": "(Download කරගැනීමට අවශ් ‍ ය Internet)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "පේළි පරතරය",
   "stop": "නවත්තන්න",
   "repeatMode": "පුනරාවර්තන ප් ‍ රකාරය",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "කළු පැහැති ගල්",
   "themeName_lavender": "ලැවෙන්ඩර්",
   "themeName_calm_peach": "සාමකාමී පීච්",
-  "themeName_morning_sun": "සුදුසු හිරු"
+  "themeName_morning_sun": "සුදුසු හිරු",
+  "manageTranslations": "පරිවර්තනය සහ වචන අර්ථ බාගන්න",
+  "hideTooltipHint": "සටහන: ඔබට මෙම කවුළුව සැකසුම් වලින් සඟවන්න පුළුවන්"
 }

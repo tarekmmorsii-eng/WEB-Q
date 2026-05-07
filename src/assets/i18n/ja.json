@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── ムジャッワドと教育 ──────",
   "confirmDeleteTitle": "確認",
   "internetRequiredDownload": "（ダウンロードにはインターネットが必要です）",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "行間隔",
   "stop": "停止",
   "repeatMode": "繰り返しモード",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "スレートグレイ",
   "themeName_lavender": "ラベンダー",
   "themeName_calm_peach": "静かな桃",
-  "themeName_morning_sun": "朝日"
+  "themeName_morning_sun": "朝日",
+  "manageTranslations": "翻訳と単語の意味をダウンロード",
+  "hideTooltipHint": "注：このウィンドウは設定から非表示にできます"
 }

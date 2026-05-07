@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── मुजव्वद और शैक्षिक ──────",
   "confirmDeleteTitle": "पुष्टि करना",
   "internetRequiredDownload": "(डाउनलोड के लिए इंटरनेट आवश्यक)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "पंक्ति रिक्ति",
   "stop": "रुकना",
   "repeatMode": "मोड दोहराएँ",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "स्लेट ग्रे",
   "themeName_lavender": "लैवेंडर",
   "themeName_calm_peach": "शांत आडू",
-  "themeName_morning_sun": "सुबह का सूरज"
+  "themeName_morning_sun": "सुबह का सूरज",
+  "manageTranslations": "अनुवाद और शब्द अर्थ डाउनलोड करें",
+  "hideTooltipHint": "नोट: आप इस विंडो को सेटिंग्स से छिपा सकते हैं"
 }

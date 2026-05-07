@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── முஜவ்வத் & கல்வி ──────",
   "confirmDeleteTitle": "உறுதி செய்யவும்",
   "internetRequiredDownload": "(பதிவிறக்க இணையம் தேவை)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Vari idaivelhi",
   "stop": "எழுதுபொருள் கடை",
   "repeatMode": "மீண்டும் பயன்முறை",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "ஸ்லேட் சாம்பல்",
   "themeName_lavender": "லாவெண்டர்",
   "themeName_calm_peach": "அமைதியான பீச்",
-  "themeName_morning_sun": "காலை சூரியன்"
+  "themeName_morning_sun": "காலை சூரியன்",
+  "manageTranslations": "மொழிபெயர்ப்பு மற்றும் சொல் பொருளைப் பதிவிறக்கவும்",
+  "hideTooltipHint": "Kurippu: Indha saalirattai amaipukalilirunthu maraikkalam"
 }

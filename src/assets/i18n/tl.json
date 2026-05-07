@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad at Panturo ──────",
   "confirmDeleteTitle": "Kumpirmahin",
   "internetRequiredDownload": "(Kinakailangan ang internet para sa pag - download)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Espasyo sa pagitan ng linya",
   "stop": "tigilan muna ako",
   "repeatMode": "Ulitin ang Mode",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Abo na Bato",
   "themeName_lavender": "Lavandula",
   "themeName_calm_peach": "Mapayapang Melokoton",
-  "themeName_morning_sun": "Araw ng Umaga"
+  "themeName_morning_sun": "Araw ng Umaga",
+  "manageTranslations": "I-download ang pagsasalin at kahulugan ng mga salita",
+  "hideTooltipHint": "Tala: Maaari mong itago ang window na ito mula sa mga setting"
 }

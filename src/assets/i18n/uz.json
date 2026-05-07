@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujavvad va Ta'lim ──────",
   "confirmDeleteTitle": "Tasdiqlash",
   "internetRequiredDownload": "(Yuklab olish uchun internet kerak)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Qatorlar orasidagi masofa",
   "stop": "To'xtatish",
   "repeatMode": "Takrorlash rejimi",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Kulrang Tosht",
   "themeName_lavender": "Lavanda",
   "themeName_calm_peach": "Tinch Shaftoli",
-  "themeName_morning_sun": "Tong Quyoshi"
+  "themeName_morning_sun": "Tong Quyoshi",
+  "manageTranslations": "Tarjima va soz maanolarini yuklab olish",
+  "hideTooltipHint": "Eslatma: Bu oynani sozlamalardan yashirishingiz mumkin"
 }

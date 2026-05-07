@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── مجود و آموزشی ──────",
   "confirmDeleteTitle": "تایید کنید",
   "internetRequiredDownload": "(برای دانلود به اینترنت نیاز است)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "فاصله بین خطوط",
   "stop": "توقف کنید",
   "repeatMode": "حالت تکرار",
   "youtube": "یوتیوب",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "خاکستری تیره",
   "themeName_lavender": "اسطوخودوس",
   "themeName_calm_peach": "هلوی آرام",
-  "themeName_morning_sun": "آفتاب صبحگاهی"
+  "themeName_morning_sun": "آفتاب صبحگاهی",
+  "manageTranslations": "دانلود ترجمه و معانی کلمات",
+  "hideTooltipHint": "توجه: می‌توانید این پنجره را از تنظیمات مخفی کنید"
 }

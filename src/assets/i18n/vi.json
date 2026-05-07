@@ -659,7 +659,7 @@
   "confirmDeleteTitle": "Xác nhận",
   "internetRequiredDownload": "(Cần internet để tải xuống)",
   "playAyah": "Play Ayah",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Khoang cach dong",
   "shareAppDesc": "Chia sẻ liên kết ứng dụng với bạn bè",
   "followUs": "Theo dõi chúng tôi",
   "tourMemorizationPwr": "Đánh giá mức độ ghi nhớ:",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Xám Đá",
   "themeName_lavender": "Oải Hương",
   "themeName_calm_peach": "Đào Yên Bình",
-  "themeName_morning_sun": "Mặt Trời Buổi Sáng"
+  "themeName_morning_sun": "Mặt Trời Buổi Sáng",
+  "manageTranslations": "Tai xuong ban dich va nghia tu",
+  "hideTooltipHint": "Luu y: Ban co the an cua so nay tu cai dat"
 }

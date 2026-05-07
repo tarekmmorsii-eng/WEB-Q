@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mudžewwed & Obrazovanje ──────",
   "confirmDeleteTitle": "Potvrdi",
   "internetRequiredDownload": "(Za preuzimanje je potreban internet)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Razmak između redova",
   "stop": "Stani",
   "repeatMode": "Režim ponavljanja",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Sivi Kamen",
   "themeName_lavender": "Lavanda",
   "themeName_calm_peach": "Mirna Breskva",
-  "themeName_morning_sun": "Jutarnje Sunce"
+  "themeName_morning_sun": "Jutarnje Sunce",
+  "manageTranslations": "Preuzmi prijevod i značenja riječi",
+  "hideTooltipHint": "Napomena: Možete sakriti ovaj prozor iz postavki"
 }

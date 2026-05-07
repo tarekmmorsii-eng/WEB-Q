@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── ሙጃውዋድ እና ትምህርት ──────",
   "confirmDeleteTitle": "አረጋግጥ",
   "internetRequiredDownload": "(ኢንተርኔት ለማውረድ ያስፈልጋል)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "የመስመር ክፍተት",
   "stop": "ተወ",
   "repeatMode": "ድገም ሁነታ",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "ጥቁር ሰማያዊ ጥራጥሬ",
   "themeName_lavender": "ላቬንደር",
   "themeName_calm_peach": "ሰላማዊ ፒች",
-  "themeName_morning_sun": "ጠዋት ፀሐይ"
+  "themeName_morning_sun": "ጠዋት ፀሐይ",
+  "manageTranslations": "ትርጉም እና የቃል ትርጉሞችን አውርድ",
+  "hideTooltipHint": "ማሳሰቢያ፡ ይህንን መስኮት ከቅንብሮች ላይ ማሳየም ይችላሉ"
 }

@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad & Elimu ──────",
   "confirmDeleteTitle": "Thibitisha",
   "internetRequiredDownload": "(Intaneti inahitajika kwa ajili ya kupakuliwa)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Nafasi kati ya mistari",
   "stop": "Simamisha",
   "repeatMode": "Hali ya Kurudia",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Kijivu cha Slate",
   "themeName_lavender": "Lavenda",
   "themeName_calm_peach": "Pishi Tulivu",
-  "themeName_morning_sun": "Jua la Asubuhi"
+  "themeName_morning_sun": "Jua la Asubuhi",
+  "manageTranslations": "Pakua tafsiri na maana ya maneno",
+  "hideTooltipHint": "Kumbuka: Unaweza kuficha dirisha hili kutoka kwa mipangilio"
 }

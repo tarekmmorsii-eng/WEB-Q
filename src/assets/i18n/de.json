@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad & Bildung ──────",
   "confirmDeleteTitle": "Bestätigen",
   "internetRequiredDownload": "(Internet zum Herunterladen erforderlich)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Zeilenabstand",
   "stop": "Stoppen",
   "repeatMode": "Wiederholungsmodus",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Schiefergrau",
   "themeName_lavender": "Lavendel",
   "themeName_calm_peach": "Ruhiger Pfirsich",
-  "themeName_morning_sun": "Morgensonne"
+  "themeName_morning_sun": "Morgensonne",
+  "manageTranslations": "Übersetzung und Wortbedeutungen herunterladen",
+  "hideTooltipHint": "Hinweis: Sie können dieses Fenster in den Einstellungen ausblenden"
 }

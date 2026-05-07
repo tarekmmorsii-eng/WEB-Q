@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── মুজাওয়াদ ও শিক্ষামূলক ──────",
   "confirmDeleteTitle": "নিশ্চিত করুন",
   "internetRequiredDownload": "(ডাউনলোডের জন্য ইন্টারনেট প্রয়োজন)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "লাইন ফাঁকা",
   "stop": "থামো",
   "repeatMode": "পুনরাবৃত্তি মোড",
   "youtube": "ইউটিউব",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "স্লেট ধূসর",
   "themeName_lavender": "ল্যাভেন্ডার",
   "themeName_calm_peach": "শান্ত পীচ",
-  "themeName_morning_sun": "সকালের সূর্য"
+  "themeName_morning_sun": "সকালের সূর্য",
+  "manageTranslations": "অনুবাদ ও শব্দার্থ ডাউনলোড করুন",
+  "hideTooltipHint": "নোট: আপনি এই উইন্ডোটি সেটিংস থেকে লুকাতে পারেন"
 }

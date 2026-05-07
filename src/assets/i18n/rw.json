@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad n'Amasomo ──────",
   "confirmDeleteTitle": "Kwemeza",
   "internetRequiredDownload": "(Bya ngombwa kugirango Iyimura)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Intera y'Imirongo",
   "stop": "Guhagarika",
   "repeatMode": "Ubwoko",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Ibara ryibumba",
   "themeName_lavender": "Lavande",
   "themeName_calm_peach": "Igiturage cyumutekano",
-  "themeName_morning_sun": "Izuba ryamanywa"
+  "themeName_morning_sun": "Izuba ryamanywa",
+  "manageTranslations": "Kumuzika Umusemuro n'Amakuru y'Ijambo",
+  "hideTooltipHint": "Menya: Ushobora guhisha aka diriya mu myirire"
 }

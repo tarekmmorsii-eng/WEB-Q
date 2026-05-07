@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Mujawwad & Pendidikan ──────",
   "confirmDeleteTitle": "Sah",
   "internetRequiredDownload": "(Internet diperlukan untuk muat turun)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Jarak baris",
   "stop": "Berhenti",
   "repeatMode": "Mod ulang",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Kelabu Batu",
   "themeName_lavender": "Lavender",
   "themeName_calm_peach": "Pic Tenang",
-  "themeName_morning_sun": "Matahari Pagi"
+  "themeName_morning_sun": "Matahari Pagi",
+  "manageTranslations": "Muat turun terjemahan dan maksud perkataan",
+  "hideTooltipHint": "Nota: Anda boleh menyembunyikan tetingkap ini dari tetapan"
 }

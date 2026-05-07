@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── موجەوەد و فێرکاری ──────",
   "confirmDeleteTitle": "Tesdîqkirin",
   "internetRequiredDownload": "(Ji bo dakêşanê înternet pêwîst e)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Boshaia newan helnekan",
   "stop": "Rawestîne",
   "repeatMode": "Moda Dubarekirinê",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Sorê Kevirşahî",
   "themeName_lavender": "Laventer",
   "themeName_calm_peach": "Hêlîna Aram",
-  "themeName_morning_sun": "Tavê Sibê"
+  "themeName_morning_sun": "Tavê Sibê",
+  "manageTranslations": "وەرگێڕان و واتای وشانەکان دابەزێنە",
+  "hideTooltipHint": "Tebini: Dletit em penjereye le rekhistinekanewe bsharitewee"
 }

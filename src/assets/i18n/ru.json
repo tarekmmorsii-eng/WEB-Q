@@ -664,7 +664,7 @@
   "reciterSectionMujawwad": "────── Муджаввад и Обучающие ──────",
   "confirmDeleteTitle": "Подтвердить",
   "internetRequiredDownload": "(Для загрузки требуется Интернет)",
-  "lineSpacing": "تباعد الأسطر",
+  "lineSpacing": "Mezhstrochny interval",
   "stop": "Остановить",
   "repeatMode": "Режим повтора",
   "youtube": "YouTube",
@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Сланцевый Серый",
   "themeName_lavender": "Лаванда",
   "themeName_calm_peach": "Спокойный Персик",
-  "themeName_morning_sun": "Утреннее Солнце"
+  "themeName_morning_sun": "Утреннее Солнце",
+  "manageTranslations": "Скачать перевод и значения слов",
+  "hideTooltipHint": "Primetchanie: Vy mozhete skryt eto okno v nastroykakh"
 }
