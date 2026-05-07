@@ -22,7 +22,6 @@ import MutashabihatModal from './components/MutashabihatModal';
 import MutashabihatIndex from './components/MutashabihatIndex';
 import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
 import HowToUseGuide from './components/HowToUseGuide';
-import newMa3anyPosData from './src/data/ma3any/new_ma3any_pos.json';
 import SocialShareModal from './components/SocialShareModal';
 import FloatingSideMenu from './components/FloatingSideMenu';
 import AudioDownloadModal from './components/AudioDownloadModal';
@@ -52,6 +51,7 @@ import { startTour } from './utils/TourManager';
 import { useAyahAudio } from './hooks/useAyahAudio';
 import { useWakeLock } from './hooks/useWakeLock';
 import FloatingAudioPlayer from './components/FloatingAudioPlayer';
+import TranslationManagerModal from './components/TranslationManagerModal';
 import AuthModal from './components/AuthModal';
 import AudioSettingsModal from './components/AudioSettingsModal';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
@@ -348,6 +348,7 @@ export default function App() {
   const [playingAyahId, setPlayingAyahId] = useState<string | null>(null);
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
   const [isAudioDownloadOpen, setIsAudioDownloadOpen] = useState(false);
+  const [isTranslationManagerOpen, setIsTranslationManagerOpen] = useState(false);
 
   // Advanced Audio Settings
   const [audioSettings, setAudioSettings] = useState({
@@ -611,6 +612,17 @@ export default function App() {
   const [activeMutashabihaId, setActiveMutashabihaId] = useState<string | null>(null);
   const [selectorIsInsideSurah, setSelectorIsInsideSurah] = useState<boolean>(false);
   const [isHowToUseOpen, setIsHowToUseOpen] = useState(false);
+
+  // ⭐ تحميل بيانات المعاني بشكل غير متزامن (بدون حظر الشاشة)
+  useEffect(() => {
+    fetch('/data/new_ma3any_pos.json')
+      .then(res => res.ok ? res.json() : {})
+      .then(data => {
+        (window as any).__ma3anyData = data;
+        console.log('✅ Ma3any data loaded asynchronously');
+      })
+      .catch(err => console.warn('⚠️ Failed to load ma3any data:', err));
+  }, []);
 
   // Load mutashabihat data on mount with custom user data
   useEffect(() => {
@@ -2623,12 +2635,19 @@ export default function App() {
           highlightOffline={highlightOffline}
           onOpenShare={handleOpenShare}
           onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
+          onOpenTranslationManager={() => setIsTranslationManagerOpen(true)}
         />
 
         <SocialShareModal
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           currentLanguage={settings.language as Language}
+        />
+
+        <TranslationManagerModal
+          isOpen={isTranslationManagerOpen}
+          onClose={() => setIsTranslationManagerOpen(false)}
+          currentLanguage={settings.language}
         />
 
         <AudioDownloadModal 
@@ -2689,7 +2708,8 @@ export default function App() {
               onOpenMutashabihat={() => {
                 handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
               }}
-              tafsir={(newMa3anyPosData as any)[`${ratingModalData.surah}:${ratingModalData.ayah}`]?._tafsir}
+              tafsir={((window as any).__ma3anyData || {})[`${ratingModalData.surah}:${ratingModalData.ayah}`]?._tafsir}
+              onOpenTranslationManager={() => setIsTranslationManagerOpen(true)}
             />
           )
         }

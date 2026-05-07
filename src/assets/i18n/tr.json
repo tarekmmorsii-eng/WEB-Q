@@ -684,5 +684,7 @@
   "themeName_slate_gray": "Kaya Gri",
   "themeName_lavender": "Lavanta",
   "themeName_calm_peach": "Sakin Şeftali",
-  "themeName_morning_sun": "Sabah Güneşi"
+  "themeName_morning_sun": "Sabah Güneşi",
+  "manageTranslations": "Çeviri ve Kelime Anlamlarını İndir",
+  "hideTooltipHint": "Not: Bu pencereyi ayarlardan gizleyebilirsiniz"
 }

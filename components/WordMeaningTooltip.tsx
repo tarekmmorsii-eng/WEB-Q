@@ -7,9 +7,12 @@ interface WordMeaningTooltipProps {
     meaning: string;
     onClose: () => void;
     position: { x: number; y: number };
+    isFallback?: boolean;
+    fallbackMessage?: string;
+    hideTooltipHint?: string;
 }
 
-const WordMeaningTooltip: React.FC<WordMeaningTooltipProps> = ({ word, meaning, onClose, position }) => {
+const WordMeaningTooltip: React.FC<WordMeaningTooltipProps> = ({ word, meaning, onClose, position, isFallback = false, fallbackMessage, hideTooltipHint }) => {
     const [isVisible, setIsVisible] = useState(false);
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [tooltipHeight, setTooltipHeight] = useState<number>(0);
@@ -18,7 +21,7 @@ const WordMeaningTooltip: React.FC<WordMeaningTooltipProps> = ({ word, meaning, 
         if (tooltipRef.current) {
             setTooltipHeight(tooltipRef.current.offsetHeight);
         }
-    }, [word, meaning]);
+    }, [word, meaning, isFallback]);
 
     useEffect(() => {
         const entryTimeout = setTimeout(() => setIsVisible(true), 10);
@@ -90,6 +93,27 @@ const WordMeaningTooltip: React.FC<WordMeaningTooltipProps> = ({ word, meaning, 
                     >
                         {meaning}
                     </p>
+
+                    {/* Fallback message - يظهر فقط عند استخدام لغة بديلة */}
+                    {isFallback && (
+                        <p
+                            className="text-[10px] leading-relaxed text-center mt-2 pt-2 border-t border-[var(--border-primary)] m-0"
+                            style={{
+                                fontStyle: 'italic',
+                                opacity: 0.5,
+                                color: 'var(--text-secondary, #888)'
+                            }}
+                        >
+                            {fallbackMessage || 'The alternative language was used because word meanings are not available in this language.'}
+                        </p>
+                    )}
+
+                    {/* Hint: يمكنك إخفاء النافذة من الإعدادات */}
+                    {isFallback && hideTooltipHint && (
+                        <p className="text-red-500 text-[10px] leading-relaxed text-center mt-1 m-0">
+                            {hideTooltipHint}
+                        </p>
+                    )}
                 </div>
 
                 {/* Tooltip Arrow */}

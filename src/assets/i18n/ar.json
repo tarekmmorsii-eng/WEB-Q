@@ -684,5 +684,7 @@
   "themeName_slate_gray": "الرمادي الصخري",
   "themeName_lavender": "اللافندر",
   "themeName_calm_peach": "الخوخ الهادئ",
-  "themeName_morning_sun": "شمس الصباح"
+  "themeName_morning_sun": "شمس الصباح",
+  "manageTranslations": "تحميل الترجمة ومعاني الكلمات",
+  "hideTooltipHint": "ملاحظة: يمكنك إخفاء هذه النافذة من الإعدادات"
 }

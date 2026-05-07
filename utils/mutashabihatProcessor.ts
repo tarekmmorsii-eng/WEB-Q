@@ -303,9 +303,11 @@ export async function getProcessedMutashabihat(): Promise<Mutashabiha[]> {
             customData.push(...processed);
         });
 
-        // 2. Load Generated JSON Data via dynamic import (not in initial bundle)
+        // 2. Load Generated JSON Data via fetch from public/data/ (lazy, not in bundle)
         console.log("📂 Processing JSON mutashabihat data...");
-        const { default: jsonRaw } = await import('../constants/mutashabiha_data_full.json');
+        const response = await fetch('/data/mutashabiha_data_full.json');
+        if (!response.ok) throw new Error('Failed to fetch mutashabiha data');
+        const jsonRaw = await response.json();
 
         // Populate the exported mutable reference so AYAH_RULE_MAP can be built
         MUTASHABIHAT_DATA_FULL.length = 0;

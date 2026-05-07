@@ -472,3 +472,526 @@
 | الملف | الوصف |
 |-------|-------|
 | `components/NotificationManager.tsx` | إضافة `forceArabicNumerals` + `ln` + استبدال 31 استدعاء + تنظيف الاستيراد |
+
+---
+
+## ⚡ تحسين أداء الـ RAM وبناء مدير التحميلات — 2026-05-06
+
+### أولاً: تفكيك قنبلة الـ RAM (تحسين أداء اللغة العربية) ✅
+
+**المشكلة:** كان التطبيق يستورد ملفات JSON ضخمة مباشرة عبر `import` مما يسبب استهلاك RAM عالي وتأخير بدء التشغيل.
+
+**الحل المُنفذ:**
+1. ✅ نقل `new_ma3any_pos.json` و `mutashabiha_data_full.json` إلى `public/data/`
+2. ✅ حذف الاستيراد المباشر من `App.tsx` و `QPCV2PageRenderer.tsx` و `mutashabihatProcessor.ts`
+3. ✅ تحويل التحميل إلى `fetch()` غير متزامن عبر `useEffect`
+4. ✅ التطبيق يفتح فوراً وبيانات التفسير تُقرأ في الخلفية
+
+### ثانياً: واجهة مدير التحميلات (30 لغة) ✅
+
+**الملفات الجديدة:**
+| الملف | الوصف |
+|-------|-------|
+| `services/translationStorageService.ts` | خدمة IndexedDB لإدارة الترجمات |
+| `components/TranslationManagerModal.tsx` | واجهة إدارة اللغات (تحميل/حذف) |
+
+**الملفات المعدّلة:**
+| الملف | الوصف |
+|-------|-------|
+| `components/Settings.tsx` | إضافة زر "إدارة التفاسير واللغات" |
+| `App.tsx` | ربط مكون مدير التحميلات + تحويل ma3any لـ fetch |
+| `components/QPCV2PageRenderer.tsx` | حذف استيراد ma3any المباشر + استخدام fetch |
+| `utils/mutashabihatProcessor.ts` | تحويل mutashabiha_data_full لـ fetch غير متزامن |
+
+---
+
+## 🌐 ربط مدير التحميلات بـ APIs الحقيقية — 2026-05-07
+
+### الهدف
+تحويل مدير التحميلات من نظام محاكاة إلى نظام حقيقي يجلب ترجمات القرآن الكريم من APIs عامة ويحفظها في IndexedDB للاستخدام Offline.
+
+### ما تم إنجازه
+
+#### 1. خريطة اللغات (`utils/translationMapper.ts`) — ملف جديد
+تم إنشاء ملف يربط بين رموز اللغات الـ 30 الخاصة بالتطبيق ومعرفات الترجمات في APIs:
+
+| الميزة | التفاصيل |
+|--------|----------|
+| عدد اللغات المربوطة | **34 إصدار** لـ **30 لغة** (بعض اللغات لها عدة خيارات) |
+| المصدر الأساسي | **Al Quran Cloud API** (`api.alquran.cloud`) — يدعم **28 لغة** |
+| المصدر البديل | **FawazAhmed API** (`github.com/fawazahmed0/quran-api`) — يدعم **5 لغات إضافية** |
+| لغة غير متاحة | `tl` (التغالوغ) — غير موجودة في أي API حالياً |
+| اللغة العربية | `ar` — مستثناة لأنها مدمجة محلياً |
+
+**أمثلة على معرفات الترجمات المختارة:**
+| اللغة | معرف الإصدار | المترجم | المصدر |
+|-------|-------------|---------|--------|
+| en | `en.sahih` | Saheeh International | Al Quran Cloud |
+| fr | `fr.hamidullah` | Muhammad Hamidullah | Al Quran Cloud |
+| ur | `ur.maududi` | Abul Ala Maududi | Al Quran Cloud |
+| bn | `bn.hoque` | Zohurul Hoque | Al Quran Cloud |
+| tr | `tr.diyanet` | Diyanet İşleri | Al Quran Cloud |
+| ru | `ru.kuliev` | Elmir Kuliev | Al Quran Cloud |
+| vi | `vie_hassanabdulkari` | Hassan Abdul Karim | FawazAhmed |
+| kk | `kaz_khalifahaltai` | Khalifa Altay | FawazAhmed |
+
+#### 2. نظام التحميل الحقيقي (في `TranslationManagerModal.tsx`)
+- **Al Quran Cloud:** تحميل كامل للقرآن في طلب واحد (`/v1/quran/{editionId}`)
+- **FawazAhmed:** تحميل سورة بسورة (114 طلب) لأن الإصدارات مقسمة حسب السور
+- **مؤشر تقدم مرئي:** شريط تقدم متحرك مع نسبة مئوية أثناء التحميل
+- **حفظ تلقائي:** بعد نجاح التحميل يتم الحفظ فوراً في IndexedDB
+- **تحديث الواجهة:** يتغير الزر من "تحميل ☁️" إلى "حذف 🗑️" تلقائياً
+- **رسائل خطأ واضحة:** في حال فشل التحميل تظهر رسالة "فشل التحميل، تأكد من اتصالك بالإنترنت"
+
+#### 3. هيكل البيانات المحفوظة
+```typescript
+{
+  languageCode: 'en',      // رمز اللغة
+  languageName: 'الإنجليزية', // اسم اللغة
+  data: {                   // بيانات الترجمة الكاملة
+    surahs: [...],          // 114 سورة مع الآيات
+    _meta: {                // بيانات وصفية
+      editionId: 'en.sahih',
+      author: 'Saheeh International',
+      source: 'alquran-cloud',
+      direction: 'ltr',
+      downloadedAt: '2026-05-07T...'
+    }
+  },
+  timestamp: 1746567890123, // وقت التحميل
+  size: 1234567             // حجم البيانات بالبايت
+}
+```
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `utils/translationMapper.ts` | **جديد** — خريطة اللغات ومعرفات APIs |
+| `components/TranslationManagerModal.tsx` | إعادة كتابة كاملة — تحميل حقيقي + مؤشر تقدم + معالجة أخطاء |
+
+### API Sources
+| API | الرابط | اللغات | المميزات |
+|-----|--------|---------|----------|
+| Al Quran Cloud | `https://api.alquran.cloud` | 28 لغة | طلب واحد، سريع، موثوق |
+| FawazAhmed | `https://github.com/fawazahmed0/quran-api` | 5 لغات إضافية | مفتوح المصدر، 400+ ترجمة |
+
+---
+
+## 📜 عرض الترجمات في نافذة خيارات الآية — 2026-05-07
+
+### الهدف
+استهلاك بيانات الترجمات المحفوظة في IndexedDB وعرضها للمستخدم في نافذة خيارات الآية (AyahOptionsModal).
+
+### ما تم إنجازه
+
+#### 1. تعديل `AyahOptionsModal.tsx`
+- **حالة `translatedText`**: لتخزين نص الترجمة أو التفسير
+- **`useEffect`**: يعمل عند فتح المودال أو تغيير السورة/الآية/اللغة
+- **منطق العرض:**
+  - لغة `ar`: يعرض التفسير العربي المدمج (`_tafsir`) كما هو
+  - لغات أخرى: يجلب الترجمة من IndexedDB عبر `getTranslation(language)`
+  - وُجدت بيانات → يستخرج نص الآية ويعرضه
+  - لم توجد بيانات → رسالة توجيهية مع زر للانتقال لشاشة إدارة الترجمات
+- **دالة `extractAyahText()`**: تستخرج نص الآية من هياكل JSON المختلفة (Al Quran Cloud و FawazAhmed)
+- **تحديد اتجاه النص** (`dir`) تلقائياً بناءً على لغة الترجمة
+- **prop جديد `onOpenTranslationManager`**: للتنقل المباشر لشاشة إدارة الترجمات
+
+#### 2. مفاتيح ترجمة جديدة (4 مفاتيح × 31 لغة)
+- `translationAyah`: "ترجمة الآية" / "Verse Translation"
+- `translationNotAvailable`: رسالة توجيهية عند عدم وجود ترجمة
+- `translationAyahNotFound`: رسالة عند عدم العثور على نص الآية
+- `manageTranslations`: "إدارة التفاسير واللغات"
+
+#### 3. تحديث `App.tsx`
+- تمرير `onOpenTranslationManager` لمكون AyahOptionsModal
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/AyahOptionsModal.tsx` | جلب الترجمة من IndexedDB + عرض + دالة استخراج نص الآية |
+| `i18n/translations.ts` | إضافة 4 مفاتيح في واجهة Translations |
+| `src/assets/i18n/*.json` (31 ملف) | إضافة 4 مفاتيح ترجمة لكل لغة |
+| `App.tsx` | إضافة `onOpenTranslationManager` prop |
+
+---
+
+## 🔄 التحميل المزدوج: ترجمة + معاني الكلمات (Offline WbW & Tafsir) — 2026-05-07
+
+### الهدف
+عند تحميل لغة، يتم جلب ترجمة الآيات + معاني الكلمات (Word by Word) معاً وحفظهما في IndexedDB ليعمل 100% بدون إنترنت.
+
+### ما تم إنجازه
+
+#### 1. توسيع IndexedDB (`services/translationStorageService.ts`)
+- **ترقية DB** من الإصدار 1 إلى 2 لإضافة مخزن `wbw_translations`
+- **دوال جديدة:**
+  - `saveWbwData()` — حفظ بيانات معاني الكلمات
+  - `getWbwData()` — جلب بيانات معاني الكلمات
+  - `deleteWbwData()` — حذف بيانات معاني الكلمات
+  - `isWbwDataStored()` — التحقق من وجود البيانات
+  - `getWbwWordMeaning()` — استخراج معنى كلمة واحدة بالسورة/الآية/الموقع
+
+#### 2. التحميل المزدوج (`components/TranslationManagerModal.tsx`)
+- **مصدر WbW:** Quran.com API v4 (`/v4/verses/by_chapter/{surah}?language={lang}&words=true`)
+- **Al Quran Cloud:** تحميل الترجمة كاملة أولاً، ثم WbW سورة بسورة (35% → 80%)
+- **FawazAhmed:** دمج جلب الترجمة + WbW في نفس حلقة التكرار (ترجمة + معاني معاً)
+- **شريط التقدم:** يعكس تقدم العمليتين معاً (ترجمة 50% + معاني 50%)
+- **حذف تلقائي:** عند حذف ترجمة يتم حذف بيانات WbW أيضاً
+
+#### 3. عرض المعاني المترجمة (`components/QPCV2PageRenderer.tsx`)
+- **تحميل WbW:** `useEffect` يجلب بيانات WbW من IndexedDB عند تغيير اللغة
+- **عربي (`ar`):** يستمر في استخدام `__ma3anyData` المدمج (بدون تغيير)
+- **غير عربي:** يبحث في بيانات WbW المحفوظة عبر `getWbwWordMeaning()`
+- **Fallback:** إذا لم توجد ترجمة للكلمة، يستخدم المعنى العربي
+
+### هيكل بيانات WbW في IndexedDB
+```typescript
+{
+  languageCode: 'fr',          // رمز اللغة
+  data: {                       // كائن ضخم بجميع الآيات
+    "1:1": {                    // verse_key = surah:ayah
+      "1": { translation: "Au nom" },    // position → ترجمة الكلمة
+      "2": { translation: "d'Allah" },
+      "3": { translation: "le Tout Miséricordieux" },
+      // ...
+    },
+    "1:2": { ... },
+    // ... حوالي 6000+ آية
+  },
+  timestamp: 1746567890123
+}
+```
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `services/translationStorageService.ts` | ترقية DB + إضافة مخزن WbW + 5 دوال جديدة |
+| `components/TranslationManagerModal.tsx` | تحميل مزدوج + شريط تقدم محسّن + حذف WbW |
+| `components/QPCV2PageRenderer.tsx` | تحميل WbW + عرض معاني مترجمة + Fallback عربي |
+
+---
+
+## 🐛 إصلاح معاني الكلمات المترجمة (WbW Fix) — 2026-05-07
+
+### المشكلة
+كانت معاني الكلمات (Word by Word) للغات غير العربية (مثل الإنجليزية والتركية) تظهر بالعربية دائماً (يتم تفعيل الـ Fallback) بدلاً من عرض الترجمة باللغة المحددة.
+
+### تحليل الأسباب الجذرية
+
+| # | السبب | التفاصيل |
+|---|-------|----------|
+| 1 | **`word_fields` محدود** | كان URL يحتوي على `word_fields=position,verse_key` وهذا يحظر إرجاع حقل `translation` و `char_type_name` من API، فكانت المعاني تأتي فارغة دائماً |
+| 2 | **`char_type` vs `char_type_name`** | Quran.com API v4 يستخدم الحقل `char_type_name` وليس `char_type`، فكان شرط الفلترة `word.char_type === 'word'` يفشل دائماً |
+| 3 | **عدم فحص `isEnd`** | عند الضغط المطول على كلمة هي رقم آية (إشارة نهاية الآية)، كان الكود يحاول جلب معنى لها مما يسبب بحث غير ضروري |
+| 4 | **لا يوجد تشخيص** | لم تكن هناك أي `console.log` في `getWbwWordMeaning` لتتبع سبب عودة `null` |
+
+### الإصلاحات المُطبّقة
+
+#### 1. إصلاح `TranslationManagerModal.tsx` — دالة `fetchWbwForSurah`
+- **إزالة `word_fields`** من URL نهائياً ليتم إرجاع جميع الحقول بما فيها `translation`
+- **تصحيح اسم الحقل** من `char_type` إلى `char_type_name` (مع fallback لـ `char_type`)
+- **إضافة `?.` بعد `position`** لحماية ضد القيم `undefined`
+- **إضافة console.log تشخيصية** لكل سورة (عدد الآيات التي تحتوي معاني)
+
+#### 2. إصلاح `translationStorageService.ts` — دالة `getWbwWordMeaning`
+- **إضافة console.log تفصيلية** عند كل حالة: لا بيانات، مفتاح غير موجود، موقع غير موجود، نجاح
+- **طباعة المفاتيح المتاحة** عند عدم العثور على مفتاح الآية (أول 5 مفاتيح)
+- **طباعة المواقع المتاحة** عند عدم العثور على موقع الكلمة
+
+#### 3. إصلاح `QPCV2PageRenderer.tsx` — منطق عرض المعاني
+- **إضافة شرط `!word.isEnd`** لمنع البحث عن معنى لكلمة هي رقم آية
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/TranslationManagerModal.tsx` | إصلاح URL + `char_type_name` + تشخيص |
+| `services/translationStorageService.ts` | إضافة تشخيص مفصل في `getWbwWordMeaning` |
+| `components/QPCV2PageRenderer.tsx` | منع جلب المعاني لرقم الآية (`isEnd`) |
+
+### ملاحظة مهمة للمستخدمين الحاليين
+بعد هذا الإصلاح، يجب **إعادة تحميل اللغات** (حذف ثم تحميل) لكي يتم جلب البيانات بالهيكل الصحيح من API.
+
+---
+
+## 🔗 إصلاح رابط API لمعاني الكلمات (WbW Endpoint Fix) — 2026-05-07
+
+### المشكلة
+كان التطبيق يتلقى خطأ **404 Not Found** من سيرفر Quran.com عند محاولة جلب بيانات معاني الكلمات (Word by Word).
+
+### السبب
+الرابط (Endpoint) المستخدم في دالة `fetchWbwForSurah` كان ينقصه مسار `/api/`:
+- ❌ **الرابط الخاطئ:** `https://api.quran.com/v4/verses/by_chapter/...`
+- ✅ **الرابط الصحيح:** `https://api.quran.com/api/v4/verses/by_chapter/...`
+
+### الإصلاح
+تم تحديث الرابط في دالة `fetchWbwForSurah` داخل `TranslationManagerModal.tsx` ليكون:
+```
+https://api.quran.com/api/v4/verses/by_chapter/${surahNum}?language=${langCode}&words=true&word_fields=translation&per_page=300
+```
+
+كما تمت إضافة معامل `word_fields=translation` لضمان إرجاع حقل الترجمة من API.
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/TranslationManagerModal.tsx` | إصلاح رابط API بإضافة `/api/` قبل `/v4/` + إضافة `word_fields=translation` |
+
+---
+
+## 🔧 إصلاح مشكلة Closure + تشخيص WbW (WbW Closure Fix & Diagnostics) — 2026-05-07
+
+### المشكلة
+حتى بعد إصلاح رابط API، كانت معاني الكلمات المترجمة (WbW) لا تظهر للغات غير العربية. السبب: **مشكلة Closure قديمة** في React — معالج `onPointerDown` كان يحتفظ بقيمة قديمة (null) لـ `wbwTranslationData` بدلاً من أحدث قيمة محمّلة من IndexedDB.
+
+### الإصلاحات المُطبّقة
+
+#### 1. إضافة `wbwDataRef` (useRef) في `QPCV2PageRenderer.tsx`
+- **المشكلة:** `onPointerDown` مُعرّف داخل `render` كـ inline callback، لذلك يلتقط (captures) قيمة `wbwTranslationData` وقت الإنشاء وليس أحدث قيمة.
+- **الحل:** إضافة `useRef` يُحدّث مع كل تغيير للغة ويُقرأ مباشرة في معالج الأحداث:
+  ```typescript
+  const wbwDataRef = useRef<any>(null);
+  // يُحدّث في useEffect عند تحميل البيانات
+  wbwDataRef.current = result.data;
+  // يُقرأ في onPointerDown
+  const currentWbwData = wbwDataRef.current;
+  ```
+
+#### 2. إضافة console.log تشخيصية
+- عند تحميل بيانات WbW: طباعة عدد الآيات + عينة من أول 3 مفاتيح مع بياناتها
+- عند الضغط المطول: طباعة نتيجة البحث `(surah, ayah, pos, found)`
+- عند عدم توفر بيانات: طباعة رسالة "No data available"
+
+#### 3. تحسين رسائل التحذير
+- رسالة واضحة عند عدم وجود بيانات WbW للغة محددة في IndexedDB
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/QPCV2PageRenderer.tsx` | إضافة `wbwDataRef` + تحديث `onPointerDown` + تشخيص مفصل |
+
+---
+
+## ⭐ نظام مؤشرات توفر معاني الكلمات (WbW Availability Indicators) — 2026-05-07
+
+### الهدف
+بعض اللغات (مثل الروسية) لا تتوفر لها معاني كلمات في Quran.com API، فيعود المعنى بالإنجليزية كبديل. لشفافية احترافية مع المستخدم، تم بناء نظام مؤشرات توفر كامل.
+
+### ما تم إنجازه
+
+#### 1. خريطة اللغات (`utils/translationMapper.ts`)
+- إضافة خاصية `hasWbw: boolean` لكل لغة
+- إضافة دالة مساعدة `hasWbwSupport(languageCode)` للتحقق
+- **اللغات المدعومة (`true`):** en, ur, bn, id, tr, hi, de, ta
+- **اللغات غير المدعومة (`false`):** ru, es, fr, fa, sw, zh, ko, ja, وغيرها
+
+#### 2. مدير التحميلات (`components/TranslationManagerModal.tsx`)
+- **شارات واضحة:** بجانب كل لغة يظهر "تفسير + معاني كلمات" أو "تفسير فقط"
+- **تحسين الأداء:** إذا كانت اللغة `hasWbw === false`، يتم تخطي خطوة جلب WbW بالكامل لتوفير الإنترنت ووقت المستخدم
+
+#### 3. نافذة المعاني (`components/QPCV2PageRenderer.tsx`)
+- كشف تلقائي عند استخدام لغة بديلة (Fallback) وإضافة علامة `isFallback`
+- المنطق: إذا كانت اللغة غير عربية + لا يوجد معنى أجنبي + اللغة لا تدعم WbW → `isFallback = true`
+
+#### 4. نافذة Tooltip (`components/WordMeaningTooltip.tsx`)
+- دعم `isFallback` و `fallbackMessage` كـ props جديدة
+- عند `isFallback === true`: يظهر نص صغير بخط مائل ولون باهت أسفل الترجمة يعتذر عن استخدام لغة بديلة
+
+#### 5. نصوص الترجمة (i18n — 31 لغة × 5 مفاتيح = 155 قيمة جديدة)
+| المفتاح | العربية | الإنجليزية |
+|---------|---------|-----------|
+| `wbwAvailable` | تفسير + معاني كلمات | Tafsir + Word Meanings |
+| `wbwNotAvailable` | تفسير فقط | Tafsir Only |
+| `wbwFallbackMessage` | تم استخدام اللغة البديلة لعدم توفر معاني الكلمات بهذه اللغة | Alternative language used... |
+| `downloadedLanguages` | لغة محملة | Downloaded |
+| `totalLanguages` | إجمالي اللغات | Total Languages |
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `utils/translationMapper.ts` | إضافة `hasWbw` لكل لغة + دالة `hasWbwSupport()` |
+| `components/TranslationManagerModal.tsx` | شارات + تخطي تحميل WbW للغات غير المدعومة |
+| `components/QPCV2PageRenderer.tsx` | كشف Fallback + تمرير `isFallback` للـ Tooltip |
+| `components/WordMeaningTooltip.tsx` | عرض رسالة Fallback بخط مائل |
+| `i18n/translations.ts` | إضافة 5 مفاتيح في واجهة Translations |
+| `src/assets/i18n/*.json` (31 ملف) | إضافة 5 مفاتيح ترجمة لكل لغة |
+| `scripts/add_wbw_keys.cjs` | **جديد** — سكريبت إضافة المفاتيح لجميع اللغات |
+
+### الفوائد
+- ✅ **توفير الإنترنت:** التطبيق لا يحاول تحميل معاني كلمات للغات لا تملكها
+- ✅ **شفافية كاملة:** المستخدم يعرف أن هذه اللغة فيها "تفسير فقط"
+- ✅ **اعتذار لبق:** عند استخدام لغة بديلة تظهر رسالة أنيقة بلغة المستخدم
+
+---
+
+## ⚙️ إعادة ترتيب شاشة الإعدادات (UI Settings Reorganization) — 2026-05-07
+
+### التغييرات المُطبّقة
+
+#### 1. تغيير نص الزر (Rename)
+- **النص القديم:** `إدارة التفاسير واللغات` / `Manage Translations & Languages`
+- **النص الجديد:** `تحميل الترجمة ومعاني الكلمات` / `Download Translation & Word Meanings`
+
+
+## ✨ لمسات نهائية - تنظيف واجهة مدير الترجمات — 2026-05-07
+
+### التغييرات
+1. **حذف التفاصيل من بطاقة اللغة:** تم حذف عرض الحجم (`size`) والتاريخ (`lastUpdated`) نهائياً من بطاقات اللغات المُحمّلة لتبدو نظيفة وبسيطة — يظهر فقط اسم المترجم باللون الأخضر.
+2. **تصحيح رسالة اللغات غير المدعومة:** تغيير النص من "يتطلب إنترنت" إلى "الترجمة غير متوفرة حالياً" بلون رمادي باهت (`text-slate-300`) وبخط صغير جداً (`text-[10px]`).
+3. **توحيد العنوان:** عنوان النافذة أصبح مطابقاً لنص الزر: "تحميل الترجمة ومعاني الكلمات".
+
+### الملفات المعدلة
+| الملف | التغيير |
+|-------|---------|
+| `components/TranslationManagerModal.tsx` | حذف `formatSize` والتاريخ + تصحيح الرسالة + توحيد العنوان |
+| `src/assets/i18n/ar.json` | إضافة مفتاح `translationNotSupported` |
+| `src/assets/i18n/en.json` | إضافة مفتاح `translationNotSupported` |
+| `src/assets/i18n/*.json` (29 ملف) | إضافة مفتاح `translationNotSupported` |
+
+#### 2. نقل الموقع (Relocate)
+- **الموقع القديم:** تحت قائمة اختيار لغة التطبيق (قسم اللغات)
+- **الموقع الجديد:** تحت قسم "العمل بدون إنترنت" (Offline Mode) مباشرة، قبل قسم المساعدة
+- تم الحفاظ على نفس التصميم والأيقونة (Globe) والألوان (amber)
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+ | `components/Settings.tsx` | تغيير نص الزر + نقله من قسم اللغات إلى تحت قسم العمل بدون إنترنت |
+
+---
+
+## 📝 تحديث نص بطاقة اللغة العربية في مدير الترجمات — 2026-05-07
+
+### التغيير
+تم تحديث النص الفرعي (Subtitle) الخاص ببطاقة اللغة العربية الثابتة في واجهة مدير التحميلات لتوضيح مصدر بيانات معاني الكلمات:
+
+- **النص القديم:** `أساسي - مدمج ✅`
+- **النص الجديد:** `أساسي - مدمج • كتاب معاني كلمات القران الكريم كلمه بكلمه لبشير يونس ✅`
+
+### التنسيق
+- الخط: `text-xs` (صغير ومقروء)
+- اللون: `text-amber-600` / `dark:text-amber-400` (متناسق مع تصميم البطاقة)
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/TranslationManagerModal.tsx` | تحديث النص الفرعي لبطاقة اللغة العربية الثابتة |
+
+---
+
+## 📝 تحسينات واجهة المستخدم — توثيق المصدر ورقم الآية — 2026-05-07
+
+### التغييرات المُطبّقة
+
+#### 1. توثيق مصدر اللغة العربية في مدير الترجمات
+- **الملف:** `components/TranslationManagerModal.tsx`
+- **التغيير:** إزالة علامة ✅ من نهاية النص الفرعي لبطاقة اللغة العربية لتكونClean ومناسبة
+- **النص النهائي:** `أساسي - مدمج • كتاب معاني كلمات القران الكريم كلمه بكلمه لبشير يونس`
+
+#### 2. إضافة رقم الآية في عنوان نافذة التفسير
+- **الملف:** `components/AyahOptionsModal.tsx`
+- **التغيير:** إضافة رقم الآية الحالية بجانب عنوان نافذة التفسير/الترجمة
+- **النتيجة:** بدلاً من عرض "تفسير الآية" فقط، يظهر الآن "تفسير الآية ٥" (أو حسب رقم الآية المحددة)
+- **دعم اللغات:** يتم عرض الرقم بالأرقام العربية المشرقية (٥) للعربية، والأرقام الأردية للأردو، والأرقام الفارسية للفارسية، والأرقام اللاتينية لباقي اللغات
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/TranslationManagerModal.tsx` | تنظيف نص بطاقة اللغة العربية (إزالة ✅) |
+| `components/AyahOptionsModal.tsx` | إضافة رقم الآية في عنوان نافذة التفسير مع دعم تعدد اللغات |
+
+---
+
+## 🧹 إصلاح تشوه الترميز في ملفات اللغات (Encoding Mojibake Fix) — 2026-05-07
+
+### المشكلة
+اكتُشف أن زر "تفسير الآية" (الزر البنفسجي) وعنوان نافذة التفسير كانا يظهران رموزاً مشوهة مثل `طھظپط³ظٹط± ط§ظ„ط¢ظٹط©` بدلاً من الترجمة الصحيحة في اللغات الأجنبية. حدث هذا بسبب خطأ في ترميز الحروف العربية عند استخدامها كـ Fallback في ملفات اللغات الأخرى عبر أدوات الترجمة الآلية.
+
+### المفاتيح المتأثرة (10 مفاتيح)
+| المفتاح | الوصف |
+|---------|-------|
+| `tafsirAyah` | عنوان زر التفسير |
+| `translationAyah` | عنوان زر الترجمة |
+| `translationAyahNotFound` | رسالة عدم العثور على الآية |
+| `translationNotAvailable` | رسالة عدم توفر الترجمة |
+| `translationNotSupported` | رسالة عدم دعم اللغة |
+| `manageTranslations` | زر إدارة الترجمات |
+| `wbwAvailable` | شارة توفر معاني الكلمات |
+| `wbwNotAvailable` | شارة عدم توفر معاني الكلمات |
+| `wbwFallbackMessage` | رسالة استخدام لغة بديلة |
+| `wordMeaningsNote` | ملاحظة المعاني |
+
+### الحل المُنفّذ
+
+#### 1. إصلاح ملفات الترجمة (29 لغة × 10 مفاتيح = 281 إصلاح)
+- كل لغة حصلت على ترجمة أصيلة بلغتها (الإسبانية: "Traducción del Verso"، الألمانية: "Versübersetzung"، إلخ)
+
+#### 2. تحسين مكون نافذة التفسير (`AyahOptionsModal.tsx`)
+- رقم الآية في عنوان نافذة التفسير أصبح **باللون الأحمر** (`text-red-500`) لتمييزه عن النص
+- رقم الآية أُضيف أيضاً في **زر التفسير** نفسه باللون الأحمر (`text-red-300`)
+- التنسيق: (كلمة التفسير المترجمة) + (رقم الآية باللون الأحمر)
+- مثال: "Tafsir del Verso **7**" باللون الأحمر
+
+### اللغات المُصلَحة (29 لغة)
+am, bn, bs, de, en, es, fa, fr, ha, hi, id, ja, kk, ko, ku, ms, om, ru, rw, si, sq, sw, ta, tl, tr, ur, uz, vi, yo, zh
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `src/assets/i18n/*.json` (29 ملف) | إصلاح 281 مفتاح مشوه بترجمات صحيحة |
+| `components/AyahOptionsModal.tsx` | جعل رقم الآية باللون الأحمر في العنوان والزر |
+
+---
+
+## 🚨 إصلاح طارئ — التراجع عن كارثة الترميز (Emergency Rollback) — 2026-05-07
+
+### المشكلة
+سكريبت `fix_encoding_tafsir.cjs` تسبب في تدمير ترميز UTF-8 لجميع ملفات الترجمة (30 ملف JSON) مما أدى إلى ظهور الواجهة بالكامل كرموز مشوهة (Mojibake).
+
+### الإجراءات المتخذة فوراً
+
+#### 1. تراجع كامل (Rollback) ✅
+- تم استخدام `git checkout HEAD -- src/assets/i18n/` لاستعادة جميع ملفات الترجمة الـ 30 إلى آخر نسخة سليمة من Git
+- تم التأكد من عدم وجود أي اختلافات (`git diff --stat` = فارغ)
+
+#### 2. حذف السكريبت المسبب ✅
+- تم حذف `scripts/fix_encoding_tafsir.cjs` نهائياً من المشروع
+- **ممنوع استخدام سكريبتات الأتمتة المجمعة على ملفات الترجمة مستقبلاً**
+
+#### 3. إصلاحات يدوية دقيقة ✅
+- **زر التفسير (`AyahOptionsModal.tsx`):** إضافة رقم الآية باللون الأحمر (`text-red-300`) بجانب نص الزر
+- **الإنجليزية (`en.json`):** إضافة مفتاح `translationAyah: "Verse Translation"` يدوياً
+- **الإسبانية (`es.json`):** إضافة مفتاح `translationAyah: "Traducción del Verso"` يدوياً + تحسين `tafsirAyah`
+
+### الدرس المستفاد
+> ⛔ لا تستخدم سكريبتات Node.js لمعالجة ملفات JSON تحتوي على نصوص عربية/Unicode. استخدم دائماً محرر الأكواد مباشرة مع التأكد من الحفظ بترميز UTF-8.
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `src/assets/i18n/*.json` (30 ملف) | تراجع كامل عبر Git |
+| `scripts/fix_encoding_tafsir.cjs` | **محذوف** نهائياً |
+| `components/AyahOptionsModal.tsx` | رقم الآية بالأحمر في الزر |
+| `src/assets/i18n/en.json` | إضافة `translationAyah` يدوياً |
+| `src/assets/i18n/es.json` | إضافة `translationAyah` + تحسين `tafsirAyah` يدوياً |
+
+---
+
+## 🔄 إضافة مفاتيح الترجمة المفقودة (i18n Keys Restore) — 2026-05-07
+
+### المشكلة
+بعد التراجع عن كارثة الترميز، تم فقدان مفتاحين جديدين من ملفات الترجمة الأساسية، مما أدى لاختفاء نص الزر والملاحظة الحمراء من الواجهة.
+
+### المفاتيح المُضافة يدوياً (بدون سكريبتات)
+
+| المفتاح | ar | en | tr | es |
+|---------|-----|-----|-----|-----|
+| `manageTranslations` | تحميل الترجمة ومعاني الكلمات | Download Translation & Word Meanings | Çeviri ve Kelime Anlamlarını İndir | Descargar Traducción y Significados |
+| `hideTooltipHint` | ملاحظة: يمكنك إخفاء هذه النافذة من الإعدادات | Note: You can hide this window in settings | Not: Bu pencereyi ayarlardan gizleyebilirsiniz | Nota: Puede ocultar esta ventana en la configuración |
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `src/assets/i18n/ar.json` | إضافة `manageTranslations` + `hideTooltipHint` |
+| `src/assets/i18n/en.json` | إضافة `manageTranslations` + `hideTooltipHint` |
+| `src/assets/i18n/tr.json` | إضافة `manageTranslations` + `hideTooltipHint` |
+| `src/assets/i18n/es.json` | إضافة `manageTranslations` + `hideTooltipHint` |

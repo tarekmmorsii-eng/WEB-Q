@@ -527,6 +527,16 @@ export interface Translations {
     themeName_lavender: string;
     themeName_calm_peach: string;
     themeName_morning_sun: string;
+    translationAyah: string;
+    translationNotAvailable: string;
+    translationAyahNotFound: string;
+    manageTranslations: string;
+    wbwAvailable: string;
+    wbwNotAvailable: string;
+    wbwFallbackMessage: string;
+    downloadedLanguages: string;
+    totalLanguages: string;
+    hideTooltipHint: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';

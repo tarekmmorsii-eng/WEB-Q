@@ -118,7 +118,8 @@
   "rateMemorization": "Calificar Memorización",
   "ayahCopied": "Ayah copiado al portapapeles",
   "errorCopying": "No se pudo copiar ayah",
-  "tafsirAyah": "Verso Tafsir",
+  "tafsirAyah": "Tafsir del Verso",
+  "translationAyah": "Traducción del Verso",
   "displaySettings": "Configuración de pantalla",
   "defaultFontSize": "Tamaño de fuente predeterminado",
   "lineSpacingLabel": "Interlineado",
@@ -684,5 +685,7 @@
   "themeName_slate_gray": "Gris Pizarra",
   "themeName_lavender": "Lavanda",
   "themeName_calm_peach": "Durazno Tranquilo",
-  "themeName_morning_sun": "Sol Matutino"
+  "themeName_morning_sun": "Sol Matutino",
+  "manageTranslations": "Descargar Traducción y Significados",
+  "hideTooltipHint": "Nota: Puede ocultar esta ventana en la configuración"
 }

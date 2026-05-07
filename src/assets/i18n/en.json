@@ -119,6 +119,7 @@
   "ayahCopied": "Ayah copied to clipboard",
   "errorCopying": "Failed to copy ayah",
   "tafsirAyah": "Verse Tafsir",
+  "translationAyah": "Verse Translation",
   "displaySettings": "Display Settings",
   "defaultFontSize": "Default Font Size",
   "lineSpacingLabel": "Line Spacing",
@@ -684,5 +685,7 @@
   "themeName_slate_gray": "Slate Gray",
   "themeName_lavender": "Lavender",
   "themeName_calm_peach": "Calm Peach",
-  "themeName_morning_sun": "Morning Sun"
+  "themeName_morning_sun": "Morning Sun",
+  "manageTranslations": "Download Translation & Word Meanings",
+  "hideTooltipHint": "Note: You can hide this window in settings"
 }

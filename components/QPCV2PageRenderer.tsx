@@ -9,7 +9,6 @@ import clsx from 'clsx';
 import { ViewMode, MemorizationRating, VerseBookmark, Mutashabiha } from '../types';
 import { Bookmark, WifiOff } from 'lucide-react';
 import WordMeaningTooltip from './WordMeaningTooltip';
-import newMa3anyPosData from '../src/data/ma3any/new_ma3any_pos.json';
 import { STOP_SIGNS } from '../src/generated/stopSigns';
 import { SURAHS } from '../constants/surahData'; // Or local SURAH_NAMES if defined there
 import SurahFrame from './SurahFrame';
@@ -18,6 +17,8 @@ import { PAGE_DIVISIONS } from '../constants/pageDivisions';
 import { JUZ_SECTIONS } from '../constants';
 import { translations, Language } from '../i18n/translations';
 import { getMushafData, saveMushafData } from '../utils/db';
+import { getWbwData, getWbwWordMeaning } from '../services/translationStorageService';
+import { hasWbwSupport } from '../utils/translationMapper';
 import { findMutashabihatForAyah, findAllMutashabihatForAyah } from '../utils/mutashabihatProcessor';
 import { formatNumber } from '../utils/quranUtils';
 import { useWordByWordAudio } from '../hooks/useWordByWordAudio';
@@ -293,7 +294,41 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         return 'desktop';
     });
 
-    const [selectedWordMeaning, setSelectedWordMeaning] = useState<{ word: string, meaning: string, x: number, y: number } | null>(null);
+    const [selectedWordMeaning, setSelectedWordMeaning] = useState<{ word: string, meaning: string, x: number, y: number, isFallback?: boolean } | null>(null);
+    const [wbwTranslationData, setWbwTranslationData] = useState<any>(null);
+    // ⭐ Ref لضمان الوصول لأحدث بيانات WbW في معالجات الأحداث (حل مشكلة Closure القديم)
+    const wbwDataRef = useRef<any>(null);
+
+    // ⭐ تحميل بيانات معاني الكلمات المترجمة من IndexedDB عند تغيير اللغة
+    useEffect(() => {
+        if (language === 'ar') {
+            // العربية تستخدم الملف المدمج __ma3anyData
+            setWbwTranslationData(null);
+            wbwDataRef.current = null;
+            return;
+        }
+        getWbwData(language).then(result => {
+            if (result?.data) {
+                setWbwTranslationData(result.data);
+                wbwDataRef.current = result.data;
+                console.log(`✅ WbW translation data loaded for ${language}: ${Object.keys(result.data).length} ayahs`);
+                // تشخيص: طباعة أول 3 مفاتيح للتأكد من البنية
+                const sampleKeys = Object.keys(result.data).slice(0, 3);
+                sampleKeys.forEach(key => {
+                    const positions = Object.keys(result.data[key]);
+                    console.log(`  📖 Key "${key}": ${positions.length} words, sample:`, result.data[key][positions[0]]);
+                });
+            } else {
+                setWbwTranslationData(null);
+                wbwDataRef.current = null;
+                console.warn(`⚠️ No WbW data found in IndexedDB for language: ${language}`);
+            }
+        }).catch(err => {
+            console.warn('⚠️ Failed to load WbW data:', err);
+            setWbwTranslationData(null);
+            wbwDataRef.current = null;
+        });
+    }, [language]);
 
     const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => {
         if (typeof window !== 'undefined') {
@@ -522,7 +557,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     const a = parseInt(pts[1]);
 
                     const ayahKey = `${s}:${a}`;
-                    const meaningsObj = (newMa3anyPosData as any)[ayahKey] || {};
+                    const ma3anyData = (window as any).__ma3anyData || {};
+                    const meaningsObj = ma3anyData[ayahKey] || {};
                     let meaning = undefined;
                     let meaningPhrase = undefined;
                     let meaningColorIndex = undefined;
@@ -1469,13 +1505,47 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                                 if (navigator.vibrate) navigator.vibrate(50);
                                                             }
 
-                                                            if (showWordMeanings && word.meaning) {
-                                                                setSelectedWordMeaning({
-                                                                    word: word.meaningPhrase || word.originalText || '',
-                                                                    meaning: word.meaning,
-                                                                    x: startX,
-                                                                    y: startY
-                                                                });
+                                                            // ⭐ منطق المعاني المزدوج: عربي + مترجم
+                                                            if (showWordMeanings) {
+                                                                // استخراج المعنى العربي من __ma3anyData
+                                                                const ma3anyData = (window as any).__ma3anyData || {};
+                                                                const ayahKey = `${word.surah}:${word.ayah}`;
+                                                                const meaningsObj = ma3anyData[ayahKey] || {};
+                                                                const arabicMeaning = !word.isEnd ? meaningsObj[word.word.toString()] : null;
+
+                                                                // الكلمة العربية النظيفة من phrase
+                                                                const displayWord = arabicMeaning?.phrase || word.originalText || "";
+
+                                                                // للغات غير العربية: ابحث في بيانات WbW المحفوظة
+                                                                const currentWbwData = wbwDataRef.current;
+                                                                let foreignMeaning: string | null = null;
+                                                                if (language !== 'ar' && !word.isEnd && currentWbwData) {
+                                                                    const wbwMeaning = getWbwWordMeaning(
+                                                                        currentWbwData,
+                                                                        word.surah,
+                                                                        word.ayah,
+                                                                        word.word
+                                                                    );
+                                                                    if (wbwMeaning) {
+                                                                        foreignMeaning = wbwMeaning;
+                                                                    }
+                                                                }
+
+                                                                // الترجمة الأجنبية أولاً، ثم المعنى العربي كاحتياطي
+                                                                const displayMeaning = foreignMeaning || arabicMeaning?.meaning || word.meaning || null;
+
+                                                                // ⭐ كشف Fallback: إذا لم تتوفر ترجمة أجنبية واستخدمنا العربية/الإنجليزية كبديل
+                                                                const isFallback = language !== 'ar' && !foreignMeaning && !hasWbwSupport(language);
+
+                                                                if (displayMeaning) {
+                                                                    setSelectedWordMeaning({
+                                                                        word: displayWord,
+                                                                        meaning: displayMeaning,
+                                                                        x: startX,
+                                                                        y: startY,
+                                                                        isFallback
+                                                                    });
+                                                                }
                                                             }
                                                         }, 600);
                                                     }}
@@ -1605,6 +1675,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                         meaning={selectedWordMeaning.meaning}
                         position={{ x: selectedWordMeaning.x, y: selectedWordMeaning.y }}
                         onClose={() => setSelectedWordMeaning(null)}
+                        isFallback={selectedWordMeaning.isFallback}
+                        fallbackMessage={t.wbwFallbackMessage || undefined}
+                        hideTooltipHint={t.hideTooltipHint || undefined}
                     />
                 )}
             </div>

@@ -38,6 +38,7 @@ interface SettingsProps {
     highlightOffline?: boolean;
     onOpenShare?: () => void;
     onOpenAudioDownload?: () => void;
+    onOpenTranslationManager?: () => void;
 }
 
 export default function Settings({
@@ -52,7 +53,8 @@ export default function Settings({
     highlightHelp = false,
     highlightOffline = false,
     onOpenShare,
-    onOpenAudioDownload
+    onOpenAudioDownload,
+    onOpenTranslationManager
 }: SettingsProps) {
     const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
     const t = translations[currentLanguage];
@@ -856,10 +858,30 @@ export default function Settings({
                                                     </button>
                                                 </div>
 
+                                                {/* زر تحميل الترجمة ومعاني الكلمات */}
+                                                <button
+                                                    onClick={() => {
+                                                        onClose();
+                                                        onOpenTranslationManager?.();
+                                                    }}
+                                                    className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all active:scale-[0.98] group"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-amber-100 dark:bg-amber-800/60 rounded-full">
+                                                            <Globe size={18} className="text-amber-600 dark:text-amber-400" />
+                                                        </div>
+                                                        <span className="font-medium text-amber-800 dark:text-amber-200">
+                                                            {t.manageTranslations}
+                                                        </span>
+                                                    </div>
+                                                    <ChevronDown size={18} className="text-amber-500 -rotate-90 rtl:rotate-90" />
+                                                </button>
+
                                             </div>
                                         </div>
                                     )}
-                                </section>
+                            </section>
+
                             <div className="pt-4 border-t border-gray-100 dark:border-slate-700" />
 
 
