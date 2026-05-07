@@ -125,11 +125,14 @@ export default function Settings({
         }
     }, [isOpen, highlightHelp]);
 
-    // مؤقت لإخفاء الوميض الأحمر بعد 3.5 ثانية
+    // مؤقت لإخفاء الوميض الأحمر بعد 3.5 ثانية — يعمل عند كل فتح للنافذة
     React.useEffect(() => {
-        const timer = setTimeout(() => setShowMoreSettingsGlow(false), 3500);
-        return () => clearTimeout(timer);
-    }, []);
+        if (isOpen) {
+            setShowMoreSettingsGlow(true);
+            const timer = setTimeout(() => setShowMoreSettingsGlow(false), 3500);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
 
     // مزامنة الإعدادات المحلية عند فتح القائمة أو تغيير الإعدادات الخارجية
     // مزامنة الإعدادات المحلية عند تغيير الإعدادات الخارجية
@@ -409,9 +412,10 @@ export default function Settings({
                         </div>
 
                         {/* More Settings Toggle Button */}
+                        <div className="mt-4 rounded-lg">
                         <button
                             onClick={() => setShowAllSettings(!showAllSettings)}
-                            className={`w-full mt-4 flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-all duration-1000 ease-in-out group ${showMoreSettingsGlow ? 'ring-2 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]' : 'ring-0 ring-transparent shadow-none'}`}
+className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-all duration-1000 ease-in-out group ${showMoreSettingsGlow ? 'ring-2 ring-red-500 shadow-lg shadow-red-500/50' : 'ring-0 shadow-none'}`}
                         >
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-[var(--bg-card)] rounded-full shadow-sm group-hover:scale-110 transition-transform">
@@ -427,6 +431,7 @@ export default function Settings({
                                 <ChevronDown size={20} className="text-gray-500" />
                             )}
                         </button>
+                        </div>
                     </section>
 
                     {showAllSettings && (
