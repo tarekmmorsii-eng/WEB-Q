@@ -14,6 +14,7 @@ import VerseCalculatorModal from './VerseCalculatorModal';
 import VisitorCounter from './VisitorCounter';
 import { useOfflineManager } from '../hooks/useOfflineManager';
 import AudioDownloadModal from './AudioDownloadModal';
+import DownloadProgressBar from './DownloadProgressBar';
 
 interface SettingsProps {
     isOpen: boolean;
@@ -73,6 +74,9 @@ export default function Settings({
     const [openOffline, setOpenOffline] = useState(false);
     const [openHelp, setOpenHelp] = useState(false);
 
+    // حالة وميض أحمر مؤقت لزر "المزيد من الإعدادات"
+    const [showMoreSettingsGlow, setShowMoreSettingsGlow] = useState(true);
+
     const { openFeedback } = useFeedback();
 
     const {
@@ -120,6 +124,12 @@ export default function Settings({
             }, 350);
         }
     }, [isOpen, highlightHelp]);
+
+    // مؤقت لإخفاء الوميض الأحمر بعد 3.5 ثانية
+    React.useEffect(() => {
+        const timer = setTimeout(() => setShowMoreSettingsGlow(false), 3500);
+        return () => clearTimeout(timer);
+    }, []);
 
     // مزامنة الإعدادات المحلية عند فتح القائمة أو تغيير الإعدادات الخارجية
     // مزامنة الإعدادات المحلية عند تغيير الإعدادات الخارجية
@@ -401,7 +411,7 @@ export default function Settings({
                         {/* More Settings Toggle Button */}
                         <button
                             onClick={() => setShowAllSettings(!showAllSettings)}
-                            className="w-full mt-4 flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors group"
+                            className={`w-full mt-4 flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-all duration-1000 ease-in-out group ${showMoreSettingsGlow ? 'ring-2 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]' : 'ring-0 ring-transparent shadow-none'}`}
                         >
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-[var(--bg-card)] rounded-full shadow-sm group-hover:scale-110 transition-transform">
@@ -821,20 +831,13 @@ export default function Settings({
                                                                 )}
                                                             </button>
 
-                                                            {/* Progress Bar */}
+                                                            {/* شريط التحميل الموحد */}
                                                             {downloadProgress !== null && (
-                                                                <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-2">
-                                                                    <div
-                                                                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                                                        style={{ width: `${downloadProgress}%` }}
-                                                                    ></div>
-                                                                </div>
-                                                            )}
-
-                                                            {downloadProgress === 100 && (
-                                                                <div className="text-center text-green-600 dark:text-green-400 text-sm font-medium animate-pulse">
-                                                                    {t.downloadSuccess}
-                                                                </div>
+                                                                <DownloadProgressBar
+                                                                    progress={downloadProgress}
+                                                                    message={downloadProgress === 100 ? t.downloadSuccess : undefined}
+                                                                    color="blue"
+                                                                />
                                                             )}
                                                         </>
                                                     )}

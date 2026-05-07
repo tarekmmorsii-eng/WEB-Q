@@ -14,6 +14,7 @@ import {
     getAllCachedKeys, 
     clearAllAudioCache 
 } from '../services/audioCacheService';
+import DownloadProgressBar from './DownloadProgressBar';
 
 
 
@@ -44,6 +45,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     const [cacheSizeMB, setCacheSizeMB] = useState<string>('0.00');
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
     const [showWbwTip, setShowWbwTip] = useState(false);
+
+    // حالات تتبع التقدم
+    const [progressPercent, setProgressPercent] = useState<number>(0);
+    const [progressMsg, setProgressMsg] = useState<string>('');
 
     useEffect(() => {
         if (activeTab === 'words') {
@@ -153,6 +158,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
     const handleDownloadFull = async () => {
         setIsDownloadingFull(true);
+        setProgressPercent(0);
+        setProgressMsg('');
         try {
             const surahInfo = SURAHS.find(s => s.number === selectedSurah);
             if (!surahInfo) return;
@@ -175,7 +182,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 ayahGlobalNumbers.push(startGlobal + i);
             }
 
-            await preCacheAudio(ayahGlobalNumbers, selectedReciter);
+            await preCacheAudio(ayahGlobalNumbers, selectedReciter, (percent, msg) => {
+                setProgressPercent(percent);
+                if (msg) setProgressMsg(msg);
+            });
 
             // Verify the first ayah is in IndexedDB
             const firstAyahUrl = buildAudioUrl(selectedReciter, startGlobal);
@@ -199,6 +209,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             }));
         } finally {
             setIsDownloadingFull(false);
+            setProgressPercent(0);
+            setProgressMsg('');
         }
     };
 
@@ -239,6 +251,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             return;
         }
         setDownloadingWordsSurahs(prev => new Set(prev).add(surahNumber));
+        setProgressPercent(0);
+        setProgressMsg('');
         try {
             const surahInfo = SURAHS.find(s => s.number === surahNumber);
             if (!surahInfo) return;
@@ -264,7 +278,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             }
 
             // 3. Call preCacheWords (now uses IndexedDB)
-            await preCacheWords(wordsToCache);
+            await preCacheWords(wordsToCache, (percent, msg) => {
+                setProgressPercent(percent);
+                if (msg) setProgressMsg(msg);
+            });
 
             // 4. Update UI
             setDownloadedWordsSurahs(prev => new Set(prev).add(surahNumber));
@@ -283,6 +300,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 newSet.delete(surahNumber);
                 return newSet;
             });
+            setProgressPercent(0);
+            setProgressMsg('');
         }
     };
 
@@ -409,10 +428,10 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                         )}
                                     >
                                         {isDownloadingFull ? (
-                                            <>
-                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                {t.downloading}
-                                            </>
+                                            <DownloadProgressBar 
+                                                progress={progressPercent} 
+                                                message={progressMsg || "جارٍ التحميل..."} 
+                                            />
                                         ) : (
                                             <>
                                                 <Download size={20} />
@@ -479,11 +498,16 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                                                 )}
                                             >
                                                 {isDownloading ? (
-                                                    <div className="w-4 h-4 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
+                                                    <DownloadProgressBar 
+                                                        progress={progressPercent} 
+                                                        message={progressMsg || "جارٍ التحميل..."} 
+                                                    />
                                                 ) : (
-                                                    <Download size={14} />
+                                                    <>
+                                                        <Download size={14} />
+                                                        {t.downloadAction}
+                                                    </>
                                                 )}
-                                                {t.downloadAction}
                                             </button>
                                         )}
                                     </div>

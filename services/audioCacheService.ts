@@ -244,3 +244,39 @@ export async function cacheMultipleAudioBlobs(urls: string[]): Promise<number> {
     
     return successCount;
 }
+
+// ─── Cache Multiple Audio Files with Progress ─────────────────────
+/**
+ * Batch cache multiple audio URLs as Blobs with progress tracking.
+ * Calls onProgress after each file completes with current percentage.
+ * Returns the count of successfully cached files.
+ */
+export async function cacheMultipleAudioBlobsWithProgress(
+    urls: string[],
+    onProgress?: (percent: number, completed: number, total: number) => void
+): Promise<number> {
+    let successCount = 0;
+    let completedCount = 0;
+    const total = urls.length;
+    const CONCURRENCY = 3;
+
+    for (let i = 0; i < urls.length; i += CONCURRENCY) {
+        const batch = urls.slice(i, i + CONCURRENCY);
+        const results = await Promise.allSettled(
+            batch.map(url => cacheAudioBlob(url))
+        );
+        for (const result of results) {
+            completedCount++;
+            if (result.status === 'fulfilled' && result.value) {
+                successCount++;
+            }
+        }
+        // إبلاغ التقدم بعد كل دفعة
+        if (onProgress) {
+            const percent = Math.round((completedCount / total) * 100);
+            onProgress(percent, completedCount, total);
+        }
+    }
+
+    return successCount;
+}

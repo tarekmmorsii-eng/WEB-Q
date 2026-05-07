@@ -312,12 +312,29 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
     runtimeSettingsRef.current = null;
   }, [playAyahAudio]);
 
-  const preCacheAudio = useCallback(async (ayahGlobalNumbers: number[], reciterID: string) => {
+  const preCacheAudio = useCallback(async (
+      ayahGlobalNumbers: number[],
+      reciterID: string,
+      onProgress?: (percent: number, message?: string) => void
+  ) => {
       // Use IndexedDB Blob Storage — works on mobile browsers
+      const total = ayahGlobalNumbers.length;
+      let completed = 0;
+
       for (const num of ayahGlobalNumbers) {
           const url = buildAudioUrl(reciterID, num);
-          if (!url) continue;
+          if (!url) {
+              completed++;
+              continue;
+          }
           await cacheAudioBlob(url);
+          completed++;
+
+          // إبلاغ التقدم
+          if (onProgress) {
+              const percent = Math.round((completed / total) * 100);
+              onProgress(percent, `${completed} / ${total}`);
+          }
       }
   }, []);
 

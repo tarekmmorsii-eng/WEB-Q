@@ -998,6 +998,77 @@ am, bn, bs, de, en, es, fa, fr, ha, hi, id, ja, kk, ko, ku, ms, om, ru, rw, si, 
 
 ---
 
+## 📊 نظام شريط تتبع التحميل (Download Progress Bar) — المرحلة 5 — 2026-05-07
+
+### الهدف
+ربط مكون شريط التقدم `DownloadProgressBar` بواجهة مدير التحميلات `AudioDownloadModal` لعرض تقدم حقيقي أثناء تحميل التلاوات الكاملة ومعاني الكلمات، بدلاً من مؤشر الدوران (Spinner) القديم.
+
+### ما تم إنجازه
+
+#### 1. إضافة حالات التتبع (Progress States)
+- **`progressPercent`**: نسبة التقدم من 0 إلى 100
+- **`progressMsg`**: رسالة توضيحية (مثل "15 / 286")
+- **تصفير تلقائي** عند بداية كل عملية تحميل وعند انتهائها (نجاح أو خطأ)
+
+#### 2. تحديث دوال التحميل بـ onProgress Callback
+- **`handleDownloadFull`**: تمرير `onProgress` لـ `preCacheAudio` لعرض تقدم تحميل التلاوة الكاملة
+- **`handleDownloadWords`**: تمرير `onProgress` لـ `preCacheWords` لعرض تقدم تحميل معاني الكلمات
+
+#### 3. استبدال الـ Spinners بمكون DownloadProgressBar
+- **تبويب التلاوة الكاملة (Tab 1):** استبدال Spinner + نص "جارٍ التحميل" بـ `DownloadProgressBar`
+- **تبويب معاني الكلمات (Tab 2):** استبدال Spinner بـ `DownloadProgressBar` في زر تحميل كل سورة
+
+### سير العمل (Data Flow)
+```
+AudioDownloadModal.tsx
+  → handleDownloadFull / handleDownloadWords
+    → preCacheAudio / preCacheWords (with onProgress callback)
+      → audioCacheService (IndexedDB Blob caching)
+        → onProgress(percent, msg) ↑
+    → setProgressPercent + setProgressMsg ↑
+  → DownloadProgressBar (progress={percent} message={msg})
+```
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/AudioDownloadModal.tsx` | استيراد DownloadProgressBar + حالات التتبع + تمرير onProgress + استبدال Spinners |
+
+---
+
+## 🔴 تأثير وميض أحمر مؤقت لزر "المزيد من الإعدادات" (Red Glow UX Enhancement) — 2026-05-07
+
+### الهدف
+تحسين تجربة المستخدم (UX) في شاشة الإعدادات عن طريق إضافة تأثير وميض أحمر مؤقت حول زر "المزيد من الإعدادات" لجذب انتباه المستخدم الجديد إليه عند فتح النافذة، ثم يختفي التأثير بسلاسة بعد 3.5 ثانية.
+
+### ما تم تنفيذه
+
+#### 1. إضافة حالة ومؤقت (State + useEffect)
+- **حالة جديدة:** `showMoreSettingsGlow` تبدأ بـ `true` عند فتح النافذة
+- **مؤقت تلقائي:** `useEffect` يُغيّر الحالة إلى `false` بعد 3500 مللي ثانية (3.5 ثانية)
+- **تنظيف المؤقت:** يتم تنظيف `setTimeout` عند إغلاق المكون لمنع تسرب الذاكرة
+
+#### 2. تطبيق التأثير البصري (Tailwind CSS)
+تم إضافة كلاسات شرطية على زر "المزيد من الإعدادات":
+- **عند التفعيل (`showMoreSettingsGlow = true`):**
+  - `ring-2 ring-red-500` — حدود حمراء واضحة
+  - `shadow-[0_0_15px_rgba(239,68,68,0.6)]` — ظل أحمر متوهج
+- **عند الانتهاء (`showMoreSettingsGlow = false`):**
+  - `ring-0 ring-transparent shadow-none` — يختفي التأثير تماماً
+- **انتقال سلس:** `transition-all duration-1000 ease-in-out` — التلاشي خلال ثانية واحدة
+
+#### 3. ملاحظات تقنية
+- تم استخدام `React.useEffect` الموجود مسبقاً (لا حاجة لاستيرادات جديدة)
+- التأثير لا يتداخل مع وظيفة الزر الأصلية
+- تم الحفاظ على جميع الكلاسات الأصلية للزر
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/Settings.tsx` | إضافة حالة `showMoreSettingsGlow` + `useEffect` مؤقت + كلاسات الوميض الأحمر على الزر |
+
+---
+
 ## 🧹 تنظيف النصوص الثابتة في مدير الترجمات (TranslationManagerModal i18n Cleanup) — 2026-05-07
 
 ### المشكلة
@@ -1269,3 +1340,34 @@ bn → লাইন ফাঁকা | bs → Razmak između redova | de → Zeil
 | `src/assets/i18n/vi.json` | إضافة مفتاحين + إصلاح lineSpacing |
 | `src/assets/i18n/yo.json` | إضافة مفتاحين + إصلاح lineSpacing |
 | `src/assets/i18n/zh.json` | إضافة مفتاحين + إصلاح lineSpacing |
+
+---
+
+## 📊 توحيد شريط التحميل في شاشة الإعدادات — المرحلة 6 (الأخيرة) — 2026-05-08
+
+### الهدف
+استبدال شريط التحميل القديم الموجود في شاشة الإعدادات (قسم العمل بدون إنترنت - PWA Offline Data) بالمكون الموحد `DownloadProgressBar`، لإكمال خطة توحيد أشرطة التحميل في جميع أنحاء التطبيق.
+
+### ما تم إنجازه
+
+#### 1. إضافة استيراد المكون الموحد
+- تم استيراد `DownloadProgressBar` في أعلى ملف `Settings.tsx`
+
+#### 2. استبدال شريط التحميل القديم
+- **قبل:** شريط تقدم مبني بعناصر `div` عادية مع `bg-gray-200` و `bg-blue-600` + رسالة نجاح منفصلة
+- **بعد:** مكون `DownloadProgressBar` الموحد مع:
+  - `progress={downloadProgress}` — النسبة المئوية من `useOfflineManager`
+  - `message={downloadProgress === 100 ? t.downloadSuccess : undefined}` — رسالة النجاح عند الاكتمال
+  - `color="blue"` — اللون الأزرق المتناسق مع قسم العمل بدون إنترنت
+
+#### 3. فوائد التوحيد
+- ✅ هوية بصرية موحدة في جميع شاشات التطبيق
+- ✅ دعم الوضع الداكن والفاتح تلقائياً
+- ✅ دعم اتجاه RTL
+- ✅ أيقونة تحميل متحركة (Loader2) أثناء التحميل
+- ✅ عرض النسبة المئوية بشكل رقمي بجانب الشريط
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/Settings.tsx` | استيراد `DownloadProgressBar` + استبدال شريط التحميل القديم بالمكون الموحد |

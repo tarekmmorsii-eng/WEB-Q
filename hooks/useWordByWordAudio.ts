@@ -55,9 +55,15 @@ export function useWordByWordAudio() {
         setActiveWord(null);
     }, []);
 
-    const preCacheWords = useCallback(async (words: ActiveWord[]) => {
+    const preCacheWords = useCallback(async (
+        words: ActiveWord[],
+        onProgress?: (percent: number, message?: string) => void
+    ) => {
         // Use IndexedDB Blob Storage — works on mobile browsers
         const BATCH_SIZE = 10;
+        const total = words.length;
+        let completed = 0;
+
         try {
             for (let i = 0; i < words.length; i += BATCH_SIZE) {
                 const batch = words.slice(i, i + BATCH_SIZE);
@@ -67,6 +73,13 @@ export function useWordByWordAudio() {
                         await cacheAudioBlob(url);
                     })
                 );
+                completed += batch.length;
+
+                // إبلاغ التقدم بعد كل دفعة
+                if (onProgress) {
+                    const percent = Math.round((completed / total) * 100);
+                    onProgress(percent, `${completed} / ${total}`);
+                }
             }
         } catch (err) {
             console.error('[preCacheWords] failed:', err);
