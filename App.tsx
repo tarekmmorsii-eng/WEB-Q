@@ -32,6 +32,7 @@ import { Mutashabiha } from './types';
 import TourWelcomeModal from './components/TourWelcomeModal';
 
 const EMPTY_ARRAY: any[] = [];
+
 import TourClickOverlay from './components/TourClickOverlay';
 import PrayerModeButton from './components/PrayerModeButton';
 import FullscreenExitButton from './components/FullscreenExitButton';
@@ -57,6 +58,64 @@ import AudioSettingsModal from './components/AudioSettingsModal';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
 import { useNotifications } from './hooks/useNotifications';
 import InAppNotificationsModal from './components/InAppNotificationsModal';
+
+// ⭐ المنبهات الافتراضية - تظهر للمستخدم الجديد عند أول تشغيل
+const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: 'default-alarm-kahf',
+    name: 'سورة الكهف',
+    isEnabled: true,
+    isAlarm: true,
+    sound: '/islamic_song.mp3',
+    type: 'weekly',
+    days: [5], // الجمعة فقط (0=أحد, 5=جمعة)
+    times: ['10:00'],
+    category: 'surah',
+    metadata: {
+      surahNumber: 18,
+      startPage: 293,
+      endPage: 304,
+      startAyah: 1,
+      endAyah: 110,
+    },
+  },
+  {
+    id: 'default-alarm-mulk',
+    name: 'سورة الملك',
+    isEnabled: true,
+    isAlarm: true,
+    sound: '/islamic_song.mp3',
+    type: 'daily',
+    days: [0, 1, 2, 3, 4, 5, 6],
+    times: ['23:00'],
+    category: 'surah',
+    metadata: {
+      surahNumber: 67,
+      startPage: 562,
+      endPage: 563,
+      startAyah: 1,
+      endAyah: 30,
+    },
+  },
+  {
+    id: 'default-alarm-baqarah',
+    name: 'سورة البقرة',
+    isEnabled: true,
+    isAlarm: true,
+    sound: '/islamic_song.mp3',
+    type: 'weekly',
+    days: [1, 4], // الإثنين والخميس
+    times: ['16:00'],
+    category: 'surah',
+    metadata: {
+      surahNumber: 2,
+      startPage: 2,
+      endPage: 49,
+      startAyah: 1,
+      endAyah: 286,
+    },
+  },
+];
 
 // --- STABLE SWIPER CONFIGURATION ---
 const SWIPER_MODULES: any[] = [];
@@ -1707,7 +1766,13 @@ export default function App() {
       if (savedPageBookmarks) setPageBookmarks(JSON.parse(savedPageBookmarks));
       if (savedVerseBookmarks) setVerseBookmarks(JSON.parse(savedVerseBookmarks));
       if (savedHistory) setHistory(JSON.parse(savedHistory));
-      if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+      if (savedNotifications) {
+        setNotifications(JSON.parse(savedNotifications));
+      } else {
+        // ⭐ أول تشغيل: حقن المنبهات الافتراضية (3 منبهات جاهزة)
+        setNotifications(DEFAULT_ALARM_NOTIFICATIONS);
+        localStorage.setItem('quran_notifications', JSON.stringify(DEFAULT_ALARM_NOTIFICATIONS));
+      }
       if (savedMemorizationRatings) setMemorizationRatings(JSON.parse(savedMemorizationRatings));
       if (savedSurahRatings) setSurahRatings(JSON.parse(savedSurahRatings));
     } catch (e) {
