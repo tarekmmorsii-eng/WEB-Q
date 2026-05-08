@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, HelpCircle, Share2, PlayCircle, Headphones } from 'lucide-react';
+import { Download, HelpCircle, Share2, PlayCircle, Headphones, Bell } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
 import { useOfflineManager } from '../hooks/useOfflineManager';
@@ -14,6 +14,8 @@ interface FloatingSideMenuProps {
     onOpenReciterSelection?: () => void;
     onOpenShare?: () => void;
     onOpenAudioDownload?: () => void;
+    onOpenNotifications?: () => void;
+    notificationUnreadCount?: number;
     isVisible?: boolean;
     isEnabled?: boolean;
     isRTL?: boolean;
@@ -27,6 +29,8 @@ export default function FloatingSideMenu({
     onOpenReciterSelection,
     onOpenShare,
     onOpenAudioDownload,
+    onOpenNotifications,
+    notificationUnreadCount = 0,
     isVisible = true,
     isEnabled = true,
     isRTL = false
@@ -89,6 +93,21 @@ export default function FloatingSideMenu({
                 title={t.help}
             >
                 <HelpCircle size={24} />
+            </button>
+
+            {/* Notifications Bell Button */}
+            <button
+                onClick={onOpenNotifications}
+                disabled={!isVisible}
+                className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r border-rose-500/30' : 'rounded-l-xl border-y border-l border-rose-500/30'} flex items-center justify-center bg-[var(--bg-card)] text-rose-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14 relative`}
+                title={t.notifications}
+            >
+                <Bell size={24} />
+                {notificationUnreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm shadow-red-500/50 animate-pulse px-1">
+                        {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                    </span>
+                )}
             </button>
 
             {/* Share Button */}

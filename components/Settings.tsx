@@ -26,6 +26,7 @@ interface SettingsProps {
     onOpenSearch?: () => void;
     onOpenMemorization?: () => void;
     onOpenNotifications?: () => void;
+    notificationUnreadCount?: number;
     onOpenMutashabihat?: () => void;
     onOpenColorPicker?: () => void;
     onOpenReciterSelection?: () => void;
@@ -45,7 +46,7 @@ interface SettingsProps {
 export default function Settings({
     isOpen, onClose, settings, onSave, currentLanguage,
     onOpenIndex, onOpenSearch, onOpenMemorization,
-    onOpenNotifications, onOpenMutashabihat, onOpenColorPicker, onOpenReciterSelection,
+    onOpenNotifications, notificationUnreadCount = 0, onOpenMutashabihat, onOpenColorPicker, onOpenReciterSelection,
     onTogglePageBookmark, isPageBookmarked,
     hasUpdate = false,
     onUpdateApp,
@@ -322,19 +323,29 @@ export default function Settings({
                     {/* Quick Access Buttons */}
                     <section>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {quickAccessButtons.map((btn, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        if (!btn.keepOpen) onClose();
-                                        btn.onClick?.();
-                                    }}
-                                    className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
-                                >
-                                    <btn.icon size={24} className="text-amber-600" />
-                                    <span className="text-sm text-[var(--text-primary)]">{btn.label}</span>
-                                </button>
-                            ))}
+                            {quickAccessButtons.map((btn, idx) => {
+                                const isNotifBtn = btn.icon === Bell;
+                                return (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            if (!btn.keepOpen) onClose();
+                                            btn.onClick?.();
+                                        }}
+                                        className="relative flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
+                                    >
+                                        <div className="relative">
+                                            <btn.icon size={24} className="text-amber-600" />
+                                            {isNotifBtn && notificationUnreadCount > 0 && (
+                                                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm shadow-red-500/50 animate-pulse px-0.5">
+                                                    {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className="text-sm text-[var(--text-primary)]">{btn.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* Toggle Buttons Row */}

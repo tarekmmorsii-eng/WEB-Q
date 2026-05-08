@@ -55,6 +55,8 @@ import TranslationManagerModal from './components/TranslationManagerModal';
 import AuthModal from './components/AuthModal';
 import AudioSettingsModal from './components/AudioSettingsModal';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
+import { useNotifications } from './hooks/useNotifications';
+import InAppNotificationsModal from './components/InAppNotificationsModal';
 
 // --- STABLE SWIPER CONFIGURATION ---
 const SWIPER_MODULES: any[] = [];
@@ -328,6 +330,21 @@ export default function App() {
   const [isMemorizationStatsOpen, setIsMemorizationStatsOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // ⭐ مركز الإشعارات الذكي
+  const {
+    notifications: inAppNotifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll: clearAllNotifications,
+    isModalOpen: isNotificationsModalOpen,
+    setIsModalOpen: setIsNotificationsModalOpen
+  } = useNotifications();
+
+  // ⭐ الإظهار التلقائي للإشعارات - تم نقله بعد تعريف حالات الجولة والترحيب
+
   const [selectedReciterId, setSelectedReciterId] = useState<string>(() => {
     const stored = localStorage.getItem('selected_reciter_id');
     if (!stored) return 'husary';
@@ -972,6 +989,24 @@ export default function App() {
   const [showTourWelcome, setShowTourWelcome] = useState(false);
   const [showTourClickOverlay, setShowTourClickOverlay] = useState(false);
   const [isTourActive, setIsTourActive] = useState(false);
+
+  // ⭐ حالة "تم العرض التلقائي" - لمنع إعادة فتح نافذة الإشعارات بعد إغلاقها (حل مشكلة Infinite Loop)
+  const [hasAutoShown, setHasAutoShown] = useState(false);
+
+  // ⭐ الإظهار التلقائي عند وجود إشعارات غير مقروءة - مرة واحدة فقط عند بدء التشغيل
+  useEffect(() => {
+    // تحقق مما إذا كانت هناك شاشة ترحيب/تعليمات مفتوحة
+    const isWelcomeScreenActive = showSplash || showLanguageSelection || showTourWelcome || showTourClickOverlay || isHowToUseOpen || isTourActive;
+
+    // لا تعرض الإشعارات إلا بعد إغلاق جميع شاشات الترحيب + لم يتم العرض التلقائي من قبل
+    if (unreadCount > 0 && !isNotificationsModalOpen && !isWelcomeScreenActive && !hasAutoShown) {
+      const timer = setTimeout(() => {
+        setIsNotificationsModalOpen(true);
+        setHasAutoShown(true); // ⭐ منع إعادة الفتح التلقائي بعد إغلاق المستخدم للنافذة
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [unreadCount, isNotificationsModalOpen, showSplash, showLanguageSelection, showTourWelcome, showTourClickOverlay, isHowToUseOpen, isTourActive, hasAutoShown]);
 
   // 4. Alarm Auto-close Logic (59 seconds)
   useEffect(() => {
@@ -2683,6 +2718,7 @@ export default function App() {
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
           onOpenNotifications={() => setIsNotificationOpen(true)}
+          notificationUnreadCount={unreadCount}
           onOpenMutashabihat={() => {
             const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
             setMutashabihatIndexSurah(currentS);
@@ -2733,6 +2769,24 @@ export default function App() {
           isRTL={isRTL}
           onOpenShare={handleOpenShare}
           onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
+          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
+          notificationUnreadCount={unreadCount}
+        />
+
+        <InAppNotificationsModal
+          isOpen={isNotificationsModalOpen}
+          onClose={() => setIsNotificationsModalOpen(false)}
+          notifications={inAppNotifications}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onDeleteNotification={deleteNotification}
+          onClearAll={clearAllNotifications}
+          unreadCount={unreadCount}
+          language={settings.language}
+          onOpenAlarmSettings={() => {
+            setIsNotificationsModalOpen(false);
+            setTimeout(() => setIsNotificationOpen(true), 150);
+          }}
         />
 
 
