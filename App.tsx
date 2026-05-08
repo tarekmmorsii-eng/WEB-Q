@@ -1561,6 +1561,10 @@ export default function App() {
         days: [0, 1, 2, 3, 4, 5, 6],
         times: []
       });
+      // Vibrate device to ensure user notices the alarm
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 500]);
+      }
       if (alarmAudioRef.current) {
         alarmAudioRef.current.pause();
       }
@@ -1592,6 +1596,10 @@ export default function App() {
         if (n.days.includes(currentDay) && n.times.includes(currentTimeStr) && !lastFired) {
           if (n.isAlarm) {
             setActiveAlarm(n);
+            // Vibrate device to ensure user notices the alarm
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+              navigator.vibrate([500, 200, 500, 200, 500]);
+            }
             if (alarmAudioRef.current) {
               alarmAudioRef.current.pause();
             }
@@ -1609,8 +1617,8 @@ export default function App() {
               navigator.serviceWorker.ready.then(reg => {
                 reg.showNotification(n.name, {
                   body: n.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
-                  icon: '/logo192.png',
-                  badge: '/logo192.png',
+                  icon: '/final_logo.png',
+                  badge: '/final_logo.png',
                   tag: `quran-notif-${n.id}`,
                   // @ts-ignore
                   renotify: true,
@@ -2971,20 +2979,62 @@ export default function App() {
             }}
         />
 
-        {/* Alarm Dismiss Overlay */}
+        {/* Alarm Dismiss Overlay - Guaranteed visible on all devices */}
         {
           activeAlarm && (
-            <div className="fixed inset-0 z-[99999] bg-red-600/90 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
-              <div className="relative mb-8">
-                <div className="absolute inset-0 bg-white/20 rounded-full animate-ping scale-150" />
-                <div className="relative bg-white p-8 rounded-full shadow-2xl">
-                  <Bell size={64} className="text-red-600 animate-bounce" />
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 999999,
+                backgroundColor: 'rgba(220, 38, 38, 0.95)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                opacity: 1,
+                visibility: 'visible',
+              }}
+            >
+              {/* Pulsing bell icon */}
+              <div style={{ position: 'relative', marginBottom: '2rem' }}>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  borderRadius: '50%',
+                  animation: 'alarmPulse 1s ease-in-out infinite',
+                }} />
+                <div style={{
+                  position: 'relative',
+                  backgroundColor: 'white',
+                  padding: '2rem',
+                  borderRadius: '50%',
+                  boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                }}>
+                  <Bell size={64} className="text-red-600" style={{ animation: 'alarmBounce 0.8s ease-in-out infinite' }} />
                 </div>
               </div>
 
-              <h2 className="text-3xl font-bold mb-2 text-center px-4">{activeAlarm.name}</h2>
-              <p className="text-xl opacity-90 mb-12 text-center">{t.alarmMessage}</p>
+              <h2 style={{
+                fontSize: '1.75rem',
+                fontWeight: 'bold',
+                marginBottom: '0.5rem',
+                textAlign: 'center',
+                padding: '0 1rem',
+              }}>{activeAlarm.name}</h2>
 
+              <p style={{
+                fontSize: '1.25rem',
+                opacity: 0.9,
+                marginBottom: '3rem',
+                textAlign: 'center',
+              }}>{t.alarmMessage}</p>
+
+              {/* Stop Alarm Button - Large and prominent for mobile */}
               <button
                 onClick={() => {
                   if (alarmAudioRef.current) {
@@ -2993,10 +3043,34 @@ export default function App() {
                   }
                   setActiveAlarm(null);
                 }}
-                className="bg-white text-red-600 px-12 py-4 rounded-full text-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-transform"
+                style={{
+                  backgroundColor: 'white',
+                  color: '#dc2626',
+                  padding: '1rem 3rem',
+                  borderRadius: '9999px',
+                  fontSize: '1.5rem',
+                  fontWeight: 900,
+                  boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  minWidth: '200px',
+                  minHeight: '60px',
+                }}
               >
                 {t.stopAlarm}
               </button>
+
+              {/* Inline keyframes for guaranteed animation */}
+              <style>{`
+                @keyframes alarmPulse {
+                  0%, 100% { transform: scale(1); opacity: 0.5; }
+                  50% { transform: scale(1.5); opacity: 0; }
+                }
+                @keyframes alarmBounce {
+                  0%, 100% { transform: translateY(0); }
+                  50% { transform: translateY(-10px); }
+                }
+              `}</style>
             </div>
           )
         }

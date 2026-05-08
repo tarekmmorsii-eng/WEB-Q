@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-04-30-V3'; // Force update for new reciters list
+const CACHE_VERSION = 'v2026-05-08-V1'; // Alarm overlay fix + notification icon fix
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
