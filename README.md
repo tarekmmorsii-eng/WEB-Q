@@ -1562,3 +1562,37 @@ bn → লাইন ফাঁকা | bs → Razmak između redova | de → Zeil
 | الملف | الوصف |
 |-------|-------|
 | `App.tsx` | إضافة ثابت `DEFAULT_ALARM_NOTIFICATIONS` + تعديل منطق تحميل المنبهات من localStorage لحقن الافتراضية عند أول تشغيل |
+
+---
+
+## 🔗 الإشعارات القابلة للضغط (Clickable Notifications) — 2026-05-08
+
+### الهدف
+جعل الإشعارات الترحيبية الثلاثة (الكهف، تبارك، البقرة) قابلة للضغط بحيث تنقل المستخدم فوراً إلى بداية السورة المعنية وتغلق نافذة الإشعارات.
+
+### ما تم إنجازه
+
+#### 1. تحديث واجهة الإشعار (`hooks/useNotifications.ts`)
+- إضافة خاصية اختيارية جديدة: `targetPage?: number`
+- تحديث الإشعارات الثلاثة بأرقام الصفحات:
+  - سورة الكهف ← `targetPage: 293`
+  - سورة تبارك (الملك) ← `targetPage: 562`
+  - سورة البقرة ← `targetPage: 2`
+
+#### 2. تعديل نافذة الإشعارات (`components/InAppNotificationsModal.tsx`)
+- إضافة prop جديد: `onNavigateToPage?: (page: number) => void`
+- تعديل `handleNotificationClick` ليمرر كائن الإشعار الكامل بدلاً من المعرف فقط
+- عند الضغط على إشعار يحتوي `targetPage`:
+  - يُحدَّد كمقروء (`markAsRead`)
+  - يتنقل للصفحة المطلوبة (`onNavigateToPage`)
+  - تُغلق نافذة الإشعارات تلقائياً (`onClose`)
+
+#### 3. الربط في `App.tsx`
+- تمرير `setCurrentPage` كدالة تنقل: `onNavigateToPage={(page) => setCurrentPage(page)}`
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `hooks/useNotifications.ts` | إضافة `targetPage?: number` للواجهة + تحديث 3 إشعارات |
+| `components/InAppNotificationsModal.tsx` | إضافة `onNavigateToPage` prop + تعديل `handleNotificationClick` |
+| `App.tsx` | تمرير `onNavigateToPage` لـ `InAppNotificationsModal` |

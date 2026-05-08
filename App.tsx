@@ -2852,6 +2852,7 @@ export default function App() {
             setIsNotificationsModalOpen(false);
             setTimeout(() => setIsNotificationOpen(true), 150);
           }}
+          onNavigateToPage={(page) => setCurrentPage(page)}
         />
 
 

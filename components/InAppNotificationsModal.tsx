@@ -14,6 +14,7 @@ interface InAppNotificationsModalProps {
     onClearAll: () => void;
     language: string;
     onOpenAlarmSettings?: () => void;
+    onNavigateToPage?: (page: number) => void;
 }
 
 /**
@@ -109,14 +110,19 @@ export default function InAppNotificationsModal({
     onClearAll,
     language,
     onOpenAlarmSettings,
+    onNavigateToPage,
 }: InAppNotificationsModalProps) {
     if (!isOpen) return null;
 
     const t = getTranslations(language);
     const isRTL = language === 'ar' || language === 'fa' || language === 'ur';
 
-    const handleNotificationClick = (id: string) => {
-        onMarkAsRead(id);
+    const handleNotificationClick = (notification: InAppNotification) => {
+        onMarkAsRead(notification.id);
+        if (notification.targetPage && onNavigateToPage) {
+            onNavigateToPage(notification.targetPage);
+            onClose();
+        }
     };
 
     return (
@@ -217,7 +223,7 @@ export default function InAppNotificationsModal({
                             {notifications.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    onClick={() => handleNotificationClick(notification.id)}
+                                    onClick={() => handleNotificationClick(notification)}
                                     className={clsx(
                                         "relative p-4 transition-all duration-200 cursor-pointer group",
                                         notification.isRead

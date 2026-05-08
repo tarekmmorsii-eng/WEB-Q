@@ -11,6 +11,7 @@ export interface InAppNotification {
   isRead: boolean;
   createdAt: number;
   icon?: string;
+  targetPage?: number;
 }
 
 const STORAGE_KEY = 'quran_in_app_notifications';
@@ -28,6 +29,7 @@ const DEFAULT_NOTIFICATIONS: InAppNotification[] = [
     isRead: false,
     createdAt: Date.now(),
     icon: '📖',
+    targetPage: 293,
   },
   {
     id: 'reminder-tabarak',
@@ -37,6 +39,7 @@ const DEFAULT_NOTIFICATIONS: InAppNotification[] = [
     isRead: false,
     createdAt: Date.now() - 1000,
     icon: '🌙',
+    targetPage: 562,
   },
   {
     id: 'reminder-baqarah',
@@ -46,6 +49,7 @@ const DEFAULT_NOTIFICATIONS: InAppNotification[] = [
     isRead: false,
     createdAt: Date.now() - 2000,
     icon: '📿',
+    targetPage: 2,
   },
 ];
 
