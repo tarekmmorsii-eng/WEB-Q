@@ -1053,23 +1053,21 @@ export default function App() {
   const [showTourClickOverlay, setShowTourClickOverlay] = useState(false);
   const [isTourActive, setIsTourActive] = useState(false);
 
-  // ⭐ حالة "تم العرض التلقائي" - لمنع إعادة فتح نافذة الإشعارات بعد إغلاقها (حل مشكلة Infinite Loop)
-  const [hasAutoShown, setHasAutoShown] = useState(false);
-
-  // ⭐ الإظهار التلقائي عند وجود إشعارات غير مقروءة - مرة واحدة فقط عند بدء التشغيل
+  // ⭐ Ref لتتبع unreadCount بشكل فوري (للاستخدام داخل Callbacks دون مشاكل Stale Closure)
+  const unreadCountRef = useRef(unreadCount);
   useEffect(() => {
-    // تحقق مما إذا كانت هناك شاشة ترحيب/تعليمات مفتوحة
-    const isWelcomeScreenActive = showSplash || showLanguageSelection || showTourWelcome || showTourClickOverlay || isHowToUseOpen || isTourActive;
+    unreadCountRef.current = unreadCount;
+  }, [unreadCount]);
 
-    // لا تعرض الإشعارات إلا بعد إغلاق جميع شاشات الترحيب + لم يتم العرض التلقائي من قبل
-    if (unreadCount > 0 && !isNotificationsModalOpen && !isWelcomeScreenActive && !hasAutoShown) {
-      const timer = setTimeout(() => {
+  // ⭐ فتح نافذة الإشعارات كرد فعل مباشر (Event-Driven) - بدلاً من المؤقت الأعمى
+  // يتم استدعاؤها فقط بعد إغلاق الجولة التعليمية يدوياً من المستخدم
+  const showNotificationsIfNeeded = useCallback(() => {
+    if (unreadCountRef.current > 0) {
+      setTimeout(() => {
         setIsNotificationsModalOpen(true);
-        setHasAutoShown(true); // ⭐ منع إعادة الفتح التلقائي بعد إغلاق المستخدم للنافذة
-      }, 1000);
-      return () => clearTimeout(timer);
+      }, 500);
     }
-  }, [unreadCount, isNotificationsModalOpen, showSplash, showLanguageSelection, showTourWelcome, showTourClickOverlay, isHowToUseOpen, isTourActive, hasAutoShown]);
+  }, []);
 
   // 4. Alarm Auto-close Logic (59 seconds)
   useEffect(() => {
@@ -1317,6 +1315,7 @@ export default function App() {
   const handleCloseTourWelcome = () => {
     setShowTourWelcome(false);
     localStorage.setItem('hasSeenTour', 'true');
+    showNotificationsIfNeeded();
   };
 
   const handleClickTutorialComplete = () => {
@@ -1337,6 +1336,7 @@ export default function App() {
         setIsTourActive(false);
         // Resume normal auto-hide behavior after tour ends
         handleUiInteraction();
+        showNotificationsIfNeeded();
       });
     }, 500);
   };
@@ -1382,6 +1382,7 @@ export default function App() {
       startTour(t, 0, () => {
         setIsTourActive(false);
         handleUiInteraction();
+        showNotificationsIfNeeded();
       });
     }, 1500);
   };
@@ -2340,6 +2341,11 @@ export default function App() {
               const langSelected = localStorage.getItem('quran_language_selected');
               if (!langSelected) {
                 setShowLanguageSelection(true);
+              } else {
+                const hasSeenTour = localStorage.getItem('hasSeenTour');
+                if (hasSeenTour) {
+                  showNotificationsIfNeeded();
+                }
               }
             }}
           />

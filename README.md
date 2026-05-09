@@ -1803,3 +1803,69 @@ const resolveName = (name: string, surahNumber?: number): string => {
 |-------|-------|
 | `App.tsx` | `DEFAULT_ALARM_NOTIFICATIONS` بأسماء من SURAHS + `ALARMS_VERSION` + Hard Reset logic |
 | `components/NotificationManager.tsx` | تحسين `resolveName` لدعم الأسماء العربية المباشرة + fallback من SURAHS |
+
+---
+
+## 🔧 إصلاح التداخل البصري: الإشعارات vs الجولة التعليمية (Modal Clash Fix) — 2026-05-09
+
+### المشكلة
+كانت نافذة الإشعارات التلقائية (`InAppNotificationsModal`) تظهر أثناء نشاط الشاشة التعليمية (`TourClickOverlay`)، مما يسبب تداخلاً بصرياً يربك المستخدم.
+
+### السبب الجذري
+المنطق القديم كان يفحص حالة الشاشة التعليمية **قبل** بدء `setTimeout` فقط (بفترة ثانية واحدة). لكن خلال هذه الثانية، كانت الجولة التعليمية تبدأ وتصبح نشطة، وبعد انتهاء المؤقت تُفتح نافذة الإشعارات فوقها — لأن الفحص داخل `setTimeout` كان يعتمد على قيمة مُغلَقة (stale closure) لا تعكس التغييرات الحديثة.
+
+### الحل المُنفّذ: useRef للفحص اللحظي داخل setTimeout
+
+#### 1. إضافة `isWelcomeScreenActiveRef` (useRef)
+- يتم تحديثه بشكل متزامن مع كل rerender ليعكس آخر قيمة فورية
+- يجمع حالات جميع الشاشات المعيقة: `showSplash || showLanguageSelection || showTourWelcome || showTourClickOverlay || isHowToUseOpen || isTourActive`
+
+#### 2. فحص مزدوج صارم داخل `setTimeout`
+- **الفحص الأول (قبل setTimeout):** لا يبدأ المؤقت إلا إذا كانت جميع الشاشات مغلقة
+- **الفحص الثاني (داخل setTimeout):** قبل فتح الإشعارات، يتحقق من `isWelcomeScreenActiveRef.current` للحصول على أحدث قيمة لحظية
+
+### المتغيرات المربوطة
+| المتغير | الوصف |
+|---------|-------|
+| `showSplash` | شاشة البداية |
+| `showLanguageSelection` | شاشة اختيار اللغة |
+| `showTourWelcome` | نافذة ترحيب الجولة التعليمية |
+| `showTourClickOverlay` | **الشاشة التعليمية الرئيسية** (اضغط هنا أو هنا أو هنا) |
+| `isHowToUseOpen` | دليل الاستخدام |
+| `isTourActive` | الجولة التفاعلية (Driver.js) |
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `App.tsx` | إعادة هندسة نظام الإشعارات التلقائية: حذف `useRef` المُعطّل واستبداله بـ `Derived State` + `Cleanup Function` آمنة |
+
+---
+
+## 🔧 إصلاح Race Condition في الإشعارات التلقائية (v2 - إعادة هندسة)
+
+**التاريخ:** 2026-05-09
+**المشكلة:** كان النظام يستخدم `useRef` لمتابعة حالة الشاشة التعليمية، وهو Anti-pattern لأن الـ Refs لا تُحدث Re-render ولا تُعيد تشغيل useEffect بشكل اعتمادي صحيح. كان هناك Race Condition يجعل setTimeout ينطلق ولا يتم إلغاؤه عند ظهور شاشة تعليمية.
+
+**الحل المُطبّق (Clean Architecture):**
+
+### 1. حذف `isWelcomeScreenActiveRef` بالكامل
+تم إزالة الـ Ref المعقد وجميع المنطق المرتبط به.
+
+### 2. استخدام Derived State (استنتاج مباشر)
+```typescript
+const isTutorialActive = showSplash || showLanguageSelection || showTourWelcome || showTourClickOverlay || isHowToUseOpen || isTourActive;
+```
+هذا المتغير يُعاد حسابه تلقائياً مع كل Re-render ويدخل في مصفوفة اعتمادات useEffect.
+
+### 3. إعادة كتابة useEffect بنمط آمن
+```typescript
+useEffect(() => {
+  if (isTutorialActive) return; // توقف فوري
+  if (unreadCount > 0 && !hasAutoShown) {
+    const timer = setTimeout(() => { ... }, 1000);
+    return () => clearTimeout(timer); // Cleanup حاسمة
+  }
+}, [isTutorialActive, unreadCount, hasAutoShown]);
+```
+
+**النتيجة:** إذا تغيّر `isTutorialActive` إلى `true` أثناء ثانية الانتظار، تُعاد تشغيل useEffect → ينفّذ `return` فوراً ← تُنفّذ Cleanup Function السابقة ← يُدمّر المؤقت ← لا تظهر نافذة الإشعارات.
