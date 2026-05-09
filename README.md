@@ -1596,3 +1596,210 @@ bn → লাইন ফাঁকা | bs → Razmak između redova | de → Zeil
 | `hooks/useNotifications.ts` | إضافة `targetPage?: number` للواجهة + تحديث 3 إشعارات |
 | `components/InAppNotificationsModal.tsx` | إضافة `onNavigateToPage` prop + تعديل `handleNotificationClick` |
 | `App.tsx` | تمرير `onNavigateToPage` لـ `InAppNotificationsModal` |
+
+---
+
+## 🔔 تحسينات UX + دعم i18n للإشعارات والمنبهات — 2026-05-08
+
+### 1. حذف الإشعار تلقائياً عند الضغط (Auto-Delete on Click)
+- **السلوك السابق:** عند الضغط على إشعار كان يُحدَّد كمقروء فقط ويبقى في القائمة
+- **السلوك الجديد:** عند الضغط على الإشعار يتم **حذفه نهائياً** من القائمة بعد التنقل للسورة
+- **الملف:** `components/InAppNotificationsModal.tsx` — استبدال `markAsRead(id)` بـ `deleteNotification(id)`
+
+### 2. ترجمة نافذة الإشعارات (InAppNotificationsModal i18n)
+- تم استبدال جميع النصوص الثابتة في نافذة الإشعارات بمفاتيح ترجمة عبر `t()`:
+  - `Notifications` ← `inAppNotifModalTitle`
+  - `New` ← `inAppNotifNewBadge`
+  - `Mark all as read` ← `inAppNotifMarkAllRead`
+  - `Clear all` ← `inAppNotifClearAll`
+  - `No notifications yet` ← `inAppNotifEmpty`
+  - `Your notifications will appear here` ← `inAppNotifEmptyDesc`
+- تم تمرير دالة الترجمة `t` كـ prop من `App.tsx`
+
+### 3. ترجمة الإشعارات الافتراضية (useNotifications i18n)
+- استبدال النصوص العربية الثابتة (عناوين ومحتوى الإشعارات) بمفاتيح ترجمة:
+  - `notif_kahf_title` / `notif_kahf_body` — تذكير سورة الكهف
+  - `notif_mulk_title` / `notif_mulk_body` — تذكير سورة الملك
+  - `notif_baqarah_title` / `notif_baqarah_body` — تذكير سورة البقرة
+- يتم ترجمة هذه المفاتيح ديناميكياً عند العرض في `InAppNotificationsModal.tsx`
+
+### 4. ترجمة أسماء السور في المنبهات (Alarms i18n)
+- استبدال أسماء السور العربية الثابتة في المنبهات الافتراضية بمفاتيح ترجمة:
+  - `surah_kahf` — سورة الكهف / Surah Al-Kahf
+  - `surah_mulk` — سورة الملك / Surah Al-Mulk
+  - `surah_baqarah` — سورة البقرة / Surah Al-Baqarah
+- يتم حل المفاتيح ديناميكياً عبر `t()` في:
+  - `InAppNotificationsModal.tsx` (عرض اسم السورة في الإشعار)
+  - `NotificationManager.tsx` (عرض اسم السورة في المنبه)
+  - `App.tsx` (عرض اسم السورة في واجهة التنبيه النشط)
+
+### 5. مفاتيح الترجمة الجديدة (6 مفاتيح نصية × 31 لغة)
+
+#### ✅ مبدأ DRY — عدم تكرار أسماء السور
+بدلاً من تكرار أسماء السور (الكهف، الملك، البقرة) في مفاتيح ترجمة منفصلة لكل لغة، تم الاعتماد كلياً على `t.surahNames[surahIndex]` الذي يحتوي أسماء جميع الـ 114 سورة بجميع اللغات الـ 31.
+
+الإشعارات تستخدم **قوالب ديناميكية** مع `{surahName}`:
+- `notif_surah_reminder`: "تذكير بسورة {surahName}" — العنوان يُبنى ديناميكياً
+- `notif_surah_kahf_body`: "حان وقت قراءة سورة {surahName} يوم الجمعة"
+- `notif_surah_mulk_body`: "حان وقت قراءة سورة {surahName} قبل النوم"
+- `notif_surah_baqarah_body`: "حان وقت قراءة سورة {surahName}"
+- `inAppNotifModalTitle` / `inAppNotifMarkAllRead` / ... — نصوص الواجهة
+
+#### ❌ مفاتيح محذوفة (كانت مكررة):
+`notif_kahf_title`, `notif_kahf_body`, `notif_mulk_title`, `notif_mulk_body`, `notif_baqarah_title`, `notif_baqarah_body`, `surah_kahf`, `surah_mulk`, `surah_baqarah`
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/InAppNotificationsModal.tsx` | بناء العنوان من `t.surahNames[surahNumber-1]` + قوالب `{surahName}` |
+| `hooks/useNotifications.ts` | إضافة `surahNumber` للمنبهات الافتراضية + استخدام القوالب |
+| `components/NotificationManager.tsx` | حل أسماء السور عبر `t()` |
+| `App.tsx` | تمرير `t` لـ InAppNotificationsModal + حل مفاتيح المنبهات |
+| `i18n/translations.ts` | تنظيف المفاتيح المكررة من واجهة Translations |
+| `src/assets/i18n/*.json` (31 ملف) | إضافة 4 مفاتيح قوالب + حذف 9 مفاتيح مكررة لكل لغة |
+| `scripts/add_notif_surah_keys.cjs` | **جديد** — سكريبت إضافة المفاتيح لجميع اللغات |
+
+---
+
+## 🔥 إصلاح ترقيم i18n الكارثي في دالة resolveName (Dynamic i18n Priority Fix) — 2026-05-09
+
+### المشكلة
+كانت دالة `resolveName` في `NotificationManager.tsx` تحتوي على ترقيع (Hack) يفحص إذا كان الاسم يحتوي على حروف عربية، فيقوم بعرضه مباشرة متجاهلاً نظام الترجمة. هذا أدى إلى:
+- عرض "الكهف" و"الملك" بالعربية في الواجهة الصينية والروسية!
+- كسر صريح لنظام الـ i18n
+
+### الحل الجذري (Dynamic i18n Priority)
+
+#### 1. تدمير قاعدة الحروف العربية
+تم حذف الشرط الكارثي الذي يفحص إذا كان الاسم يحتوي على حروف عربية.
+
+#### 2. الأولوية المطلقة لـ surahNumber
+تم إعادة كتابة `resolveName` لتعطي الأولوية القصوى لـ `alarm.surahNumber`:
+- إذا كان المنبه يحتوي على `surahNumber` (مثلاً 18) → يتم تجاهل الاسم النصي المحفوظ تماماً
+- يتم جلب الاسم المترجم من قاموس لغة المستخدم الحالية عبر `t('surahNames', { returnObjects: true })`
+- نفس الآلية المستخدمة في فهرس السور (`SurahIndex`)
+
+#### 3. النتيجة الحتمية
+| اللغة | سورة الكهف (رقم 18) | سورة الملك (رقم 67) |
+|-------|---------------------|---------------------|
+| العربية | الكهف | الملك |
+| الصينية | 山洞 (洞穴) | 国权 (主权) |
+| الروسية | Пещера | Власть |
+| الإنجليزية | The Cave | The Sovereignty |
+
+### المنطق الجديد لـ `resolveName`
+```
+1. إذا وُجد surahNumber → جلب الاسم من t('surahNames')[surahNumber - 1]
+2. إذا لم يوجد surahNumber → استخدام الاسم المحفوظ (للأجزاء والأحزاب)
+3. إذا لم يوجد أي اسم → اسم افتراضي
+```
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/NotificationManager.tsx` | إعادة كتابة `resolveName` + تمرير `surahNumber` في جميع الاستدعاءات |
+
+---
+
+## 🐛 إصلاح اختفاء أسماء السور في مركز الإشعارات — 2026-05-09
+
+### المشكلة
+كانت أسماء السور تختفي تماماً (تظهر كـ `undefined` أو نص فارغ) في واجهة مركز الإشعارات (`NotificationManager.tsx`)، مما يؤثر على:
+- القائمة المنسدلة لاختيار السورة (أرقام فقط بدون أسماء)
+- بطاقات الإشعارات المحفوظة
+- أسماء الإشعارات المولّدة تلقائياً
+- عرض معلومات الأجزاء والأحزاب
+
+### السبب الجذري
+دالة `getSurahName` كانت تستخدم `t?.surahNames` بشكل مباشر، وفي هذا التطبيق `t` هو **كائن Translations** (وليس دالة i18next). هذا يعني أن `t.surahNames` يعمل بشكل صحيح **طالما أن المصفوفة موجودة**. لكن المشكلة كانت في:
+1. عدم وجود فحص كافٍ لطول المصفوفة
+2. عدم وجود fallback موثوق عندما تفشل مصفوفة الترجمة
+
+### الحل المُنفّذ
+إعادة كتابة دالة `getSurahName` بـ **3 طبقات حماية** لا ترجع `undefined` أبداً:
+
+| الطبقة | المنطق | الملاحظة |
+|--------|--------|----------|
+| **1 - الترجمة** | `t?.surahNames` مع فحص `Array.isArray` + فحص الطول | تعمل لجميع اللغات الـ 31 |
+| **2 - الثوابت** | `SURAHS.find()` من `constants/surahData.ts` | أسماء عربية مضمونة (114 سورة) |
+| **3 - الاحتياط** | `` `${t?.surah || 'Surah'} ${surahNum}` `` | عرض رقم السورة كآخر حل |
+
+### الكود الجديد
+```typescript
+const getSurahName = (surahNum: number | undefined): string => {
+    if (!surahNum || surahNum < 1 || surahNum > 114) return '';
+    
+    // الطريقة 1: مصفوفة surahNames من كائن الترجمة
+    try {
+        const names = t?.surahNames;
+        if (Array.isArray(names) && names.length >= surahNum && names[surahNum - 1]) {
+            return names[surahNum - 1];
+        }
+    } catch (e) {}
+    
+    // الطريقة 2: مصفوفة SURAHS الثابتة (أسماء عربية)
+    const surahData = SURAHS.find(s => s.number === surahNum);
+    if (surahData?.name) return surahData.name;
+    
+    // الطريقة 3: عرض رقم السورة
+    return `${t?.surah || 'Surah'} ${surahNum}`;
+};
+```
+
+### المواقع المستخدمة في `NotificationManager.tsx`
+- **القائمة المنسدلة:** `{ln(surah.number)}. {getSurahName(surah.number)}`
+- **اسم الإشعار:** `` `${t.surahPrefix} ${sName}` ``
+- **معلومات الجزء/الحزب:** `{t.surah} {getSurahName(JUZ_SECTIONS[...]?.surahNum)}`
+- **بطاقات الإشعارات:** عرض اسم السورة في التفاصيل
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/NotificationManager.tsx` | إعادة كتابة `getSurahName` بـ 3 طبقات حماية + fallback من `SURAHS` |
+
+---
+
+## 🚨 إصلاح جذري نهائي لاختفاء أسماء السور في المنبهات — 2026-05-09
+
+### المشكلة
+أسماء السور كانت مختفية تماماً في المنبهات الافتراضية الثلاث (الكهف، الملك، البقرة). السبب الجذري كان **مزدوجاً**:
+1. حقل `name` في `DEFAULT_ALARM_NOTIFICATIONS` كان فارغاً (`''`)
+2. دالة `resolveName('')` كانت ترجع نصاً فارغاً
+
+### الحل الجذري (3 طبقات حماية)
+
+#### 1. ملء الأسماء من SURAHS مباشرة في App.tsx
+بدلاً من ترك `name` فارغاً، تم ملؤه من مصفوفة `SURAHS` الثابتة:
+```typescript
+name: SURAHS.find(s => s.number === 18)?.name || 'الكهف'
+name: SURAHS.find(s => s.number === 67)?.name || 'الملك'
+name: SURAHS.find(s => s.number === 2)?.name || 'البقرة'
+```
+
+#### 2. نظام Hard Reset بـ ALARMS_VERSION
+تم إضافة ثابت `ALARMS_VERSION = 2`. عند رفعه:
+- يتم مسح المنبهات القديمة من localStorage تلقائياً
+- يتم حقن المنبهات الجديدة بالأسماء الصحيحة
+- ضمان تحديث البيانات لجميع المستخدمين الحاليين
+
+#### 3. تحسين دالة resolveName في NotificationManager.tsx
+أصبحت تعرض الاسم العربي مباشرة إذا وُجد (من SURAHS)، وإلا تستخدم `SURAHS.find()` كـ fallback:
+```typescript
+const resolveName = (name: string, surahNumber?: number): string => {
+    // الأولوية 1: اسم عربي حقيقي من SURAHS
+    if (name && /[\u0600-\u06FF]/.test(name)) return name;
+    // الأولوية 2: surahNumber fallback
+    if ((!name || name.trim() === '') && surahNumber) {
+        return SURAHS.find(s => s.number === surahNumber)?.name || `Surah ${surahNumber}`;
+    }
+    // الأولوية 3: مفتاح ترجمة
+    if (t && t[name]) return t[name];
+    return name;
+};
+```
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `App.tsx` | `DEFAULT_ALARM_NOTIFICATIONS` بأسماء من SURAHS + `ALARMS_VERSION` + Hard Reset logic |
+| `components/NotificationManager.tsx` | تحسين `resolveName` لدعم الأسماء العربية المباشرة + fallback من SURAHS |

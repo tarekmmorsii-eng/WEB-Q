@@ -15,6 +15,7 @@ interface InAppNotificationsModalProps {
     language: string;
     onOpenAlarmSettings?: () => void;
     onNavigateToPage?: (page: number) => void;
+    t: any;
 }
 
 /**
@@ -74,30 +75,6 @@ const formatRelativeTime = (timestamp: number, lang: string): string => {
     return new Date(timestamp).toLocaleDateString('en');
 };
 
-const translationsMap = {
-    ar: {
-        title: 'الإشعارات',
-        noNotifications: 'لا توجد إشعارات',
-        noNotificationsDesc: 'ستظهر هنا الإشعارات والنصائح الجديدة',
-        markAllRead: 'تحديد الكل كمقروء',
-        clearAll: 'مسح الكل',
-        newBadge: 'جديد',
-    },
-    en: {
-        title: 'Notifications',
-        noNotifications: 'No Notifications',
-        noNotificationsDesc: 'New notifications and tips will appear here',
-        markAllRead: 'Mark all as read',
-        clearAll: 'Clear all',
-        newBadge: 'New',
-    },
-};
-
-// دعم اللغات الإضافية - fallback to ar
-const getTranslations = (lang: string) => {
-    if (lang === 'en') return translationsMap.en;
-    return translationsMap.ar;
-};
 
 export default function InAppNotificationsModal({
     isOpen,
@@ -111,17 +88,34 @@ export default function InAppNotificationsModal({
     language,
     onOpenAlarmSettings,
     onNavigateToPage,
+    t,
 }: InAppNotificationsModalProps) {
     if (!isOpen) return null;
 
-    const t = getTranslations(language);
     const isRTL = language === 'ar' || language === 'fa' || language === 'ur';
 
+    // ⭐ حل مفاتيح الترجمة - إذا كان العنوان/الرسالة مفتاح ترجمة (يحتوي على _) استخدمه
+    const resolveText = (text: string, notification?: InAppNotification): string => {
+        let resolved = text;
+        if (t && t[text]) resolved = t[text];
+
+        // استبدال {surahName} باسم السورة من المصدر الأصلي t.surahNames
+        if (notification?.surahNumber && t?.surahNames) {
+            const surahName = t.surahNames[notification.surahNumber - 1] || '';
+            resolved = resolved.replace('{surahName}', surahName);
+        }
+
+        return resolved;
+    };
+
+    // ⭐ حذف الإشعار تلقائياً عند الضغط والانتقال للصفحة المطلوبة
     const handleNotificationClick = (notification: InAppNotification) => {
-        onMarkAsRead(notification.id);
         if (notification.targetPage && onNavigateToPage) {
             onNavigateToPage(notification.targetPage);
+            onDeleteNotification(notification.id);
             onClose();
+        } else {
+            onMarkAsRead(notification.id);
         }
     };
 
@@ -150,12 +144,12 @@ export default function InAppNotificationsModal({
                             )}
                         </div>
                         <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
-                            {t.title}
+                            {t.inAppNotifModalTitle}
                             {onOpenAlarmSettings && (
                                 <button
                                     onClick={onOpenAlarmSettings}
                                     className="p-1.5 rounded-full hover:bg-[var(--bg-primary)] transition-colors group"
-                                    title="إعدادات المنبهات"
+                                    title={t.notificationManagerTitle}
                                 >
                                     <Settings size={16} className="text-[var(--text-primary)] opacity-40 group-hover:opacity-80 group-hover:rotate-90 transition-all duration-300" />
                                 </button>
@@ -163,7 +157,7 @@ export default function InAppNotificationsModal({
                         </h2>
                         {unreadCount > 0 && (
                             <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                {unreadCount} {t.newBadge}
+                                {unreadCount} {t.inAppNotifNewBadge}
                             </span>
                         )}
                     </div>
@@ -188,7 +182,7 @@ export default function InAppNotificationsModal({
                                 className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
                             >
                                 <CheckCheck size={14} />
-                                <span>{t.markAllRead}</span>
+                                <span>{t.inAppNotifMarkAllRead}</span>
                             </button>
                         )}
                         <div className="flex-1" />
@@ -198,7 +192,7 @@ export default function InAppNotificationsModal({
                                 className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors"
                             >
                                 <Trash2 size={14} />
-                                <span>{t.clearAll}</span>
+                                <span>{t.inAppNotifClearAll}</span>
                             </button>
                         )}
                     </div>
@@ -212,10 +206,10 @@ export default function InAppNotificationsModal({
                                 <BellOff size={28} className="text-[var(--text-primary)] opacity-30" />
                             </div>
                             <p className="text-[var(--text-primary)] font-medium text-sm mb-1">
-                                {t.noNotifications}
+                                {t.inAppNotifEmpty}
                             </p>
                             <p className="text-[var(--text-primary)] opacity-50 text-xs">
-                                {t.noNotificationsDesc}
+                                {t.inAppNotifEmptyDesc}
                             </p>
                         </div>
                     ) : (
@@ -253,10 +247,10 @@ export default function InAppNotificationsModal({
                                                     ? "text-[var(--text-primary)] opacity-70 font-medium"
                                                     : "text-[var(--text-primary)] font-bold"
                                             )}>
-                                                {notification.title}
+                                                {resolveText(notification.title, notification)}
                                             </h3>
                                             <p className="text-xs text-[var(--text-primary)] opacity-60 leading-relaxed">
-                                                {notification.message}
+                                                {resolveText(notification.message, notification)}
                                             </p>
                                             <span className="text-[10px] text-[var(--text-primary)] opacity-40 mt-1 inline-block">
                                                 {formatRelativeTime(notification.createdAt, language)}

@@ -700,5 +700,9 @@
   "downloadingTranslation": "Translating Verses",
   "downloadingMeanings": "Word Meanings",
   "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
-  "arabicLangName": "Arabic"
+  "arabicLangName": "Arabic",
+  "notif_surah_reminder": "Podsjetnik za Suru {surahName}",
+  "notif_surah_kahf_body": "Vrijeme je za čitanje Sure {surahName} u petak",
+  "notif_surah_mulk_body": "Vrijeme je za čitanje Sure {surahName} prije spavanja",
+  "notif_surah_baqarah_body": "Vrijeme je za čitanje Sure {surahName}"
 }

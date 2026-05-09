@@ -701,5 +701,9 @@
   "downloadingTranslation": "Translating Verses",
   "downloadingMeanings": "Word Meanings",
   "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
-  "arabicLangName": "Arabic"
+  "arabicLangName": "Arabic",
+  "notif_surah_reminder": "Recordatorio de Sura {surahName}",
+  "notif_surah_kahf_body": "Es hora de leer la Sura {surahName} el viernes",
+  "notif_surah_mulk_body": "Es hora de leer la Sura {surahName} antes de dormir",
+  "notif_surah_baqarah_body": "Es hora de leer la Sura {surahName}"
 }

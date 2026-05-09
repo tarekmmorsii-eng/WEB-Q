@@ -41,6 +41,44 @@ function SurahListSummary({ startPage, endPage, language }: { startPage: number,
 export default function NotificationManager({ isOpen, onClose, notifications, onSave, onNavigate, t, language }: NotificationManagerProps) {
     const isArabic = language === 'ar';
 
+    // ⭐ حل أسماء المنبهات مع دعم i18n الديناميكي
+    const resolveName = (name: string, surahNumber?: number): string => {
+        // 🎯 الأولوية المطلقة: إذا كان هناك surahNumber، اجلب الاسم المترجم ديناميكياً من لغة المستخدم
+        // هذا يضمن أن المستخدم الصيني يرى الاسم بالصينية، والروسي بالروسية، إلخ
+        if (surahNumber && surahNumber >= 1 && surahNumber <= 114) {
+            const translatedName = t?.surahNames?.[surahNumber - 1];
+            if (translatedName) return translatedName;
+        }
+        // 🎯 Fallback: مفتاح ترجمة
+        if (t && name && t[name]) return t[name];
+        // 🎯 Fallback أخير: الاسم المحفوظ
+        return name;
+    };
+
+    // ⭐ Helper: جلب اسم السورة المترجم بأمان مع fallback مضمون 100%
+    const getSurahName = (surahNum: number | undefined): string => {
+        if (!surahNum || surahNum < 1 || surahNum > 114) return '';
+        
+        // الطريقة 1: محاولة جلب الاسم من مصفوفة surahNames في كائن الترجمة
+        try {
+            const names = t?.surahNames;
+            if (Array.isArray(names) && names.length >= surahNum && names[surahNum - 1]) {
+                return names[surahNum - 1];
+            }
+        } catch (e) {
+            // تجاهل أي خطأ
+        }
+        
+        // الطريقة 2: Fallback مضمون - استخدام مصفوفة SURAHS الثابتة (أسماء عربية)
+        const surahData = SURAHS.find(s => s.number === surahNum);
+        if (surahData?.name) {
+            return surahData.name;
+        }
+        
+        // الطريقة 3: آخر احتياط - عرض رقم السورة
+        return `${t?.surah || 'Surah'} ${surahNum}`;
+    };
+
     // Bulletproof localized number: forces Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) in Arabic, standard otherwise
     const ln = (num: number): string => isArabic ? forceArabicNumerals(num) : String(num);
 
@@ -140,7 +178,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                     
                     schedules.push({
                         id: uniqueId,
-                        title: notification.isAlarm ? `🚨 ${notification.name}` : notification.name,
+                        title: notification.isAlarm ? `🚨 ${resolveName(notification.name, notification.metadata?.surahNumber)}` : resolveName(notification.name, notification.metadata?.surahNumber),
                         body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
                         schedule: {
                             on: {
@@ -518,7 +556,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             onNavigate && "cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
                                                         )}
                                                     >
-                                                        {notification.name}
+                                                        {resolveName(notification.name, notification.metadata?.surahNumber)}
                                                     </h3>
                                                     <p className="text-sm text-[var(--text-primary)] opacity-60">
                                                         {notification.category === 'surah' && notification.metadata ? (
@@ -536,11 +574,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             <span className="block text-amber-600 dark:text-amber-400 mb-1">
                                                                 {notification.name.includes(t.juz) ? (
                                                                     <>
-                                                                        {t.hizb} {notification.metadata.hizb != null ? ln(notification.metadata.hizb) : ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.hizb ?? 1) - 1) * 4]?.surahNum - 1] ?? ''}
+                                                                        {t.hizb} {notification.metadata.hizb != null ? ln(notification.metadata.hizb) : ''}، {t.surah} {getSurahName(JUZ_SECTIONS[((notification.metadata.hizb ?? 1) - 1) * 4]?.surahNum)}
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        {t.juz} {notification.metadata.juz != null ? ln(notification.metadata.juz) : ''}، {t.surah} {t.surahNames[JUZ_SECTIONS[((notification.metadata.juz ?? 1) - 1) * 8]?.surahNum - 1] ?? ''}
+                                                                        {t.juz} {notification.metadata.juz != null ? ln(notification.metadata.juz) : ''}، {t.surah} {getSurahName(JUZ_SECTIONS[((notification.metadata.juz ?? 1) - 1) * 8]?.surahNum)}
                                                                     </>
                                                                 )}
                                                             </span>
@@ -700,7 +738,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     // Get Surah details
                                                     const surah = SURAHS.find(s => s.number === sNum);
                                                     if (surah) {
-                                                        const sName = t.surahNames[sNum - 1];
+                                                        const sName = getSurahName(sNum);
                                                         setFormName(`${t.surahPrefix} ${sName}`);
 
                                                         // Important: Update dependent fields immediately to avoid stale state in UI
@@ -719,7 +757,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             >
                                                 {SURAHS.map(surah => (
                                                     <option key={surah.number} value={surah.number}>
-                                                        {ln(surah.number)}. {t.surahNames[surah.number - 1]}
+                                                        {ln(surah.number)}. {getSurahName(surah.number)}
                                                     </option>
                                                 ))}
                                             </select>
@@ -793,7 +831,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             // Auto-update name
                                                             const surah = SURAHS.find(s => s.number === formSurahNumber);
                                                             if (surah) {
-                                                                const sName = t.surahNames[surah.number - 1];
+                                                                const sName = getSurahName(surah.number);
                                                                 setFormName(`${t.surahPrefix} ${sName} (${ln(val)}-${ln(formEndAyah)})`);
                                                             }
                                                         }}
@@ -815,7 +853,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                                 // Auto-update name
                                                                 const surah = SURAHS.find(s => s.number === formSurahNumber);
                                                                 if (surah) {
-                                                                    const sName = t.surahNames[surah.number - 1];
+                                                                    const sName = getSurahName(surah.number);
                                                                     setFormName(`${t.surahPrefix} ${sName} (${ln(formStartAyah)}-${ln(val)})`);
                                                                 }
                                                             }}
@@ -878,7 +916,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     ))}
                                                 </select>
                                                 <span className="text-[10px] text-amber-600 italic block mt-1 px-1">
-                                                    {t.surahPrefix} {t.surahNames[JUZ_SECTIONS[(formJuz - 1) * 8]?.surahNum - 1]}
+                                                    {t.surahPrefix} {getSurahName(JUZ_SECTIONS[(formJuz - 1) * 8]?.surahNum)}
                                                 </span>
                                             </div>
                                             <div>

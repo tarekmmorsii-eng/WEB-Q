@@ -95,6 +95,16 @@ export interface Translations {
     notRated: string;
     notificationManagerTitle: string;
     noNotifications: string;
+    inAppNotifModalTitle: string;
+    inAppNotifNewBadge: string;
+    inAppNotifMarkAllRead: string;
+    inAppNotifClearAll: string;
+    inAppNotifEmpty: string;
+    inAppNotifEmptyDesc: string;
+    notif_surah_reminder: string;
+    notif_surah_kahf_body: string;
+    notif_surah_mulk_body: string;
+    notif_surah_baqarah_body: string;
     daily: string;
     addNotification: string;
     editNotification: string;

@@ -701,5 +701,15 @@
   "downloadingTranslation": "Translating Verses",
   "downloadingMeanings": "Word Meanings",
   "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
-  "arabicLangName": "Arabic"
+  "arabicLangName": "Arabic",
+  "inAppNotifModalTitle": "Notifications",
+  "inAppNotifNewBadge": "New",
+  "inAppNotifMarkAllRead": "Mark all as read",
+  "inAppNotifClearAll": "Clear all",
+  "inAppNotifEmpty": "No notifications yet",
+  "inAppNotifEmptyDesc": "Your notifications will appear here",
+  "notif_surah_reminder": "Surah {surahName} Reminder",
+  "notif_surah_kahf_body": "Time to read Surah {surahName} on Friday",
+  "notif_surah_mulk_body": "Time to read Surah {surahName} before sleep",
+  "notif_surah_baqarah_body": "Time to read Surah {surahName}"
 }

@@ -60,15 +60,19 @@ import { useNotifications } from './hooks/useNotifications';
 import InAppNotificationsModal from './components/InAppNotificationsModal';
 
 // ⭐ المنبهات الافتراضية - تظهر للمستخدم الجديد عند أول تشغيل
+// name فارغ = يتم بناء العرض ديناميكياً من surahNumber + t.surahNames
+// 🔄 إصدار المنبهات - عند رفعه يتم مسح القديمة وإعادة الحقن تلقائياً
+const ALARMS_VERSION = 2;
+
 const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'default-alarm-kahf',
-    name: 'سورة الكهف',
+    name: SURAHS.find(s => s.number === 18)?.name || 'الكهف',
     isEnabled: true,
     isAlarm: true,
     sound: '/islamic_song.mp3',
     type: 'weekly',
-    days: [5], // الجمعة فقط (0=أحد, 5=جمعة)
+    days: [5],
     times: ['10:00'],
     category: 'surah',
     metadata: {
@@ -81,7 +85,7 @@ const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'default-alarm-mulk',
-    name: 'سورة الملك',
+    name: SURAHS.find(s => s.number === 67)?.name || 'الملك',
     isEnabled: true,
     isAlarm: true,
     sound: '/islamic_song.mp3',
@@ -99,12 +103,12 @@ const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'default-alarm-baqarah',
-    name: 'سورة البقرة',
+    name: SURAHS.find(s => s.number === 2)?.name || 'البقرة',
     isEnabled: true,
     isAlarm: true,
     sound: '/islamic_song.mp3',
     type: 'weekly',
-    days: [1, 4], // الإثنين والخميس
+    days: [1, 4],
     times: ['16:00'],
     category: 'surah',
     metadata: {
@@ -1709,7 +1713,11 @@ export default function App() {
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification(n.name, {
+                reg.showNotification(
+                  n.metadata?.surahNumber
+                    ? t.surahNames[n.metadata.surahNumber - 1]
+                    : ((t as any)[n.name] || n.name || t.notifications),
+                  {
                   body: n.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
                   icon: '/final_logo.png',
                   badge: '/final_logo.png',
@@ -1766,10 +1774,20 @@ export default function App() {
       if (savedPageBookmarks) setPageBookmarks(JSON.parse(savedPageBookmarks));
       if (savedVerseBookmarks) setVerseBookmarks(JSON.parse(savedVerseBookmarks));
       if (savedHistory) setHistory(JSON.parse(savedHistory));
-      if (savedNotifications) {
-        setNotifications(JSON.parse(savedNotifications));
+      // 🔄 Hard Reset: مسح المنبهات القديمة وإعادة الحقن عند تغير الإصدار
+      const savedAlarmsVersion = localStorage.getItem('quran_alarms_version');
+      if (savedAlarmsVersion && parseInt(savedAlarmsVersion) < ALARMS_VERSION) {
+        // إصدار قديم ← مسح كامل وإعادة حقن
+        console.log(`[Hard Reset] ترقية المنبهات من إصدار ${savedAlarmsVersion} إلى ${ALARMS_VERSION}`);
+        localStorage.removeItem('quran_notifications');
+      }
+      localStorage.setItem('quran_alarms_version', ALARMS_VERSION.toString());
+
+      const freshSavedNotifications = localStorage.getItem('quran_notifications');
+      if (freshSavedNotifications) {
+        setNotifications(JSON.parse(freshSavedNotifications));
       } else {
-        // ⭐ أول تشغيل: حقن المنبهات الافتراضية (3 منبهات جاهزة)
+        // ⭐ أول تشغيل أو بعد Hard Reset: حقن المنبهات الافتراضية
         setNotifications(DEFAULT_ALARM_NOTIFICATIONS);
         localStorage.setItem('quran_notifications', JSON.stringify(DEFAULT_ALARM_NOTIFICATIONS));
       }
@@ -2853,6 +2871,7 @@ export default function App() {
             setTimeout(() => setIsNotificationOpen(true), 150);
           }}
           onNavigateToPage={(page) => setCurrentPage(page)}
+          t={t}
         />
 
 
@@ -3145,7 +3164,11 @@ export default function App() {
                 marginBottom: '0.5rem',
                 textAlign: 'center',
                 padding: '0 1rem',
-              }}>{activeAlarm.name}</h2>
+              }}>{
+                activeAlarm.metadata?.surahNumber
+                  ? t.surahNames[activeAlarm.metadata.surahNumber - 1]
+                  : (activeAlarm.name || t.alarmMessage)
+              }</h2>
 
               <p style={{
                 fontSize: '1.25rem',

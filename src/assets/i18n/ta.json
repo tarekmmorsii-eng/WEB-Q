@@ -695,5 +695,9 @@
   "downloadingTranslation": "Translating Verses",
   "downloadingMeanings": "Word Meanings",
   "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
-  "arabicLangName": "Arabic"
+  "arabicLangName": "Arabic",
+  "notif_surah_reminder": "சூரா {surahName} நினைவூட்டல்",
+  "notif_surah_kahf_body": "வெள்ளிக்கிழமை சூரா {surahName} படிக்க நேரம்",
+  "notif_surah_mulk_body": "தூங்கும் முன் சூரா {surahName} படிக்க நேரம்",
+  "notif_surah_baqarah_body": "சூரா {surahName} படிக்க நேரம்"
 }

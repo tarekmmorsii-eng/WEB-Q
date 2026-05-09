@@ -700,5 +700,15 @@
   "downloadingTranslation": "ترجمة الآيات",
   "downloadingMeanings": "معاني الكلمات",
   "downloadCompleteMsg": "✅ {name} - {author} ({count} آية بمعاني الكلمات)",
-  "arabicLangName": "العربية"
+  "arabicLangName": "العربية",
+  "inAppNotifModalTitle": "الإشعارات",
+  "inAppNotifNewBadge": "جديد",
+  "inAppNotifMarkAllRead": "تحديد الكل كمقروء",
+  "inAppNotifClearAll": "مسح الكل",
+  "inAppNotifEmpty": "لا توجد إشعارات بعد",
+  "inAppNotifEmptyDesc": "ستظهر إشعاراتك هنا",
+  "notif_surah_reminder": "تذكير بسورة {surahName}",
+  "notif_surah_kahf_body": "حان وقت قراءة سورة {surahName} يوم الجمعة",
+  "notif_surah_mulk_body": "حان وقت قراءة سورة {surahName} قبل النوم",
+  "notif_surah_baqarah_body": "حان وقت قراءة سورة {surahName}"
 }

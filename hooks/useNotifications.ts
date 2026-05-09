@@ -12,6 +12,7 @@ export interface InAppNotification {
   createdAt: number;
   icon?: string;
   targetPage?: number;
+  surahNumber?: number; // رقم السورة لجلب الاسم من t.surahNames تلقائياً
 }
 
 const STORAGE_KEY = 'quran_in_app_notifications';
@@ -23,33 +24,36 @@ const HAS_SEEN_WELCOME_KEY = 'quran_has_seen_welcome_notification';
 const DEFAULT_NOTIFICATIONS: InAppNotification[] = [
   {
     id: 'reminder-kahf',
-    title: 'سورة الكهف',
-    message: 'تذكير بقراءة سورة الكهف كل يوم جمعة الساعة 10:00 صباحاً.',
+    title: 'notif_surah_reminder',    // مفتاح ترجمة: "تذكير بسورة {surahName}"
+    message: 'notif_surah_kahf_body',  // مفتاح ترجمة: "حان وقت قراءة سورة الكهف يوم الجمعة"
     type: 'info',
     isRead: false,
     createdAt: Date.now(),
     icon: '📖',
     targetPage: 293,
+    surahNumber: 18,  // الكهف - سيُستخدم لجلب الاسم من t.surahNames[17]
   },
   {
     id: 'reminder-tabarak',
-    title: 'سورة تبارك',
-    message: 'تذكير بقراءة سورة الملك (تبارك) يومياً الساعة 11:00 مساءً.',
+    title: 'notif_surah_reminder',
+    message: 'notif_surah_mulk_body',  // "حان وقت قراءة سورة الملك قبل النوم"
     type: 'info',
     isRead: false,
     createdAt: Date.now() - 1000,
     icon: '🌙',
     targetPage: 562,
+    surahNumber: 67,  // الملك - سيُستخدم لجلب الاسم من t.surahNames[66]
   },
   {
     id: 'reminder-baqarah',
-    title: 'سورة البقرة',
-    message: 'تذكير بقراءة سورة البقرة كل يومي إثنين وخميس الساعة 4:00 عصراً.',
+    title: 'notif_surah_reminder',
+    message: 'notif_surah_baqarah_body', // "حان وقت قراءة سورة البقرة"
     type: 'info',
     isRead: false,
     createdAt: Date.now() - 2000,
     icon: '📿',
     targetPage: 2,
+    surahNumber: 2,   // البقرة - سيُستخدم لجلب الاسم من t.surahNames[1]
   },
 ];
 

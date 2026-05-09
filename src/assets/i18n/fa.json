@@ -700,5 +700,9 @@
   "downloadingTranslation": "Translating Verses",
   "downloadingMeanings": "Word Meanings",
   "downloadCompleteMsg": "✅ {name} - {author} ({count} ayahs with word meanings)",
-  "arabicLangName": "Arabic"
+  "arabicLangName": "Arabic",
+  "notif_surah_reminder": "یادآوری سوره {surahName}",
+  "notif_surah_kahf_body": "زمان خواندن سوره {surahName} در روز جمعه",
+  "notif_surah_mulk_body": "زمان خواندن سوره {surahName} قبل از خواب",
+  "notif_surah_baqarah_body": "زمان خواندن سوره {surahName}"
 }
