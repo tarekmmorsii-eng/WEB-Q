@@ -56,9 +56,10 @@ export interface NotificationItem {
   isEnabled: boolean;
   isAlarm: boolean;
   sound?: string; // Optional custom sound path
-  type: 'daily' | 'weekly';
+  type: 'daily' | 'weekly' | 'once';
   days: number[]; // Array of day indices (0=Sunday, 6=Saturday)
   times: string[]; // Array of time strings in HH:MM format
+  targetDate?: string; // YYYY-MM-DD format for specific date or once alarm
   // Legacy properties for backward compatibility
   title?: string;
   description?: string;

@@ -699,5 +699,15 @@
   "notif_surah_reminder": "Kumbusho la Surah {surahName}",
   "notif_surah_kahf_body": "Ni wakati wa kusoma Surah {surahName} Ijumaa",
   "notif_surah_mulk_body": "Ni wakati wa kusoma Surah {surahName} kabla ya kulala",
-  "notif_surah_baqarah_body": "Ni wakati wa kusoma Surah {surahName}"
+  "notif_surah_baqarah_body": "Ni wakati wa kusoma Surah {surahName}",
+  "alarm_once": "Mara moja",
+  "alarm_select_date": "📅 Tarehe Maalum",
+  "alarm_clear_date": "Tarehe wazi",
+  "alarm_specific_date": "Tarehe Maalum",
+  "inAppNotifModalTitle": "Arifa",
+  "inAppNotifNewBadge": "Mpya",
+  "inAppNotifMarkAllRead": "Weka alama zote kama zimesomwa",
+  "inAppNotifClearAll": "Futa zote",
+  "inAppNotifEmpty": "Bado hakuna arifa",
+  "inAppNotifEmptyDesc": "Arifa zako zitaonekana hapa"
 }

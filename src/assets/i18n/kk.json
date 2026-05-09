@@ -699,5 +699,15 @@
   "notif_surah_reminder": "{surahName} сүресінің еске салғызы",
   "notif_surah_kahf_body": "Жұма күні {surahName} сүресін оқу уақыты",
   "notif_surah_mulk_body": "Ұйықтар алдында {surahName} сүресін оқу уақыты",
-  "notif_surah_baqarah_body": "{surahName} сүресін оқу уақыты"
+  "notif_surah_baqarah_body": "{surahName} сүресін оқу уақыты",
+  "alarm_once": "Бір рет",
+  "alarm_select_date": "📅 Нақты күн",
+  "alarm_clear_date": "Өшіру күні",
+  "alarm_specific_date": "Нақты күн",
+  "inAppNotifModalTitle": "Хабарландырулар",
+  "inAppNotifNewBadge": "Жаңа",
+  "inAppNotifMarkAllRead": "Барлығын оқылған деп белгілеңіз",
+  "inAppNotifClearAll": "Барлығын өшіру",
+  "inAppNotifEmpty": "Әзірге хабарландырулар жоқ",
+  "inAppNotifEmptyDesc": "Хабарландыруларыңыз осы жерде пайда болады"
 }

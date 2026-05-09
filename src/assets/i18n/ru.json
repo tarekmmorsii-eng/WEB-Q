@@ -699,5 +699,15 @@
   "notif_surah_reminder": "Напоминание о суре {surahName}",
   "notif_surah_kahf_body": "Время читать суру {surahName} в пятницу",
   "notif_surah_mulk_body": "Время читать суру {surahName} перед сном",
-  "notif_surah_baqarah_body": "Время читать суру {surahName}"
+  "notif_surah_baqarah_body": "Время читать суру {surahName}",
+  "alarm_once": "Один раз",
+  "alarm_select_date": "📅 Конкретная дата",
+  "alarm_clear_date": "Очистить дату",
+  "alarm_specific_date": "Конкретная дата",
+  "inAppNotifModalTitle": "Уведомления",
+  "inAppNotifNewBadge": "Новый",
+  "inAppNotifMarkAllRead": "Отметить все как прочитанное",
+  "inAppNotifClearAll": "Очистить все",
+  "inAppNotifEmpty": "Уведомлений пока нет",
+  "inAppNotifEmptyDesc": "Ваши уведомления будут появляться здесь"
 }

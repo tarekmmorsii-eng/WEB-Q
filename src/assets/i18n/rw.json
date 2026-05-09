@@ -704,5 +704,15 @@
   "notif_surah_reminder": "Kwibutsa Surah {surahName}",
   "notif_surah_kahf_body": "Ni igihe cyo gusoma Surah {surahName} ku wa Gatandatu",
   "notif_surah_mulk_body": "Ni igihe cyo gusoma Surah {surahName} mbere yo kujya kuryama",
-  "notif_surah_baqarah_body": "Ni igihe cyo gusoma Surah {surahName}"
+  "notif_surah_baqarah_body": "Ni igihe cyo gusoma Surah {surahName}",
+  "alarm_once": "Rimwe",
+  "alarm_select_date": "Itariki Itariki",
+  "alarm_clear_date": "Itariki Itomoye",
+  "alarm_specific_date": "Itariki yihariye",
+  "inAppNotifModalTitle": "Kumenyesha",
+  "inAppNotifNewBadge": "Gishya",
+  "inAppNotifMarkAllRead": "Shyira akamenyetso nkuko wasomwe",
+  "inAppNotifClearAll": "Kuraho byose",
+  "inAppNotifEmpty": "Nta menyesha",
+  "inAppNotifEmptyDesc": "Amatangazo yawe azagaragara hano"
 }

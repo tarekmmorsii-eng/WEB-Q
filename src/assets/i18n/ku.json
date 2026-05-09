@@ -699,5 +699,15 @@
   "notif_surah_reminder": "بیرخستنەوەی سورەتی {surahName}",
   "notif_surah_kahf_body": "کاتی خوێندنەوەی سورەتی {surahName} لە ڕۆژی ھەینی",
   "notif_surah_mulk_body": "کاتی خوێندنەوەی سورەتی {surahName} پێش خەو",
-  "notif_surah_baqarah_body": "کاتی خوێندنەوەی سورەتی {surahName}"
+  "notif_surah_baqarah_body": "کاتی خوێندنەوەی سورەتی {surahName}",
+  "alarm_once": "Carek",
+  "alarm_select_date": "📅 Dîroka Taybet",
+  "alarm_clear_date": "Dîroka zelal",
+  "alarm_specific_date": "Dîroka Taybet",
+  "inAppNotifModalTitle": "Notifications",
+  "inAppNotifNewBadge": "Nşh",
+  "inAppNotifMarkAllRead": "Hemî wekî xwendin nîşan bide",
+  "inAppNotifClearAll": "Hemî paqij bikin",
+  "inAppNotifEmpty": "No notifications hê",
+  "inAppNotifEmptyDesc": "Agahiyên we dê li vir xuya bibin"
 }

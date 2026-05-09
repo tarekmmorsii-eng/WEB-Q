@@ -704,5 +704,15 @@
   "notif_surah_reminder": "සූරා {surahName} මතක් කිරීම",
   "notif_surah_kahf_body": "සිකුරාදා සූරා {surahName} කියවීමට වේලාවයි",
   "notif_surah_mulk_body": "නින්දට පෙර සූරා {surahName} කියවීමට වේලාවයි",
-  "notif_surah_baqarah_body": "සූරා {surahName} කියවීමට වේලාවයි"
+  "notif_surah_baqarah_body": "සූරා {surahName} කියවීමට වේලාවයි",
+  "alarm_once": "වරක්",
+  "alarm_select_date": "📅 නිශ්චිත දිනය",
+  "alarm_clear_date": "දිනය පැහැදිලි කරන්න",
+  "alarm_specific_date": "නිශ්චිත දිනය",
+  "inAppNotifModalTitle": "දැනුම්දීම්",
+  "inAppNotifNewBadge": "අලුත්",
+  "inAppNotifMarkAllRead": "සියල්ල කියවූ ලෙස ලකුණු කරන්න",
+  "inAppNotifClearAll": "සියල්ල හිස් කරන්න",
+  "inAppNotifEmpty": "තවම දැනුම්දීම් නැත",
+  "inAppNotifEmptyDesc": "ඔබගේ දැනුම්දීම් මෙහි දිස් වනු ඇත"
 }

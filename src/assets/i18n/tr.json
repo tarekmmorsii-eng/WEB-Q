@@ -704,5 +704,15 @@
   "notif_surah_reminder": "{surahName} Suresi Hatırlatması",
   "notif_surah_kahf_body": "Cuma günü {surahName} Suresini okuma vakti",
   "notif_surah_mulk_body": "Uyumadan önce {surahName} Suresini okuma vakti",
-  "notif_surah_baqarah_body": "{surahName} Suresini okuma vakti"
+  "notif_surah_baqarah_body": "{surahName} Suresini okuma vakti",
+  "alarm_once": "Bir kere",
+  "alarm_select_date": "📅 Belirli Tarih",
+  "alarm_clear_date": "Tarihi Temizle",
+  "alarm_specific_date": "Belirli Tarih",
+  "inAppNotifModalTitle": "Bildirimler",
+  "inAppNotifNewBadge": "Yeni",
+  "inAppNotifMarkAllRead": "Tümünü okundu olarak işaretle",
+  "inAppNotifClearAll": "Tümünü temizle",
+  "inAppNotifEmpty": "Henüz bildirim yok",
+  "inAppNotifEmptyDesc": "Bildirimleriniz burada görünecek"
 }

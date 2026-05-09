@@ -699,5 +699,15 @@
   "notif_surah_reminder": "{surahName} 提醒",
   "notif_surah_kahf_body": "是时候在星期五阅读 {surahName} 了",
   "notif_surah_mulk_body": "是时候在睡前阅读 {surahName} 了",
-  "notif_surah_baqarah_body": "是时候阅读 {surahName} 了"
+  "notif_surah_baqarah_body": "是时候阅读 {surahName} 了",
+  "alarm_once": "一次",
+  "alarm_select_date": "📅具体日期",
+  "alarm_clear_date": "清除日期",
+  "alarm_specific_date": "具体日期",
+  "inAppNotifModalTitle": "通知",
+  "inAppNotifNewBadge": "新的",
+  "inAppNotifMarkAllRead": "全部标记为已读",
+  "inAppNotifClearAll": "全部清除",
+  "inAppNotifEmpty": "还没有通知",
+  "inAppNotifEmptyDesc": "您的通知将显示在此处"
 }

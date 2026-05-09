@@ -711,5 +711,9 @@
   "notif_surah_reminder": "Surah {surahName} Reminder",
   "notif_surah_kahf_body": "Time to read Surah {surahName} on Friday",
   "notif_surah_mulk_body": "Time to read Surah {surahName} before sleep",
-  "notif_surah_baqarah_body": "Time to read Surah {surahName}"
+  "notif_surah_baqarah_body": "Time to read Surah {surahName}",
+  "alarm_once": "Once",
+  "alarm_select_date": "📅 Specific Date",
+  "alarm_clear_date": "Clear Date",
+  "alarm_specific_date": "Specific Date"
 }

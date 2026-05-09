@@ -699,5 +699,15 @@
   "notif_surah_reminder": "{surahName} 알림",
   "notif_surah_kahf_body": "금요일에 {surahName}을(를) 읽을 시간입니다",
   "notif_surah_mulk_body": "취침 전 {surahName}을(를) 읽을 시간입니다",
-  "notif_surah_baqarah_body": "{surahName}을(를) 읽을 시간입니다"
+  "notif_surah_baqarah_body": "{surahName}을(를) 읽을 시간입니다",
+  "alarm_once": "한 번",
+  "alarm_select_date": "📅 구체적인 날짜",
+  "alarm_clear_date": "날짜 지우기",
+  "alarm_specific_date": "특정 날짜",
+  "inAppNotifModalTitle": "알림",
+  "inAppNotifNewBadge": "새로운",
+  "inAppNotifMarkAllRead": "모두 읽음으로 표시",
+  "inAppNotifClearAll": "모두 지우기",
+  "inAppNotifEmpty": "아직 알림이 없습니다",
+  "inAppNotifEmptyDesc": "알림이 여기에 표시됩니다."
 }

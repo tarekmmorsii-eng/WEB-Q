@@ -699,5 +699,15 @@
   "notif_surah_reminder": "Paalala para sa Surah {surahName}",
   "notif_surah_kahf_body": "Oras na para basahin ang Surah {surahName} sa Biyernes",
   "notif_surah_mulk_body": "Oras na para basahin ang Surah {surahName} bago matulog",
-  "notif_surah_baqarah_body": "Oras na para basahin ang Surah {surahName}"
+  "notif_surah_baqarah_body": "Oras na para basahin ang Surah {surahName}",
+  "alarm_once": "minsan",
+  "alarm_select_date": "📅 Tukoy na Petsa",
+  "alarm_clear_date": "I-clear ang Petsa",
+  "alarm_specific_date": "Tukoy na Petsa",
+  "inAppNotifModalTitle": "Mga abiso",
+  "inAppNotifNewBadge": "Bago",
+  "inAppNotifMarkAllRead": "Markahan ang lahat bilang nabasa na",
+  "inAppNotifClearAll": "I-clear lahat",
+  "inAppNotifEmpty": "Wala pang notification",
+  "inAppNotifEmptyDesc": "Lalabas dito ang iyong mga notification"
 }

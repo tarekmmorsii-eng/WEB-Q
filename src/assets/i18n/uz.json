@@ -699,5 +699,15 @@
   "notif_surah_reminder": "{surahName} surasi eslatmasi",
   "notif_surah_kahf_body": "Juma kuni {surahName} surasini o'qish vaqti",
   "notif_surah_mulk_body": "Uyqudan oldin {surahName} surasini o'qish vaqti",
-  "notif_surah_baqarah_body": "{surahName} surasini o'qish vaqti"
+  "notif_surah_baqarah_body": "{surahName} surasini o'qish vaqti",
+  "alarm_once": "Bir marta",
+  "alarm_select_date": "📅 Aniq sana",
+  "alarm_clear_date": "Tozalash sanasi",
+  "alarm_specific_date": "Aniq sana",
+  "inAppNotifModalTitle": "Bildirishnomalar",
+  "inAppNotifNewBadge": "Yangi",
+  "inAppNotifMarkAllRead": "Hammasini o'qilgan deb belgilang",
+  "inAppNotifClearAll": "Hammasini tozalang",
+  "inAppNotifEmpty": "Hozircha bildirishnomalar yo‘q",
+  "inAppNotifEmptyDesc": "Bildirishnomalaringiz shu yerda chiqadi"
 }

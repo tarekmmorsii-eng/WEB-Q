@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Pause, Upload } from 'lucide-react';
+import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Pause, Upload, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 import { NotificationItem } from '../types';
 import { SURAHS } from '../constants/surahData';
@@ -169,25 +169,23 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             const channelId = notification.isAlarm ? 'quran_critical_alarm_v1' : 'quran_regular_v1';
 
             const schedules: any[] = [];
+            const isOnce = notification.type === 'once' || (!notification.days || notification.days.length === 0);
             
             for (let i = 0; i < notification.times.length; i++) {
                 const [hour, minute] = notification.times[i].split(':').map(Number);
-                
-                for (const day of notification.days) {
-                    const uniqueId = baseId + i + (day * 100);
-                    
+
+                if (notification.targetDate) {
+                    // 📅 Specific date alarm - schedule for that date only, no repeat
+                    const [year, month, day] = notification.targetDate.split('-').map(Number);
+                    const uniqueId = baseId + i;
                     schedules.push({
                         id: uniqueId,
                         title: notification.isAlarm ? `🚨 ${resolveName(notification.name, notification.metadata?.surahNumber)}` : resolveName(notification.name, notification.metadata?.surahNumber),
                         body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
                         schedule: {
-                            on: {
-                                weekday: day + 1, // Sunday = 1 in Capacitor
-                                hour,
-                                minute
-                            },
-                            repeats: true,
-                            allowWhileIdle: true // CRITICAL: bypass Doze Mode and fire on time
+                            at: new Date(year, month - 1, day, hour, minute),
+                            repeats: false,
+                            allowWhileIdle: true
                         },
                         channelId: channelId,
                         sound: nativeSound,
@@ -196,7 +194,6 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             ayah: notification.metadata?.startAyah,
                             surah: notification.metadata?.surahNumber
                         },
-                        // Don't auto-dismiss alarm notifications - they stay visible
                         autoCancel: !notification.isAlarm,
                         ongoing: false,
                         actionTypeId: 'OPEN_QURAN',
@@ -205,6 +202,73 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         largeIcon: 'res://icon',
                         badge: 1
                     });
+                } else if (isOnce) {
+                    // 🔔 Once alarm - next upcoming time, no repeat
+                    const now = new Date();
+                    const scheduledDate = new Date(now);
+                    scheduledDate.setHours(hour, minute, 0, 0);
+                    // If the time has already passed today, schedule for tomorrow
+                    if (scheduledDate <= now) {
+                        scheduledDate.setDate(scheduledDate.getDate() + 1);
+                    }
+                    const uniqueId = baseId + i;
+                    schedules.push({
+                        id: uniqueId,
+                        title: notification.isAlarm ? `🚨 ${resolveName(notification.name, notification.metadata?.surahNumber)}` : resolveName(notification.name, notification.metadata?.surahNumber),
+                        body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
+                        schedule: {
+                            at: scheduledDate,
+                            repeats: false,
+                            allowWhileIdle: true
+                        },
+                        channelId: channelId,
+                        sound: nativeSound,
+                        extra: {
+                            page: notification.metadata?.startPage || notification.metadata?.page,
+                            ayah: notification.metadata?.startAyah,
+                            surah: notification.metadata?.surahNumber
+                        },
+                        autoCancel: !notification.isAlarm,
+                        ongoing: false,
+                        actionTypeId: 'OPEN_QURAN',
+                        attachments: [],
+                        smallIcon: 'ic_stat_name',
+                        largeIcon: 'res://icon',
+                        badge: 1
+                    });
+                } else {
+                    // 📅 Daily/Weekly repeating alarm
+                    for (const day of notification.days) {
+                        const uniqueId = baseId + i + (day * 100);
+                        schedules.push({
+                            id: uniqueId,
+                            title: notification.isAlarm ? `🚨 ${resolveName(notification.name, notification.metadata?.surahNumber)}` : resolveName(notification.name, notification.metadata?.surahNumber),
+                            body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
+                            schedule: {
+                                on: {
+                                    weekday: day + 1,
+                                    hour,
+                                    minute
+                                },
+                                repeats: true,
+                                allowWhileIdle: true
+                            },
+                            channelId: channelId,
+                            sound: nativeSound,
+                            extra: {
+                                page: notification.metadata?.startPage || notification.metadata?.page,
+                                ayah: notification.metadata?.startAyah,
+                                surah: notification.metadata?.surahNumber
+                            },
+                            autoCancel: !notification.isAlarm,
+                            ongoing: false,
+                            actionTypeId: 'OPEN_QURAN',
+                            attachments: [],
+                            smallIcon: 'ic_stat_name',
+                            largeIcon: 'res://icon',
+                            badge: 1
+                        });
+                    }
                 }
             }
 
@@ -220,10 +284,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
     // Form state
     const [formName, setFormName] = useState('');
-    const [formType, setFormType] = useState<'daily' | 'weekly'>('daily');
-    const [formDays, setFormDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+    const [formType, setFormType] = useState<'daily' | 'weekly' | 'once'>('once');
+    const [formDays, setFormDays] = useState<number[]>([]);
+    const [formTargetDate, setFormTargetDate] = useState<string>('');
     const [formTimes, setFormTimes] = useState<string[]>(['08:00']);
     const timeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const dateInputRef = useRef<HTMLInputElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
 
@@ -239,6 +305,18 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                 }
             } catch (e) {
                 input.focus();
+            }
+        }
+    };
+
+    // 🛠️ إجبار تقويم التاريخ على الفتح - يتجاوز قيود الـ Modal (Focus Trap / Event Propagation)
+    const handleDateClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // منع تداخل أحداث النافذة المنبثقة
+        if (dateInputRef.current && 'showPicker' in HTMLInputElement.prototype) {
+            try {
+                dateInputRef.current.showPicker();
+            } catch (err) {
+                console.error('Failed to open date picker:', err);
             }
         }
     };
@@ -315,13 +393,13 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         setIsPlaying(false);
 
         setFormName('');
-        setFormType('daily');
-        setFormDays([0, 1, 2, 3, 4, 5, 6]);
+        setFormType('once');
+        setFormDays([]);
+        setFormTargetDate('');
         setFormTimes(['08:00']);
         setFormIsAlarm(true);
         setFormSound('/islamic_song.mp3');
 
-        // Reset new fields
         // Reset new fields
         setFormCategory('text');
         setFormSurahNumber(1);
@@ -364,6 +442,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     };
 
     const toggleDay = (day: number) => {
+        // Conflict resolution: selecting a day clears date
+        setFormTargetDate('');
+        if (formType === 'once') {
+            setFormType('weekly');
+        }
         if (formDays.includes(day)) {
             setFormDays(formDays.filter(d => d !== day));
         } else {
@@ -374,15 +457,18 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const handleSaveNotification = () => {
         if (!formName.trim() || formTimes.length === 0) return;
 
+        const isOnce = formType === 'once' || (!formType?.includes('daily') && !formType?.includes('weekly') && formDays.length === 0 && !formTargetDate);
+
         const newNotification: NotificationItem = {
             id: editingId || Date.now().toString(),
             name: formName,
             isEnabled: true,
             isAlarm: formIsAlarm,
             sound: formSound,
-            type: formType,
+            type: isOnce ? 'once' : formType === 'daily' ? 'daily' : 'weekly',
             days: formType === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : formDays,
             times: formTimes,
+            targetDate: formTargetDate || undefined,
             category: formCategory,
             metadata: {
                 surahNumber: formCategory === 'surah' ? formSurahNumber : undefined,
@@ -413,8 +499,9 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
     const handleEdit = (notification: NotificationItem) => {
         setFormName(notification.name);
-        setFormType(notification.type);
-        setFormDays(notification.days);
+        setFormType(notification.type || 'once');
+        setFormDays(notification.days || []);
+        setFormTargetDate(notification.targetDate || '');
         setFormTimes(notification.times);
         setFormIsAlarm(notification.isAlarm || false);
         setFormSound(notification.sound || '/islamic_song.mp3');
@@ -584,7 +671,11 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                             </span>
                                                         ) : null}
                                                         {notification.type === 'daily' ? t.daily :
-                                                            notification.days.map(d => DAYS[d]).join('، ')}
+                                                            notification.type === 'once' || (!notification.days || notification.days.length === 0) ?
+                                                                (notification.targetDate ?
+                                                                    `📅 ${notification.targetDate}` :
+                                                                    t.alarm_once) :
+                                                                (notification.days || []).map(d => DAYS[d]).join('، ')}
                                                     </p>
                                                     <div className="flex flex-wrap gap-2 mt-2">
                                                         {notification.times.map((time, i) => (
@@ -1047,14 +1138,30 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
                                     {t.notificationType}
                                 </label>
-                                <div className="flex gap-3">
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setFormType('once');
+                                            setFormDays([]);
+                                            setFormTargetDate('');
+                                        }}
+                                        className={clsx(
+                                            "flex-1 py-2 rounded-lg font-bold transition-colors text-sm",
+                                            formType === 'once'
+                                                ? "bg-amber-600 text-white"
+                                                : "bg-amber-100 dark:bg-slate-700 text-amber-900 dark:text-amber-100"
+                                        )}
+                                    >
+                                        {t.alarm_once}
+                                    </button>
                                     <button
                                         onClick={() => {
                                             setFormType('daily');
                                             setFormDays([0, 1, 2, 3, 4, 5, 6]);
+                                            setFormTargetDate('');
                                         }}
                                         className={clsx(
-                                            "flex-1 py-2 rounded-lg font-bold transition-colors",
+                                            "flex-1 py-2 rounded-lg font-bold transition-colors text-sm",
                                             formType === 'daily'
                                                 ? "bg-amber-600 text-white"
                                                 : "bg-amber-100 dark:bg-slate-700 text-amber-900 dark:text-amber-100"
@@ -1066,9 +1173,10 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                         onClick={() => {
                                             setFormType('weekly');
                                             setFormDays([]);
+                                            setFormTargetDate('');
                                         }}
                                         className={clsx(
-                                            "flex-1 py-2 rounded-lg font-bold transition-colors",
+                                            "flex-1 py-2 rounded-lg font-bold transition-colors text-sm",
                                             formType === 'weekly'
                                                 ? "bg-amber-600 text-white"
                                                 : "bg-amber-100 dark:bg-slate-700 text-amber-900 dark:text-amber-100"
@@ -1078,6 +1186,46 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Specific Date Picker - shown for once/weekly types */}
+                            {(formType === 'once' || formType === 'weekly') && (
+                                <div className="bg-amber-50/50 dark:bg-slate-800/50 p-3 rounded-lg border border-amber-200 dark:border-slate-700">
+                                    <label className="block text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
+                                        {t.alarm_specific_date}
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative flex-1" onClick={handleDateClick}>
+                                            <Calendar size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 dark:text-amber-400 pointer-events-none" />
+                                            <input
+                                                ref={dateInputRef}
+                                                type="date"
+                                                value={formTargetDate}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setFormTargetDate(val);
+                                                    // Conflict resolution: selecting date clears days
+                                                    if (val) {
+                                                        setFormDays([]);
+                                                    }
+                                                }}
+                                                onClick={handleDateClick}
+                                                min={new Date().toISOString().split('T')[0]}
+                                                style={{ color: formTargetDate ? 'inherit' : 'transparent', direction: 'ltr', textAlign: document.dir === 'rtl' ? 'right' : 'left' }}
+                                                className="w-full px-4 py-2 pr-10 border border-amber-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                            />
+                                        </div>
+                                        {formTargetDate && (
+                                            <button
+                                                onClick={() => setFormTargetDate('')}
+                                                className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors text-xs font-bold"
+                                                title={t.alarm_clear_date}
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Days (for weekly) */}
                             {formType === 'weekly' && (
@@ -1312,7 +1460,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             <div className="flex gap-3 pt-4">
                                 <button
                                     onClick={handleSaveNotification}
-                                    disabled={!formName.trim() || formTimes.length === 0 || (formType === 'weekly' && formDays.length === 0)}
+                                    disabled={!formName.trim() || formTimes.length === 0 || (formType === 'weekly' && formDays.length === 0 && !formTargetDate)}
                                     className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg font-bold transition-colors disabled:cursor-not-allowed"
                                 >
                                     {editingId ? t.saveChangesAction : t.addNotificationAction}

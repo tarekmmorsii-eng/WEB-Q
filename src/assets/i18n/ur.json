@@ -699,5 +699,15 @@
   "notif_surah_reminder": "سورة {surahName} کی یاددہانی",
   "notif_surah_kahf_body": "جمعہ کے دن سورة {surahName} پڑھنے کا وقت",
   "notif_surah_mulk_body": "سونے سے پہلے سورة {surahName} پڑھنے کا وقت",
-  "notif_surah_baqarah_body": "سورة {surahName} پڑھنے کا وقت"
+  "notif_surah_baqarah_body": "سورة {surahName} پڑھنے کا وقت",
+  "alarm_once": "ایک بار",
+  "alarm_select_date": "📅 مخصوص تاریخ",
+  "alarm_clear_date": "تاریخ صاف کریں۔",
+  "alarm_specific_date": "مخصوص تاریخ",
+  "inAppNotifModalTitle": "اطلاعات",
+  "inAppNotifNewBadge": "نیا",
+  "inAppNotifMarkAllRead": "سبھی کو پڑھا ہوا نشان زد کریں۔",
+  "inAppNotifClearAll": "سب صاف کریں۔",
+  "inAppNotifEmpty": "ابھی تک کوئی اطلاع نہیں ہے۔",
+  "inAppNotifEmptyDesc": "آپ کی اطلاعات یہاں ظاہر ہوں گی۔"
 }

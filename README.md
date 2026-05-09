@@ -1868,4 +1868,126 @@ useEffect(() => {
 }, [isTutorialActive, unreadCount, hasAutoShown]);
 ```
 
-**النتيجة:** إذا تغيّر `isTutorialActive` إلى `true` أثناء ثانية الانتظار، تُعاد تشغيل useEffect → ينفّذ `return` فوراً ← تُنفّذ Cleanup Function السابقة ← يُدمّر المؤقت ← لا تظهر نافذة الإشعارات.
+**النتيجة:** إذا تغيّر `isTutorialActive` إلى `true` أثناء ثانية الانتظار، تُعاد تشغيل useEffect → ينفّذ `return` فوراً ← تُنفّذ Cleanup Function السابقة ← يُدمّر المؤقت ← لا تظهر نافذة الإشعارات. 
+
+---
+
+## 🔔 تحسين تجربة المستخدم في نظام المنبهات — إضافة "لمرة واحدة" وتاريخ محدد — 2026-05-09
+
+### الهدف
+تحسين تجربة المستخدم (UX) في نموذج إضافة/تعديل المنبه بإضافة خيار "لمرة واحدة" وإمكانية اختيار تاريخ محدد، مع دعم كامل لـ i18n.
+
+### التغييرات المُطبّقة
+
+#### 1. تحديث واجهة المنبه (`types.ts`)
+- إضافة `type: 'once'` كنوع جديد (بجانب `daily` و `weekly`)
+- إضافة `targetDate?: string` (صيغة YYYY-MM-DD) لتحديد تاريخ معين
+
+#### 2. تحديث واجهة المستخدم (`NotificationManager.tsx`)
+- **الوضع الافتراضي:** عند فتح نموذج إضافة منبه جديد → `type: 'once'`، `days: []`، `targetDate: undefined`
+- **3 أزرار نوع:** "مرة واحدة" / "يومي" / "أسبوعي"
+- **حقل تاريخ محدد:** `<input type="date" />` مع أيقونة تقويم 📅 (يظهر لأنواع once/weekly)
+- **زر إلغاء التاريخ:** زر ✕ أحمر لمسح التاريخ المحدد
+- **منطق التضارب:**
+  - اختيار تاريخ ← تفريغ الأيام `days = []`
+  - ضغط على أي يوم ← مسح التاريخ `targetDate = ''` + التحويل لـ weekly
+- **بطاقة العرض:** تعرض "مرة واحدة" أو `📅 2026-05-10` حسب حالة المنبه
+
+#### 3. تحديث نظام الجدولة (`scheduleNativeNotification`)
+- **تاريخ محدد (`targetDate`):** يُجدول في هذا التاريخ فقط (`repeats: false`)
+- **مرة واحدة (`once`):** يُجدول لأقرب وقت قادم (`repeats: false`) ولا يُعيد جدولة نفسه
+- **يومي/أسبوعي:** يعمل كما كان بالتكرار (`repeats: true`)
+
+#### 4. دعم i18n كامل (4 مفاتيح × 31 لغة = 124 قيمة)
+| المفتاح | العربية | الإنجليزية |
+|---------|---------|-----------|
+| `alarm_once` | مرة واحدة | Once |
+| `alarm_select_date` | 📅 تاريخ محدد | 📅 Specific Date |
+| `alarm_clear_date` | إلغاء التاريخ | Clear Date |
+| `alarm_specific_date` | تاريخ محدد | Specific Date |
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `types.ts` | إضافة `type: 'once'` + `targetDate?: string` في واجهة `NotificationItem` |
+| `components/NotificationManager.tsx` | إضافة زر "مرة واحدة" + حقل تاريخ + منطق التضارب + جدولة once |
+| `i18n/translations.ts` | إضافة 4 مفاتيح في واجهة `Translations` |
+| `src/assets/i18n/ar.json` | إضافة 4 مفاتيح بالعربية |
+| `src/assets/i18n/en.json` | إضافة 4 مفاتيح بالإنجليزية |
+| `src/assets/i18n/*.json` (29 ملف) | ترجمة 4 مفاتيح لجميع اللغات الـ 31 via Google Translate API |
+| `scripts/add_alarm_once_keys.cjs` | **جديد** — سكريبت إضافة المفاتيح كـ Fallback إنجليزي |
+| `scripts/translate_alarm_keys.cjs` | **جديد** — سكريبت ترجمة المفاتيح لجميع اللغات عبر Google Translate |
+
+### ✅ اكتمال ترجمة جميع اللغات (31/31)
+تمت ترجمة مفاتيح `alarm_once` و `alarm_select_date` و `alarm_clear_date` و `alarm_specific_date` بنجاح لجميع اللغات الـ 31:
+
+| اللغة | alarm_once | alarm_select_date |
+|-------|-----------|-------------------|
+| 🇸🇦 ar | مرة واحدة | 📅 تاريخ محدد |
+| 🇺🇸 en | Once | 📅 Specific Date |
+| 🇩🇪 de | Einmal | 📅 Spezifisches Datum |
+| 🇪🇸 es | Una vez | 📅 Fecha específica |
+| 🇫🇷 fr | Une fois | 📅 Date précise |
+| 🇹🇷 tr | Bir kere | 📅 Belirli Tarih |
+| 🇮🇩 id | Sekali | 📅 Tanggal Tertentu |
+| 🇯🇵 ja | 一度 | 📅 特定の日付 |
+| 🇰🇷 ko | 한 번 | 📅 구체적인 날짜 |
+| 🇨🇳 zh | 一次 | 📅 具体日期 |
+| 🇷🇺 ru | Один раз | 📅 Конкретная дата |
+| + 20 لغة أخرى | ✅ | ✅ |
+
+**النتيجة:** 31/31 لغة مكتملة — 0 أخطاء ✅
+
+---
+
+## 🐛 إصلاح حقل التاريخ في نموذج المنبهات (Date Picker RTL & Modal Fix) — 2026-05-09
+
+### المشكلتان
+1. **النص المشوه:** حقل `<input type="date">` كان يعرض نصاً مشوهاً مثل `ة نس/رهش/موي` بسبب تعارض اتجاه RTL مع تنسيق التاريخ اللاتيني.
+2. **التقويم لا يفتح:** الضغط على حقل التاريخ لم يكن يفتح التقويم الأصلي بسبب تداخل أحداث النافذة المنبثقة (Modal Event Propagation / Focus Trap).
+
+### الإصلاحات المُطبّقة
+
+#### 1. إصلاح النص المشوه (RTL Date Fix)
+- إضافة ستايل مخصص `style={{ direction: 'ltr', textAlign: document.dir === 'rtl' ? 'right' : 'left' }}` لحقل التاريخ
+- هذا يجبر المتصفح على عرض التنسيق `dd/mm/yyyy` بشكل صحيح دون قلبه، مع الحفاظ على المحاذاة لليمين في RTL
+
+#### 2. إجبار التقويم على الفتح (Force Open Picker)
+- إنشاء مرجع `dateInputRef = useRef<HTMLInputElement>(null)` مربوط بحقل التاريخ
+- إنشاء دالة `handleDateClick` تستخدم `e.stopPropagation()` + `showPicker()` لتجاوز قيود الـ Modal
+- ربط الدالة بـ `onClick` على حقل الإدخال `<input>` والحاوية `<div>` التي تضم أيقونة التقويم
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/NotificationManager.tsx` | إضافة `dateInputRef` + `handleDateClick` + ستايل LTR + ربط onClick |
+
+---
+
+## 🔄 تحديث 2025-05-09: إصلاح نص التاريخ المشوه + تعميم ترجمات الإشعارات
+
+### التعديلات المنفّذة
+
+#### 1. إخفاء النص المشوه في حقل التاريخ (Desktop Date Placeholder Fix)
+- **المشكلة**: في متصفحات الديسكتوب، حقل `<input type="date">` يظهر نصاً مشوهاً (ة نس/رهش/موي) عندما يكون فارغاً
+- **الحل**: إضافة `color: formTargetDate ? 'inherit' : 'transparent'` في ستايل حقل الإدخال
+  - عندما لا يوجد تاريخ محدد → اللون شفاف (يختفي النص المشوه)
+  - عندما يختار المستخدم تاريخاً → اللون طبيعي (inherit)
+
+#### 2. تعميم ترجمات واجهة الإشعارات المفقودة (InAppNotificationsModal i18n)
+- **المشكلة**: مفاتيح واجهة الإشعارات (inAppNotifModalTitle, inAppNotifClearAll, inAppNotifMarkAllRead, إلخ) كانت موجودة فقط في ar.json و en.json وبعض اللغات
+- **الحل**: إنشاء سكربت `scripts/translate_inapp_notif_keys.cjs` لترجمة المفاتيح الـ 6 إلى جميع اللغات الـ 31 المتبقية
+- **النتيجة**: جميع ملفات اللغات (33 لغة) تحتوي الآن على المفاتيح التالية مترجمة:
+  - `inAppNotifModalTitle` → عنوان نافذة الإشعارات
+  - `inAppNotifNewBadge` → شارة "جديد"
+  - `inAppNotifMarkAllRead` → "تحديد الكل كمقروء"
+  - `inAppNotifClearAll` → "مسح الكل"
+  - `inAppNotifEmpty` → "لا توجد إشعارات بعد"
+  - `inAppNotifEmptyDesc` → "ستظهر إشعاراتك هنا"
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `components/NotificationManager.tsx` | إضافة خدعة CSS `color: transparent` لإخفاء النص المشوه |
+| `scripts/translate_inapp_notif_keys.cjs` | سكربت ترجمة آلية جديد |
+| `src/assets/i18n/*.json` (20 ملف) | إضافة مفاتيح InAppNotificationsModal المترجمة |

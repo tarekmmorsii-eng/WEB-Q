@@ -699,5 +699,15 @@
   "notif_surah_reminder": "Irantansi Surah {surahName}",
   "notif_surah_kahf_body": "Akoko lati ka Surah {surahName} ni Ojo Jumok",
   "notif_surah_mulk_body": "Akoko lati ka Surah {surahName} kuro sun",
-  "notif_surah_baqarah_body": "Akoko lati ka Surah {surahName}"
+  "notif_surah_baqarah_body": "Akoko lati ka Surah {surahName}",
+  "alarm_once": "Ni ẹẹkan",
+  "alarm_select_date": "📅 Ọjọ pato",
+  "alarm_clear_date": "Ko Ọjọ kuro",
+  "alarm_specific_date": "Ọjọ pato",
+  "inAppNotifModalTitle": "Awọn iwifunni",
+  "inAppNotifNewBadge": "Tuntun",
+  "inAppNotifMarkAllRead": "Samisi gbogbo bi o ti ka",
+  "inAppNotifClearAll": "Ko gbogbo rẹ kuro",
+  "inAppNotifEmpty": "Ko si awọn iwifunni sibẹsibẹ",
+  "inAppNotifEmptyDesc": "Awọn iwifunni rẹ yoo han nibi"
 }

@@ -699,5 +699,15 @@
   "notif_surah_reminder": "Nhắc nhở Surah {surahName}",
   "notif_surah_kahf_body": "Đã đến lúc đọc Surah {surahName} vào thứ Sáu",
   "notif_surah_mulk_body": "Đã đến lúc đọc Surah {surahName} trước khi ngủ",
-  "notif_surah_baqarah_body": "Đã đến lúc đọc Surah {surahName}"
+  "notif_surah_baqarah_body": "Đã đến lúc đọc Surah {surahName}",
+  "alarm_once": "Một lần",
+  "alarm_select_date": "📅 Ngày cụ thể",
+  "alarm_clear_date": "Xóa ngày",
+  "alarm_specific_date": "Ngày cụ thể",
+  "inAppNotifModalTitle": "Thông báo",
+  "inAppNotifNewBadge": "Mới",
+  "inAppNotifMarkAllRead": "Đánh dấu tất cả là đã đọc",
+  "inAppNotifClearAll": "Xóa tất cả",
+  "inAppNotifEmpty": "Chưa có thông báo nào",
+  "inAppNotifEmptyDesc": "Thông báo của bạn sẽ xuất hiện ở đây"
 }

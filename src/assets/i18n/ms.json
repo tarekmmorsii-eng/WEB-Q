@@ -699,5 +699,15 @@
   "notif_surah_reminder": "Peringatan Surah {surahName}",
   "notif_surah_kahf_body": "Masanya membaca Surah {surahName} pada hari Jumaat",
   "notif_surah_mulk_body": "Masanya membaca Surah {surahName} sebelum tidur",
-  "notif_surah_baqarah_body": "Masanya membaca Surah {surahName}"
+  "notif_surah_baqarah_body": "Masanya membaca Surah {surahName}",
+  "alarm_once": "sekali",
+  "alarm_select_date": "📅 Tarikh Tertentu",
+  "alarm_clear_date": "Tarikh Kosong",
+  "alarm_specific_date": "Tarikh Tertentu",
+  "inAppNotifModalTitle": "Pemberitahuan",
+  "inAppNotifNewBadge": "baru",
+  "inAppNotifMarkAllRead": "Tandai semua sebagai dibaca",
+  "inAppNotifClearAll": "Kosongkan semua",
+  "inAppNotifEmpty": "Tiada pemberitahuan lagi",
+  "inAppNotifEmptyDesc": "Pemberitahuan anda akan dipaparkan di sini"
 }

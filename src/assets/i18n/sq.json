@@ -699,5 +699,15 @@
   "notif_surah_reminder": "Kujtesë për Surën {surahName}",
   "notif_surah_kahf_body": "Është koha për të lexuar Surën {surahName} të premten",
   "notif_surah_mulk_body": "Është koha për të lexuar Surën {surahName} para gjumit",
-  "notif_surah_baqarah_body": "Është koha për të lexuar Surën {surahName}"
+  "notif_surah_baqarah_body": "Është koha për të lexuar Surën {surahName}",
+  "alarm_once": "Një herë",
+  "alarm_select_date": "📅 Data specifike",
+  "alarm_clear_date": "Data e qartë",
+  "alarm_specific_date": "Data specifike",
+  "inAppNotifModalTitle": "Njoftimet",
+  "inAppNotifNewBadge": "E re",
+  "inAppNotifMarkAllRead": "Shënoni të gjitha si të lexuara",
+  "inAppNotifClearAll": "Pastro të gjitha",
+  "inAppNotifEmpty": "Nuk ka ende njoftime",
+  "inAppNotifEmptyDesc": "Njoftimet tuaja do të shfaqen këtu"
 }

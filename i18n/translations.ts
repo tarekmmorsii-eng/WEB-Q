@@ -105,6 +105,10 @@ export interface Translations {
     notif_surah_kahf_body: string;
     notif_surah_mulk_body: string;
     notif_surah_baqarah_body: string;
+    alarm_once: string;
+    alarm_select_date: string;
+    alarm_clear_date: string;
+    alarm_specific_date: string;
     daily: string;
     addNotification: string;
     editNotification: string;

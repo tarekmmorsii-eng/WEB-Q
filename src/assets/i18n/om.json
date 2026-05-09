@@ -704,5 +704,15 @@
   "notif_surah_reminder": "Yaadachiisa Suura {surahName}",
   "notif_surah_kahf_body": "Guyya Jimaa Suura {surahName} dubbisuuf sa'aati",
   "notif_surah_mulk_body": "Hinyaatin dura Suura {surahName} dubbisuuf sa'aati",
-  "notif_surah_baqarah_body": "Suura {surahName} dubbisuuf sa'aati"
+  "notif_surah_baqarah_body": "Suura {surahName} dubbisuuf sa'aati",
+  "alarm_once": "Al tokko",
+  "alarm_select_date": "📅 Guyyaa Addaa",
+  "alarm_clear_date": "Guyyaa Qulqulleessi",
+  "alarm_specific_date": "Guyyaa Addaa",
+  "inAppNotifModalTitle": "Beeksisa",
+  "inAppNotifNewBadge": "Haaraa",
+  "inAppNotifMarkAllRead": "Hundaa akka dubbifameetti mallatteessi",
+  "inAppNotifClearAll": "Hundaa qulqulleessi",
+  "inAppNotifEmpty": "Hanga ammaatti beeksisni hin jiru",
+  "inAppNotifEmptyDesc": "Beeksisni keessan asitti ni mul'ata"
 }
