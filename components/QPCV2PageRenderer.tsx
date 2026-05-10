@@ -1021,10 +1021,36 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     idsToReveal = info.revealKeys;
                 }
             }
+        } else if (surah && ayah && mode === ViewMode.TOGGLE_FIRST_WORD && toggleState === 1) {
+            const info = ayahWordMap.get(`${surah}-${ayah}`);
+            if (info) {
+                const wordIndex = info.revealKeys.indexOf(id);
+                if (wordIndex !== -1) {
+                    const stops = info.stopIndices || [];
+                    const prevStop = stops.filter((s: number) => s < wordIndex).pop();
+                    const start = (prevStop !== undefined) ? prevStop + 1 : 0;
+                    const nextStop = stops.find((s: number) => s >= wordIndex);
+                    const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
+                    idsToReveal = info.revealKeys.slice(start, end + 1);
+                }
+            }
+        } else if (surah && ayah && mode === ViewMode.TOGGLE_LAST_WORD && toggleState === 1) {
+            const info = ayahWordMap.get(`${surah}-${ayah}`);
+            if (info) {
+                const wordIndex = info.revealKeys.indexOf(id);
+                if (wordIndex !== -1) {
+                    const stops = info.stopIndices || [];
+                    const prevStop = stops.filter((s: number) => s < wordIndex).pop();
+                    const start = (prevStop !== undefined) ? prevStop + 1 : 0;
+                    const nextStop = stops.find((s: number) => s >= wordIndex);
+                    const end = (nextStop !== undefined) ? nextStop : (info.revealKeys.length - 1);
+                    idsToReveal = info.revealKeys.slice(start, end + 1);
+                }
+            }
         }
         setRevealedIndices(prev => {
             const next = new Set(prev);
-            idsToReveal.forEach(i => next.add(i));
+            idsToReveal.forEach((revealId: string) => next.add(revealId));
             return next;
         });
     }, [mode, toggleState, ayahWordMap, setRevealedIndices]);
@@ -1062,6 +1088,92 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 return false;
         }
     }, [mode, toggleState, pageData, revealedIndices, randomMasks, ayahWordMap, getId]);
+
+    // =============================================================
+    // UNIFIED AYAH SHADOW: DOM Overlays for HIDE_ALL_AYAHS mode
+    // Creates a single continuous shadow block per ayah per line
+    // =============================================================
+    useLayoutEffect(() => {
+        const container = linesContainerRef.current;
+        if (!container) return;
+
+        // 1. Remove old shadow overlays
+        container.querySelectorAll('.ayah-shadow-overlay').forEach(el => el.remove());
+
+        // 2. Only active in ayah hiding modes (unified shadow) + TOGGLE_FIRST_WORD state 1
+        if (mode !== ViewMode.HIDE_ALL_AYAHS && mode !== ViewMode.HIDE_RANDOM_AYAHS && !(mode === ViewMode.TOGGLE_FIRST_WORD) && !(mode === ViewMode.TOGGLE_LAST_WORD)) return;
+
+        // 3. Get all unique ayahs on this page
+        const ayahKeys = Array.from(ayahWordMap.keys());
+
+        // 4. Process each line
+        const lineEls = container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]');
+
+        lineEls.forEach((lineEl) => {
+            const line = lineEl as HTMLElement;
+            line.style.position = 'relative';
+
+            ayahKeys.forEach((key) => {
+                const [surahStr, ayahStr] = key.split('-');
+
+                // Find hidden words of this ayah in this line
+                const wordEls = line.querySelectorAll<HTMLElement>(`[data-word-surah="${surahStr}"][data-word-ayah="${ayahStr}"]`);
+
+                if (wordEls.length === 0) return;
+
+                // Get ayah info for reveal state checking
+                const info = ayahWordMap.get(key);
+                if (!info || info.revealKeys.length === 0) return;
+
+                // Check if ALL words in this ayah are fully revealed → skip entirely
+                const allRevealed = info.revealKeys.every((rk: string) => revealedIndices.has(rk));
+                if (allRevealed) return;
+
+                // Filter to only HIDDEN (unrevealed) word elements using data-reveal-key
+                const hiddenWordEls: HTMLElement[] = [];
+                wordEls.forEach(wordEl => {
+                    const revealKey = wordEl.getAttribute('data-reveal-key');
+                    // If word has a revealKey and it's NOT revealed yet → it's hidden
+                    if (revealKey && !revealedIndices.has(revealKey)) {
+                        hiddenWordEls.push(wordEl);
+                    }
+                });
+
+                if (hiddenWordEls.length === 0) return;
+
+                // Calculate bounding box relative to the line for hidden words only
+                const lineRect = line.getBoundingClientRect();
+                let minLeft = Infinity, maxRight = -Infinity;
+
+                hiddenWordEls.forEach(wordEl => {
+                    const r = wordEl.getBoundingClientRect();
+                    minLeft = Math.min(minLeft, r.left);
+                    maxRight = Math.max(maxRight, r.right);
+                });
+
+                if (minLeft === Infinity) return;
+
+                const finalLeft = Math.max(0, minLeft - lineRect.left - 3);
+                const finalRight = Math.min(lineRect.width, maxRight - lineRect.left + 3);
+
+                // Create overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'ayah-shadow-overlay';
+                overlay.style.position = 'absolute';
+                overlay.style.top = '50%';
+                overlay.style.transform = 'translateY(-50%)';
+                overlay.style.height = '85%';
+                overlay.style.left = `${finalLeft}px`;
+                overlay.style.width = `${finalRight - finalLeft}px`;
+                overlay.style.backgroundColor = isDarkMode ? '#1e293b' : '#334155';
+                overlay.style.borderRadius = '4px';
+                overlay.style.zIndex = '5';
+                overlay.style.pointerEvents = 'none';
+
+                line.appendChild(overlay);
+            });
+        });
+    }, [mode, pageData, revealedIndices, isDarkMode, toggleState, deviceType, orientation, ayahWordMap, randomMasks]);
 
     // --- Prefetching Neighbor Pages ---
     useEffect(() => {
@@ -1443,11 +1555,14 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                     id={isActive && word.surah === 1 && word.ayah === 2 && word.word === 1 ? 'tour-word-long-press' : undefined}
                                                     data-word-surah={word.surah}
                                                     data-word-ayah={word.ayah}
+                                                    data-reveal-key={shouldHide ? wordId : undefined}
                                                     className={clsx(
                                                         `qpc-v2-text cursor-pointer transition-colors duration-300 relative`,
                                                         (activeWord?.surah === word.surah && activeWord?.ayah === word.ayah && activeWord?.word === word.word) && "bg-amber-300 dark:bg-amber-700/80 rounded px-1",
                                                         shouldHide
-                                                            ? "text-transparent bg-slate-800 rounded-[4px]"
+                                                            ? (mode === ViewMode.HIDE_RANDOM_WORDS
+                                                                ? "rounded-sm" // Per-word shadow: bg applied via style below
+                                                                : "text-transparent") // Unified shadow: no bg on individual words
                                                             : "hover:text-amber-600 outline-none"
                                                     )}
                                                     style={{
@@ -1455,7 +1570,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         lineHeight: '1.2',
                                                         flexShrink: line.isCentered ? 0 : 1,
                                                         color: shouldHide ? 'transparent' : (isDarkMode ? '#f5f5f5' : '#1a1a1a'),
-                                                        zIndex: 10
+                                                        backgroundColor: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS
+                                                            ? (isDarkMode ? '#1e293b' : '#334155')
+                                                            : undefined,
+                                                        borderRadius: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS ? '3px' : undefined,
+                                                        zIndex: 10,
                                                     }}
                                                     onPointerDown={(e) => {
                                                         isLongPressRef.current = false;
@@ -1490,7 +1609,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
                                                                             setRevealedIndices(prev => {
                                                                                 const next = new Set(prev);
-                                                                                idsToReveal.forEach(i => next.add(i));
+                                                                                idsToReveal.forEach((revealId: string) => next.add(revealId));
                                                                                 return next;
                                                                             });
                                                                             if (navigator.vibrate) navigator.vibrate(50);
@@ -1656,9 +1775,17 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         }} />
                                                     )}
                                                 </span>
-                                                {!isSpecialPage && !line.isCentered && wIdx < line.words.length - 1 && (
-                                                    <span className="flex-grow" style={{ minWidth: deviceType === 'mobile' ? '1px' : '4px' }} />
-                                                )}
+                                                {!isSpecialPage && !line.isCentered && wIdx < line.words.length - 1 && (() => {
+                                                    // In unified shadow modes: skip spacer between hidden words of same ayah
+                                                    if (mode === ViewMode.HIDE_ALL_AYAHS || mode === ViewMode.HIDE_RANDOM_AYAHS || (mode === ViewMode.TOGGLE_FIRST_WORD && toggleState === 1) || (mode === ViewMode.TOGGLE_LAST_WORD && toggleState === 1)) {
+                                                        const nextWord = line.words[wIdx + 1];
+                                                        const nextShouldHide = nextWord && isHidden(idx, wIdx + 1) && !nextWord.isEnd;
+                                                        if (shouldHide && nextShouldHide && word.surah === nextWord.surah && word.ayah === nextWord.ayah) {
+                                                            return null;
+                                                        }
+                                                    }
+                                                    return <span className="flex-grow" style={{ minWidth: deviceType === 'mobile' ? '1px' : '4px' }} />;
+                                                })()}
                                             </React.Fragment>
                                         );
                                     })}
