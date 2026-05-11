@@ -2161,3 +2161,39 @@ useEffect(() => {
 - Service Worker يُرسل الإشعار للواجهة عبر `postMessage` لحفظه
 - الإشعارات في المقدمة تُحفظ مباشرة من `onMessage`
 - مركز الإشعارات يعرض آخر 20 إشعار مع وقت نسبي وتحديد كمقروء
+
+---
+
+## 🔗 توحيد مسار صلاحيات الإشعارات (Unified Permission Flow) — 2026-05-11
+
+### الهدف
+تحسين تجربة المستخدم (UX) بربط الإشعارات الداخلية (Browser) والخارجية (Firebase Push) في مسار تسلسلي واحد.
+
+### الملف المُعدَّل: `components/NotificationManager.tsx`
+
+#### ما تم تنفيذه:
+1. **استيراد `usePushNotifications`**: تم إضافة استيراد الهوك في أعلى الملف
+2. **تهيئة الهوك**: تم إضافة `usePushNotifications()` داخل المكون لاستخراج `requestPushPermission` و `pushPermissionStatus` و `isPushSupported`
+3. **ربط تسلسلي (Chained)**: في دالة `onChange` لـ checkbox "إشعارات المتصفح"، بعد نجاح `Notification.requestPermission()`، يتم استدعاء `requestPushPermission()` تلقائياً
+
+#### التسلسل الجديد:
+```
+المستخدم يفعّل "إشعارات المتصفح" ← يظهر طلب المتصفح (Browser Permission)
+    ↓ إذا وافق ↓
+يُطلب تلقائياً صلاحية Firebase Push (FCM Token)
+    ↓ إذا نجح ↓
+كلا النظامين مفعّلان ✓
+```
+
+#### الكود المضاف (ملخص):
+```typescript
+// الخطوة 1: طلب صلاحية الإشعارات الداخلية
+const permission = await Notification.requestPermission();
+if (permission !== 'granted') { return; }
+
+// الخطوة 2: طلب صلاحية الإشعارات الخارجية تسلسلياً
+if (isPushSupported && pushPermissionStatus !== 'granted') {
+    const pushResult = await requestPushPermission();
+    // النجاح أو الفشل لا يؤثر على الإشعارات الداخلية
+}
+```

@@ -8,6 +8,7 @@ import { getAyahPage, getPageAyahRange, getSurahsForPages } from '../services/qu
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { formatTimeLocalized } from '../i18n/translations';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -40,6 +41,13 @@ function SurahListSummary({ startPage, endPage, language }: { startPage: number,
 
 export default function NotificationManager({ isOpen, onClose, notifications, onSave, onNavigate, t, language }: NotificationManagerProps) {
     const isArabic = language === 'ar';
+
+    // ⭐ هوك الإشعارات الخارجية (Firebase Push) - لربطه بالإشعارات الداخلية
+    const {
+        requestPermission: requestPushPermission,
+        permissionStatus: pushPermissionStatus,
+        isPushSupported
+    } = usePushNotifications();
 
     // ⭐ حل أسماء المنبهات مع دعم i18n الديناميكي
     const resolveName = (name: string, surahNumber?: number): string => {
@@ -1435,10 +1443,27 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     alert('Browser does not support notifications');
                                                     return;
                                                 }
+                                                // ⭐ الخطوة 1: طلب صلاحية الإشعارات الداخلية (Browser)
                                                 const permission = await Notification.requestPermission();
                                                 setPermissionStatus(permission);
                                                 if (permission !== 'granted') {
                                                     alert(t.permissionRequired);
+                                                    return; // توقف إذا رُفضت الصلاحية الداخلية
+                                                }
+
+                                                // ⭐ الخطوة 2: طلب صلاحية الإشعارات الخارجية (Firebase Push) تسلسلياً
+                                                if (isPushSupported && pushPermissionStatus !== 'granted') {
+                                                    console.log('[Notifications] ✅ تم قبول الإشعارات الداخلية، جاري طلب الإشعارات الخارجية...');
+                                                    try {
+                                                        const pushResult = await requestPushPermission();
+                                                        if (pushResult.success) {
+                                                            console.log('[Notifications] ✅ تم تفعيل الإشعارات الداخلية + الخارجية بنجاح');
+                                                        } else {
+                                                            console.warn('[Notifications] ⚠️ فشل تفعيل الإشعارات الخارجية:', pushResult.error);
+                                                        }
+                                                    } catch (pushErr) {
+                                                        console.warn('[Notifications] ⚠️ خطأ في الإشعارات الخارجية:', pushErr);
+                                                    }
                                                 }
                                             }
                                         }}
