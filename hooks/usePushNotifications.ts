@@ -2,6 +2,10 @@
  * هوك الإشعارات الخارجية (Push Notifications)
  * يتعامل مع طلب الصلاحيات وتسجيل الأجهزة لاستقبال الإشعارات
  * يدعم كل من الويب (Firebase) والأندرويد (Capacitor)
+ * 
+ * ⭐ يدعم ربط التوكن مع لغة المستخدم (Localization Routing)
+ * يتم حفظ { fcmToken, userLang } في localStorage تحت اسم push_notification_prefs
+ * عند تغيير المستخدم للغته، يتم تحديث userLang تلقائياً
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -10,10 +14,48 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { getToken, onMessage } from 'firebase/messaging';
 import { initMessaging } from '../utils/firebase-config';
 import { addNotificationToStore } from './useNotificationStore';
+import { Language } from '../i18n/translations';
 
 // مفتاح التخزين المحلي لحالة الإشعارات
 const PUSH_PERMISSION_KEY = 'quran_push_permission_granted';
 const PUSH_TOKEN_KEY = 'quran_push_fcm_token';
+
+// ⭐ مفتاح حفظ إعدادات الإشعارات المرتبطة باللغة (Localization Routing)
+const PUSH_PREFS_KEY = 'push_notification_prefs';
+
+/**
+ * حفظ كائن الارتباط (Token + Language) في localStorage
+ */
+function savePushPrefs(token: string, lang: string) {
+  try {
+    const prefs = { fcmToken: token, userLang: lang };
+    localStorage.setItem(PUSH_PREFS_KEY, JSON.stringify(prefs));
+    console.log(`[Push Sync] 🔄 Token synced with language: ${lang}`, prefs);
+  } catch (e) {
+    console.error('[Push Sync] ❌ Failed to save push prefs:', e);
+  }
+}
+
+/**
+ * جلب إعدادات الإشعارات المحفوظة
+ */
+export function getPushPrefs(): { fcmToken: string; userLang: string } | null {
+  try {
+    const raw = localStorage.getItem(PUSH_PREFS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('[Push Sync] ❌ Failed to read push prefs:', e);
+  }
+  return null;
+}
+
+/**
+ * واجهة معاملات الهوك
+ */
+interface UsePushNotificationsOptions {
+  /** اللغة الحالية للتطبيق (لربط التوكن باللغة) */
+  language: Language;
+}
 
 /**
  * حالة الإشعارات
@@ -32,8 +74,12 @@ interface PushNotificationResult {
 /**
  * هوك usePushNotifications
  * يدير طلب صلاحيات الإشعارات وتسجيل الأجهزة
+ * 
+ * @param options - خيارات الهوك، يجب تمرير { language } لربط التوكن بلغة المستخدم
  */
-export function usePushNotifications() {
+export function usePushNotifications(options?: UsePushNotificationsOptions) {
+  const currentLanguage = options?.language || 'ar';
+  
   const [permissionStatus, setPermissionStatus] = useState<PushPermissionStatus>('prompt');
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +131,9 @@ export function usePushNotifications() {
         localStorage.setItem(PUSH_TOKEN_KEY, token.value);
         localStorage.setItem(PUSH_PERMISSION_KEY, 'granted');
         setPermissionStatus('granted');
+        
+        // ⭐ ربط التوكن باللغة الحالية وحفظه في push_notification_prefs
+        savePushPrefs(token.value, currentLanguage);
       });
 
       // الاستماع لأخطاء التسجيل
@@ -117,7 +166,7 @@ export function usePushNotifications() {
       console.error('[Push] خطأ في تهيئة الإشعارات الأصلية:', err);
       return { success: false, error: err.message || 'خطأ غير معروف' };
     }
-  }, []);
+  }, [currentLanguage]);
 
   /**
    * تهيئة الإشعارات على الويب (Firebase)
@@ -166,6 +215,9 @@ export function usePushNotifications() {
         setFcmToken(token);
         localStorage.setItem(PUSH_TOKEN_KEY, token);
         localStorage.setItem(PUSH_PERMISSION_KEY, 'granted');
+        
+        // ⭐ ربط التوكن باللغة الحالية وحفظه في push_notification_prefs
+        savePushPrefs(token, currentLanguage);
       } else {
         return { success: false, error: 'فشل في الحصول على Token' };
       }
@@ -217,7 +269,7 @@ export function usePushNotifications() {
       console.error('[Push] خطأ في تهيئة إشعارات الويب:', err);
       return { success: false, error: err.message || 'خطأ غير معروف' };
     }
-  }, []);
+  }, [currentLanguage]);
 
   /**
    * طلب صلاحية الإشعارات وتسجيل الجهاز
@@ -265,6 +317,36 @@ export function usePushNotifications() {
       setFcmToken(savedToken);
     }
   }, [checkPermissionStatus]);
+
+  /**
+   * ⭐ المراقبة التلقائية لتغيير اللغة (Re-sync on Language Change)
+   * 
+   * عندما يغيّر المستخدم لغة التطبيق (مثلاً من العربية إلى البنغالية)،
+   * وكان يمتلك FCM Token مسبقاً، يتم تحديث قيمة userLang داخل localStorage
+   * لتصبح اللغة الجديدة بدلاً من القديمة.
+   * 
+   * هذا يضمن أن أي إشعار مستقبلي سيُرسل باللغة الصحيحة للمستخدم.
+   */
+  useEffect(() => {
+    // لا نعمل شيء إذا لم يكن هناك توكن محفوظ
+    const savedToken = localStorage.getItem(PUSH_TOKEN_KEY);
+    if (!savedToken) return;
+
+    // جلب الإعدادات المحفوظة الحالية
+    const existingPrefs = getPushPrefs();
+
+    // إذا كانت اللغة الجديدة مختلفة عن اللغة المحفوظة، حدّث
+    if (existingPrefs && existingPrefs.userLang !== currentLanguage) {
+      const oldLang = existingPrefs.userLang;
+      savePushPrefs(savedToken, currentLanguage);
+      console.log(
+        `[Push Sync] 🌐 Language changed: ${oldLang} → ${currentLanguage}. Updated push_notification_prefs.`
+      );
+    } else if (!existingPrefs) {
+      // إذا كان هناك توكن لكن لا توجد إعدادات محفوظة (حالة ترقية من نسخة قديمة)
+      savePushPrefs(savedToken, currentLanguage);
+    }
+  }, [currentLanguage]);
 
   return {
     // الحالة

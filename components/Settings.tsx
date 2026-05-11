@@ -89,7 +89,7 @@ export default function Settings({
         fcmToken,
         requestPermission: requestPushPermission,
         isPushSupported
-    } = usePushNotifications();
+    } = usePushNotifications({ language: currentLanguage });
 
     const {
         installPrompt,

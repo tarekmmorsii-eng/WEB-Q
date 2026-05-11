@@ -999,6 +999,58 @@ am, bn, bs, de, en, es, fa, fr, ha, hi, id, ja, kk, ko, ku, ms, om, ru, rw, si, 
 
 ---
 
+## 🌐 ربط الإشعارات الخارجية بلغة المستخدم (Localization Routing) — 2026-05-11
+
+### الهدف
+ربط الـ FCM Token الخاص بالمستخدم باللغة الحالية النشطة في التطبيق، وتحديث هذا الربط ديناميكياً إذا غيّر المستخدم لغته. هذا يُمهّد لإرسال الإشعارات بلغة المستخدم الصحيحة مستقبلاً.
+
+### ما تم إنجازه
+
+#### 1. التقاط اللغة الحالية وربطها بالتوكن
+- تم تعديل `usePushNotifications` ليقبل معامل `{ language }` من نوع `Language`
+- عند استخراج الـ Token بنجاح (ويب أو أندرويد)، يتم إنشاء كائن الارتباط:
+  ```typescript
+  { fcmToken: "...", userLang: "ar" }
+  ```
+- يتم حفظ هذا الكائن في `localStorage` تحت اسم `push_notification_prefs`
+
+#### 2. المراقبة التلقائية (Re-sync on Language Change)
+- تم إضافة `useEffect` يراقب المتغير `currentLanguage`
+- إذا غيّر المستخدم لغته (مثلاً من العربية إلى البنغالية) وكان يمتلك Token مسبقاً، يتم تحديث `userLang` تلقائياً في localStorage من `'ar'` إلى `'bn'`
+- يعالج أيضاً حالة الترقية من نسخة قديمة (توكن موجود بدون prefs)
+
+#### 3. الطباعة التشخيصية (Console Debugging)
+- عند إنشاء التوكن لأول مرة:
+  ```
+  [Push Sync] 🔄 Token synced with language: ar {fcmToken: "...", userLang: "ar"}
+  ```
+- عند تغيير اللغة:
+  ```
+  [Push Sync] 🌐 Language changed: ar → bn. Updated push_notification_prefs.
+  ```
+
+#### 4. دالة مساعدة مُصدَّرة
+- `getPushPrefs()`: دالة مُصدَّرة (exported) تُرجع كائن `{ fcmToken, userLang }` من localStorage
+- يمكن استخدامها مستقبلاً عند إرسال الإشعارات من السيرفر لمعرفة لغة المستخدم
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `hooks/usePushNotifications.ts` | إضافة `UsePushNotificationsOptions` + `savePushPrefs()` + `getPushPrefs()` + `useEffect` لمراقبة اللغة |
+| `components/NotificationManager.tsx` | تمرير `language` للهوك: `usePushNotifications({ language })` |
+| `components/Settings.tsx` | تمرير `currentLanguage` للهوك: `usePushNotifications({ language: currentLanguage })` |
+
+### ملخص تقني
+```
+localStorage:
+  push_notification_prefs = { fcmToken: "xxx", userLang: "ar" }
+  
+عند تغيير اللغة:
+  push_notification_prefs.userLang ← "bn" (تلقائياً)
+```
+
+---
+
 ## 🌍 ترجمة مفاتيح الإشعارات الخارجية لجميع اللغات — 2026-05-11
 
 ### المشكلة

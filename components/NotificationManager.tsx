@@ -43,11 +43,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const isArabic = language === 'ar';
 
     // ⭐ هوك الإشعارات الخارجية (Firebase Push) - لربطه بالإشعارات الداخلية
+    // ⭐ يتم تمرير اللغة لربط التوكن بها (Localization Routing)
     const {
         requestPermission: requestPushPermission,
         permissionStatus: pushPermissionStatus,
         isPushSupported
-    } = usePushNotifications();
+    } = usePushNotifications({ language: language as any });
 
     // ⭐ حل أسماء المنبهات مع دعم i18n الديناميكي
     const resolveName = (name: string, surahNumber?: number): string => {
