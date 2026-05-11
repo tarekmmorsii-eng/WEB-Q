@@ -1018,7 +1018,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                             <div className="space-y-3">
                                 <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
                                     <Bell size={18} className="text-purple-500" />
-                                    {t.pushNotifTitle || 'تفعيل الإشعارات الخارجية'}
+                                    {t.pushNotifTitle}
                                 </h3>
 
                                 <button
@@ -1055,10 +1055,10 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                                     ? "text-emerald-800 dark:text-emerald-200"
                                                     : "text-purple-800 dark:text-purple-200"
                                             )}>
-                                                {pushPermission === 'granted' ? (t.pushNotifActive || 'الإشعارات مفعّلة ✓') : (t.pushNotifTitle || 'تفعيل الإشعارات الخارجية للمراجعة')}
+                                                {pushPermission === 'granted' ? t.pushNotifActive : t.pushNotifTitle}
                                             </span>
                                             <span className="text-[10px] opacity-60 mt-0.5">
-                                                {pushPermission === 'granted' ? (t.pushNotifActiveDesc || 'ستصلك تنبيهات المراجعة') : (t.pushNotifDesc || 'لتصلك تنبيهات المراجعة والتحفيز')}
+                                                {pushPermission === 'granted' ? t.pushNotifActiveDesc : t.pushNotifDesc}
                                             </span>
                                         </div>
                                     </div>
@@ -1153,17 +1153,17 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                         <Bell size={32} className="text-purple-600 dark:text-purple-400" />
                                     </div>
                                     <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                                        {t.pushNotifConsentTitle || 'تفعيل الإشعارات'}
+                                        {t.pushNotifConsentTitle}
                                     </h3>
                                     <p className="text-sm text-[var(--text-primary)] opacity-70 leading-relaxed">
-                                        {t.pushNotifConsentBody || 'لتصلك تنبيهات المراجعة، يرجى الموافقة على الطلب الذي سيظهر من المتصفح'}
+                                        {t.pushNotifConsentBody}
                                     </p>
                                     <div className="flex gap-3 w-full mt-2">
                                         <button
                                             onClick={() => setShowPushConsentModal(false)}
                                             className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all font-medium text-sm"
                                         >
-                                            {t.pushNotifConsentCancel || 'إلغاء'}
+                                            {t.pushNotifConsentCancel}
                                         </button>
                                         <button
                                             onClick={async () => {
@@ -1181,7 +1181,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                         >
                                             {isPushLoading ? (
                                                 <Loader2 size={18} className="animate-spin mx-auto" />
-                                            ) : (t.pushNotifConsentAgree || 'موافق')}
+                                            ) : t.pushNotifConsentAgree}
                                         </button>
                                     </div>
                                 </div>

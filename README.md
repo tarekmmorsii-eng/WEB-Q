@@ -999,6 +999,44 @@ am, bn, bs, de, en, es, fa, fr, ha, hi, id, ja, kk, ko, ku, ms, om, ru, rw, si, 
 
 ---
 
+## 🌍 ترجمة مفاتيح الإشعارات الخارجية لجميع اللغات — 2026-05-11
+
+### المشكلة
+تم إضافة مفاتيح الإشعارات الخارجية (Push Notifications) في 31 ملف لغة، لكن القيم كانت بالإنجليزية في جميع الملفات بدلاً من ترجمتها للغة الهدف.
+
+### المفاتيح الثمانية المُترجَمة
+| المفتاح | الوصف |
+|---------|-------|
+| `pushNotifTitle` | عنوان تفعيل الإشعارات |
+| `pushNotifActive` | حالة تفعيل الإشعارات |
+| `pushNotifDesc` | وصف الإشعارات |
+| `pushNotifActiveDesc` | وصف الحالة النشطة |
+| `pushNotifConsentTitle` | عنوان نافذة الموافقة |
+| `pushNotifConsentBody` | نص نافذة الموافقة |
+| `pushNotifConsentAgree` | زر الموافقة |
+| `pushNotifConsentCancel` | زر الإلغاء |
+
+### الحل
+تم إنشاء سكريبت `scripts/translate_push_notif_keys.cjs` يحتوي على ترجمات يدوية دقيقة لـ 30 لغة (الإنجليزية بقيت كما هي).
+
+### النتائج
+| المؤشر | القيمة |
+|--------|--------|
+| ملفات محدّثة | **30** ✅ |
+| ملفات متخطاة (en) | **1** |
+| أخطاء | **0** |
+
+### اللغات المُترجَمة
+ar, ru, bn, ur, fr, de, es, tr, id, hi, fa, ja, ko, zh, ms, ta, tl, sw, ha, am, om, rw, si, bs, kk, ku, sq, uz, vi, yo
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `scripts/translate_push_notif_keys.cjs` | **جديد** — سكريبت ترجمة يدوية لـ 30 لغة |
+| `src/assets/i18n/*.json` (30 ملف) | ترجمة 8 مفاتيح إشعارات لكل لغة |
+
+---
+
 ## 🔔 إعادة ترتيب زر الإشعارات الخارجية في صفحة الإعدادات — 2026-05-11
 
 ### التغيير
@@ -2197,3 +2235,41 @@ if (isPushSupported && pushPermissionStatus !== 'granted') {
     // النجاح أو الفشل لا يؤثر على الإشعارات الداخلية
 }
 ```
+
+---
+
+## 🌐 إصلاح ربط قسم الإشعارات الخارجية بنظام الترجمة (Push Notifications i18n Fix) — 2026-05-11
+
+### المشكلة
+قسم "تفعيل الإشعارات الخارجية" في `Settings.tsx` والنافذة المنبثقة (Modal) التابعة له كانا يحتويان على نصوص عربية ثابتة (Hardcoded) كـ Fallback بعد عامل `||`، مما يعني أن النصوص تظهر بالعربية حتى عند تغيير لغة التطبيق إلى لغة أخرى مثل البنغالية.
+
+### الحل المُنفّذ
+
+#### 1. التحقق من مفاتيح الترجمة
+تم التأكد من أن جميع مفاتيح الترجمة الخاصة بالإشعارات الخارجية موجودة في جميع ملفات اللغات الـ 31:
+- `pushNotifTitle` — عنوان الزر
+- `pushNotifActive` — نص عند تفعيل الإشعارات
+- `pushNotifDesc` — وصف الزر
+- `pushNotifActiveDesc` — وصف عند التفعيل
+- `pushNotifConsentTitle` — عنوان النافذة المنبثقة
+- `pushNotifConsentBody` — نص النافذة المنبثقة
+- `pushNotifConsentCancel` — زر الرفض
+- `pushNotifConsentAgree` — زر القبول
+
+#### 2. إزالة النصوص الثابتة من Settings.tsx
+تم إزالة 7 نصوص عربية ثابتة كانت تظهر كـ Fallback:
+| قبل الإصلاح | بعد الإصلاح |
+|-------------|-------------|
+| `{t.pushNotifTitle \|\| 'تفعيل الإشعارات الخارجية'}` | `{t.pushNotifTitle}` |
+| `{t.pushNotifActive \|\| 'الإشعارات مفعّلة ✓'}` | `{t.pushNotifActive}` |
+| `{t.pushNotifDesc \|\| 'لتصلك تنبيهات المراجعة والتحفيز'}` | `{t.pushNotifDesc}` |
+| `{t.pushNotifActiveDesc \|\| 'ستصلك تنبيهات المراجعة'}` | `{t.pushNotifActiveDesc}` |
+| `{t.pushNotifConsentTitle \|\| 'تفعيل الإشعارات'}` | `{t.pushNotifConsentTitle}` |
+| `{t.pushNotifConsentBody \|\| 'لتصلك تنبيهات المراجعة...'}` | `{t.pushNotifConsentBody}` |
+| `{t.pushNotifConsentCancel \|\| 'إلغاء'}` | `{t.pushNotifConsentCancel}` |
+| `{t.pushNotifConsentAgree \|\| 'موافق'}` | `{t.pushNotifConsentAgree}` |
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/Settings.tsx` | إزالة 8 نصوص عربية ثابتة (Hardcoded Fallbacks) من قسم الإشعارات الخارجية والنافذة المنبثقة |
