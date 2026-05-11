@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "برای دریافت یادآوری‌های مرور حتی زمانی که برنامه بسته است، لطفاً درخواستی که از مرورگر یا سیستم شما نمایش داده می‌شود را بپذیرید.",
   "pushNotifConsentAgree": "باشه، فعال کن",
   "pushNotifConsentCancel": "الان نه",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "مرکز اعلان‌ها",
+  "pushNotifMarkAllRead": "علامت‌گذاری همه به عنوان خوانده شده",
+  "pushNotifClearAll": "حذف همه",
+  "pushNotifEmpty": "هنوز اعلانی نیست",
+  "pushNotifEmptyDesc": "اعلان‌های دریافتی اینجا نمایش داده می‌شوند",
+  "pushNotifDelete": "حذف",
+  "pushNotifUnread": "خوانده نشده",
+  "pushNotifFooterSaved": "آخرین ۲۰ اعلان ذخیره شد",
+  "pushNotifFooterInLog": "در گزارش"
 }

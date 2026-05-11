@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "بۆ وەرگرتنی بیرخەرەوەی پێداچوونەوە تەنانەت کاتێک ئەپەکە داخرابێت، تکایە داواکارییەکەی وەرگرت لە وێبگەڕەکەت یان سیستەمەکەت.",
   "pushNotifConsentAgree": "باشە، چالاک بکە",
   "pushNotifConsentCancel": "ئێستا نا",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "ناوەندی ئاگادارییەکان",
+  "pushNotifMarkAllRead": "هەموو وەک خوێندراوە نیشانە بکە",
+  "pushNotifClearAll": "هەموو بیسڕەوە",
+  "pushNotifEmpty": "هێشتا ئاگاداری نییە",
+  "pushNotifEmptyDesc": "ئاگادارییەکانی پەش لە وەرگرتندا لێرە دەردەکەون",
+  "pushNotifDelete": "بیسڕەوە",
+  "pushNotifUnread": "نەخوێندراوە",
+  "pushNotifFooterSaved": "٢٠ ئاگاداریی کۆتایی پاشەکەوت کران",
+  "pushNotifFooterInLog": "لە تۆمارێکدا"
 }

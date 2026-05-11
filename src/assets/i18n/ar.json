@@ -729,5 +729,8 @@
   "pushNotifClearAll": "حذف الكل",
   "pushNotifEmpty": "لا توجد إشعارات بعد",
   "pushNotifEmptyDesc": "ستظهر الإشعارات الخارجية هنا عند استلامها",
-  "pushNotifDelete": "حذف"
+  "pushNotifDelete": "حذف",
+  "pushNotifUnread": "غير مقروء",
+  "pushNotifFooterSaved": "يتم حفظ آخر 20 إشعار",
+  "pushNotifFooterInLog": "إشعار في السجل"
 }

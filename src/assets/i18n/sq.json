@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Për të marrë kujtesa rishikimi edhe kur aplikacioni është i mbyllur, ju lutemi pranojeni kërkesën që do të shfaqet nga shfletuesi ose sistemi juaj.",
   "pushNotifConsentAgree": "OK, aktivizo",
   "pushNotifConsentCancel": "Jo tani",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Qendra e njoftimeve",
+  "pushNotifMarkAllRead": "Shënoji të gjitha si të lexuara",
+  "pushNotifClearAll": "Fshi të gjitha",
+  "pushNotifEmpty": "Ende pa njoftime",
+  "pushNotifEmptyDesc": "Njoftimet push do të shfaqen këtu kur të merren",
+  "pushNotifDelete": "Fshi",
+  "pushNotifUnread": "të palexuara",
+  "pushNotifFooterSaved": "Ruhen 20 njoftimet e fundit",
+  "pushNotifFooterInLog": "në regjistër"
 }

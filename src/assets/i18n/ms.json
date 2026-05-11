@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Untuk menerima peringatan semakan walaupun aplikasi ditutup, sila terima permintaan yang akan muncul dari pelayar atau sistem anda.",
   "pushNotifConsentAgree": "OK, Aktifkan",
   "pushNotifConsentCancel": "Bukan Sekarang",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Pusat Pemberitahuan",
+  "pushNotifMarkAllRead": "Tandai semua telah dibaca",
+  "pushNotifClearAll": "Hapus semua",
+  "pushNotifEmpty": "Tiada pemberitahuan lagi",
+  "pushNotifEmptyDesc": "Pemberitahuan push akan muncul di sini apabila diterima",
+  "pushNotifDelete": "Hapus",
+  "pushNotifUnread": "belum dibaca",
+  "pushNotifFooterSaved": "20 pemberitahuan terakhir disimpan",
+  "pushNotifFooterInLog": "dalam log"
 }

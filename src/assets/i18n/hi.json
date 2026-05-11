@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "ऐप बंद होने पर भी समीक्षा रिमाइंडर प्राप्त करने के लिए, कृपया अपने ब्राउज़र या सिस्टम से दिखाई देने वाले अनुरोध को स्वीकार करें।",
   "pushNotifConsentAgree": "ठीक है, सक्षम करें",
   "pushNotifConsentCancel": "अभी नहीं",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "सूचना केंद्र",
+  "pushNotifMarkAllRead": "सभी को पढ़ा हुआ चिह्नित करें",
+  "pushNotifClearAll": "सभी हटाएं",
+  "pushNotifEmpty": "अभी तक कोई सूचना नहीं",
+  "pushNotifEmptyDesc": "पुश सूचनाएं प्राप्त होने पर यहां दिखाई देंगी",
+  "pushNotifDelete": "हटाएं",
+  "pushNotifUnread": "अपठित",
+  "pushNotifFooterSaved": "अंतिम 20 सूचनाएं सहेजी गईं",
+  "pushNotifFooterInLog": "लॉग में"
 }

@@ -729,5 +729,8 @@
   "pushNotifClearAll": "Clear all",
   "pushNotifEmpty": "No notifications yet",
   "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifDelete": "Delete",
+  "pushNotifUnread": "unread",
+  "pushNotifFooterSaved": "Last 20 notifications saved",
+  "pushNotifFooterInLog": "in log"
 }

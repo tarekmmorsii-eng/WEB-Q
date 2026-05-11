@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "Um Wiederholungserinnerungen zu erhalten auch wenn die App geschlossen ist, akzeptieren Sie bitte die Anfrage Ihres Browsers oder Systems.",
   "pushNotifConsentAgree": "OK, aktivieren",
   "pushNotifConsentCancel": "Nicht jetzt",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Benachrichtigungscenter",
+  "pushNotifMarkAllRead": "Alle als gelesen markieren",
+  "pushNotifClearAll": "Alle löschen",
+  "pushNotifEmpty": "Noch keine Benachrichtigungen",
+  "pushNotifEmptyDesc": "Push-Benachrichtigungen werden hier angezeigt, wenn sie eintreffen",
+  "pushNotifDelete": "Löschen",
+  "pushNotifUnread": "ungelesen",
+  "pushNotifFooterSaved": "Letzte 20 Benachrichtigungen gespeichert",
+  "pushNotifFooterInLog": "im Protokoll"
 }

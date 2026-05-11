@@ -723,10 +723,13 @@
   "pushNotifConsentBody": "Yaadachiisa qorannoo appiin cufameettiyyuu argachuuf, osoo bilbileessi ykn sirna keessan irraa mul'atu fudhadhaa.",
   "pushNotifConsentAgree": "Haala, Dandeessisi",
   "pushNotifConsentCancel": "Amma Mitii",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Wiirtuu Beeksisa",
+  "pushNotifMarkAllRead": "Hunda akka dubbifameetti mallattoo gochuu",
+  "pushNotifClearAll": "Hunda haqi",
+  "pushNotifEmpty": "Amma beeksisa hin jiru",
+  "pushNotifEmptyDesc": "Beeksisa push yeroo dhufu asitti argama",
+  "pushNotifDelete": "Haqi",
+  "pushNotifUnread": "hin dubbadhinee",
+  "pushNotifFooterSaved": "Beeksisa 20 dhumaa olkaa'eera",
+  "pushNotifFooterInLog": "galma keessatti"
 }

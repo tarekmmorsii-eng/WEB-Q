@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "アプリが閉じている時でも復習リマインダーを受け取るには、ブラウザまたはシステムから表示されるリクエストを承認してください。",
   "pushNotifConsentAgree": "OK、有効にする",
   "pushNotifConsentCancel": "後で",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "通知センター",
+  "pushNotifMarkAllRead": "すべて既読にする",
+  "pushNotifClearAll": "すべて削除",
+  "pushNotifEmpty": "通知はまだありません",
+  "pushNotifEmptyDesc": "プッシュ通知を受信するとここに表示されます",
+  "pushNotifDelete": "削除",
+  "pushNotifUnread": "未読",
+  "pushNotifFooterSaved": "最新20件の通知を保存しました",
+  "pushNotifFooterInLog": "ログ内"
 }

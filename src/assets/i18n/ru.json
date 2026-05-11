@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Чтобы получать напоминания о повторении даже когда приложение закрыто, пожалуйста, примите запрос, который появится от вашего браузера или системы.",
   "pushNotifConsentAgree": "ОК, включить",
   "pushNotifConsentCancel": "Не сейчас",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Центр уведомлений",
+  "pushNotifMarkAllRead": "Отметить всё как прочитанное",
+  "pushNotifClearAll": "Очистить всё",
+  "pushNotifEmpty": "Пока нет уведомлений",
+  "pushNotifEmptyDesc": "Push-уведомления появятся здесь при получении",
+  "pushNotifDelete": "Удалить",
+  "pushNotifUnread": "непрочитано",
+  "pushNotifFooterSaved": "Сохранены последние 20 уведомлений",
+  "pushNotifFooterInLog": "в журнале"
 }

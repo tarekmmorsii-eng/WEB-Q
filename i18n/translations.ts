@@ -565,6 +565,9 @@ export interface Translations {
     downloadedLanguages: string;
     totalLanguages: string;
     hideTooltipHint: string;
+    pushNotifUnread: string;
+    pushNotifFooterSaved: string;
+    pushNotifFooterInLog: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';
@@ -680,6 +683,50 @@ export function formatTimeLocalized(time24: string, language: Language, t: Trans
         const period = h >= 12 ? pmLabel : amLabel;
         const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
         return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
+    }
+}
+
+/**
+ * Format a relative time (e.g. "2 hours ago", "الآن") using Intl.RelativeTimeFormat.
+ * Supports all 31 languages via LOCALE_MAP.
+ */
+export function formatRelativeTime(timestamp: number, language: Language): string {
+    const locale = LOCALE_MAP[language] || 'en-US';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    try {
+        const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+        if (seconds < 60) {
+            return rtf.format(0, 'second');
+        }
+        if (minutes < 60) {
+            return rtf.format(-minutes, 'minute');
+        }
+        if (hours < 24) {
+            return rtf.format(-hours, 'hour');
+        }
+        if (days < 7) {
+            return rtf.format(-days, 'day');
+        }
+        // For dates older than a week, show localized date
+        return new Intl.DateTimeFormat(locale, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        }).format(new Date(timestamp));
+    } catch {
+        // Fallback to English
+        if (seconds < 60) return 'just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
+        return new Date(timestamp).toLocaleDateString('en-US');
     }
 }
 

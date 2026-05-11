@@ -723,10 +723,13 @@
   "pushNotifConsentBody": "යෙදුම වසා ඇති විටත් සමාලෝචන මතක දැනුම්දීම් ලබා ගැනීමට, කරුණාකර ඔබේ බ්‍රවුසරයෙන් හෝ පද්ධතියෙන් පෙන්වන ඉල්ලීම පිළිගන්න.",
   "pushNotifConsentAgree": "හරි, සක්‍රීය කරන්න",
   "pushNotifConsentCancel": "දැන් නොවේ",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "දැනුම්දීම් මධ්‍යස්ථානය",
+  "pushNotifMarkAllRead": "සියල්ල කියවූ ලෙස සලකුණු කරන්න",
+  "pushNotifClearAll": "සියල්ල මකන්න",
+  "pushNotifEmpty": "තවම දැනුම්දීම් නැත",
+  "pushNotifEmptyDesc": "එළඹෙන දැනුම්දීම් ලැබුණු විට මෙහි පෙන්වනු ඇත",
+  "pushNotifDelete": "මකන්න",
+  "pushNotifUnread": "නොකියවූ",
+  "pushNotifFooterSaved": "අවසන් දැනුම්දීම් 20 සුරකින ලදී",
+  "pushNotifFooterInLog": "ලොග් එකේ"
 }

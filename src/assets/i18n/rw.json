@@ -723,10 +723,13 @@
   "pushNotifConsentBody": "Kugira ngo umenye ibibutso by'isuzuma iyo porogaramu yafunze, mwasabye kwemera ikibazo kizagaragara muri mu cyakozwe cyangwa muri sisitemu yawe.",
   "pushNotifConsentAgree": "Yego, Emeza",
   "pushNotifConsentCancel": "Oya Ubu",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Hagurisha Amakuru",
+  "pushNotifMarkAllRead": "Menyesha byose ko byasomwe",
+  "pushNotifClearAll": "Siba byose",
+  "pushNotifEmpty": "Nta makuru arimo",
+  "pushNotifEmptyDesc": "Amakuru ya push azagaragara hano agiye kugeraho",
+  "pushNotifDelete": "Siba",
+  "pushNotifUnread": "adasomye",
+  "pushNotifFooterSaved": "Amakuru 20 ya nyuma yabitswe",
+  "pushNotifFooterInLog": "mu rutonde"
 }

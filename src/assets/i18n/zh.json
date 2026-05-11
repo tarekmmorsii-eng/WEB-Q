@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "为了在应用关闭时也能收到复习提醒，请接受来自浏览器或系统的请求。",
   "pushNotifConsentAgree": "好的，启用",
   "pushNotifConsentCancel": "以后再说",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "通知中心",
+  "pushNotifMarkAllRead": "全部标记为已读",
+  "pushNotifClearAll": "全部清除",
+  "pushNotifEmpty": "暂无通知",
+  "pushNotifEmptyDesc": "收到推送通知后将在此处显示",
+  "pushNotifDelete": "删除",
+  "pushNotifUnread": "未读",
+  "pushNotifFooterSaved": "已保存最近20条通知",
+  "pushNotifFooterInLog": "在记录中"
 }

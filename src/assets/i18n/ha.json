@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "Don karɓar tunatarwar bita ko da app ɗin ta rufe, da fatan za a amince da buƙatar da za ta bayyana daga burauzar ko tsarin ku.",
   "pushNotifConsentAgree": "To, Kunna",
   "pushNotifConsentCancel": "Ba Yanzu ba",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Cibiyar Sanarwa",
+  "pushNotifMarkAllRead": "Marka duka an karanta",
+  "pushNotifClearAll": "Goge duka",
+  "pushNotifEmpty": "Babu sanarwa har yanzu",
+  "pushNotifEmptyDesc": "Sanarwar push za ta bayyana a nan lokacin da aka karɓa",
+  "pushNotifDelete": "Goge",
+  "pushNotifUnread": "ba a karanta ba",
+  "pushNotifFooterSaved": "Sanarwanni 20 na ƙarshe an ajiye",
+  "pushNotifFooterInLog": "a cikin log"
 }

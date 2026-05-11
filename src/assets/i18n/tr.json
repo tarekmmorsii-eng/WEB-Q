@@ -723,10 +723,13 @@
   "pushNotifConsentBody": "Uygulama kapalıyken bile gözden geçirme hatırlatıcılarını almak için tarayıcınızdan veya sisteminizden gelen isteği kabul edin.",
   "pushNotifConsentAgree": "Tamam, etkinleştir",
   "pushNotifConsentCancel": "Şimdi değil",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Bildirim Merkezi",
+  "pushNotifMarkAllRead": "Tümünü okundu olarak işaretle",
+  "pushNotifClearAll": "Tümünü sil",
+  "pushNotifEmpty": "Henüz bildirim yok",
+  "pushNotifEmptyDesc": "Push bildirimleri alındığında burada görünecek",
+  "pushNotifDelete": "Sil",
+  "pushNotifUnread": "okunmamış",
+  "pushNotifFooterSaved": "Son 20 bildirim kaydedildi",
+  "pushNotifFooterInLog": "kayıtta"
 }

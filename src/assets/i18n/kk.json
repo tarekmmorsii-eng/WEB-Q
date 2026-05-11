@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Қолданба жабық болғанда да қайталау еске салғыштарын алу үшін, браузеріңізден немесе жүйеңізден пайда болатын сұрауды қабылдаңыз.",
   "pushNotifConsentAgree": "Жақсы, қосу",
   "pushNotifConsentCancel": "Қазір емес",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Хабарламалар орталығы",
+  "pushNotifMarkAllRead": "Барлығын оқылды деп белгілеу",
+  "pushNotifClearAll": "Барлығын жою",
+  "pushNotifEmpty": "Әлі хабарлама жоқ",
+  "pushNotifEmptyDesc": "Push-хабарламалар келгенде осында көрінеді",
+  "pushNotifDelete": "Жою",
+  "pushNotifUnread": "оқылмаған",
+  "pushNotifFooterSaved": "Соңғы 20 хабарлама сақталды",
+  "pushNotifFooterInLog": "журналда"
 }

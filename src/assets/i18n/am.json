@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "መተግበሪያው ተዘግቶ ቢሆንም የግምገማ ማስታወሻዎችን ለመቀበል እባክዎ ከአሳሹ ወይም ከስርዓተ ክወናዎ የሚታየውን ጥያቄ ይቀበሉ።",
   "pushNotifConsentAgree": "እሺ፣ ያንቁ",
   "pushNotifConsentCancel": "አሁን አይ",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "የማሳወቂያ ማዕከል",
+  "pushNotifMarkAllRead": "ሁሉንም እንደተነበበ ምልክት አድርግ",
+  "pushNotifClearAll": "ሁሉንም አጥፋ",
+  "pushNotifEmpty": "እስካሁን ማሳወቂያ የለም",
+  "pushNotifEmptyDesc": "የተላኩ ማሳወቂያዎች ሲደርሱ እዚህ ይታያሉ",
+  "pushNotifDelete": "አጥፋ",
+  "pushNotifUnread": "ያልተነበበ",
+  "pushNotifFooterSaved": "የመጨረሻ 20 ማሳወቂያዎች ተቀምጠዋል",
+  "pushNotifFooterInLog": "በምዝግብ ማስታወሻ ውስጥ"
 }

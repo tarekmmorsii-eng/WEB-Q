@@ -2273,3 +2273,70 @@ if (isPushSupported && pushPermissionStatus !== 'granted') {
 | الملف | الوصف |
 |-------|-------|
 | `components/Settings.tsx` | إزالة 8 نصوص عربية ثابتة (Hardcoded Fallbacks) من قسم الإشعارات الخارجية والنافذة المنبثقة |
+
+---
+
+## 🌐 إصلاح ثغرات الترجمة في نظام الإشعارات (Notification Localization Gaps Fix) — 2026-05-11
+
+### المشكلة
+كانت هناك ثغرات لغوية (Localization Gaps) في نظام الإشعارات الداخلي والخارجي:
+1. **توقيت الإشعارات (Relative Time):** النصوص مثل "Just now", "2h ago" كانت بالإنجليزية دائماً ولا تتغير حسب لغة التطبيق
+2. **مركز الإشعارات الخارجية (PushNotificationCenter.tsx):** جميع النصوص كانت مكتوبة بالإنجليزية الثابتة (Hardcoded)
+3. **ملفات اللغات:** المفاتيح الجديدة لم تكن موجودة في ملفات JSON للغات الـ 31
+
+### الحلول المُطبّقة
+
+#### 1. إضافة دالة `formatRelativeTime` في `i18n/translations.ts`
+- دالة جديدة تستخدم `Intl.RelativeTimeFormat` المدعوم في جميع المتصفحات الحديثة
+- تدعم 31 لغة بتقديم الوقت النسبي المترجم تلقائياً:
+  - العربية: "منذ ٥ دقائق" / "الآن"
+  - الروسية: "5 минут назад" / "сейчас"
+  - البنغالية: "৫ মিনিট আগে" / "এইমাত্র"
+  - الصينية: "5分钟前" / "刚刚"
+- تصدير نوع `Language` للاستخدام في المكونات
+
+#### 2. تحديث `PushNotificationCenter.tsx` (استبدال 7 نصوص ثابتة)
+| النص الثابت القديم | مفتاح الترجمة الجديد |
+|-------------------|---------------------|
+| `'Notification Center'` | `t.pushNotifCenterTitle` |
+| `'Mark all as read'` | `t.pushNotifMarkAllRead` |
+| `'Clear all'` | `t.pushNotifClearAll` |
+| `'No notifications yet'` | `t.pushNotifEmpty` |
+| `'Push notifications will appear here...'` | `t.pushNotifEmptyDesc` |
+| `'Delete'` | `t.pushNotifDelete` |
+| `'unread'` | `t.pushNotifUnread` |
+| `'Last 20 notifications saved'` | `t.pushNotifFooterSaved` |
+| `'in log'` | `t.pushNotifFooterInLog` |
+| `formatRelativeTime()` (محلية) | `formatRelativeTime()` من translations.ts |
+
+#### 3. تحديث `InAppNotificationsModal.tsx`
+- استبدال دالة الوقت النسبي المحلية بـ `formatRelativeTime` المُصدَّرة من `i18n/translations.ts`
+
+#### 4. ترجمة فعلية لـ 31 لغة (9 مفاتيح × 31 = 279 قيمة)
+تمت ترجمة جميع المفاتيح فعلياً (ليس نسخ إنجليزية) لكل لغة:
+
+| المفتاح | ar | en | ru | zh | ja |
+|---------|-----|-----|-----|-----|-----|
+| `pushNotifCenterTitle` | مركز الإشعارات | Notification Center | Центр уведомлений | 通知中心 | 通知センター |
+| `pushNotifMarkAllRead` | تحديد الكل كمقروء | Mark all as read | Отметить всё как прочитанное | 全部标记为已读 | すべて既読にする |
+| `pushNotifClearAll` | حذف الكل | Clear all | Очистить всё | 全部清除 | すべて削除 |
+| `pushNotifEmpty` | لا توجد إشعارات بعد | No notifications yet | Пока нет уведомлений | 暂无通知 | 通知はまだありません |
+| `pushNotifUnread` | غير مقروء | unread | непрочитано | 未读 | 未読 |
+
+### النتائج
+| المؤشر | القيمة |
+|--------|--------|
+| ملفات لغات محدّثة | **31** ✅ |
+| أخطاء | **0** |
+| مكونات محدّثة | **2** (PushNotificationCenter + InAppNotificationsModal) |
+| دوال جديدة | **1** (`formatRelativeTime`) |
+| نصوص ثابتة مُستبدَلة | **16** |
+
+### الملفات المعدّلة
+| الملف | الوصف |
+|-------|-------|
+| `i18n/translations.ts` | إضافة `formatRelativeTime` + تصدير نوع `Language` |
+| `components/PushNotificationCenter.tsx` | استبدال 10 نصوص ثابتة بمفاتيح `t()` + استخدام `formatRelativeTime` |
+| `components/InAppNotificationsModal.tsx` | استبدال دالة الوقت المحلية بـ `formatRelativeTime` المركزية |
+| `src/assets/i18n/*.json` (31 ملف) | إضافة 9 مفاتيح ترجمة فعلية لكل لغة |
+| `scripts/fix_notif_localization.cjs` | **جديد** — سكربت ترجمة المفاتيح لجميع اللغات |

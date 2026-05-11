@@ -6,7 +6,7 @@
 import React from 'react';
 import { X, Bell, BellOff, Trash2, CheckCheck, Clock } from 'lucide-react';
 import { useNotificationStore } from '../hooks/useNotificationStore';
-import { Language, translations } from '../i18n/translations';
+import { Language, translations, formatRelativeTime } from '../i18n/translations';
 
 interface PushNotificationCenterProps {
   isOpen: boolean;
@@ -32,29 +32,6 @@ export default function PushNotificationCenter({
 
   if (!isOpen) return null;
 
-  // تنسيق الوقت النسبي
-  const formatTime = (timestamp: number): string => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (currentLanguage === 'ar') {
-      if (minutes < 1) return 'الآن';
-      if (minutes < 60) return `منذ ${minutes} دقيقة`;
-      if (hours < 24) return `منذ ${hours} ساعة`;
-      if (days < 7) return `منذ ${days} يوم`;
-      return new Date(timestamp).toLocaleDateString('ar-SA');
-    }
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return new Date(timestamp).toLocaleDateString('en-US');
-  };
-
   return (
     <div
       className="fixed inset-0 bg-black/60 z-[150] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
@@ -73,9 +50,7 @@ export default function PushNotificationCenter({
               </h2>
               {unreadCount > 0 && (
                 <span className="text-xs text-purple-600 dark:text-purple-400">
-                  {currentLanguage === 'ar'
-                    ? `${unreadCount} إشعار غير مقروء`
-                    : `${unreadCount} unread`}
+                  {unreadCount} {t.pushNotifUnread || 'unread'}
                 </span>
               )}
             </div>
@@ -153,7 +128,7 @@ export default function PushNotificationCenter({
                       <div className="flex items-center gap-1 mt-2">
                         <Clock size={10} className="text-gray-400" />
                         <span className="text-[10px] text-gray-400">
-                          {formatTime(notif.timestamp)}
+                          {formatRelativeTime(notif.timestamp, currentLanguage)}
                         </span>
                       </div>
                     </div>
@@ -177,9 +152,7 @@ export default function PushNotificationCenter({
         {/* Footer */}
         <div className="p-3 border-t border-[var(--border-primary)] bg-[var(--bg-secondary)] text-center shrink-0">
           <p className="text-[10px] text-[var(--text-primary)] opacity-40">
-            {currentLanguage === 'ar'
-              ? `يتم حفظ آخر 20 إشعار • ${notifications.length} إشعار في السجل`
-              : `Last 20 notifications saved • ${notifications.length} in log`}
+            {t.pushNotifFooterSaved || 'Last 20 notifications saved'} • {notifications.length} {t.pushNotifFooterInLog || 'in log'}
           </p>
         </div>
       </div>

@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "ایپ بند ہونے پر بھی مراجعہ کی یاددہانیاں وصول کرنے کے لیے، براہ کرم اپنے براؤزر یا سسٹم سے آنے والی درخواست قبول کریں۔",
   "pushNotifConsentAgree": "ٹھیک ہے، فعال کریں",
   "pushNotifConsentCancel": "ابھی نہیں",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "اطلاعات کا مرکز",
+  "pushNotifMarkAllRead": "سب پڑھے ہوئے نشان زد کریں",
+  "pushNotifClearAll": "سب حذف کریں",
+  "pushNotifEmpty": "ابھی تک کوئی اطلاعات نہیں",
+  "pushNotifEmptyDesc": "پش نوٹیفکیشن موصول ہونے پر یہاں ظاہر ہوں گی",
+  "pushNotifDelete": "حذف کریں",
+  "pushNotifUnread": "غیر پڑھے",
+  "pushNotifFooterSaved": "آخری 20 اطلاعات محفوظ کی گئیں",
+  "pushNotifFooterInLog": "لاگ میں"
 }

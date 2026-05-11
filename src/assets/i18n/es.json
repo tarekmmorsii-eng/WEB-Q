@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "Para recibir recordatorios de revisión incluso cuando la aplicación esté cerrada, acepte la solicitud que aparecerá desde su navegador o sistema.",
   "pushNotifConsentAgree": "OK, activar",
   "pushNotifConsentCancel": "Ahora no",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Centro de notificaciones",
+  "pushNotifMarkAllRead": "Marcar todo como leído",
+  "pushNotifClearAll": "Borrar todo",
+  "pushNotifEmpty": "Aún no hay notificaciones",
+  "pushNotifEmptyDesc": "Las notificaciones push aparecerán aquí al recibirlas",
+  "pushNotifDelete": "Eliminar",
+  "pushNotifUnread": "no leído",
+  "pushNotifFooterSaved": "Últimas 20 notificaciones guardadas",
+  "pushNotifFooterInLog": "en el registro"
 }

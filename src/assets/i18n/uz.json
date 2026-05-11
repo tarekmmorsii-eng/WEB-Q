@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Ilova yopiq bo'lsa ham takrorlash eslatmalarini olish uchun, brauzeringiz yoki tizimingizdan paydo bo'ladigan so'rovni qabul qiling.",
   "pushNotifConsentAgree": "OK, yoqish",
   "pushNotifConsentCancel": "Hozir emas",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Bildirishnomalar markazi",
+  "pushNotifMarkAllRead": "Hammasini o'qilgan deb belgilash",
+  "pushNotifClearAll": "Hammasini o'chirish",
+  "pushNotifEmpty": "Hali bildirishnoma yo'q",
+  "pushNotifEmptyDesc": "Push-bildirishnomalar qabul qilinganda bu yerda ko'rinadi",
+  "pushNotifDelete": "O'chirish",
+  "pushNotifUnread": "o'qilmagan",
+  "pushNotifFooterSaved": "So'nggi 20 ta bildirishnoma saqlandi",
+  "pushNotifFooterInLog": "jurnalda"
 }

@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Để nhận lời nhắc ôn tập ngay cả khi ứng dụng đã đóng, vui lòng chấp nhận yêu cầu sẽ xuất hiện từ trình duyệt hoặc hệ thống của bạn.",
   "pushNotifConsentAgree": "OK, Bật",
   "pushNotifConsentCancel": "Không phải bây giờ",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Trung tâm thông báo",
+  "pushNotifMarkAllRead": "Đánh dấu tất cả đã đọc",
+  "pushNotifClearAll": "Xóa tất cả",
+  "pushNotifEmpty": "Chưa có thông báo",
+  "pushNotifEmptyDesc": "Thông báo đẩy sẽ xuất hiện ở đây khi nhận được",
+  "pushNotifDelete": "Xóa",
+  "pushNotifUnread": "chưa đọc",
+  "pushNotifFooterSaved": "Đã lưu 20 thông báo gần nhất",
+  "pushNotifFooterInLog": "trong nhật ký"
 }

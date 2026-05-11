@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "অ্যাপ বন্ধ থাকলেও পর্যালোচনা রিমাইন্ডার পেতে, আপনার ব্রাউজার বা সিস্টেম থেকে আসা অনুরোধটি গ্রহণ করুন।",
   "pushNotifConsentAgree": "ঠিক আছে, সক্রিয় করুন",
   "pushNotifConsentCancel": "এখন নয়",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "বিজ্ঞপ্তি কেন্দ্র",
+  "pushNotifMarkAllRead": "সব পঠিত হিসেবে চিহ্নিত করুন",
+  "pushNotifClearAll": "সব মুছুন",
+  "pushNotifEmpty": "এখনো কোনো বিজ্ঞপ্তি নেই",
+  "pushNotifEmptyDesc": "পুশ বিজ্ঞপ্তি পাওয়ার পর এখানে দেখা যাবে",
+  "pushNotifDelete": "মুছুন",
+  "pushNotifUnread": "অপঠিত",
+  "pushNotifFooterSaved": "সর্বশেষ ২০টি বিজ্ঞপ্তি সংরক্ষিত",
+  "pushNotifFooterInLog": "লগে আছে"
 }

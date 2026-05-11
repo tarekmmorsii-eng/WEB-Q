@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Upang makatanggap ng paalala sa pag-review kahit sarado ang app, pakiusap tanggapin ang kahilingan na lalabas sa iyong browser o sistema.",
   "pushNotifConsentAgree": "OK, I-enable",
   "pushNotifConsentCancel": "Hindi Ngayon",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Sentro ng Abiso",
+  "pushNotifMarkAllRead": "I-mark lahat bilang nabasa",
+  "pushNotifClearAll": "I-clear lahat",
+  "pushNotifEmpty": "Wala pang abiso",
+  "pushNotifEmptyDesc": "Mga push notification ay lalabas dito kapag natanggap",
+  "pushNotifDelete": "I-delete",
+  "pushNotifUnread": "hindi pa nabasa",
+  "pushNotifFooterSaved": "Huling 20 na abiso ay nai-save",
+  "pushNotifFooterInLog": "sa log"
 }

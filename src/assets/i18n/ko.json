@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "앱이 닫혀 있을 때도 복습 알림을 받으려면 브라우저나 시스템에서 나타나는 요청을 수락해 주세요.",
   "pushNotifConsentAgree": "확인, 활성화",
   "pushNotifConsentCancel": "나중에",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "알림 센터",
+  "pushNotifMarkAllRead": "모두 읽음으로 표시",
+  "pushNotifClearAll": "모두 삭제",
+  "pushNotifEmpty": "알림이 없습니다",
+  "pushNotifEmptyDesc": "푸시 알림이 수신되면 여기에 표시됩니다",
+  "pushNotifDelete": "삭제",
+  "pushNotifUnread": "읽지 않음",
+  "pushNotifFooterSaved": "최근 20개 알림 저장됨",
+  "pushNotifFooterInLog": "로그에"
 }

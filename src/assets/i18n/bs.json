@@ -724,10 +724,13 @@
   "pushNotifConsentBody": "Da biste primali podsjetnike za ponavljanje čak i kada je aplikacija zatvorena, prihvatite zahtjev koji će se pojaviti iz vašeg preglednika ili sistema.",
   "pushNotifConsentAgree": "OK, aktiviraj",
   "pushNotifConsentCancel": "Ne sada",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Centar za obavještenja",
+  "pushNotifMarkAllRead": "Označi sve kao pročitano",
+  "pushNotifClearAll": "Obriši sve",
+  "pushNotifEmpty": "Još nema obavještenja",
+  "pushNotifEmptyDesc": "Push obavještenja će se pojaviti ovdje kada budu primljena",
+  "pushNotifDelete": "Obriši",
+  "pushNotifUnread": "nepročitano",
+  "pushNotifFooterSaved": "Zadnjih 20 obavještenja sačuvano",
+  "pushNotifFooterInLog": "u zapisniku"
 }

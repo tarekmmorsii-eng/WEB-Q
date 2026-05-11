@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Lati gba awọn iranti atunyẹwo paapaa nigbati app naa ti pa, jọwọ gba ibeere ti yoo han lati ẹrọ aṣawakiri tabi eto rẹ.",
   "pushNotifConsentAgree": "OK, Mu ṣiṣẹ",
   "pushNotifConsentCancel": "Kii ṣe Bayi",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Ile-iṣẹ Ikilọ",
+  "pushNotifMarkAllRead": "Tọkasi gbogbo bi a ti ka",
+  "pushNotifClearAll": "Pa gbogbo rẹ",
+  "pushNotifEmpty": "Ko si ikilọ tuntun",
+  "pushNotifEmptyDesc": "Awọn ikilọ yoo han nibi nigbati wọn ba de",
+  "pushNotifDelete": "Pa rẹ",
+  "pushNotifUnread": "a ko ka",
+  "pushNotifFooterSaved": "Awọn ikilọ 20 ti a fi pamọ",
+  "pushNotifFooterInLog": "ninu log"
 }

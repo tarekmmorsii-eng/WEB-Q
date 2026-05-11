@@ -718,10 +718,13 @@
   "pushNotifConsentBody": "Ili kupokea vikumbusho vya ukaguzi hata programu ikiwa imefungwa, tafadhali kukubali ombi litakaloonekana kutoka kwa kivinjali chako au mfumo wako.",
   "pushNotifConsentAgree": "Sawa, Washa",
   "pushNotifConsentCancel": "Sio Sasa",
-  "pushNotifCenterTitle": "Notification Center",
-  "pushNotifMarkAllRead": "Mark all as read",
-  "pushNotifClearAll": "Clear all",
-  "pushNotifEmpty": "No notifications yet",
-  "pushNotifEmptyDesc": "Push notifications will appear here when received",
-  "pushNotifDelete": "Delete"
+  "pushNotifCenterTitle": "Kituo cha Arifa",
+  "pushNotifMarkAllRead": "Weka alama zote kama zimesomwa",
+  "pushNotifClearAll": "Futa zote",
+  "pushNotifEmpty": "Hakuna arifa bado",
+  "pushNotifEmptyDesc": "Arifa za push zitaonekana hapa zinapopokelewa",
+  "pushNotifDelete": "Futa",
+  "pushNotifUnread": "haujasomwa",
+  "pushNotifFooterSaved": "Arifa 20 za mwisho zimehifadhiwa",
+  "pushNotifFooterInLog": "katika kumbukumbu"
 }

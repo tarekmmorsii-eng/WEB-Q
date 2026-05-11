@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Bell, BellOff, CheckCheck, Trash2, Info, Lightbulb, Sparkles, Gift, Megaphone, Settings } from 'lucide-react';
 import clsx from 'clsx';
 import { InAppNotification } from '../hooks/useNotifications';
+import { formatRelativeTime, Language } from '../i18n/translations';
 
 interface InAppNotificationsModalProps {
     isOpen: boolean;
@@ -47,32 +48,6 @@ const getTypeColor = (type: InAppNotification['type']) => {
         case 'achievement': return 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400';
         default: return 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400';
     }
-};
-
-/**
- * تنسيق الوقت النسبي
- */
-const formatRelativeTime = (timestamp: number, lang: string): string => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (lang === 'ar') {
-        if (seconds < 60) return 'الآن';
-        if (minutes < 60) return `منذ ${minutes} دقيقة`;
-        if (hours < 24) return `منذ ${hours} ساعة`;
-        if (days < 7) return `منذ ${days} يوم`;
-        return new Date(timestamp).toLocaleDateString('ar');
-    }
-
-    if (seconds < 60) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return new Date(timestamp).toLocaleDateString('en');
 };
 
 
@@ -253,7 +228,7 @@ export default function InAppNotificationsModal({
                                                 {resolveText(notification.message, notification)}
                                             </p>
                                             <span className="text-[10px] text-[var(--text-primary)] opacity-40 mt-1 inline-block">
-                                                {formatRelativeTime(notification.createdAt, language)}
+                                                {formatRelativeTime(notification.createdAt, language as Language)}
                                             </span>
                                         </div>
 
