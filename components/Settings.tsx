@@ -3,6 +3,7 @@ import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, B
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
 import { useFeedback } from '../contexts/FeedbackContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 import clsx from 'clsx';
 import { AppSettings, BottomBarSettings } from '../types';
@@ -67,6 +68,7 @@ export default function Settings({
 
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
+    const [showPushConsentModal, setShowPushConsentModal] = useState(false);
 
     // Accordion open states for each section
     const [openSound, setOpenSound] = useState(false);
@@ -79,6 +81,15 @@ export default function Settings({
     const [showMoreSettingsGlow, setShowMoreSettingsGlow] = useState(true);
 
     const { openFeedback } = useFeedback();
+
+    // هوك الإشعارات الخارجية (Push Notifications)
+    const {
+        permissionStatus: pushPermission,
+        isLoading: isPushLoading,
+        fcmToken,
+        requestPermission: requestPushPermission,
+        isPushSupported
+    } = usePushNotifications();
 
     const {
         installPrompt,
@@ -896,6 +907,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                                     <ChevronDown size={18} className="text-amber-500 -rotate-90 rtl:rotate-90" />
                                                 </button>
 
+
                                             </div>
                                         </div>
                                     )}
@@ -1002,6 +1014,64 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                 </div>
                             </section>
 
+                            {/* ═══════ قسم الإشعارات الخارجية (Push Notifications) ═══════ */}
+                            <div className="space-y-3">
+                                <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
+                                    <Bell size={18} className="text-purple-500" />
+                                    {t.pushNotifTitle || 'تفعيل الإشعارات الخارجية'}
+                                </h3>
+
+                                <button
+                                    onClick={() => {
+                                        if (pushPermission !== 'granted') {
+                                            setShowPushConsentModal(true);
+                                        }
+                                    }}
+                                    disabled={isPushLoading || pushPermission === 'granted'}
+                                    className={clsx(
+                                        "w-full flex items-center justify-between p-4 rounded-lg transition-all border",
+                                        pushPermission === 'granted'
+                                            ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30"
+                                            : "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800/40 hover:bg-purple-100 dark:hover:bg-purple-900/30 active:scale-[0.98]"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={clsx(
+                                            "p-2 rounded-full",
+                                            pushPermission === 'granted'
+                                                ? "bg-emerald-100 dark:bg-emerald-800/60"
+                                                : "bg-purple-100 dark:bg-purple-800/60"
+                                        )}>
+                                            {pushPermission === 'granted' ? (
+                                                <Check size={18} className="text-emerald-600 dark:text-emerald-400" />
+                                            ) : (
+                                                <Bell size={18} className="text-purple-600 dark:text-purple-400" />
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col items-start">
+                                            <span className={clsx(
+                                                "font-medium text-sm",
+                                                pushPermission === 'granted'
+                                                    ? "text-emerald-800 dark:text-emerald-200"
+                                                    : "text-purple-800 dark:text-purple-200"
+                                            )}>
+                                                {pushPermission === 'granted' ? (t.pushNotifActive || 'الإشعارات مفعّلة ✓') : (t.pushNotifTitle || 'تفعيل الإشعارات الخارجية للمراجعة')}
+                                            </span>
+                                            <span className="text-[10px] opacity-60 mt-0.5">
+                                                {pushPermission === 'granted' ? (t.pushNotifActiveDesc || 'ستصلك تنبيهات المراجعة') : (t.pushNotifDesc || 'لتصلك تنبيهات المراجعة والتحفيز')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {isPushLoading ? (
+                                        <Loader2 size={20} className="animate-spin text-purple-600 dark:text-purple-400" />
+                                    ) : pushPermission === 'granted' ? (
+                                        <Check size={18} className="text-emerald-500" />
+                                    ) : (
+                                        <Bell size={18} className="text-purple-500" />
+                                    )}
+                                </button>
+                            </div>
+
                             {/* Share Section */}
                             <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
                                 <button
@@ -1072,6 +1142,51 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                 </div>
                             )}
                         </>
+                    )}
+
+                    {/* نافذة التوضيح - Two-Step Consent Modal */}
+                    {showPushConsentModal && (
+                        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+                            <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-[var(--border-primary)]">
+                                <div className="flex flex-col items-center text-center gap-4">
+                                    <div className="p-4 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                                        <Bell size={32} className="text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                                        {t.pushNotifConsentTitle || 'تفعيل الإشعارات'}
+                                    </h3>
+                                    <p className="text-sm text-[var(--text-primary)] opacity-70 leading-relaxed">
+                                        {t.pushNotifConsentBody || 'لتصلك تنبيهات المراجعة، يرجى الموافقة على الطلب الذي سيظهر من المتصفح'}
+                                    </p>
+                                    <div className="flex gap-3 w-full mt-2">
+                                        <button
+                                            onClick={() => setShowPushConsentModal(false)}
+                                            className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all font-medium text-sm"
+                                        >
+                                            {t.pushNotifConsentCancel || 'إلغاء'}
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                setShowPushConsentModal(false);
+                                                console.log('[Push] جاري طلب صلاحية الإشعارات...');
+                                                const result = await requestPushPermission();
+                                                if (result.success && result.token) {
+                                                    console.log('[Push] ✅ تم الحصول على FCM Token بنجاح:', result.token);
+                                                } else if (result.error) {
+                                                    console.warn('[Push] ⚠️ خطأ:', result.error);
+                                                }
+                                            }}
+                                            disabled={isPushLoading}
+                                            className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg transition-all font-bold text-sm disabled:opacity-60"
+                                        >
+                                            {isPushLoading ? (
+                                                <Loader2 size={18} className="animate-spin mx-auto" />
+                                            ) : (t.pushNotifConsentAgree || 'موافق')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 

@@ -5,9 +5,162 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-05-08-V1'; // Alarm overlay fix + notification icon fix
+const CACHE_VERSION = 'v2026-05-11-FCM'; // دمج Firebase Messaging داخل Service Worker الموحد
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
+
+// ============================================================
+// 🔥 Firebase Cloud Messaging - مدمج داخل Service Worker الرئيسي
+// ============================================================
+console.log('[SW-FCM] 🚀 جاري تحميل Firebase SDK داخل sw.js...');
+console.log('[SW-FCM] 📍 الموقع:', self.location.href);
+console.log('[SW-FCM] 🕐 الوقت:', new Date().toISOString());
+
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+  console.log('[SW-FCM] ✅ تم تحميل firebase-app-compat.js - typeof firebase:', typeof firebase);
+
+  importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
+  console.log('[SW-FCM] ✅ تم تحميل firebase-messaging-compat.js');
+
+  // تهيئة Firebase بالمفاتيح الحقيقية
+  const firebaseConfig = {
+    apiKey: 'AIzaSyALus6trZEvqIwl-RZh9T8nSWkmKfsO5g0',
+    authDomain: 'quran-app-69891.firebaseapp.com',
+    projectId: 'quran-app-69891',
+    storageBucket: 'quran-app-69891.firebasestorage.app',
+    messagingSenderId: '495250099560',
+    appId: '1:495250099560:web:78d1eb07e0e6b47093dadd',
+    measurementId: 'G-4FYJ6QRCQL'
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  console.log('[SW-FCM] ✅ تم تهيئة Firebase - projectId:', firebaseConfig.projectId);
+
+  const messaging = firebase.messaging();
+  console.log('[SW-FCM] ✅ تم إنشاء كائن Messaging بنجاح');
+
+  // ---- مستمع Push خام للتشخيص فقط (لا يعرض إشعار) ----
+  self.addEventListener('push', (event) => {
+    console.log('[SW-FCM] 🔥🔥🔥 ========== PUSH EVENT RAW FIRED ==========');
+    console.log('[SW-FCM] 🔥🔥🔥 event:', event);
+    console.log('[SW-FCM] 🔥🔥🔥 event.data exists:', !!event.data);
+    if (event.data) {
+      try {
+        const jsonData = event.data.json();
+        console.log('[SW-FCM] 🔥🔥🔥 JSON payload:', JSON.stringify(jsonData, null, 2));
+      } catch (e) {
+        console.log('[SW-FCM] 🔥🔥🔥 Raw text:', event.data.text());
+      }
+    } else {
+      console.log('[SW-FCM] 🔥🔥⚠️ PUSH EVENT بدون بيانات!');
+    }
+    console.log('[SW-FCM] 🔥🔥🔥 ========== END PUSH RAW ==========');
+  });
+
+  // ---- Firebase onBackgroundMessage ----
+  messaging.onBackgroundMessage((payload) => {
+    console.log('[SW-FCM] 🔔🔔🔔 ========== onBackgroundMessage FIRED ==========');
+    console.log('[SW-FCM] 🔔 Full payload:', JSON.stringify(payload, null, 2));
+
+    const notificationTitle = payload.notification?.title || payload.data?.title || 'إشعار جديد';
+    const notificationBody = payload.notification?.body || payload.data?.body || '';
+
+    console.log('[SW-FCM] 🔔 Title:', notificationTitle);
+    console.log('[SW-FCM] 🔔 Body:', notificationBody);
+    console.log('[SW-FCM] 🔔 Data:', JSON.stringify(payload.data));
+
+    const notificationOptions = {
+      body: notificationBody,
+      icon: payload.notification?.icon || '/final_logo.png',
+      badge: '/final_logo.png',
+      tag: payload.data?.tag || 'quran-push-' + Date.now(),
+      data: payload.data || {},
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      dir: 'rtl',
+      lang: 'ar',
+      silent: false,
+      renotify: true,
+    };
+
+    console.log('[SW-FCM] 🔔 جاري استدعاء showNotification...');
+    self.registration.showNotification(notificationTitle, notificationOptions)
+      .then(() => {
+        console.log('[SW-FCM] ✅✅✅ showNotification SUCCESS - الإشعار ظهر!');
+      })
+      .catch(err => {
+        console.error('[SW-FCM] ❌❌❌ showNotification FAILED:', err);
+      });
+
+    // حفظ الإشعار في السجل
+    saveNotificationToStore({
+      title: notificationTitle,
+      body: notificationBody,
+      icon: notificationOptions.icon,
+      tag: notificationOptions.tag,
+      data: payload.data
+    });
+
+    console.log('[SW-FCM] 🔔🔔🔔 ========== END onBackgroundMessage ==========');
+  });
+
+  // ---- دوال مساعدة لحفظ الإشعارات ----
+  function saveNotificationToStore(notificationData) {
+    const storePayload = {
+      type: 'SAVE_PUSH_NOTIFICATION',
+      notification: {
+        title: notificationData.title || 'إشعار جديد',
+        body: notificationData.body || '',
+        icon: notificationData.icon || '/final_logo.png',
+        tag: notificationData.tag,
+        data: notificationData.data || {},
+      }
+    };
+
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      if (clientList.length > 0) {
+        clientList.forEach(client => client.postMessage(storePayload));
+        console.log('[SW-FCM] 📨 تم إرسال الإشعار للحفظ إلى', clientList.length, 'نافذة');
+      } else {
+        console.log('[SW-FCM] ⚠️ لا توجد نوافذ مفتوحة، حفظ في IndexedDB');
+        saveToIndexedDB(storePayload.notification);
+      }
+    });
+  }
+
+  function saveToIndexedDB(notification) {
+    try {
+      const request = indexedDB.open('quran_push_store', 1);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('notifications')) {
+          db.createObjectStore('notifications', { keyPath: 'id', autoIncrement: true });
+        }
+      };
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const tx = db.transaction('notifications', 'readwrite');
+        const store = tx.objectStore('notifications');
+        store.add({
+          ...notification,
+          timestamp: Date.now(),
+          isRead: false,
+          savedAt: new Date().toISOString()
+        });
+        console.log('[SW-FCM] ✅ تم حفظ الإشعار في IndexedDB');
+      };
+      request.onerror = () => console.warn('[SW-FCM] ⚠️ فشل حفظ في IndexedDB');
+    } catch (e) {
+      console.warn('[SW-FCM] ⚠️ خطأ في IndexedDB:', e);
+    }
+  }
+
+  console.log('[SW-FCM] 🎉🎉🎉 Firebase Messaging جاهز تماماً لاستقبال الإشعارات!');
+} catch (e) {
+  console.error('[SW-FCM] ❌❌❌ خطأ في تحميل Firebase:', e);
+  console.error('[SW-FCM] ❌ الإشعارات لن تعمل - تحقق من اتصال الإنترنت');
+}
 
 // ---------------------------
 // 1. Install Event
@@ -27,6 +180,41 @@ self.addEventListener('message', (event) => {
     if (event.data === 'SKIP_WAITING') {
         console.log('[SW] Skipping waiting...');
         self.skipWaiting();
+        return;
+    }
+
+    // استقبال طلب سحب الإشعارات المحفوظة من IndexedDB
+    if (event.data && event.data.type === 'GET_STORED_NOTIFICATIONS') {
+        console.log('[SW-FCM] 📬 طلب سحب الإشعارات المحفوظة من IndexedDB');
+        try {
+            const request = indexedDB.open('quran_push_store', 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('notifications')) {
+                    db.createObjectStore('notifications', { keyPath: 'id', autoIncrement: true });
+                }
+            };
+            request.onsuccess = (e) => {
+                const db = e.target.result;
+                if (db.objectStoreNames.contains('notifications')) {
+                    const tx = db.transaction('notifications', 'readonly');
+                    const store = tx.objectStore('notifications');
+                    const getAll = store.getAll();
+                    getAll.onsuccess = () => {
+                        if (event.ports && event.ports[0]) {
+                            event.ports[0].postMessage({ type: 'STORED_NOTIFICATIONS', notifications: getAll.result });
+                        }
+                        // مسح بعد الإرسال
+                        const clearTx = db.transaction('notifications', 'readwrite');
+                        clearTx.objectStore('notifications').clear();
+                        console.log('[SW-FCM] 📬 تم إرسال', getAll.result.length, 'إشعار محفوظ ومسحها');
+                    };
+                }
+            };
+            request.onerror = () => console.warn('[SW-FCM] ⚠️ فشل فتح IndexedDB');
+        } catch (e) {
+            console.warn('[SW-FCM] ⚠️ خطأ في سحب IndexedDB:', e);
+        }
         return;
     }
 
@@ -347,24 +535,30 @@ self.addEventListener('fetch', (event) => {
 });
 
 // ---------------------------
-// 5. Notification Click Event
+// 5. Notification Click Event (موحد - يدعم التنقل لصفحة محددة)
 // ---------------------------
 self.addEventListener('notificationclick', (event) => {
+    console.log('[SW-FCM] 👆 تم النقر على الإشعار:', event.notification.tag);
     event.notification.close();
 
-    // Logic to open the app or focus it
+    // تحديد الصفحة المستهدفة من بيانات الإشعار
+    const targetUrl = event.notification.data?.targetPage
+        ? `/?page=${event.notification.data.targetPage}`
+        : '/';
+
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-            if (clientList.length > 0) {
-                let client = clientList[0];
-                for (let i = 0; i < clientList.length; i++) {
-                    if (clientList[i].focused) {
-                        client = clientList[i];
-                    }
+            // إذا كان التطبيق مفتوحاً، ركز عليه وانتقل للصفحة المطلوبة
+            for (const client of clientList) {
+                if (client.url.includes(self.location.origin) && 'focus' in client) {
+                    client.navigate(targetUrl);
+                    return client.focus();
                 }
-                return client.focus();
             }
-            return clients.openWindow('/');
+            // إذا لم يكن مفتوحاً، افتح نافذة جديدة
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
         })
     );
 });

@@ -715,5 +715,19 @@
   "alarm_once": "مرة واحدة",
   "alarm_select_date": "📅 تاريخ محدد",
   "alarm_clear_date": "إلغاء التاريخ",
-  "alarm_specific_date": "تاريخ محدد"
+  "alarm_specific_date": "تاريخ محدد",
+  "pushNotifTitle": "تفعيل الإشعارات الخارجية",
+  "pushNotifActive": "الإشعارات الخارجية مفعّلة ✓",
+  "pushNotifDesc": "استقبل تنبيهات وتذكيرات مهمة حتى والتطبيق مغلق",
+  "pushNotifActiveDesc": "ستصلك الإشعارات تلقائياً في الخلفية",
+  "pushNotifConsentTitle": "تفعيل التنبيهات الخارجية",
+  "pushNotifConsentBody": "لتصلك تنبيهات المراجعة حتى والتطبيق مغلق، يرجى الموافقة على الطلب الذي سيظهر لك الآن من المتصفح أو النظام.",
+  "pushNotifConsentAgree": "موافق، فعّلها",
+  "pushNotifConsentCancel": "ليس الآن",
+  "pushNotifCenterTitle": "مركز الإشعارات",
+  "pushNotifMarkAllRead": "تحديد الكل كمقروء",
+  "pushNotifClearAll": "حذف الكل",
+  "pushNotifEmpty": "لا توجد إشعارات بعد",
+  "pushNotifEmptyDesc": "ستظهر الإشعارات الخارجية هنا عند استلامها",
+  "pushNotifDelete": "حذف"
 }

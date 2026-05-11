@@ -709,5 +709,19 @@
   "inAppNotifMarkAllRead": "Отметить все как прочитанное",
   "inAppNotifClearAll": "Очистить все",
   "inAppNotifEmpty": "Уведомлений пока нет",
-  "inAppNotifEmptyDesc": "Ваши уведомления будут появляться здесь"
+  "inAppNotifEmptyDesc": "Ваши уведомления будут появляться здесь",
+  "pushNotifTitle": "Enable Push Notifications",
+  "pushNotifActive": "Push Notifications Active",
+  "pushNotifDesc": "Receive important alerts and reminders even when the app is closed",
+  "pushNotifActiveDesc": "You will receive notifications automatically in the background",
+  "pushNotifConsentTitle": "Enable Push Notifications",
+  "pushNotifConsentBody": "To receive review reminders even when the app is closed, please accept the request that will appear from your browser or system.",
+  "pushNotifConsentAgree": "OK, Enable",
+  "pushNotifConsentCancel": "Not Now",
+  "pushNotifCenterTitle": "Notification Center",
+  "pushNotifMarkAllRead": "Mark all as read",
+  "pushNotifClearAll": "Clear all",
+  "pushNotifEmpty": "No notifications yet",
+  "pushNotifEmptyDesc": "Push notifications will appear here when received",
+  "pushNotifDelete": "Delete"
 }

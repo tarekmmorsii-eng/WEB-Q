@@ -978,6 +978,89 @@ am, bn, bs, de, en, es, fa, fr, ha, hi, id, ja, kk, ko, ku, ms, om, ru, rw, si, 
 
 ---
 
+## 🔔 بنية الإشعارات الخارجية (Push Notifications Infrastructure) — 2026-05-10
+
+### الهدف
+بناء البنية التحتية البرمجية الكاملة لدعم الإشعارات الخارجية (Push Notifications) عبر Firebase Cloud Messaging (FCM) للويب والأندرويد.
+
+### الملفات الجديدة
+
+| الملف | الوصف |
+|-------|-------|
+| `utils/firebase-config.ts` | تهيئة Firebase للويب (`initializeApp` + `getMessaging`) |
+| `hooks/usePushNotifications.ts` | هوك مخصص لطلب الصلاحيات والحصول على FCM Token (ويب + أندرويد) |
+
+### الملفات المعدّلة
+
+| الملف | الوصف |
+|-------|-------|
+| `capacitor.config.ts` | إضافة إعدادات `PushNotifications` plugin |
+| `components/Settings.tsx` | إضافة زر "تفعيل الإشعارات الخارجية" في قسم العمل بدون إنترنت |
+
+---
+
+## 🔔 إعادة ترتيب زر الإشعارات الخارجية في صفحة الإعدادات — 2026-05-11
+
+### التغيير
+بناءً على مراجعة تجربة المستخدم (UX)، تم نقل قسم "تفعيل الإشعارات الخارجية" (Push Notifications) إلى **أسفل قائمة الإعدادات** ليكون آخر خيار قبل نهاية الصفحة.
+
+### التفاصيل
+- **الموقع القديم:** كان القسم يظهر مباشرة بعد أزرار التبديل (Dark/Light, Prayer Mode, Bookmark, Search) وقبل زر "المزيد من الإعدادات"
+- **الموقع الجديد:** أصبح يظهر في أسفل الصفحة، بعد جميع أقسام الإعدادات (المساعدة، التواصل، التواصل الاجتماعي، المشاركة، عداد الزوار)
+- **لا يوجد تغيير في أي كود منطقي** — فقط إعادة ترتيب العناصر في الواجهة (UI Reordering)
+- القسم يشمل: زر التفعيل + حالة الصلاحية + نافذة الموافقة (Consent Modal)
+
+### الملف المعدّل
+| الملف | الوصف |
+|-------|-------|
+| `components/Settings.tsx` | نقل قسم الإشعارات الخارجية من موقعه القديم إلى أسفل القائمة |
+
+---
+
+## 🔧 إصلاح تعارض Service Workers — دمج Firebase داخل sw.js — 2026-05-11
+
+### المشكلة
+كانت الإشعارات لا تصل للمتصفح بسبب تعارض بين ملفي Service Worker:
+- `sw.js` — مسجل من `index.html` للعمل دون اتصال
+- `firebase-messaging-sw.js` — مسجل من `firebase-config.ts` للإشعارات
+
+المتصفح يسمح بـ Service Worker واحد فقط لكل نطاق، فكان `sw.js` يسيطر ويتم تجاهل أحداث Firebase.
+
+### الحل: دمج Firebase SDK داخل sw.js الموحد
+بدلاً من ملفين منفصلين، أصبح `sw.js` يتعامل مع **التخزين المؤقت + الإشعارات** معاً عبر `importScripts`:
+
+1. **تحميل Firebase SDK** داخل `sw.js` عبر `importScripts`
+2. **`messaging.onBackgroundMessage()`** لاستقبال الإشعارات في الخلفية
+3. **`self.addEventListener('push')`** خام للتشخيص
+4. **`self.registration.showNotification()`** لإظهار الإشعار إجبارياً
+5. **حفظ الإشعارات** عبر `postMessage` للنوافذ المفتوحة أو IndexedDB كبديل
+6. **`notificationclick`** محسّن يدعم التنقل لصفحة محددة عبر `data.targetPage`
+
+### الملفات المعدّلة
+
+| الملف | التغيير |
+|-------|---------|
+| `public/sw.js` | دمج Firebase SDK + `onBackgroundMessage` + `push` event + `notificationclick` محسّن + `GET_STORED_NOTIFICATIONS` |
+| `utils/firebase-config.ts` | إزالة تسجيل `firebase-messaging-sw.js` المنفصل — يستخدم `sw.js` الموحد |
+| `hooks/usePushNotifications.ts` | تمرير `serviceWorkerRegistration` صراحةً في `getToken()` |
+
+### ملف محفوظظ (لم يعد يُستخدم مباشرة)
+| الملف | الحالة |
+|-------|--------|
+| `public/firebase-messaging-sw.js` | محفوظ كمرجع — لكن لا يتم تسجيله بعد الآن |
+
+### كيفية العمل
+1. **للويب (PWA):** يستخدم Firebase Messaging مباشرة مع Service Worker
+2. **للأندرويد (Capacitor):** يستخدم `@capacitor/push-notifications` plugin
+3. **الهوك يتعامل بأمان** مع المتصفحات التي لا تدعم الإشعارات
+
+### ⚠️ مطلوب منك
+- افتح `utils/firebase-config.ts` والصق مفاتيح Firebase في كائن `firebaseConfig`
+- افتح `public/firebase-messaging-sw.js` والصق نفس المفاتيح
+- تأكد من إضافة مفتاح VAPID في `hooks/usePushNotifications.ts`
+
+---
+
 ## 🔄 إضافة مفاتيح الترجمة المفقودة (i18n Keys Restore) — 2026-05-07
 
 ### المشكلة
@@ -1991,3 +2074,90 @@ useEffect(() => {
 | `components/NotificationManager.tsx` | إضافة خدعة CSS `color: transparent` لإخفاء النص المشوه |
 | `scripts/translate_inapp_notif_keys.cjs` | سكربت ترجمة آلية جديد |
 | `src/assets/i18n/*.json` (20 ملف) | إضافة مفاتيح InAppNotificationsModal المترجمة |
+
+---
+
+## 🔔 تحديث 2025-05-10: البنية التحتية للإشعارات الخارجية (Push Notifications)
+
+### الملخص
+تم بناء البنية التحتية البرمجية الكاملة لدعم الإشعارات الخارجية (Push Notifications) عبر Firebase Cloud Messaging (FCM) للويب والأندرويد.
+
+### الملفات المنشأة والمعدّلة
+
+#### 1. ملف تهيئة Firebase للويب `utils/firebase-config.ts` (جديد)
+- تهيئة `initializeApp` من Firebase
+- تهيئة `getMessaging` مع التحقق من دعم المتصفح عبر `isSupported()`
+- **⚠️ يتطلب منك**: لصق مفاتيح Firebase الخاصة بك في كائن `firebaseConfig`
+
+#### 2. Service Worker للإشعارات `public/firebase-messaging-sw.js` (جديد)
+- استقبال الإشعارات في الخلفية عبر `onBackgroundMessage`
+- دعم النقر على الإشعار وفتح التطبيق
+- دعم RTL للغة العربية
+- **⚠️ يتطلب منك**: تحديث نفس مفاتيح Firebase الموجودة في `firebase-config.ts`
+
+#### 3. إعدادات Capacitor `capacitor.config.ts` (معدّل)
+- إضافة إعدادات `PushNotifications` ضمن `plugins`
+- تضمين: `presentationOptions`, `smallIcon`, `iconColor`, `defaultChannel`
+
+#### 4. هوك الصلاحيات `hooks/usePushNotifications.ts` (جديد)
+- طلب صلاحية الإشعارات من المستخدم
+- دعم الويب: Firebase Messaging + `Notification.requestPermission()` + VAPID Key
+- دعم الأندرويد: Capacitor `PushNotifications` API
+- استماع للرسائل في المقدمة (`onMessage` / `pushNotificationReceived`)
+- حفظ واستعادة FCM Token في `localStorage`
+- **⚠️ يتطلب منك**: لصق مفتاح VAPID الخاص بك
+
+### ما يجب عليك فعله بعد هذا التحديث
+1. **Firebase Console** → Project Settings → Web App → نسخ مفاتيح `firebaseConfig` ولصقها في:
+   - `utils/firebase-config.ts`
+   - `public/firebase-messaging-sw.js`
+2. **Firebase Console** → Project Settings → Cloud Messaging → Web Push certificates → إنشاء/نسخ مفتاح VAPID ولصقه في:
+   - `hooks/usePushNotifications.ts` (ابحث عن `YOUR_VAPID_KEY_HERE`)
+3. استدعاء `usePushNotifications()` في المكان المناسب من التطبيق وربط `requestPermission()` بزر في الواجهة
+
+### تحديث: واجهة التوضيح (Two-Step Consent) + تعريب الإشعارات الخارجية (2026-05-10)
+
+#### المشكلة
+زر الإشعارات الخارجية كان يطلب صلاحية المتصفح مباشرة عند الضغط، مما يربك المستخدم. كما كانت النصوص ثابتة (hardcoded) وليست مترجمة.
+
+#### الحل
+1. **نافذة توضيح (Two-Step Consent Modal):** عند الضغط على زر "تفعيل الإشعارات الخارجية"، تظهر نافذة توضيحية أولاً تشرح للمستخدم ما سيحدث، ثم عند الموافقة يُطلب الإذن من المتصفح
+2. **تعريب كامل:** جميع نصوص زر الإشعارات ونافذة التوضيح أصبحت تستخدم مفاتيح ترجمة `t.pushNotifTitle` و `t.pushNotifConsentTitle` وغيرها
+
+#### المفاتيح المضافة لجميع اللغات (31 لغة)
+| المفتاح | الوصف |
+|--------|-------|
+| `pushNotifTitle` | عنوان الزر: "تفعيل الإشعارات الخارجية" |
+| `pushNotifActive` | حالة التفعيل: "الإشعارات مفعّلة ✓" |
+| `pushNotifDesc` | وصف الزر |
+| `pushNotifActiveDesc` | وصف حالة التفعيل |
+| `pushNotifConsentTitle` | عنوان نافذة التوضيح |
+| `pushNotifConsentBody` | نص نافذة التوضيح |
+| `pushNotifConsentAgree` | زر الموافقة |
+| `pushNotifConsentCancel` | زر الإلغاء |
+
+| الملف | التغيير |
+|-------|---------|
+| `components/Settings.tsx` | إضافة `showPushConsentModal` + نافذة التوضيح + استبدال النصوص الثابتة بمفاتيح `t.` |
+| `i18n/translations.ts` | إضافة 8 خصائص جديدة لواجهة `Translations` |
+| `src/assets/i18n/ar.json` | مفاتيح عربية |
+| `src/assets/i18n/en.json` | مفاتيح إنجليزية |
+| `src/assets/i18n/*.json` (29 لغة) | مفاتيح احتياطية بالإنجليزية |
+
+### الحزم المطلوبة (مثبتة مسبقاً)
+- `firebase` ^12.13.0
+- `@capacitor/push-notifications` ^8.0.4
+
+### تحديث: نظام تخزين ومركز الإشعارات (2026-05-10)
+
+#### الملفات الجديدة
+| الملف | الوصف |
+|-------|-------|
+| `hooks/useNotificationStore.ts` | نظام تخزين سجل الإشعارات (آخر 20 إشعار) في localStorage مع عداد غير المقروء |
+| `components/PushNotificationCenter.tsx` | مكون عرض سجل الإشعارات مع حذف وتحديد كمقروء |
+
+#### آلية العمل
+- كل إشعار خارجي (مقدمة/خلفية) يُحفظ تلقائياً في localStorage
+- Service Worker يُرسل الإشعار للواجهة عبر `postMessage` لحفظه
+- الإشعارات في المقدمة تُحفظ مباشرة من `onMessage`
+- مركز الإشعارات يعرض آخر 20 إشعار مع وقت نسبي وتحديد كمقروء

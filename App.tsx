@@ -58,6 +58,8 @@ import AudioSettingsModal from './components/AudioSettingsModal';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
 import { useNotifications } from './hooks/useNotifications';
 import InAppNotificationsModal from './components/InAppNotificationsModal';
+import PushNotificationCenter from './components/PushNotificationCenter';
+import { useNotificationStore } from './hooks/useNotificationStore';
 
 // ⭐ المنبهات الافتراضية - تظهر للمستخدم الجديد عند أول تشغيل
 // name فارغ = يتم بناء العرض ديناميكياً من surahNumber + t.surahNames
@@ -393,6 +395,10 @@ export default function App() {
   const [isMemorizationStatsOpen, setIsMemorizationStatsOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // ⭐ مركز إشعارات Push الخارجية
+  const [isPushCenterOpen, setIsPushCenterOpen] = useState(false);
+  const { unreadCount: pushUnreadCount } = useNotificationStore();
 
   // ⭐ مركز الإشعارات الذكي
   const {
@@ -2858,8 +2864,8 @@ export default function App() {
           isRTL={isRTL}
           onOpenShare={handleOpenShare}
           onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
-          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
-          notificationUnreadCount={unreadCount}
+          onOpenNotifications={() => setIsPushCenterOpen(true)}
+          notificationUnreadCount={pushUnreadCount}
         />
 
         <InAppNotificationsModal
@@ -2880,6 +2886,12 @@ export default function App() {
           t={t}
         />
 
+        {/* ⭐ مركز إشعارات Push الخارجية */}
+        <PushNotificationCenter
+          isOpen={isPushCenterOpen}
+          onClose={() => setIsPushCenterOpen(false)}
+          currentLanguage={settings.language as Language}
+        />
 
         {
           ratingModalData && (

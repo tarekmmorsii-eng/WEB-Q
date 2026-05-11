@@ -715,5 +715,19 @@
   "alarm_once": "一度",
   "alarm_select_date": "📅 特定の日付",
   "alarm_clear_date": "クリア日付",
-  "alarm_specific_date": "特定の日付"
+  "alarm_specific_date": "特定の日付",
+  "pushNotifTitle": "Enable Push Notifications",
+  "pushNotifActive": "Push Notifications Active",
+  "pushNotifDesc": "Receive important alerts and reminders even when the app is closed",
+  "pushNotifActiveDesc": "You will receive notifications automatically in the background",
+  "pushNotifConsentTitle": "Enable Push Notifications",
+  "pushNotifConsentBody": "To receive review reminders even when the app is closed, please accept the request that will appear from your browser or system.",
+  "pushNotifConsentAgree": "OK, Enable",
+  "pushNotifConsentCancel": "Not Now",
+  "pushNotifCenterTitle": "Notification Center",
+  "pushNotifMarkAllRead": "Mark all as read",
+  "pushNotifClearAll": "Clear all",
+  "pushNotifEmpty": "No notifications yet",
+  "pushNotifEmptyDesc": "Push notifications will appear here when received",
+  "pushNotifDelete": "Delete"
 }
