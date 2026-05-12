@@ -1,3 +1,21 @@
+## 🔧 إصلاحات وتحسينات — 12 مايو 2026
+
+### ✅ إصلاحات جذرية (Root Causes):
+1. **App.tsx**: حذف استيراد `AuthModal` المفقود + إضافة `usePushNotifications`
+2. **capacitor.config.ts + NotificationManager.tsx**: تغيير `smallIcon` من `ic_stat_name` إلى `ic_launcher_foreground`
+
+### ✅ تحسينات تجربة المستخدم (UX):
+3. **دمج التصاريح**: الموافقة على إشعارات المتصفح تُفعل تلقائياً Firebase Push بضغطة واحدة
+4. **مزامنة العدادات**: عداد القائمة الجانبية (`pushUnreadCount`) + عداد الإعدادات (`unreadCount`)
+5. **الإشعارات الثابتة**: المنبهات الافتراضية (الكهف، البقرة، تبارك) في القائمة الجانبية والعداد
+6. **ترتيب عكسي**: الأحدث أولاً في `InAppNotificationsModal` و `NotificationManager`
+7. **زر إضافة سريع (+)**: أيقونة بجوار عنوان نافذة المنبهات
+
+### 📁 الملفات المعدلة:
+`App.tsx` | `capacitor.config.ts` | `components/NotificationManager.tsx` | `components/InAppNotificationsModal.tsx`
+
+---
+
 <div align="center">
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>

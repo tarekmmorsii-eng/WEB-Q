@@ -380,88 +380,95 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // =============================================================
     // UNIFIED AYAH HIGHLIGHTING: DOM Overlays for all lines
     // Handles BOTH Search (highlightedAyah) and Audio (playingAyahId)
+    // ⭐ FIX: Wrapped in requestAnimationFrame to ensure DOM is fully rendered
+    // ⭐ FIX: Added pageNumber to dependencies for page-change reactivity
     // =============================================================
     useLayoutEffect(() => {
         const container = linesContainerRef.current;
         if (!container) return;
 
-        // 1. Remove old overlays
-        container.querySelectorAll('.hl-ayah-overlay').forEach(el => el.remove());
+        // Use requestAnimationFrame to ensure DOM is fully painted before querying
+        const rafId = requestAnimationFrame(() => {
+            // 1. Remove old overlays
+            container.querySelectorAll('.hl-ayah-overlay').forEach(el => el.remove());
 
-        // 2. Determine target status
-        let targetSurah: number | null = null;
-        let targetAyah: number | null = null;
+            // 2. Determine target status
+            let targetSurah: number | null = null;
+            let targetAyah: number | null = null;
 
-        if (highlightedAyah) {
-            targetSurah = highlightedAyah.surah;
-            targetAyah = highlightedAyah.ayah;
-        } else if (playingAyahId) {
-            const parts = playingAyahId.split('-');
-            if (parts.length >= 2) {
-                targetSurah = parseInt(parts[0]);
-                targetAyah = parseInt(parts[1]);
+            if (highlightedAyah) {
+                targetSurah = highlightedAyah.surah;
+                targetAyah = highlightedAyah.ayah;
+            } else if (playingAyahId) {
+                const parts = playingAyahId.split('-');
+                if (parts.length >= 2) {
+                    targetSurah = parseInt(parts[0]);
+                    targetAyah = parseInt(parts[1]);
+                }
             }
-        }
 
-        if (!targetSurah || !targetAyah) return;
+            if (!targetSurah || !targetAyah) return;
 
-        // 3. Find lines container
-        const lineEls = container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]');
+            // 3. Find lines container
+            const lineEls = container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]');
 
-        lineEls.forEach((lineEl) => {
-            const el = lineEl as HTMLElement;
-            
-            // Find highlighted words AND ayah separators in this line
-            const hlElements = el.querySelectorAll<HTMLElement>(
-                `[data-word-surah="${targetSurah}"][data-word-ayah="${targetAyah}"], [data-surah="${targetSurah}"][data-ayah="${targetAyah}"]`
-            );
-            
-            if (hlElements.length === 0) return;
+            lineEls.forEach((lineEl) => {
+                const el = lineEl as HTMLElement;
+                
+                // Find highlighted words AND ayah separators in this line
+                const hlElements = el.querySelectorAll<HTMLElement>(
+                    `[data-word-surah="${targetSurah}"][data-word-ayah="${targetAyah}"], [data-surah="${targetSurah}"][data-ayah="${targetAyah}"]`
+                );
+                
+                if (hlElements.length === 0) return;
 
-            // Detect if this is a "Pure Line"
-            const allRealWordsInLine = el.querySelectorAll('[data-word-surah]');
-            const isPureLine = allRealWordsInLine.length > 0 && Array.from(allRealWordsInLine).every(w => {
-                const s = w.getAttribute('data-word-surah');
-                const a = w.getAttribute('data-word-ayah');
-                return s === targetSurah?.toString() && a === targetAyah?.toString();
-            });
-
-            // Create absolutely-positioned overlay
-            const overlay = document.createElement('div');
-            overlay.className = 'hl-ayah-overlay';
-            
-            if (isPureLine) {
-                overlay.style.position = 'absolute';
-                overlay.style.height = `${el.offsetHeight + 4}px`;
-                overlay.style.top = '50%';
-                overlay.style.transform = 'translateY(-47%)'; // Optimal visual centering for Arabic text
-                overlay.style.left = '0';
-                overlay.style.right = '0';
-            } else {
-                const lineRect = el.getBoundingClientRect();
-                let minLeft = Infinity, maxRight = -Infinity;
-                hlElements.forEach(item => {
-                    const r = item.getBoundingClientRect();
-                    minLeft = Math.min(minLeft, r.left);
-                    maxRight = Math.max(maxRight, r.right);
+                // Detect if this is a "Pure Line"
+                const allRealWordsInLine = el.querySelectorAll('[data-word-surah]');
+                const isPureLine = allRealWordsInLine.length > 0 && Array.from(allRealWordsInLine).every(w => {
+                    const s = w.getAttribute('data-word-surah');
+                    const a = w.getAttribute('data-word-ayah');
+                    return s === targetSurah?.toString() && a === targetAyah?.toString();
                 });
 
-                // Add 4px horizontal bleed for better look
-                const finalLeft = Math.max(0, minLeft - lineRect.left - 4);
-                const finalRight = Math.min(lineRect.width, maxRight - lineRect.left + 4);
+                // Create absolutely-positioned overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'hl-ayah-overlay';
+                
+                if (isPureLine) {
+                    overlay.style.position = 'absolute';
+                    overlay.style.height = `${el.offsetHeight + 4}px`;
+                    overlay.style.top = '50%';
+                    overlay.style.transform = 'translateY(-47%)'; // Optimal visual centering for Arabic text
+                    overlay.style.left = '0';
+                    overlay.style.right = '0';
+                } else {
+                    const lineRect = el.getBoundingClientRect();
+                    let minLeft = Infinity, maxRight = -Infinity;
+                    hlElements.forEach(item => {
+                        const r = item.getBoundingClientRect();
+                        minLeft = Math.min(minLeft, r.left);
+                        maxRight = Math.max(maxRight, r.right);
+                    });
 
-                overlay.style.position = 'absolute';
-                overlay.style.height = `${el.offsetHeight + 4}px`;
-                overlay.style.top = '50%';
-                overlay.style.transform = 'translateY(-47%)';
-                overlay.style.left = `${finalLeft}px`;
-                overlay.style.width = `${finalRight - finalLeft}px`;
-            }
+                    // Add 4px horizontal bleed for better look
+                    const finalLeft = Math.max(0, minLeft - lineRect.left - 4);
+                    const finalRight = Math.min(lineRect.width, maxRight - lineRect.left + 4);
 
-            el.style.position = 'relative';
-            el.appendChild(overlay);
+                    overlay.style.position = 'absolute';
+                    overlay.style.height = `${el.offsetHeight + 4}px`;
+                    overlay.style.top = '50%';
+                    overlay.style.transform = 'translateY(-47%)';
+                    overlay.style.left = `${finalLeft}px`;
+                    overlay.style.width = `${finalRight - finalLeft}px`;
+                }
+
+                el.style.position = 'relative';
+                el.appendChild(overlay);
+            });
         });
-    }, [highlightedAyah, playingAyahId, pageData, isDarkMode, toggleState, deviceType, orientation]);
+
+        return () => cancelAnimationFrame(rafId);
+    }, [highlightedAyah, playingAyahId, pageData, pageNumber, isDarkMode, toggleState, deviceType, orientation]);
 
     // --- Device Detection & Resize Handler ---
     useEffect(() => {

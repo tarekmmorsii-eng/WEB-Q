@@ -53,13 +53,13 @@ import { useAyahAudio } from './hooks/useAyahAudio';
 import { useWakeLock } from './hooks/useWakeLock';
 import FloatingAudioPlayer from './components/FloatingAudioPlayer';
 import TranslationManagerModal from './components/TranslationManagerModal';
-import AuthModal from './components/AuthModal';
 import AudioSettingsModal from './components/AudioSettingsModal';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
 import { useNotifications } from './hooks/useNotifications';
 import InAppNotificationsModal from './components/InAppNotificationsModal';
 import PushNotificationCenter from './components/PushNotificationCenter';
 import { useNotificationStore } from './hooks/useNotificationStore';
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 // ⭐ المنبهات الافتراضية - تظهر للمستخدم الجديد عند أول تشغيل
 // name فارغ = يتم بناء العرض ديناميكياً من surahNumber + t.surahNames
@@ -2813,7 +2813,7 @@ export default function App() {
           onOpenIndex={() => setIsIndexOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
-          onOpenNotifications={() => setIsNotificationOpen(true)}
+          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
           notificationUnreadCount={unreadCount}
           onOpenMutashabihat={() => {
             const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
@@ -2865,8 +2865,8 @@ export default function App() {
           isRTL={isRTL}
           onOpenShare={handleOpenShare}
           onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
-          onOpenNotifications={() => setIsPushCenterOpen(true)}
-          notificationUnreadCount={pushUnreadCount}
+          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
+          notificationUnreadCount={unreadCount}
         />
 
         <InAppNotificationsModal

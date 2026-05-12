@@ -16,7 +16,7 @@ export default function SocialShareModal({
     isOpen,
     onClose,
     currentLanguage,
-    shareUrl = 'https://mushafalmurajaa.com',
+    shareUrl = 'https://play.google.com/store/apps/details?id=com.mushafalmurajaa.app',
     shareTitle,
     shareText
 }: SocialShareModalProps) {

@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   plugins: {
     LocalNotifications: {
-      smallIcon: 'ic_stat_name',
+      smallIcon: 'ic_launcher_foreground',
       iconColor: '#D97706',
       sound: 'islamic_song.mp3',
       defaultChannel: {

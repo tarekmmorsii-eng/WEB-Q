@@ -207,7 +207,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         ongoing: false,
                         actionTypeId: 'OPEN_QURAN',
                         attachments: [],
-                        smallIcon: 'ic_stat_name',
+                        smallIcon: 'ic_launcher_foreground',
                         largeIcon: 'res://icon',
                         badge: 1
                     });
@@ -241,7 +241,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         ongoing: false,
                         actionTypeId: 'OPEN_QURAN',
                         attachments: [],
-                        smallIcon: 'ic_stat_name',
+                        smallIcon: 'ic_launcher_foreground',
                         largeIcon: 'res://icon',
                         badge: 1
                     });
@@ -273,7 +273,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             ongoing: false,
                             actionTypeId: 'OPEN_QURAN',
                             attachments: [],
-                            smallIcon: 'ic_stat_name',
+                            smallIcon: 'ic_launcher_foreground',
                             largeIcon: 'res://icon',
                             badge: 1
                         });
@@ -610,7 +610,18 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             <div className="bg-[var(--bg-card)] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)]">
-                    <h2 className="text-xl font-bold text-amber-600 dark:text-amber-400">{t.notificationManagerTitle}</h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-amber-600 dark:text-amber-400">{t.notificationManagerTitle}</h2>
+                        {!showAddForm && (
+                            <button
+                                onClick={() => setShowAddForm(true)}
+                                className="p-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+                                title={t.addNotification || 'Add'}
+                            >
+                                <Plus size={20} />
+                            </button>
+                        )}
+                    </div>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
@@ -630,7 +641,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                         {t.noNotifications}
                                     </p>
                                 ) : (
-                                    notifications.map(notification => (
+                                    [...notifications].reverse().map(notification => (
                                         <div
                                             key={notification.id}
                                             className="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-primary)] transition-all"

@@ -189,7 +189,7 @@ export default function InAppNotificationsModal({
                         </div>
                     ) : (
                         <div className="divide-y divide-[var(--border-primary)]">
-                            {notifications.map((notification) => (
+                            {[...notifications].sort((a, b) => b.createdAt - a.createdAt).map((notification) => (
                                 <div
                                     key={notification.id}
                                     onClick={() => handleNotificationClick(notification)}
