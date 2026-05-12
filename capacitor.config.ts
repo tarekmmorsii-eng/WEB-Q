@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.mushafalmurajaa',
+  appId: 'com.mushafalmurajaa.app',
   appName: 'مصحف المراجعة',
   webDir: 'dist',
   plugins: {

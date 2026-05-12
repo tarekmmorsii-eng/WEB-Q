@@ -2,6 +2,106 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
+## 📱 إنشاء أيقونات التطبيق وشاشة البداية (App Assets Generation) — 2026-05-12
+
+### الهدف
+توليد جميع أيقونات التطبيق (App Icons) وشاشات البداية (Splash Screens) لنظام Android من الصورة الأصلية `public/logo_1.png` (380 KB، PNG).
+
+### ما تم تنفيذه
+
+| # | الخطوة | التفاصيل |
+|---|--------|----------|
+| 1 | **تثبيت الأداة** | `npm install -D @capacitor/assets` |
+| 2 | **تجهيز مجلد المصدر** | مجلد `assets/` موجود مسبقاً بجانب `package.json` |
+| 3 | **نسخ الصورة** | `logo_1.png` → `assets/icon.png` + `assets/splash.png` |
+| 4 | **التوليد الآلي** | `npx @capacitor/assets generate --android` |
+
+### الأيقونات المُنشأة (Android App Icons)
+تم توليد أيقونات بجميع الكثافات في `android/app/src/main/res/`:
+
+| المجلد | المحتوى |
+|--------|---------|
+| `mipmap-ldpi/` | `ic_launcher.png` + `ic_launcher_round.png` + `ic_launcher_foreground.png` + `ic_launcher_background.png` |
+| `mipmap-mdpi/` | نفس الملفات |
+| `mipmap-hdpi/` | نفس الملفات |
+| `mipmap-xhdpi/` | نفس الملفات |
+| `mipmap-xxhdpi/` | نفس الملفات |
+| `mipmap-xxxhdpi/` | نفس الملفات |
+| `mipmap-anydpi-v26/` | `ic_launcher.xml` + `ic_launcher_round.xml` (Adaptive Icons) |
+| `drawable-v24/` | `ic_launcher_foreground.xml` |
+
+### شاشات البداية المُنشأة (Android Splash Screens)
+تم توليد شاشات بداية بجميع الكثافات والاتجاهات ( Portrait + Landscape ) + الوضع الليلي:
+
+| النوع | المجلدات |
+|-------|----------|
+| **Portrait** | `drawable-port-ldpi` → `drawable-port-xxxhdpi` (6 كثافات) |
+| **Landscape** | `drawable-land-ldpi` → `drawable-land-xxxhdpi` (6 كثافات) |
+| **Portrait ليلي** | `drawable-port-night-ldpi` → `drawable-port-night-xxxhdpi` (6 كثافات) |
+| **Landscape ليلي** | `drawable-land-night-ldpi` → `drawable-land-night-xxxhdpi` (6 كثافات) |
+| **عام** | `drawable/splash.png` + `drawable-night/splash.png` |
+
+### الملفات في مجلد assets (المصدر)
+| الملف | الحجم | الاستخدام |
+|-------|-------|----------|
+| `assets/icon.png` | 380 KB | مصدر الأيقونات |
+| `assets/splash.png` | 380 KB | مصدر شاشات البداية |
+| `assets/icon-only.png` | 380 KB | أيقونة إضافية |
+
+---
+
+## 🏷️ توحيد هوية التطبيق (App Identity Unification) — 2026-05-12
+
+### المشكلة
+كان هناك تعارض خطير في معرّف التطبيق بين ملفات المشروع:
+- `capacitor.config.ts` → `com.mushafalmurajaa`
+- `build.gradle` → `com.tarteel.mushaf`
+- هذا التعارض كان سيؤدي لفشل البناء أو رفض من جوجل بلاي
+
+### الحل: توحيد المعرّف الرسمي
+تم اعتماد المعرّف الرسمي والنهائي: **`com.mushafalmurajaa.app`**
+
+### الملفات المعدّلة
+| # | الملف | التغيير |
+|---|-------|---------|
+| 1 | `capacitor.config.ts` | `appId` → `com.mushafalmurajaa.app` |
+| 2 | `android/app/build.gradle` | `namespace` + `applicationId` → `com.mushafalmurajaa.app` |
+| 3 | `android/app/src/main/res/values/strings.xml` | `package_name` + `custom_url_scheme` → `com.mushafalmurajaa.app` |
+| 4 | `android/app/src/main/assets/capacitor.config.json` | `appId` → `com.mushafalmurajaa.app` |
+| 5 | `android/app/google-services.json` | `package_name` → `com.mushafalmurajaa.app` |
+| 6 | `android/app/src/main/java/com/mushafalmurajaa/app/MainActivity.java` | **جديد** — تم إنشاؤه بالمسار الجديد |
+| 7 | `android/app/src/main/java/com/tarteel/` | **محذوف** — هيكل المجلدات القديم |
+
+### التحقق
+- ✅ فحص شامل: لا توجد أي مراجع للمعرّفات القديمة
+- ✅ `npx cap sync android` تم بنجاح
+- ⚠️ **ملاحظة مهمة:** يجب إعادة إنشاء تطبيق Firebase في Firebase Console باسم الحزمة الجديد `com.mushafalmurajaa.app` للحفاظ على عمل Push Notifications
+
+---
+
+## ⚡ تحسينات الإنتاج — vite.config.ts (Production Optimization) — 2026-05-12
+
+### التغييرات المُطبّقة
+
+| # | الإعداد | القيمة | الوصف |
+|---|---------|--------|-------|
+| 1 | `esbuild.drop` | `['console', 'debugger']` | إزالة جميع `console.log` و `debugger` تلقائياً عند البناء |
+| 2 | `minify` | `'esbuild'` | ضغط الكود بأقصى درجة (تصريح صريح بدل `true`) |
+| 3 | `chunkSizeWarningLimit` | `600` (كان 1000) | خفض حد التحذير لضغط حجم الملفات |
+| 4 | `vendor-firebase` | **chunk جديد** | فصل Firebase SDK في ملف مستقل عن كود التطبيق |
+
+### ملفات JS الناتجة عن البناء (dist/assets/)
+| الملف | المحتوى |
+|-------|---------|
+| `vendor-react-*.js` | React + ReactDOM |
+| `vendor-ui-*.js` | Lucide React + clsx |
+| `vendor-swiper-*.js` | Swiper |
+| `vendor-firebase-*.js` | Firebase App + Messaging (**جديد**) |
+| `index-*.js` | كود التطبيق الرئيسي |
+| `web-*.js` | كود إضافي |
+
+---
+
 ## 🔧 استعادة ذهبية (Hard Reset from Golden Backups) — 2026-05-12
 
 ### المشكلة
