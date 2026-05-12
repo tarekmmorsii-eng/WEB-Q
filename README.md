@@ -2,6 +2,28 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
+## 🔧 استعادة ذهبية (Hard Reset from Golden Backups) — 2026-05-12
+
+### المشكلة
+التعديلات السابقة على `index.css` أدت إلى كسر قياسات نسخة الكمبيوتر (Desktop) ولم تُحل مشكلة التمرير الأفقي بشكل صحيح.
+
+### الإجراء المتخذ
+تم استعادة كاملة (Hard Reset) لملف `index.css` من الملفات المرجعية الذهبية:
+- `FINAL_SUCCESS_SETTINGS_ALL_DEVICES.txt`
+- `FINAL_SUCCESS_SETTINGS_V2_ALL_DEVICES.txt`
+
+### ما تم تنفيذه
+
+| # | الإجراء | التفاصيل |
+|---|---------|----------|
+| 1 | **حذف التعديلات الترقيعية** | إزالة تعديلات `.quran-swiper-container` وغيرها من الترقيعات |
+| 2 | **استعادة إعدادات Desktop** | `padding: 10px 20px`, `max-width: 650px`, `height: 100vh`, `justify-content: space-between` من المرجعي |
+| 3 | **استعادة إعدادات Landscape** | `@media (max-width: 1440px) and (orientation: landscape)` مع `overflow-y: auto`, `line-height: 2.3` |
+| 4 | **استعادة data-attribute settings** | إعدادات `data-device-type` و `data-orientation` للموبايل والتابلت من المرجعي V2 |
+| 5 | **التحقق من DOM** | `QPCV2PageRenderer.tsx` سليم ✅ — `data-device-type`, `data-orientation`, `mushaf-page-qpc` في أماكنها الصحيحة |
+
+---
+
 # تطبيق تحفيظ القرآن الكريم المتكامل (Quran Memorizer App)
 
 تطبيق متقدم ومفتوح المصدر مبني باستخدام React و Vite لمساعدة المسلمين على حفظ القرآن الكريم، مراجعته، وتتبع إنجازاتهم. يوفر التطبيق ميزات فريدة مثل تتبع المتشابهات اللفظية، الإحصائيات الدقيقة، وعرض متقدم للصفحات ليطابق مصحف المدينة النبوية (KFGQPC).

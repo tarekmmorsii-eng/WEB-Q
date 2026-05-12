@@ -1065,14 +1065,12 @@ export default function App() {
     unreadCountRef.current = unreadCount;
   }, [unreadCount]);
 
-  // ⭐ فتح نافذة الإشعارات كرد فعل مباشر (Event-Driven) - بدلاً من المؤقت الأعمى
-  // يتم استدعاؤها فقط بعد إغلاق الجولة التعليمية يدوياً من المستخدم
+  // ⭐ [DISABLED] تم تعطيل الفتح التلقائي لنافذة الإشعارات لحل مشكلة تجمد التمرير (Ghost Overlay)
+  // النافذة الآن لا تفتح إلا بالضغط اليدوي على زر الجرس
+  // الشارة الحمراء (Badge) تظل ظاهرة لتنبيه المستخدم
   const showNotificationsIfNeeded = useCallback(() => {
-    if (unreadCountRef.current > 0) {
-      setTimeout(() => {
-        setIsNotificationsModalOpen(true);
-      }, 500);
-    }
+    // 🚫 تم التعطيل - لن تفتح نافذة الإشعارات تلقائياً
+    return;
   }, []);
 
   // 4. Alarm Auto-close Logic (59 seconds)
@@ -2329,10 +2327,7 @@ export default function App() {
         onClosePrayerMode={() => setSettings(prev => ({ ...prev, prayerMode: false }))}
       />
       <div
-        className={clsx(
-          "w-full flex flex-col relative transition-colors duration-300",
-          isLandscapeMode ? "h-auto overflow-auto" : "h-[100dvh] overflow-hidden"
-        )}
+        className="h-[100dvh] w-full flex flex-col relative transition-colors duration-300 overflow-hidden"
         style={{
           backgroundColor: currentTheme.colors.background,
           color: currentTheme.colors.text,
@@ -2423,6 +2418,12 @@ export default function App() {
                       onSlideChangeTransitionEnd={handleSwiperSlideChange}
                       initialSlide={1}
                       className="w-full h-full flex-1"
+                      resistance={true}
+                      resistanceRatio={0.85}
+                      touchAngle={35}
+                      touchMoveStopPropagation={false}
+                      simulateTouch={true}
+                      style={{ touchAction: isLandscapeMode ? 'pan-y' : 'pan-x' }}
                     >
                       <SwiperSlide className="w-full h-full flex items-start justify-center">
                         <QPCV2PageRenderer

@@ -1229,6 +1229,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // --- Styling Helpers ---
     const containerStyles = useMemo(() => {
         const isTabLandscape = deviceType === 'tablet' && orientation === 'landscape';
+        const isMobLandscape = deviceType === 'mobile' && orientation === 'landscape';
+        const isLandscape = isTabLandscape || isMobLandscape;
+
         let paddingValue = '10px 5px'; // Minimized side padding
         if (deviceType === 'tablet') {
             paddingValue = orientation === 'portrait' ? '50px 70px' : '15px 20px 20px 20px';
@@ -1236,8 +1239,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         return {
             width: '100%',
             maxWidth: isTabLandscape ? '1200px' : '800px',
-            height: '100%',
-            minHeight: '100%',
+            height: isLandscape ? 'auto' : '100%',
+            minHeight: isLandscape ? '100dvh' : '100%',
             padding: paddingValue,
             marginLeft: 'auto',
             marginRight: 'auto',
@@ -1306,8 +1309,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     const fontSizeClass = useMemo(() => {
         if (deviceType === 'desktop') return 'clamp(1.6rem, 2.2vw, 2.22rem)';
-        if (deviceType === 'mobile') return isMobileLandscape ? 'clamp(1.1rem, 5.5vh, 1.5rem)' : 'min(2.8vh, 5.2vw)'; 
-        if (deviceType === 'tablet') return isTabletLandscape ? 'clamp(1.5rem, 5.8vh, 2.1rem)' : '21px';
+        if (deviceType === 'mobile') return isMobileLandscape ? '40px' : 'min(2.8vh, 5.2vw)'; 
+        if (deviceType === 'tablet') return isTabletLandscape ? '56px' : '21px';
         return '21px';
     }, [deviceType, isMobileLandscape, isTabletLandscape]);
 
