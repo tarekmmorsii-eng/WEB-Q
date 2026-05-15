@@ -1800,6 +1800,13 @@ export default function App() {
 
       const now = new Date();
       const currentDay = now.getDay();
+      
+      // دعم التاريخ لخيار "مرة واحدة"
+      const currentYear = now.getFullYear();
+      const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+      const currentDate = String(now.getDate()).padStart(2, '0');
+      const currentDateStr = `${currentYear}-${currentMonth}-${currentDate}`;
+      
       const hour = now.getHours().toString().padStart(2, '0');
       const minute = now.getMinutes().toString().padStart(2, '0');
       const currentTimeStr = `${hour}:${minute}`;
@@ -1810,7 +1817,26 @@ export default function App() {
         const lastFiredKey = `notif_last_fired_${n.id}_${currentTimeStr}`;
         const lastFired = localStorage.getItem(lastFiredKey);
 
-        if (n.days.includes(currentDay) && n.times.includes(currentTimeStr) && !lastFired) {
+        const isTimeMatch = n.times.includes(currentTimeStr);
+        const isDayMatch = n.days && n.days.includes(currentDay);
+        
+        // إذا لم يحدد المستخدم تاريخاً للتنبيه لمرة واحدة، نعتبره مطابقاً لليوم
+        const isDateMatch = n.targetDate ? n.targetDate === currentDateStr : true;
+
+        // يتحقق إذا كان التنبيه في موعده سواء كان "مرة واحدة" (بالتاريخ) أو دوري (بالأيام)
+        const isTriggerDay = (n.type === 'once' && isDateMatch) || (n.type !== 'once' && isDayMatch);
+
+        if (isTriggerDay && isTimeMatch && !lastFired) {
+          
+          // ⭐ إذا كان التنبيه لمرة واحدة، نقوم بتعطيله فوراً حتى لا يتكرر غداً
+          if (n.type === 'once') {
+             n.isEnabled = false;
+             setNotifications(prev => {
+                const updated = prev.map(notif => notif.id === n.id ? { ...notif, isEnabled: false } : notif);
+                localStorage.setItem('quran_alarm_notifications', JSON.stringify(updated));
+                return updated;
+             });
+          }
           
           // ⭐ رفع قيمة العداد يدوياً وفوراً بمقدار +1 في السجل (مزامنة فورية على الويب والأجهزة)
           addInAppNotification({
