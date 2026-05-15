@@ -88,6 +88,7 @@ export default function Settings({
         isLoading: isPushLoading,
         fcmToken,
         requestPermission: requestPushPermission,
+        refreshPermissionStatus,
         isPushSupported
     } = usePushNotifications({ language: currentLanguage });
 
@@ -159,6 +160,10 @@ export default function Settings({
             if (!highlightHelp && !highlightOffline) {
                 setShowAllSettings(false);
             }
+            // ⭐ تحديث حالة الإشعارات الفورية من localStorage
+            // هذا يضمن أن زر "تفعيل الإشعارات الفورية" يتحدث تلقائياً
+            // بعد أن يكون المستخدم قد وافق على التصريح من NotificationManager
+            refreshPermissionStatus();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);

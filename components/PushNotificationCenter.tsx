@@ -12,12 +12,14 @@ interface PushNotificationCenterProps {
   isOpen: boolean;
   onClose: () => void;
   currentLanguage: Language;
+  onNavigateToPage?: (page?: number, ayahNumber?: number, surahNumber?: number) => void;
 }
 
 export default function PushNotificationCenter({
   isOpen,
   onClose,
   currentLanguage,
+  onNavigateToPage,
 }: PushNotificationCenterProps) {
   const t = translations[currentLanguage];
   const isRTL = t.dir === 'rtl';
@@ -29,6 +31,26 @@ export default function PushNotificationCenter({
     deleteNotification,
     clearAll,
   } = useNotificationStore();
+
+  const handleNotificationClick = (notif: any) => {
+    markAsRead(notif.id);
+    console.log('Clicked Notification:', notif);
+    
+    // محاولة التنقل إذا كان هناك بيانات تنقل مرفقة في أي مكان (مرونة عالية)
+    if (onNavigateToPage) {
+      const payload = notif.data || notif.extra || notif || {};
+      
+      const page = payload.page ? Number(payload.page) : payload.targetPage ? Number(payload.targetPage) : undefined;
+      const surah = payload.surah ? Number(payload.surah) : payload.surahNumber ? Number(payload.surahNumber) : undefined;
+      const ayah = payload.ayah ? Number(payload.ayah) : payload.ayahNumber ? Number(payload.ayahNumber) : undefined;
+      
+      // إذا كان لدينا رقم صفحة أو سورة، ننتقل إليها
+      if (page || surah) {
+        onNavigateToPage(page || undefined, ayah, surah);
+        onClose();
+      }
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -105,7 +127,7 @@ export default function PushNotificationCenter({
               {notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  onClick={() => markAsRead(notif.id)}
+                  onClick={() => handleNotificationClick(notif)}
                   className={`p-4 transition-all cursor-pointer hover:bg-[var(--bg-secondary)] ${
                     !notif.isRead ? 'bg-purple-50/50 dark:bg-purple-900/10 border-s-4 border-purple-500' : ''
                   }`}
@@ -116,15 +138,10 @@ export default function PushNotificationCenter({
                         {!notif.isRead && (
                           <span className="w-2 h-2 bg-purple-500 rounded-full shrink-0 animate-pulse" />
                         )}
-                        <h4 className={`text-sm font-bold text-[var(--text-primary)] truncate ${!notif.isRead ? '' : 'opacity-70'}`}>
-                          {notif.title}
+                        <h4 className={`text-sm font-bold text-[var(--text-primary)] line-clamp-2 leading-relaxed ${!notif.isRead ? '' : 'opacity-70'}`}>
+                          {notif.body || notif.title}
                         </h4>
                       </div>
-                      {notif.body && (
-                        <p className="text-xs text-[var(--text-primary)] opacity-60 mt-1 line-clamp-2 leading-relaxed">
-                          {notif.body}
-                        </p>
-                      )}
                       <div className="flex items-center gap-1 mt-2">
                         <Clock size={10} className="text-gray-400" />
                         <span className="text-[10px] text-gray-400">

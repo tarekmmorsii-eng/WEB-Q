@@ -348,6 +348,20 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
     }
   }, [currentLanguage]);
 
+  /**
+   * ⭐ تحديث حالة التصريح من localStorage
+   * يُستدعى من Settings.tsx عند فتح النافذة لضمان مزامنة حالة الزر
+   */
+  const refreshPermissionStatus = useCallback(() => {
+    const status = checkPermissionStatus();
+    setPermissionStatus(status);
+    // استعادة الـ Token المحفوظ أيضاً
+    const savedToken = localStorage.getItem(PUSH_TOKEN_KEY);
+    if (savedToken) {
+      setFcmToken(savedToken);
+    }
+  }, [checkPermissionStatus]);
+
   return {
     // الحالة
     permissionStatus,
@@ -359,6 +373,7 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
     // الدوال
     requestPermission,
     setForegroundMessage,
+    refreshPermissionStatus,
 
     // معلومات مساعدة
     isNative: Capacitor.isNativePlatform(),

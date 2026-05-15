@@ -1,4 +1,29 @@
 import { useState, useCallback, useEffect } from 'react';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
+import { Badge } from '@capawesome/capacitor-badge';
+
+const isNative = Capacitor.isNativePlatform();
+
+/**
+ * تحديث شارة الأيقونة الخارجية (App Badge)
+ * يستخدم @capawesome/capacitor-badge — الحل الرسمي المدعوم
+ */
+async function updateAppBadge(count: number): Promise<void> {
+  if (!isNative) return;
+  try {
+    const { isSupported } = await Badge.isSupported();
+    if (!isSupported) {
+      console.warn('[Badge] ⚠️ الجهاز لا يدعم الشارة');
+      return;
+    }
+    await Badge.set({ count });
+    console.log(`[Badge] ✅ تم تحديث الشارة إلى: ${count}`);
+  } catch (e) {
+    // بعض الأجهزة لا تدعم Badge — تسجيل للتشخيص
+    console.warn('[Badge] ⚠️ تعذّر تحديث شارة التطبيق:', e);
+  }
+}
 
 /**
  * واجهة الإشعار الداخلي للتطبيق
@@ -13,49 +38,17 @@ export interface InAppNotification {
   icon?: string;
   targetPage?: number;
   surahNumber?: number; // رقم السورة لجلب الاسم من t.surahNames تلقائياً
+  ayahNumber?: number; // رقم الآية للتظليل
+  data?: any; // أي بيانات إضافية (مثل metadata الخاصة بالمنبهات)
 }
 
 const STORAGE_KEY = 'quran_in_app_notifications';
 const HAS_SEEN_WELCOME_KEY = 'quran_has_seen_welcome_notification';
 
 /**
- * الإشعارات الافتراضية التي تظهر للمستخدم الجديد
+ * الإشعارات الافتراضية محذوفة بناءً على طلب ضمان نظافة السجل
  */
-const DEFAULT_NOTIFICATIONS: InAppNotification[] = [
-  {
-    id: 'reminder-kahf',
-    title: 'notif_surah_reminder',    // مفتاح ترجمة: "تذكير بسورة {surahName}"
-    message: 'notif_surah_kahf_body',  // مفتاح ترجمة: "حان وقت قراءة سورة الكهف يوم الجمعة"
-    type: 'info',
-    isRead: false,
-    createdAt: Date.now(),
-    icon: '📖',
-    targetPage: 293,
-    surahNumber: 18,  // الكهف - سيُستخدم لجلب الاسم من t.surahNames[17]
-  },
-  {
-    id: 'reminder-tabarak',
-    title: 'notif_surah_reminder',
-    message: 'notif_surah_mulk_body',  // "حان وقت قراءة سورة الملك قبل النوم"
-    type: 'info',
-    isRead: false,
-    createdAt: Date.now() - 1000,
-    icon: '🌙',
-    targetPage: 562,
-    surahNumber: 67,  // الملك - سيُستخدم لجلب الاسم من t.surahNames[66]
-  },
-  {
-    id: 'reminder-baqarah',
-    title: 'notif_surah_reminder',
-    message: 'notif_surah_baqarah_body', // "حان وقت قراءة سورة البقرة"
-    type: 'info',
-    isRead: false,
-    createdAt: Date.now() - 2000,
-    icon: '📿',
-    targetPage: 2,
-    surahNumber: 2,   // البقرة - سيُستخدم لجلب الاسم من t.surahNames[1]
-  },
-];
+const DEFAULT_NOTIFICATIONS: InAppNotification[] = [];
 
 /**
  * تحميل الإشعارات من localStorage
@@ -66,17 +59,10 @@ function loadNotifications(): InAppNotification[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        // تنظيف الذاكرة القديمة (حذف الإشعارات الثابتة للمستخدمين الحاليين)
+        const hardcodedIds = ['reminder-kahf', 'reminder-tabarak', 'reminder-baqarah'];
+        return parsed.filter(n => !hardcodedIds.includes(n.id));
       }
-    }
-
-    // إذا لم يكن هناك إشعارات محفوظة، نضع الافتراضية
-    // (فقط إذا لم يرَ المستخدم الترحيب من قبل)
-    const hasSeenWelcome = localStorage.getItem(HAS_SEEN_WELCOME_KEY);
-    if (!hasSeenWelcome) {
-      localStorage.setItem(HAS_SEEN_WELCOME_KEY, 'true');
-      saveNotifications(DEFAULT_NOTIFICATIONS);
-      return DEFAULT_NOTIFICATIONS;
     }
 
     return [];
@@ -107,9 +93,12 @@ export function useNotifications() {
   // حساب عدد غير المقروء
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  // حفظ عند التغيير
+  // حفظ عند التغيير + تحديث شارة الأيقونة الخارجية
   useEffect(() => {
     saveNotifications(notifications);
+    // ⭐ تحديث Badge على أيقونة التطبيق
+    const unread = notifications.filter(n => !n.isRead).length;
+    updateAppBadge(unread);
   }, [notifications]);
 
   /**
@@ -142,6 +131,8 @@ export function useNotifications() {
    */
   const clearAll = useCallback(() => {
     setNotifications([]);
+    // ⭐ تصفير Badge
+    updateAppBadge(0);
   }, []);
 
   /**
@@ -157,9 +148,22 @@ export function useNotifications() {
   }, []);
 
   /**
-   * فتح نافذة الإشعارات
+   * فتح نافذة الإشعارات مع التصفير التلقائي
+   * ⭐ عند الفتح: تحديد كل الإشعارات كمقروءة + تصفير شارة التطبيق
    */
   const openModal = useCallback(() => {
+    // ⭐ تصفير العدادات تلقائياً عند فتح النافذة
+    setNotifications(prev => {
+      const hasUnread = prev.some(n => !n.isRead);
+      if (hasUnread) {
+        const updated = prev.map(n => ({ ...n, isRead: true }));
+        saveNotifications(updated);
+        // ⭐ تصفير شارة أيقونة التطبيق فوراً
+        updateAppBadge(0);
+        return updated;
+      }
+      return prev;
+    });
     setIsModalOpen(true);
   }, []);
 

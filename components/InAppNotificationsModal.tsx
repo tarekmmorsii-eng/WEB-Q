@@ -15,7 +15,7 @@ interface InAppNotificationsModalProps {
     onClearAll: () => void;
     language: string;
     onOpenAlarmSettings?: () => void;
-    onNavigateToPage?: (page: number) => void;
+    onNavigateToPage?: (page?: number, ayahNumber?: number, surahNumber?: number) => void;
     t: any;
 }
 
@@ -85,13 +85,25 @@ export default function InAppNotificationsModal({
 
     // ⭐ حذف الإشعار تلقائياً عند الضغط والانتقال للصفحة المطلوبة
     const handleNotificationClick = (notification: InAppNotification) => {
-        if (notification.targetPage && onNavigateToPage) {
-            onNavigateToPage(notification.targetPage);
-            onDeleteNotification(notification.id);
-            onClose();
-        } else {
-            onMarkAsRead(notification.id);
+        console.log('Clicked Notification:', notification);
+        
+        if (onNavigateToPage) {
+            // @ts-ignore - محاولة استخراج البيانات بمرونة عالية
+            const payload = notification.data || notification.extra || notification || {};
+            
+            const page = payload.page ? Number(payload.page) : payload.targetPage ? Number(payload.targetPage) : undefined;
+            const surah = payload.surah ? Number(payload.surah) : payload.surahNumber ? Number(payload.surahNumber) : undefined;
+            const ayah = payload.ayah ? Number(payload.ayah) : payload.ayahNumber ? Number(payload.ayahNumber) : undefined;
+            
+            if (page || surah) {
+                onNavigateToPage(page || undefined, ayah, surah);
+                onDeleteNotification(notification.id);
+                onClose();
+                return;
+            }
         }
+        
+        onMarkAsRead(notification.id);
     };
 
     return (
@@ -217,16 +229,13 @@ export default function InAppNotificationsModal({
                                         {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <h3 className={clsx(
-                                                "text-sm mb-0.5 leading-tight",
+                                                "text-sm mb-0.5 leading-tight line-clamp-2",
                                                 notification.isRead
                                                     ? "text-[var(--text-primary)] opacity-70 font-medium"
                                                     : "text-[var(--text-primary)] font-bold"
                                             )}>
-                                                {resolveText(notification.title, notification)}
+                                                {resolveText(notification.message || notification.title, notification)}
                                             </h3>
-                                            <p className="text-xs text-[var(--text-primary)] opacity-60 leading-relaxed">
-                                                {resolveText(notification.message, notification)}
-                                            </p>
                                             <span className="text-[10px] text-[var(--text-primary)] opacity-40 mt-1 inline-block">
                                                 {formatRelativeTime(notification.createdAt, language as Language)}
                                             </span>

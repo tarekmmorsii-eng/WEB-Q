@@ -1,3 +1,63 @@
+## 🔔 المرحلة الثانية: إصلاح تجربة مستخدم الإشعارات (UX Fix) — 13 مايو 2026
+
+### المشكلة
+كان التطبيق يستخدم **نظامين منفصلين** للعداد:
+- `unreadCount` (إشعارات داخلية من `useNotifications`)
+- `pushUnreadCount` (إشعارات Push خارجية من `useNotificationStore`)
+
+كل نظام يعرض عداده بشكل مستقل، مما يعني أن المستخدم يرى عداداً غير دقيق.
+
+### الحل المُنفَّذ
+
+#### 1. دمج العدادات (`totalUnread`)
+| الملف | التغيير |
+|-------|---------|
+| `App.tsx` | إنشاء `totalUnread = unreadCount + pushUnreadCount` وتمريره لكل المكونات (`FloatingSideMenu` + `Settings`) بدلاً من `unreadCount` المنفصل |
+
+#### 2. التصفير التلقائي عند فتح النافذة (`Reset on Open`)
+| الملف | التغيير |
+|-------|---------|
+| `hooks/useNotifications.ts` | تعديل `openModal` لتصفير `unreadCount` الداخلي + استدعاء `updateAppBadge(0)` فوراً عند الفتح |
+| `App.tsx` | إنشاء `handleOpenNotifications` الذي يستدعي `markAllPushAsRead()` + `clearAllPush()` + `setIsNotificationsModalOpen(true)` معاً |
+
+### النتيجة
+- ✅ الدائرة الحمراء تعرض `totalUnread` (مجموع الداخلي + الخارجي)
+- ✅ عند فتح نافذة الإشعارات: تصفير فوري لكل العدادات + اختفاء الدائرة الحمراء + تصفير شارة أيقونة التطبيق
+- ✅ لا أوامر بناء — تعديل وحفظ فقط
+
+### الملفات المعدّلة
+| # | الملف | نوع التعديل |
+|---|-------|-------------|
+| 1 | `hooks/useNotifications.ts` | تصفير تلقائي في `openModal` |
+| 2 | `App.tsx` | دمج `totalUnread` + `handleOpenNotifications` + استبدال في كل مكونات العرض |
+
+---
+
+## 🔔 إصلاح دمج تصاريح الإشعارات (Push + Local) — 13 مايو 2026
+
+### المشكلة
+عندما يوافق المستخدم على رسالة أندرويد الأصلية للسماح بالإشعارات، يتم تفعيل الإشعارات الداخلية فقط دون تسجيل الإشعارات الفورية (Firebase Push). نتيجة لذلك، زر "تفعيل الإشعارات الفورية" في صفحة الإعدادات يظل غير مفعل.
+
+### الحل المُنفَّذ
+| # | الملف | التغيير |
+|---|-------|---------|
+| 1 | `hooks/usePushNotifications.ts` | إضافة دالة `refreshPermissionStatus()` لتحديث حالة التصريح من localStorage وتصديرها |
+| 2 | `components/NotificationManager.tsx` | عند منح تصريح الإشعارات المحلية (`granted`)، يتم استدعاء `requestPushPermission()` تلقائياً لتسجيل Firebase Push |
+| 3 | `components/Settings.tsx` | استدعاء `refreshPermissionStatus()` عند فتح الإعدادات لتحديث حالة الزر تلقائياً |
+
+### سير العمل الجديد
+```
+المستخدم يفتح NotificationManager ← يظهر طلب أندرويد الأصلي
+  ↓ إذا وافق ↓
+LocalNotifications.requestPermissions() ← مُفعّل
+  ↓ تلقائياً ↓
+PushNotifications.register() ← مُفعّل (FCM Token محفوظ)
+  ↓ عند فتح Settings ↓
+refreshPermissionStatus() ← الزر يظهر "مُفعّل" تلقائياً ✅
+```
+
+---
+
 ## 🔧 إصلاحات وتحسينات — 12 مايو 2026
 
 ### ✅ إصلاحات جذرية (Root Causes):

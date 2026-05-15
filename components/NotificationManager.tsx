@@ -9,6 +9,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { formatTimeLocalized } from '../i18n/translations';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { Badge } from '@capawesome/capacitor-badge';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -109,13 +110,78 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         typeof window !== 'undefined' && typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
 
+    // ⭐ فحص صلاحية المنبه الدقيق (SCHEDULE_EXACT_ALARM) لأندرويد 12+ (API 31+)
+    // أندرويد 12+ يتطلب منح هذه الصلاحية يدوياً من الإعدادات
+    const checkExactAlarmPermission = async (): Promise<boolean> => {
+        if (!isNative) return true;
+        try {
+            const lnAny = LocalNotifications as any;
+            if (typeof lnAny.canScheduleExactAlarms === 'function') {
+                const result = await lnAny.canScheduleExactAlarms();
+                if (!result?.value) {
+                    console.warn('[NotifManager] ⚠️ صلاحية SCHEDULE_EXACT_ALARM غير ممنوحة، جاري فتح الإعدادات...');
+                    if (typeof lnAny.openAlarmSettings === 'function') {
+                        await lnAny.openAlarmSettings();
+                    }
+                    return false;
+                }
+                console.log('[NotifManager] ✅ صلاحية SCHEDULE_EXACT_ALARM ممنوحة');
+                return true;
+            }
+        } catch (e) {
+            console.warn('[NotifManager] ⚠️ تعذر فحص SCHEDULE_EXACT_ALARM:', e);
+        }
+        return true;
+    };
+
     React.useEffect(() => {
         if (isOpen && isNative) {
-            LocalNotifications.requestPermissions().then(status => {
+            LocalNotifications.requestPermissions().then(async (status) => {
                 setPermissionStatus(status.display);
+                
+                // ⭐ دمج تصاريح الإشعارات: إذا منح المستخدم التصريح المحلي،
+                // قم بتسجيل الإشعارات الفورية (Firebase Push) تلقائياً أيضاً
+                if (status.display === 'granted') {
+                    // ⭐ فحص صلاحية المنبه الدقيق (Android 12+)
+                    await checkExactAlarmPermission();
+
+                    // ⭐ M1: طلب تجاهل تحسين البطارية لضمان عمل الإشعارات في الخلفية
+                    try {
+                        const NativeSettings = (window as any).cordova?.plugins?.NativeSettings
+                            || (window as any).plugins?.NativeSettings;
+                        // الطريقة 1: عبر Capacitor Intent plugin (إن وُجد)
+                        const { NativeSettings: NS } = await import('@capacitor/core').then(() => ({})).catch(() => ({})) as any;
+                        // الطريقة 2: Alert مباشر للمستخدم بضرورة تعطيل Battery Optimization
+                        const batteryKey = 'battery_opt_requested';
+                        if (!localStorage.getItem(batteryKey)) {
+                            localStorage.setItem(batteryKey, 'true');
+                            // نعرض تعليمات للمستخدم مرة واحدة فقط
+                            setTimeout(() => {
+                                alert(
+                                    'لضمان وصول التنبيهات في كل الأوقات:\n\n' +
+                                    'الإعدادات ← التطبيقات ← مصحف المراجعة ← البطارية ← لا تُحسّن (بدون قيود)'
+                                );
+                            }, 2000);
+                        }
+                    } catch (batteryErr) {
+                        console.warn('[NotifManager] ⚠️ تعذر طلب تجاهل تحسين البطارية:', batteryErr);
+                    }
+
+                    try {
+                        console.log('[NotifManager] ✅ تم منح التصريح المحلي، جاري تسجيل Push Notifications...');
+                        const pushResult = await requestPushPermission();
+                        if (pushResult.success) {
+                            console.log('[NotifManager] ✅ تم تسجيل Push Notifications بنجاح');
+                        } else {
+                            console.warn('[NotifManager] ⚠️ فشل تسجيل Push:', pushResult.error);
+                        }
+                    } catch (pushErr) {
+                        console.warn('[NotifManager] ⚠️ خطأ في تسجيل Push:', pushErr);
+                    }
+                }
             });
         }
-    }, [isOpen]);
+    }, [isOpen, requestPushPermission]);
 
     const scheduleNativeNotification = async (notification: NotificationItem) => {
         if (!isNative) return;
@@ -144,7 +210,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                 importance: 5, // IMPORTANCE_MAX = 5 (shows as heads-up, with sound)
                 visibility: 1, // VISIBILITY_PUBLIC
                 vibration: true,
-                sound: 'islamic_song.mp3',
+                sound: 'islamic_song',
                 lights: true,
                 lightColor: '#D97706'
             });
@@ -157,21 +223,22 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                 importance: 4, // IMPORTANCE_HIGH = 4 (heads-up notification)
                 visibility: 1,
                 vibration: true,
-                sound: 'paper_slide.wav',
+                sound: 'paper_slide',
                 lights: true,
                 lightColor: '#D97706'
             });
 
-            // Determine the best sound URI for Android
+            // Determine the best sound URI for Android (without extension for channel compatibility)
             const getNativeSound = (): string | undefined => {
                 if (!notification.sound) return undefined;
-                // For Android, use res:// references for files in res/raw/
-                if (notification.sound.includes('islamic_song')) return 'islamic_song.mp3';
-                if (notification.sound.includes('paper-slide') || notification.sound.includes('paper_slide')) return 'paper_slide.wav';
+                // For Android, use filenames without extensions in res/raw/
+                if (notification.sound.includes('islamic_song')) return 'islamic_song';
+                if (notification.sound.includes('paper-slide') || notification.sound.includes('paper_slide')) return 'paper_slide';
                 // Custom data-uri sounds can't be used natively, fallback to default
                 if (notification.sound.startsWith('data:')) return undefined;
-                // Strip leading slash for native
-                return notification.sound.startsWith('/') ? notification.sound.slice(1) : notification.sound;
+                // Strip leading slash and extension for native
+                const stripped = notification.sound.startsWith('/') ? notification.sound.slice(1) : notification.sound;
+                return stripped.replace(/\.[^/.]+$/, ''); // remove extension
             };
 
             const nativeSound = getNativeSound();
@@ -198,6 +265,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         },
                         channelId: channelId,
                         sound: nativeSound,
+                        smallIcon: 'ic_app_notification',
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
@@ -207,8 +275,6 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         ongoing: false,
                         actionTypeId: 'OPEN_QURAN',
                         attachments: [],
-                        smallIcon: 'ic_launcher_foreground',
-                        largeIcon: 'res://icon',
                         badge: 1
                     });
                 } else if (isOnce) {
@@ -232,6 +298,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         },
                         channelId: channelId,
                         sound: nativeSound,
+                        smallIcon: 'ic_app_notification',
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
@@ -241,42 +308,39 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         ongoing: false,
                         actionTypeId: 'OPEN_QURAN',
                         attachments: [],
-                        smallIcon: 'ic_launcher_foreground',
-                        largeIcon: 'res://icon',
                         badge: 1
                     });
                 } else {
                     // 📅 Daily/Weekly repeating alarm
                     for (const day of notification.days) {
                         const uniqueId = baseId + i + (day * 100);
-                        schedules.push({
-                            id: uniqueId,
-                            title: notification.isAlarm ? `🚨 ${resolveName(notification.name, notification.metadata?.surahNumber)}` : resolveName(notification.name, notification.metadata?.surahNumber),
-                            body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
-                            schedule: {
-                                on: {
-                                    weekday: day + 1,
-                                    hour,
-                                    minute
-                                },
-                                repeats: true,
-                                allowWhileIdle: true
+                    schedules.push({
+                        id: uniqueId,
+                        title: notification.isAlarm ? `🚨 ${resolveName(notification.name, notification.metadata?.surahNumber)}` : resolveName(notification.name, notification.metadata?.surahNumber),
+                        body: notification.isAlarm ? t.notificationBodyAlarm : t.notificationBodyRegular,
+                        schedule: {
+                            on: {
+                                weekday: day + 1,
+                                hour,
+                                minute
                             },
-                            channelId: channelId,
-                            sound: nativeSound,
-                            extra: {
-                                page: notification.metadata?.startPage || notification.metadata?.page,
-                                ayah: notification.metadata?.startAyah,
-                                surah: notification.metadata?.surahNumber
-                            },
-                            autoCancel: !notification.isAlarm,
-                            ongoing: false,
-                            actionTypeId: 'OPEN_QURAN',
-                            attachments: [],
-                            smallIcon: 'ic_launcher_foreground',
-                            largeIcon: 'res://icon',
-                            badge: 1
-                        });
+                            repeats: true,
+                            allowWhileIdle: true
+                        },
+                        channelId: channelId,
+                        sound: nativeSound,
+                        smallIcon: 'ic_app_notification',
+                        extra: {
+                            page: notification.metadata?.startPage || notification.metadata?.page,
+                            ayah: notification.metadata?.startAyah,
+                            surah: notification.metadata?.surahNumber
+                        },
+                        autoCancel: !notification.isAlarm,
+                        ongoing: false,
+                        actionTypeId: 'OPEN_QURAN',
+                        attachments: [],
+                        badge: 1
+                    });
                     }
                 }
             }
@@ -285,6 +349,20 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                 await LocalNotifications.schedule({
                     notifications: schedules
                 });
+
+                // ⭐ M2: Badge Sync — تحديث شارة الأيقونة فور جدولة تنبيه جديد
+                try {
+                    const { isSupported } = await Badge.isSupported();
+                    if (isSupported) {
+                        // احسب عدد الإشعارات المجدولة الكلي لتحديث الشارة
+                        const pending = await LocalNotifications.getPending();
+                        const activeCount = pending.notifications.length;
+                        await Badge.set({ count: activeCount > 0 ? 1 : 0 });
+                        console.log(`[Badge] ✅ Badge updated after scheduling: ${activeCount} active`);
+                    }
+                } catch (badgeErr) {
+                    console.warn('[Badge] ⚠️ تعذر تحديث الشارة بعد الجدولة:', badgeErr);
+                }
             }
         } catch (error) {
             console.error('Error scheduling native notification:', error);
@@ -547,61 +625,6 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         }
     };
 
-    const sendTestNotification = async () => {
-        if (isNative) {
-            // Ensure channel exists for test
-            await LocalNotifications.createChannel({
-                id: 'quran_critical_alarm_v1',
-                name: 'Quran Critical Alarms',
-                importance: 5,
-                visibility: 1
-            });
-
-            // Determine test sound for native
-            const testSound = formSound && formSound.includes('islamic_song') ? 'islamic_song.mp3' :
-                formSound && (formSound.includes('paper-slide') || formSound.includes('paper_slide')) ? 'paper_slide.wav' :
-                formSound && formSound.startsWith('/') ? formSound.slice(1) : undefined;
-
-            await LocalNotifications.schedule({
-                notifications: [{
-                    id: 99999,
-                    title: formIsAlarm ? `🚨 ${t.testAlarm}` : t.testNotification,
-                    body: t.testNotificationBody,
-                    schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true },
-                    channelId: formIsAlarm ? 'quran_critical_alarm_v1' : 'quran_regular_v1',
-                    sound: testSound,
-                    autoCancel: !formIsAlarm
-                }]
-            });
-            return;
-        }
-
-        const notifPermission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
-        if (notifPermission === 'granted') {
-            if (formIsAlarm) {
-                // Dispatch event to App.tsx to trigger alarm UI
-                window.dispatchEvent(new CustomEvent('triggerTestAlarm', {
-                    detail: { name: formName || t.testAlarm, sound: formSound }
-                }));
-            }
-
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification(formIsAlarm ? `🚨 ${t.testAlarm}` : t.testNotification, {
-                        body: t.testNotificationBody,
-                        icon: '/logo192.png',
-                        badge: '/logo192.png',
-                        tag: 'test-notification',
-                        requireInteraction: formIsAlarm
-                    });
-                });
-            } else if (typeof Notification !== 'undefined') {
-                new Notification(t.testNotification, { body: t.testNotificationBody });
-            }
-        } else {
-            alert(t.permissionRequired);
-        }
-    };
 
     if (!isOpen) return null;
 
@@ -1482,15 +1505,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                     />
                                 </label>
 
-                                {permissionStatus === 'granted' && (
-                                    <button
-                                        onClick={sendTestNotification}
-                                        className="mt-3 w-full py-2 border-2 border-dashed border-green-500 text-green-600 dark:text-green-400 rounded-lg text-sm font-bold hover:bg-green-50 dark:hover:bg-green-900/10 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Bell size={16} />
-                                        {t.sendTestNotification}
-                                    </button>
-                                )}
+
                             </div>
 
                             {/* Action Buttons */}

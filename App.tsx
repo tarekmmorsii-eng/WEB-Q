@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { flushSync } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
+import { Badge } from '@capawesome/capacitor-badge';
 const isNative = Capacitor.isNativePlatform();
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -398,7 +399,7 @@ export default function App() {
 
   // ⭐ مركز إشعارات Push الخارجية
   const [isPushCenterOpen, setIsPushCenterOpen] = useState(false);
-  const { unreadCount: pushUnreadCount } = useNotificationStore();
+  const { unreadCount: pushUnreadCount, markAllAsRead: markAllPushAsRead, clearAll: clearAllPush } = useNotificationStore();
 
   // ⭐ مركز الإشعارات الذكي
   const {
@@ -409,10 +410,86 @@ export default function App() {
     deleteNotification,
     clearAll: clearAllNotifications,
     isModalOpen: isNotificationsModalOpen,
-    setIsModalOpen: setIsNotificationsModalOpen
+    setIsModalOpen: setIsNotificationsModalOpen,
+    openModal: openInAppNotificationsModal,
+    addNotification: addInAppNotification
   } = useNotifications();
 
+  // ⭐ دمج العدادات: totalUnread = الإشعارات الداخلية + الإشعارات الخارجية
+  const totalUnread = unreadCount + pushUnreadCount;
+
+  // ⭐ فتح سجل الإشعارات المستلمة (النافذة البيضاء) مع تصفير كل العدادات
+  // 🔔 يُستخدم من: زر الجرس في FloatingSideMenu
+  const handleOpenNotifications = useCallback(async () => {
+    // ✅ استخدام openModal() التي تصفّر العداد تلقائياً (markAllAsRead مدمج بداخلها)
+    openInAppNotificationsModal();
+    // تصفير الإشعارات الداخلية والخارجية بشكل صريح لتوحيد الحالة
+    markAllAsRead();
+    markAllPushAsRead();
+    clearAllPush();
+    // تصفير الشارة الخارجية (Badge) فوراً
+    if (isNative) {
+      try {
+        const { isSupported } = await Badge.isSupported();
+        if (isSupported) await Badge.set({ count: 0 });
+      } catch (e) { }
+    }
+  }, [openInAppNotificationsModal, markAllAsRead, markAllPushAsRead, clearAllPush]);
+
+  // ⭐ فتح نافذة إدارة وإضافة المنبهات (NotificationManager)
+  // 🔔 يُستخدم من: زر الجرس في Settings
+  const handleOpenAlarmManager = useCallback(async () => {
+    setIsNotificationOpen(true);
+    // ✅ تصفير العدادات أيضاً عند فتح نافذة الإعدادات لكي لا يظل الرقم معلقاً (Global Sync)
+    markAllAsRead();
+    markAllPushAsRead();
+    clearAllPush();
+    if (isNative) {
+      try {
+        const { isSupported } = await Badge.isSupported();
+        if (isSupported) await Badge.set({ count: 0 });
+      } catch (e) { }
+    }
+  }, [markAllAsRead, markAllPushAsRead, clearAllPush]);
+
   // ⭐ الإظهار التلقائي للإشعارات - تم نقله بعد تعريف حالات الجولة والترحيب
+
+  // ⭐ M5: عرض FCM Token لمرة واحدة عند التفعيل الأول لتأكيد ربط الإشعارات الخارجية
+  useEffect(() => {
+    if (!isNative) return;
+    const FCM_SHOWN_KEY = 'fcm_token_alert_shown';
+    if (localStorage.getItem(FCM_SHOWN_KEY)) return;
+
+    // فحص التوكن المحفوظ مسبقاً
+    const savedToken = localStorage.getItem('quran_push_fcm_token');
+    if (savedToken) {
+      localStorage.setItem(FCM_SHOWN_KEY, 'true');
+      setTimeout(() => {
+        alert(
+          '✅ تم ربط الإشعارات الخارجية بنجاح!\n\n' +
+          'FCM Token:\n' + savedToken.slice(0, 40) + '...\n\n' +
+          '(هذه الرسالة تظهر مرة واحدة فقط للتحقق التقني)'
+        );
+      }, 3000);
+      return;
+    }
+
+    // إذا لم يكن هناك توكن محفوظ، استمع للتوكن الجديد عبر localStorage change
+    const tokenCheckInterval = setInterval(() => {
+      const token = localStorage.getItem('quran_push_fcm_token');
+      if (token && !localStorage.getItem(FCM_SHOWN_KEY)) {
+        localStorage.setItem(FCM_SHOWN_KEY, 'true');
+        clearInterval(tokenCheckInterval);
+        alert(
+          '✅ تم ربط الإشعارات الخارجية بنجاح!\n\n' +
+          'FCM Token:\n' + token.slice(0, 40) + '...\n\n' +
+          '(هذه الرسالة تظهر مرة واحدة فقط للتحقق التقني)'
+        );
+      }
+    }, 2000);
+
+    return () => clearInterval(tokenCheckInterval);
+  }, []);
 
   const [selectedReciterId, setSelectedReciterId] = useState<string>(() => {
     const stored = localStorage.getItem('selected_reciter_id');
@@ -850,11 +927,37 @@ export default function App() {
         }
       });
 
+      // ⭐ Task 2: تفعيل العداد عند وصول الإشعار والتطبيق مفتوح
+      const receiveListener = LocalNotifications.addListener('localNotificationReceived', (notification) => {
+        // إضافة الإشعار للسجل ليزيد العداد unreadCount تلقائياً +1
+        addInAppNotification({
+          title: notification.title || t.notifications,
+          message: notification.body || t.alarmMessage,
+          type: 'info',
+          isRead: false,
+          icon: '🔔',
+          surahNumber: notification.extra?.surahNumber || notification.extra?.surah,
+          targetPage: notification.extra?.startPage || notification.extra?.page || notification.extra?.pageNumber,
+          ayahNumber: notification.extra?.startAyah || notification.extra?.ayah,
+          data: notification.extra // نمرر كامل البيانات لضمان المرونة
+        });
+        
+        // تحديث البادج الخارجي
+        Badge.isSupported().then(res => {
+            if (res.isSupported) {
+               Badge.get().then(current => {
+                   Badge.set({ count: current.count + 1 });
+               }).catch(() => {});
+            }
+        }).catch(() => {});
+      });
+
       return () => {
         listener.remove();
+        receiveListener.remove();
       };
     }
-  }, []);
+  }, [addInAppNotification, t]);
 
   const handleAddSimilarAyah = (mutashabihaId: string, isInsideSurah: boolean) => {
     setActiveMutashabihaId(mutashabihaId);
@@ -1049,6 +1152,7 @@ export default function App() {
   // 3. Alarm State
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [activeAlarm, setActiveAlarm] = useState<NotificationItem | null>(null);
+  const [snoozeDuration, setSnoozeDuration] = useState<number>(5);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // 4. Update State
@@ -1664,6 +1768,16 @@ export default function App() {
         days: [0, 1, 2, 3, 4, 5, 6],
         times: []
       });
+      
+      // ⭐ زيادة العداد فوراً بإضافة الإشعار للسجل الداخلي
+      addInAppNotification({
+        title: t.notifications || 'تنبيه',
+        message: name || t.testAlarm || 'إشعار تجريبي',
+        type: 'info',
+        isRead: false,
+        icon: '🔔'
+      });
+      
       // Vibrate device to ensure user notices the alarm
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate([500, 200, 500, 200, 500]);
@@ -1697,6 +1811,20 @@ export default function App() {
         const lastFired = localStorage.getItem(lastFiredKey);
 
         if (n.days.includes(currentDay) && n.times.includes(currentTimeStr) && !lastFired) {
+          
+          // ⭐ رفع قيمة العداد يدوياً وفوراً بمقدار +1 في السجل (مزامنة فورية على الويب والأجهزة)
+          addInAppNotification({
+            title: t.notifications || 'تنبيه',
+            message: n.name || t.alarmMessage,
+            type: 'info',
+            isRead: false,
+            icon: '🔔',
+            surahNumber: n.metadata?.surahNumber,
+            targetPage: n.metadata?.startPage || n.metadata?.page || 1,
+            ayahNumber: n.metadata?.startAyah,
+            data: n.metadata // تمرير الكائن كاملاً أسوة بما يفعله NotificationManager
+          });
+
           if (n.isAlarm) {
             setActiveAlarm(n);
             // Vibrate device to ensure user notices the alarm
@@ -2813,8 +2941,8 @@ export default function App() {
           onOpenIndex={() => setIsIndexOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
-          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
-          notificationUnreadCount={unreadCount}
+          onOpenNotifications={handleOpenAlarmManager}
+          notificationUnreadCount={totalUnread}
           onOpenMutashabihat={() => {
             const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
             setMutashabihatIndexSurah(currentS);
@@ -2865,8 +2993,8 @@ export default function App() {
           isRTL={isRTL}
           onOpenShare={handleOpenShare}
           onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
-          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
-          notificationUnreadCount={unreadCount}
+          onOpenNotifications={handleOpenNotifications}
+          notificationUnreadCount={totalUnread}
         />
 
         <InAppNotificationsModal
@@ -2883,7 +3011,21 @@ export default function App() {
             setIsNotificationsModalOpen(false);
             setTimeout(() => setIsNotificationOpen(true), 150);
           }}
-          onNavigateToPage={(page) => setCurrentPage(page)}
+          onNavigateToPage={(page, ayah, surah) => {
+            let finalPage = page;
+            // إذا لم يتم تمرير صفحة ولكن تم تمرير رقم السورة، نجلب صفحة بداية السورة
+            if (!finalPage && surah !== undefined) {
+              const surahInfo = SURAHS.find(s => s.number === surah);
+              if (surahInfo) finalPage = surahInfo.startPage;
+            }
+            // كخيار أخير إذا لم يتم العثور على أي بيانات ننتقل للصفحة 1
+            if (!finalPage) finalPage = 1;
+
+            setCurrentPage(finalPage);
+            if (ayah !== undefined && surah !== undefined) {
+              setHighlightedAyah({ surah, ayah });
+            }
+          }}
           t={t}
         />
 
@@ -2892,6 +3034,19 @@ export default function App() {
           isOpen={isPushCenterOpen}
           onClose={() => setIsPushCenterOpen(false)}
           currentLanguage={settings.language as Language}
+          onNavigateToPage={(page, ayah, surah) => {
+            let finalPage = page;
+            if (!finalPage && surah !== undefined) {
+              const surahInfo = SURAHS.find(s => s.number === surah);
+              if (surahInfo) finalPage = surahInfo.startPage;
+            }
+            if (!finalPage) finalPage = 1;
+
+            setCurrentPage(finalPage);
+            if (ayah !== undefined && surah !== undefined) {
+              setHighlightedAyah({ surah, ayah });
+            }
+          }}
         />
 
         {
@@ -3221,6 +3376,79 @@ export default function App() {
               >
                 {t.stopAlarm}
               </button>
+
+              {/* Snooze Feature */}
+              <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                <select
+                  value={snoozeDuration}
+                  onChange={(e) => setSnoozeDuration(Number(e.target.value))}
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    padding: '0.65rem 1rem',
+                    borderRadius: '9999px',
+                    fontSize: '1rem',
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value={5} style={{ color: 'black' }}>5 دقائق</option>
+                  <option value={10} style={{ color: 'black' }}>10 دقائق</option>
+                  <option value={30} style={{ color: 'black' }}>30 دقيقة</option>
+                  <option value={60} style={{ color: 'black' }}>ساعة واحدة</option>
+                </select>
+
+                <button
+                  onClick={async () => {
+                    if (!activeAlarm) return;
+                    
+                    if (alarmAudioRef.current) {
+                      alarmAudioRef.current.pause();
+                      alarmAudioRef.current.currentTime = 0;
+                      alarmAudioRef.current = null;
+                    }
+                    
+                    if (isNative) {
+                      try {
+                        const { LocalNotifications } = await import('@capacitor/local-notifications');
+                        const snoozeId = Math.floor(Math.random() * 1000000) + 1000000;
+                        const snoozeTime = new Date(Date.now() + snoozeDuration * 60000);
+                        await LocalNotifications.schedule({
+                          notifications: [{
+                            id: snoozeId,
+                            title: `⏰ غفوة: ${activeAlarm.name || t.alarmMessage}`,
+                            body: `تذكير التأجيل بعد ${snoozeDuration} دقائق`,
+                            schedule: { at: snoozeTime, allowWhileIdle: true },
+                            channelId: 'quran_critical_alarm_v1',
+                            sound: activeAlarm.sound || 'islamic_song.mp3',
+                            autoCancel: false,
+                            extra: activeAlarm.metadata || {}
+                          }]
+                        });
+                        setToastMessage(settings.language === 'ar' ? `تم تأجيل المنبه لمدة ${snoozeDuration} دقيقة` : `Snoozed for ${snoozeDuration} min`);
+                      } catch (e) {}
+                    } else {
+                      setToastMessage(settings.language === 'ar' ? `تم تأجيل المنبه لمدة ${snoozeDuration} دقيقة` : `Snoozed for ${snoozeDuration} min`);
+                    }
+                    
+                    setActiveAlarm(null);
+                  }}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    padding: '0.65rem 2rem',
+                    borderRadius: '9999px',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    border: '2px solid rgba(255,255,255,0.6)',
+                    cursor: 'pointer',
+                    opacity: 0.9,
+                  }}
+                >
+                  💤 {settings.language === 'ar' ? 'تأجيل' : 'Snooze'}
+                </button>
+              </div>
 
               {/* Inline keyframes for guaranteed animation */}
               <style>{`

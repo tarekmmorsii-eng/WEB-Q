@@ -6,9 +6,9 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   plugins: {
     LocalNotifications: {
-      smallIcon: 'ic_launcher_foreground',
+      smallIcon: 'ic_app_notification',
       iconColor: '#D97706',
-      sound: 'islamic_song.mp3',
+      sound: 'islamic_song',
       defaultChannel: {
         id: 'quran_critical_alarm_v1',
         name: 'Quran Critical Alarms',
