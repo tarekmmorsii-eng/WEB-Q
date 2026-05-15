@@ -3404,27 +3404,34 @@ export default function App() {
               </button>
 
               {/* Snooze Feature */}
-              <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                <select
-                  value={snoozeDuration}
-                  onChange={(e) => setSnoozeDuration(Number(e.target.value))}
+              <div style={{ 
+                marginTop: '1.5rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                borderRadius: '9999px',
+                border: '1px solid rgba(255,255,255,0.4)',
+                padding: '0.25rem 0.5rem'
+              }}>
+                {/* Increase Button (+) */}
+                <button 
+                  onClick={() => setSnoozeDuration(prev => Math.min(prev + 5, 60))}
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.2)',
                     color: 'white',
-                    padding: '0.65rem 1rem',
-                    borderRadius: '9999px',
-                    fontSize: '1rem',
-                    border: '1px solid rgba(255,255,255,0.4)',
-                    outline: 'none',
-                    cursor: 'pointer'
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '1.5rem',
+                    cursor: 'pointer',
+                    padding: '0.5rem 1rem',
+                    opacity: snoozeDuration >= 60 ? 0.5 : 1
                   }}
+                  disabled={snoozeDuration >= 60}
                 >
-                  <option value={5} style={{ color: 'black' }}>5 دقائق</option>
-                  <option value={10} style={{ color: 'black' }}>10 دقائق</option>
-                  <option value={30} style={{ color: 'black' }}>30 دقيقة</option>
-                  <option value={60} style={{ color: 'black' }}>ساعة واحدة</option>
-                </select>
+                  +
+                </button>
 
+                {/* Snooze Execute Button */}
                 <button
                   onClick={async () => {
                     if (!activeAlarm) return;
@@ -3435,44 +3442,87 @@ export default function App() {
                       alarmAudioRef.current = null;
                     }
                     
+                    const snoozeTime = new Date(Date.now() + snoozeDuration * 60000);
+                    const snoozeYear = snoozeTime.getFullYear();
+                    const snoozeMonth = String(snoozeTime.getMonth() + 1).padStart(2, '0');
+                    const snoozeDate = String(snoozeTime.getDate()).padStart(2, '0');
+                    const snoozeDateStr = `${snoozeYear}-${snoozeMonth}-${snoozeDate}`;
+                    
+                    const snoozeHour = snoozeTime.getHours().toString().padStart(2, '0');
+                    const snoozeMinute = snoozeTime.getMinutes().toString().padStart(2, '0');
+                    const snoozeTimeStr = `${snoozeHour}:${snoozeMinute}`;
+
+                    const snoozeId = `snooze_${Date.now()}`;
+                    const snoozeNotification: any = {
+                      id: snoozeId,
+                      name: `⏰ غفوة: ${activeAlarm.name || t.alarmMessage}`,
+                      isEnabled: true,
+                      isAlarm: true,
+                      type: 'once',
+                      days: [],
+                      times: [snoozeTimeStr],
+                      targetDate: snoozeDateStr,
+                      sound: activeAlarm.sound || 'islamic_song.mp3',
+                      metadata: activeAlarm.metadata
+                    };
+
+                    setNotifications(prev => {
+                      const updated = [...prev, snoozeNotification];
+                      localStorage.setItem('quran_alarm_notifications', JSON.stringify(updated));
+                      return updated;
+                    });
+                    
                     if (isNative) {
                       try {
                         const { LocalNotifications } = await import('@capacitor/local-notifications');
-                        const snoozeId = Math.floor(Math.random() * 1000000) + 1000000;
-                        const snoozeTime = new Date(Date.now() + snoozeDuration * 60000);
+                        const nativeSnoozeId = Math.floor(Math.random() * 1000000) + 1000000;
                         await LocalNotifications.schedule({
                           notifications: [{
-                            id: snoozeId,
-                            title: `⏰ غفوة: ${activeAlarm.name || t.alarmMessage}`,
+                            id: nativeSnoozeId,
+                            title: snoozeNotification.name,
                             body: `تذكير التأجيل بعد ${snoozeDuration} دقائق`,
                             schedule: { at: snoozeTime, allowWhileIdle: true },
                             channelId: 'quran_critical_alarm_v1',
-                            sound: activeAlarm.sound || 'islamic_song.mp3',
+                            sound: snoozeNotification.sound,
                             autoCancel: false,
-                            extra: activeAlarm.metadata || {}
+                            extra: snoozeNotification.metadata || {}
                           }]
                         });
-                        setToastMessage(settings.language === 'ar' ? `تم تأجيل المنبه لمدة ${snoozeDuration} دقيقة` : `Snoozed for ${snoozeDuration} min`);
                       } catch (e) {}
-                    } else {
-                      setToastMessage(settings.language === 'ar' ? `تم تأجيل المنبه لمدة ${snoozeDuration} دقيقة` : `Snoozed for ${snoozeDuration} min`);
                     }
                     
+                    setToastMessage(settings.language === 'ar' ? `تم تأجيل المنبه لمدة ${snoozeDuration} دقيقة` : `Snoozed for ${snoozeDuration} min`);
                     setActiveAlarm(null);
                   }}
                   style={{
                     backgroundColor: 'transparent',
                     color: 'white',
-                    padding: '0.65rem 2rem',
-                    borderRadius: '9999px',
-                    fontSize: '1rem',
+                    padding: '0.5rem 1rem',
+                    fontSize: '1.1rem',
                     fontWeight: 600,
-                    border: '2px solid rgba(255,255,255,0.6)',
+                    border: 'none',
                     cursor: 'pointer',
-                    opacity: 0.9,
+                    minWidth: '150px'
                   }}
                 >
-                  💤 {settings.language === 'ar' ? 'تأجيل' : 'Snooze'}
+                  {settings.language === 'ar' ? `التأخير ${snoozeDuration} دقائق` : `Snooze ${snoozeDuration} min`}
+                </button>
+
+                {/* Decrease Button (-) */}
+                <button 
+                  onClick={() => setSnoozeDuration(prev => Math.max(prev - 5, 5))}
+                  style={{
+                    color: 'white',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '1.5rem',
+                    cursor: 'pointer',
+                    padding: '0.5rem 1rem',
+                    opacity: snoozeDuration <= 5 ? 0.5 : 1
+                  }}
+                  disabled={snoozeDuration <= 5}
+                >
+                  -
                 </button>
               </div>
 
