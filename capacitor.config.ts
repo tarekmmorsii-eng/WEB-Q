@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   plugins: {
     LocalNotifications: {
-      smallIcon: 'ic_app_notification',
-      iconColor: '#D97706',
+      smallIcon: 'ic_stat_book',
+      iconColor: '#000000',
       sound: 'islamic_song',
       defaultChannel: {
         id: 'quran_critical_alarm_v1',
@@ -22,6 +22,8 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
+      smallIcon: 'ic_stat_book',
+      iconColor: '#000000'
     }
   }
 };
