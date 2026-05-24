@@ -201,7 +201,19 @@ export default function InAppNotificationsModal({
                         </div>
                     ) : (
                         <div className="divide-y divide-[var(--border-primary)]">
-                            {[...notifications].sort((a, b) => b.createdAt - a.createdAt).map((notification) => (
+                            {[...notifications]
+                                .filter((n, _, self) => {
+                                    // إخفاء الإشعار القديم المكرر (الذي يحمل عنوان "إشعارات" فقط) إذا كان هناك إشعار حديث ومفصل وصل في نفس الوقت
+                                    const isLegacyDuplicate = (n.title === t.notifications || n.title === 'إشعارات') &&
+                                        self.some(other => 
+                                            other.id !== n.id && 
+                                            other.title !== t.notifications &&
+                                            other.title !== 'إشعارات' &&
+                                            Math.abs(other.createdAt - n.createdAt) < 60000
+                                        );
+                                    return !isLegacyDuplicate;
+                                })
+                                .sort((a, b) => b.createdAt - a.createdAt).map((notification) => (
                                 <div
                                     key={notification.id}
                                     onClick={() => handleNotificationClick(notification)}
@@ -229,13 +241,23 @@ export default function InAppNotificationsModal({
                                         {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <h3 className={clsx(
-                                                "text-sm mb-0.5 leading-tight line-clamp-2",
+                                                "text-sm mb-0.5 leading-tight line-clamp-1",
                                                 notification.isRead
                                                     ? "text-[var(--text-primary)] opacity-70 font-medium"
                                                     : "text-[var(--text-primary)] font-bold"
                                             )}>
-                                                {resolveText(notification.message || notification.title, notification)}
+                                                {resolveText(notification.title || notification.message, notification)}
                                             </h3>
+                                            {notification.message && notification.title && notification.message !== notification.title && (
+                                                <p className={clsx(
+                                                    "text-xs mb-0.5 leading-tight line-clamp-2",
+                                                    notification.isRead
+                                                        ? "text-[var(--text-primary)] opacity-60"
+                                                        : "text-[var(--text-primary)] opacity-80"
+                                                )}>
+                                                    {resolveText(notification.message, notification)}
+                                                </p>
+                                            )}
                                             <span className="text-[10px] text-[var(--text-primary)] opacity-40 mt-1 inline-block">
                                                 {formatRelativeTime(notification.createdAt, language as Language)}
                                             </span>

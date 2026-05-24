@@ -10,6 +10,7 @@ import { Capacitor } from '@capacitor/core';
 import { formatTimeLocalized } from '../i18n/translations';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Badge } from '@capawesome/capacitor-badge';
+import { NativeSettings, AndroidSettings } from 'capacitor-native-settings';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -109,6 +110,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [permissionStatus, setPermissionStatus] = useState<string>(
         typeof window !== 'undefined' && typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
+    const [showBatteryModal, setShowBatteryModal] = useState(false);
 
     // ⭐ فحص صلاحية المنبه الدقيق (SCHEDULE_EXACT_ALARM) لأندرويد 12+ (API 31+)
     // أندرويد 12+ يتطلب منح هذه الصلاحية يدوياً من الإعدادات
@@ -147,24 +149,16 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
                     // ⭐ M1: طلب تجاهل تحسين البطارية لضمان عمل الإشعارات في الخلفية
                     try {
-                        const NativeSettings = (window as any).cordova?.plugins?.NativeSettings
-                            || (window as any).plugins?.NativeSettings;
-                        // الطريقة 1: عبر Capacitor Intent plugin (إن وُجد)
-                        const { NativeSettings: NS } = await import('@capacitor/core').then(() => ({})).catch(() => ({})) as any;
-                        // الطريقة 2: Alert مباشر للمستخدم بضرورة تعطيل Battery Optimization
                         const batteryKey = 'battery_opt_requested';
                         if (!localStorage.getItem(batteryKey)) {
                             localStorage.setItem(batteryKey, 'true');
-                            // نعرض تعليمات للمستخدم مرة واحدة فقط
+                            // نعرض النافذة الأنيقة للمستخدم بدلاً من رسالة النظام المزعجة
                             setTimeout(() => {
-                                alert(
-                                    'لضمان وصول التنبيهات في كل الأوقات:\n\n' +
-                                    'الإعدادات ← التطبيقات ← مصحف المراجعة ← البطارية ← لا تُحسّن (بدون قيود)'
-                                );
-                            }, 2000);
+                                setShowBatteryModal(true);
+                            }, 1000);
                         }
                     } catch (batteryErr) {
-                        console.warn('[NotifManager] ⚠️ تعذر طلب تجاهل تحسين البطارية:', batteryErr);
+                        console.warn('[NotifManager] ⚠️ تعذر معالجة تحسين البطارية:', batteryErr);
                     }
 
                     try {
@@ -265,7 +259,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         },
                         channelId: channelId,
                         sound: nativeSound,
-                        smallIcon: 'ic_app_notification',
+                        smallIcon: 'ic_stat_book',
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
@@ -298,7 +292,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         },
                         channelId: channelId,
                         sound: nativeSound,
-                        smallIcon: 'ic_app_notification',
+                        smallIcon: 'ic_stat_book',
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
@@ -329,7 +323,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         },
                         channelId: channelId,
                         sound: nativeSound,
-                        smallIcon: 'ic_app_notification',
+                        smallIcon: 'ic_stat_book',
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
@@ -1528,6 +1522,56 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                     )}
                 </div>
             </div>
+            {/* Battery Optimization Custom Modal */}
+            {showBatteryModal && (
+                <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-[var(--bg-card)] w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in zoom-in-95">
+                        <button
+                            onClick={() => setShowBatteryModal(false)}
+                            className="absolute top-4 right-4 p-2 rounded-full hover:bg-[var(--bg-primary)] transition-colors"
+                        >
+                            <X size={20} className="text-[var(--text-primary)] opacity-60" />
+                        </button>
+                        
+                        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Bell size={32} />
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-center text-[var(--text-primary)] mb-2">
+                            لضمان وصول التنبيهات
+                        </h3>
+                        
+                        <p className="text-sm text-center text-[var(--text-primary)] opacity-70 mb-6 leading-relaxed">
+                            أنظمة الهواتف قد تقوم بإيقاف التنبيهات لتوفير البطارية. لضمان استيقاظك في الوقت المناسب، يرجى السماح للتطبيق بالعمل في الخلفية.
+                        </p>
+                        
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    if (isNative) {
+                                        NativeSettings.openAndroid({ option: AndroidSettings.IgnoreBatteryOptimization })
+                                            .catch(() => {
+                                                // Fallback to app details if specific intent is not supported by the ROM
+                                                NativeSettings.openAndroid({ option: AndroidSettings.ApplicationDetails });
+                                            });
+                                    }
+                                    setShowBatteryModal(false);
+                                }}
+                                className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-amber-600/20 active:scale-[0.98]"
+                            >
+                                السماح بالعمل في الخلفية
+                            </button>
+                            
+                            <button
+                                onClick={() => setShowBatteryModal(false)}
+                                className="w-full py-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-xl font-medium transition-all active:scale-[0.98]"
+                            >
+                                لاحقاً
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
