@@ -49,7 +49,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const {
         requestPermission: requestPushPermission,
         permissionStatus: pushPermissionStatus,
-        isPushSupported
+        isPushSupported,
+        fcmToken
     } = usePushNotifications({ language: language as any });
 
     // ⭐ حل أسماء المنبهات مع دعم i18n الديناميكي
@@ -112,6 +113,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     );
     const [showBatteryModal, setShowBatteryModal] = useState(false);
     const [dontShowAgain, setDontShowAgain] = useState(false);
+    const [showTokenPopup, setShowTokenPopup] = useState(false);
 
     // ⭐ فحص صلاحية المنبه الدقيق (SCHEDULE_EXACT_ALARM) لأندرويد 12+ (API 31+)
     // أندرويد 12+ يتطلب منح هذه الصلاحية يدوياً من الإعدادات
@@ -1501,6 +1503,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         const pushResult = await requestPushPermission();
                                                         if (pushResult.success) {
                                                             console.log('[Notifications] ✅ تم تفعيل الإشعارات الداخلية + الخارجية بنجاح');
+                                                            setShowTokenPopup(true);
                                                         } else {
                                                             console.warn('[Notifications] ⚠️ فشل تفعيل الإشعارات الخارجية:', pushResult.error);
                                                         }
@@ -1512,6 +1515,18 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                         }}
                                     />
                                 </label>
+
+                                {fcmToken && (
+                                    <div className="mt-2 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTokenPopup(true)}
+                                            className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+                                        >
+                                            🔑 {isArabic ? 'عرض رمز الإشعارات (FCM Token)' : 'Show FCM Token'}
+                                        </button>
+                                    </div>
+                                )}
 
 
                             </div>
@@ -1613,6 +1628,58 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 className="w-full py-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-xl font-medium transition-all active:scale-[0.98]"
                             >
                                 لاحقاً
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* FCM Token Display Custom Modal */}
+            {showTokenPopup && fcmToken && (
+                <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-[var(--bg-card)] w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in zoom-in-95" style={{ direction: isArabic ? 'rtl' : 'ltr' }}>
+                        <button
+                            onClick={() => setShowTokenPopup(false)}
+                            className="absolute top-4 right-4 p-2 rounded-full hover:bg-[var(--bg-primary)] transition-colors"
+                        >
+                            <X size={20} className="text-[var(--text-primary)] opacity-60" />
+                        </button>
+                        
+                        <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                            <Bell size={32} />
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-center text-[var(--text-primary)] mb-2">
+                            {isArabic ? 'رمز الإشعارات (FCM Token)' : 'FCM Token'}
+                        </h3>
+                        
+                        <p className="text-xs text-center text-[var(--text-primary)] opacity-70 mb-4 leading-relaxed">
+                            {isArabic ? 'تم ربط الإشعارات الخارجية بنجاح! يمكنك نسخ الرمز أدناه للاختبار:' : 'External notifications linked successfully! You can copy the token below to test:'}
+                        </p>
+
+                        <div className="bg-[var(--bg-secondary)] rounded-xl p-3 mb-4 border border-[var(--border-primary)] font-mono text-[10px] break-all select-all text-[var(--text-primary)] max-h-24 overflow-y-auto">
+                            {fcmToken.slice(0, 40)}...
+                        </div>
+                        
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(fcmToken).then(() => {
+                                        alert(isArabic ? '✅ تم نسخ الرمز بنجاح!' : '✅ Token copied successfully!');
+                                    }).catch(() => {
+                                        alert(isArabic ? '❌ فشل في نسخ الرمز' : '❌ Failed to copy token');
+                                    });
+                                }}
+                                className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-[0.98]"
+                            >
+                                {isArabic ? 'نسخ الرمز' : 'Copy Token'}
+                            </button>
+                            
+                            <button
+                                onClick={() => setShowTokenPopup(false)}
+                                className="w-full py-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-xl font-medium transition-all active:scale-[0.98]"
+                            >
+                                {isArabic ? 'إغلاق' : 'Close'}
                             </button>
                         </div>
                     </div>

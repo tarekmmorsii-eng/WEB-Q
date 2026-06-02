@@ -1828,6 +1828,9 @@ export default function App() {
 
         if (isTriggerDay && isTimeMatch && !lastFired) {
           
+          // ⭐ تسجيل فوري لمنع تكرار الرنين في نفس الدقيقة (حتى لو تأخر السيرفر أو لم تُمنح الصلاحية)
+          localStorage.setItem(lastFiredKey, 'true');
+
           // ⭐ إذا كان التنبيه لمرة واحدة، نقوم بتعطيله فوراً حتى لا يتكرر غداً
           if (n.type === 'once') {
              n.isEnabled = false;
@@ -1886,7 +1889,6 @@ export default function App() {
                   // @ts-ignore
                   requireInteraction: n.isAlarm
                 });
-                localStorage.setItem(lastFiredKey, 'true');
               });
             }
           }
