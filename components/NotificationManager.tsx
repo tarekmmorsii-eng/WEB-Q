@@ -1502,8 +1502,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     try {
                                                         const pushResult = await requestPushPermission();
                                                         if (pushResult.success) {
-                                                            console.log('[Notifications] ✅ تم تفعيل الإشعارات الداخلية + الخارجية بنجاح');
-                                                            setShowTokenPopup(true);
+                                                            console.log('[Notifications] ✅ تم تفعيل الإشعارات الداخلية + الخارجية بنجاح. FCM Token:', pushResult.token);
                                                         } else {
                                                             console.warn('[Notifications] ⚠️ فشل تفعيل الإشعارات الخارجية:', pushResult.error);
                                                         }
@@ -1516,7 +1515,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                     />
                                 </label>
 
-                                {fcmToken && (
+                                {/*
+                                fcmToken && (
                                     <div className="mt-2 flex justify-end">
                                         <button
                                             type="button"
@@ -1526,7 +1526,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                             🔑 {isArabic ? 'عرض رمز الإشعارات (FCM Token)' : 'Show FCM Token'}
                                         </button>
                                     </div>
-                                )}
+                                )
+                                */}
 
 
                             </div>
@@ -1635,7 +1636,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             )}
 
             {/* FCM Token Display Custom Modal */}
-            {showTokenPopup && fcmToken && (
+            {/*
+            showTokenPopup && fcmToken && (
                 <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
                     <div className="bg-[var(--bg-card)] w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in zoom-in-95" style={{ direction: isArabic ? 'rtl' : 'ltr' }}>
                         <button
@@ -1684,7 +1686,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            */}
         </div>
     );
 }
