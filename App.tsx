@@ -1894,9 +1894,64 @@ export default function App() {
       });
     };
 
-    const interval = setInterval(checkNotifications, 30000);
+    // 4. Web Worker Background Timer (لضمان عمل المؤقت في وضع السكون)
+    const workerCode = `
+      let timer = null;
+      self.onmessage = function(e) {
+        if (e.data === 'start') {
+          if (timer) clearInterval(timer);
+          timer = setInterval(() => {
+            self.postMessage('tick');
+          }, 30000);
+        } else if (e.data === 'stop') {
+          if (timer) clearInterval(timer);
+        }
+      };
+    `;
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const workerUrl = URL.createObjectURL(blob);
+    const worker = new Worker(workerUrl);
+
+    worker.onmessage = (e) => {
+      if (e.data === 'tick') {
+        checkNotifications();
+      }
+    };
+    worker.postMessage('start');
+
+    // 5. Audio Keep-Alive Hack (لإجبار النظام على إبقاء التطبيق مستيقظاً)
+    let keepAliveAudio: HTMLAudioElement | null = null;
+    const startKeepAlive = () => {
+       const hasActiveAlarms = notifications && notifications.some(n => n.isEnabled);
+       if (hasActiveAlarms) {
+          if (!keepAliveAudio) {
+             keepAliveAudio = new Audio('/islamic_song.mp3');
+             keepAliveAudio.loop = true;
+             keepAliveAudio.volume = 0.001;
+          }
+          if (keepAliveAudio.paused) {
+             keepAliveAudio.play().catch(() => {});
+          }
+       } else {
+          if (keepAliveAudio && !keepAliveAudio.paused) {
+             keepAliveAudio.pause();
+          }
+       }
+    };
+    
+    document.addEventListener('click', startKeepAlive);
+    document.addEventListener('touchstart', startKeepAlive);
+
     return () => {
-      clearInterval(interval);
+      worker.postMessage('stop');
+      worker.terminate();
+      URL.revokeObjectURL(workerUrl);
+      if (keepAliveAudio) {
+         keepAliveAudio.pause();
+         keepAliveAudio = null;
+      }
+      document.removeEventListener('click', startKeepAlive);
+      document.removeEventListener('touchstart', startKeepAlive);
       window.removeEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
     };
   }, [notifications]);

@@ -111,6 +111,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
         typeof window !== 'undefined' && typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
     const [showBatteryModal, setShowBatteryModal] = useState(false);
+    const [dontShowAgain, setDontShowAgain] = useState(false);
 
     // ⭐ فحص صلاحية المنبه الدقيق (SCHEDULE_EXACT_ALARM) لأندرويد 12+ (API 31+)
     // أندرويد 12+ يتطلب منح هذه الصلاحية يدوياً من الإعدادات
@@ -149,9 +150,9 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
                     // ⭐ M1: طلب تجاهل تحسين البطارية لضمان عمل الإشعارات في الخلفية
                     try {
-                        const batteryKey = 'battery_opt_requested';
-                        if (!localStorage.getItem(batteryKey)) {
-                            localStorage.setItem(batteryKey, 'true');
+                        const batteryStatus = localStorage.getItem('battery_opt_status');
+                        const batteryRequestedLegacy = localStorage.getItem('battery_opt_requested');
+                        if (batteryStatus !== 'granted' && batteryStatus !== 'dont_show' && !batteryRequestedLegacy) {
                             // نعرض النافذة الأنيقة للمستخدم بدلاً من رسالة النظام المزعجة
                             setTimeout(() => {
                                 setShowBatteryModal(true);
@@ -573,6 +574,19 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
         if (isNative) {
             scheduleNativeNotification(newNotification);
+            
+            // ⭐ فحص حالة تحسين البطارية عند حفظ أو تعديل أي تنبيه جديد
+            try {
+                const batteryStatus = localStorage.getItem('battery_opt_status');
+                if (batteryStatus !== 'granted' && batteryStatus !== 'dont_show') {
+                    // إذا لم يتم التفعيل أو اختيار عدم الإظهار، نعرض النافذة المنبثقة للتنبيه مجدداً
+                    setTimeout(() => {
+                        setShowBatteryModal(true);
+                    }, 500);
+                }
+            } catch (batteryErr) {
+                console.warn('[NotifManager] ⚠️ تعذر فحص حالة تحسين البطارية:', batteryErr);
+            }
         }
 
         resetForm();
@@ -1541,13 +1555,35 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             لضمان وصول التنبيهات
                         </h3>
                         
-                        <p className="text-sm text-center text-[var(--text-primary)] opacity-70 mb-6 leading-relaxed">
-                            أنظمة الهواتف قد تقوم بإيقاف التنبيهات لتوفير البطارية. لضمان استيقاظك في الوقت المناسب، يرجى السماح للتطبيق بالعمل في الخلفية.
+                        <p className="text-xs text-center text-[var(--text-primary)] opacity-70 mb-4 leading-relaxed">
+                            أنظمة الهواتف قد تقوم بإيقاف التنبيهات لتوفير البطارية. لضمان تنبيهك في الوقت المناسب، يرجى تفعيل الصلاحية باتباع الآتي عند فتح الإعدادات:
                         </p>
+
+                        <div className="bg-[var(--bg-secondary)] rounded-xl p-3 mb-4 text-right" style={{ direction: 'rtl' }}>
+                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 block mb-1">💡 خطوات التفعيل البسيطة:</span>
+                            <ol className="text-[11px] text-[var(--text-primary)] opacity-85 list-decimal list-inside space-y-0.5">
+                                <li>اضغط على <b>"البطارية" (Battery)</b> أو "استخدام البطارية".</li>
+                                <li>اختر <b>"غير مقيد" (Unrestricted)</b> أو "بلا قيود".</li>
+                            </ol>
+                        </div>
+
+                        <label className="flex items-center gap-2 cursor-pointer mb-4 justify-end select-none text-right" style={{ direction: 'rtl' }}>
+                            <input
+                                type="checkbox"
+                                checked={dontShowAgain}
+                                onChange={(e) => setDontShowAgain(e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 bg-[var(--bg-secondary)] cursor-pointer"
+                            />
+                            <span className="text-xs text-[var(--text-primary)] opacity-70">لا تظهر لي هذا التنبيه مجدداً</span>
+                        </label>
                         
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={() => {
+                                    try {
+                                        localStorage.setItem('battery_opt_status', 'granted');
+                                        localStorage.setItem('battery_opt_requested', 'true');
+                                    } catch (e) {}
                                     if (isNative) {
                                         NativeSettings.openAndroid({ option: AndroidSettings.IgnoreBatteryOptimization })
                                             .catch(() => {
@@ -1563,7 +1599,17 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             </button>
                             
                             <button
-                                onClick={() => setShowBatteryModal(false)}
+                                onClick={() => {
+                                    try {
+                                        if (dontShowAgain) {
+                                            localStorage.setItem('battery_opt_status', 'dont_show');
+                                            localStorage.setItem('battery_opt_requested', 'true');
+                                        } else {
+                                            localStorage.setItem('battery_opt_status', 'later');
+                                        }
+                                    } catch (e) {}
+                                    setShowBatteryModal(false);
+                                }}
                                 className="w-full py-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-xl font-medium transition-all active:scale-[0.98]"
                             >
                                 لاحقاً
