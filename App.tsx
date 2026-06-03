@@ -455,41 +455,41 @@ export default function App() {
   // ⭐ الإظهار التلقائي للإشعارات - تم نقله بعد تعريف حالات الجولة والترحيب
 
   // ⭐ M5: عرض FCM Token لمرة واحدة عند التفعيل الأول لتأكيد ربط الإشعارات الخارجية
-  useEffect(() => {
-    if (!isNative) return;
-    const FCM_SHOWN_KEY = 'fcm_token_alert_shown';
-    if (localStorage.getItem(FCM_SHOWN_KEY)) return;
-
-    // فحص التوكن المحفوظ مسبقاً
-    const savedToken = localStorage.getItem('quran_push_fcm_token');
-    if (savedToken) {
-      localStorage.setItem(FCM_SHOWN_KEY, 'true');
-      setTimeout(() => {
-        alert(
-          '✅ تم ربط الإشعارات الخارجية بنجاح!\n\n' +
-          'FCM Token:\n' + savedToken.slice(0, 40) + '...\n\n' +
-          '(هذه الرسالة تظهر مرة واحدة فقط للتحقق التقني)'
-        );
-      }, 3000);
-      return;
-    }
-
-    // إذا لم يكن هناك توكن محفوظ، استمع للتوكن الجديد عبر localStorage change
-    const tokenCheckInterval = setInterval(() => {
-      const token = localStorage.getItem('quran_push_fcm_token');
-      if (token && !localStorage.getItem(FCM_SHOWN_KEY)) {
-        localStorage.setItem(FCM_SHOWN_KEY, 'true');
-        clearInterval(tokenCheckInterval);
-        alert(
-          '✅ تم ربط الإشعارات الخارجية بنجاح!\n\n' +
-          'FCM Token:\n' + token.slice(0, 40) + '...\n\n' +
-          '(هذه الرسالة تظهر مرة واحدة فقط للتحقق التقني)'
-        );
-      }
-    }, 2000);
-
-    return () => clearInterval(tokenCheckInterval);
-  }, []);
+  // useEffect(() => {
+  //   if (!isNative) return;
+  //   const FCM_SHOWN_KEY = 'fcm_token_alert_shown';
+  //   if (localStorage.getItem(FCM_SHOWN_KEY)) return;
+  // 
+  //   // فحص التوكن المحفوظ مسبقاً
+  //   const savedToken = localStorage.getItem('quran_push_fcm_token');
+  //   if (savedToken) {
+  //     localStorage.setItem(FCM_SHOWN_KEY, 'true');
+  //     setTimeout(() => {
+  //       alert(
+  //         '✅ تم ربط الإشعارات الخارجية بنجاح!\n\n' +
+  //         'FCM Token:\n' + savedToken.slice(0, 40) + '...\n\n' +
+  //         '(هذه الرسالة تظهر مرة واحدة فقط للتحقق التقني)'
+  //       );
+  //     }, 3000);
+  //     return;
+  //   }
+  // 
+  //   // إذا لم يكن هناك توكن محفوظ، استمع للتوكن الجديد عبر localStorage change
+  //   const tokenCheckInterval = setInterval(() => {
+  //     const token = localStorage.getItem('quran_push_fcm_token');
+  //     if (token && !localStorage.getItem(FCM_SHOWN_KEY)) {
+  //       localStorage.setItem(FCM_SHOWN_KEY, 'true');
+  //       clearInterval(tokenCheckInterval);
+  //       alert(
+  //         '✅ تم ربط الإشعارات الخارجية بنجاح!\n\n' +
+  //         'FCM Token:\n' + token.slice(0, 40) + '...\n\n' +
+  //         '(هذه الرسالة تظهر مرة واحدة فقط للتحقق التقني)'
+  //       );
+  //     }
+  //   }, 2000);
+  // 
+  //   return () => clearInterval(tokenCheckInterval);
+  // }, []);
 
   const [selectedReciterId, setSelectedReciterId] = useState<string>(() => {
     const stored = localStorage.getItem('selected_reciter_id');

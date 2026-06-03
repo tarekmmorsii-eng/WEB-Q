@@ -113,7 +113,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     );
     const [showBatteryModal, setShowBatteryModal] = useState(false);
     const [dontShowAgain, setDontShowAgain] = useState(false);
-    const [showTokenPopup, setShowTokenPopup] = useState(false);
+    // const [showTokenPopup, setShowTokenPopup] = useState(false);
 
     // ⭐ فحص صلاحية المنبه الدقيق (SCHEDULE_EXACT_ALARM) لأندرويد 12+ (API 31+)
     // أندرويد 12+ يتطلب منح هذه الصلاحية يدوياً من الإعدادات

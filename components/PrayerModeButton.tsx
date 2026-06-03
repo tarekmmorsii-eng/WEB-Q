@@ -95,7 +95,7 @@ export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerMod
         }
 
         // Find only hidden elements that are VISIBLE on screen (not from previous/next rendered pages)
-        const allHidden = Array.from(document.querySelectorAll('.text-transparent')) as HTMLElement[];
+        const allHidden = Array.from(document.querySelectorAll('.text-transparent, [data-reveal-key]')) as HTMLElement[];
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
         const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
 
