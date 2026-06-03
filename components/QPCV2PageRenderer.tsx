@@ -1238,6 +1238,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const isTabLandscape = deviceType === 'tablet' && orientation === 'landscape';
         const isMobLandscape = deviceType === 'mobile' && orientation === 'landscape';
         const isLandscape = isTabLandscape || isMobLandscape;
+        const isDesktop = deviceType === 'desktop';
 
         let paddingValue = '10px 5px'; // Minimized side padding
         if (deviceType === 'tablet') {
@@ -1245,9 +1246,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         }
         return {
             width: '100%',
-            maxWidth: isTabLandscape ? '1200px' : '800px',
-            height: isLandscape ? 'auto' : '100%',
-            minHeight: isLandscape ? '100dvh' : '100%',
+            maxWidth: isDesktop ? '800px' : (isTabLandscape ? '1200px' : '800px'),
+            height: (isLandscape || isDesktop) ? 'auto' : '100%',
+            minHeight: (isLandscape || isDesktop) ? '100dvh' : '100%',
             padding: paddingValue,
             marginLeft: 'auto',
             marginRight: 'auto',
@@ -1256,6 +1257,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             boxSizing: 'border-box' as const,
             touchAction: 'pan-y',
             overflowX: 'hidden' as const,
+            overflowY: isDesktop ? 'auto' : undefined,
+            gap: isDesktop ? '1.5vh' : undefined,
         };
     }, [deviceType, orientation]);
 
@@ -1315,7 +1318,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     const isTabletLandscape = useMemo(() => deviceType === 'tablet' && orientation === 'landscape', [deviceType, orientation]);
 
     const fontSizeClass = useMemo(() => {
-        if (deviceType === 'desktop') return 'clamp(1.6rem, 2.2vw, 2.22rem)';
+        if (deviceType === 'desktop') return 'clamp(16px, 1.8vw, 19px)';
         if (deviceType === 'mobile') return isMobileLandscape ? '40px' : 'min(2.8vh, 5.2vw)'; 
         if (deviceType === 'tablet') return isTabletLandscape ? '56px' : '21px';
         return '21px';
@@ -1343,7 +1346,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     }, [revealNextHidden]);
 
     // Line Height
-    const lineHeightVal = '1.1'; // Standard QPC V2 Line height
+    const lineHeightVal = deviceType === 'desktop' ? '2.2' : '1.1'; // Standard QPC V2 Line height
 
     const fontName = `p${pageNumber}-v2`;
 
@@ -1547,6 +1550,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             alignSelf: 'stretch',
                             width: '100%',
                             gap: line.isCentered ? '4px' : '0px',
+                            marginTop: deviceType === 'desktop' ? '1.5vh' : undefined,
+                            marginBottom: deviceType === 'desktop' ? '1.5vh' : undefined,
                             ...(LINE_STYLE_OVERRIDES[pageNumber]?.[idx] || {}),
                         }}
                     >

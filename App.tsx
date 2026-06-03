@@ -330,19 +330,23 @@ export default function App() {
   useEffect(() => {
     const updateOverflow = () => {
       const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-      const isMobileOrTablet = window.innerWidth <= 1440;
+      // Desktop detection matching the renderer logic
+      const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-      if (isLandscape && isMobileOrTablet) {
-        // Ø§Ù„Ø³Ù…Ø§Ø permitir el desplazamiento en modo horizontal para móviles y tabletas
+      if ((isLandscape && !isDesktop) || isDesktop) {
+        // السماح بالتمرير للديسكتوب وللموبايل في الوضع الأفقي
         document.documentElement.style.overflow = 'auto';
         document.body.style.overflow = 'auto';
+        document.documentElement.style.height = 'auto';
+        document.body.style.height = 'auto';
+        document.body.style.minHeight = '100dvh';
       } else {
-        // Ù…Ù†Ø¹ Ø§Ù„ØªÙ…Ø±ÙŠØ± Ù ÙŠ Ø§Ù„ÙˆØ¶Ø¹ Ø§Ù„Ø¹Ù…ÙˆØ¯ÙŠ ÙˆØ§Ù„ÙƒÙ…Ø¨ÙŠÙˆØªØ±
+        // منع التمرير في الوضع العمودي للموبايل والتابلت
         document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
+        document.documentElement.style.height = '100%';
+        document.body.style.height = '100%';
       }
-      document.documentElement.style.height = '100%';
-      document.body.style.height = isLandscape && isMobileOrTablet ? 'auto' : '100%';
       document.body.style.width = '100%';
     };
 
@@ -2538,7 +2542,10 @@ export default function App() {
         onClosePrayerMode={() => setSettings(prev => ({ ...prev, prayerMode: false }))}
       />
       <div
-        className="h-[100dvh] w-full flex flex-col relative transition-colors duration-300 overflow-hidden"
+        className={clsx(
+          "w-full flex flex-col relative transition-colors duration-300",
+          !isTouchDevice ? "min-h-[100dvh] overflow-visible" : "h-[100dvh] overflow-hidden"
+        )}
         style={{
           backgroundColor: currentTheme.colors.background,
           color: currentTheme.colors.text,
