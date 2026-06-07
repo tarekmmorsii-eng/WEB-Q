@@ -9,3 +9,8 @@
 - The agent provides code changes and fixes.
 - The agent verifies code locally (e.g., syntax checks, linting).
 - The user reviews the changes and performs the commit/push manually.
+
+## ✍️ Chat and Communication Direction (اتجاه المحادثات والنقاشات)
+- **CRITICAL RULE:** All responses, chats, and discussions sent to the user must be formatted and structured from Right-to-Left (RTL) to ensure readability.
+- يجب كتابة جميع الردود والمناقشات البرمجية باللغة العربية ومن اليمين إلى اليسار لضمان سهولة القراءة في واجهة المستخدم.
+
