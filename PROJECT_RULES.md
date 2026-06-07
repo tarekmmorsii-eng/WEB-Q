@@ -12,5 +12,12 @@
 
 ## ✍️ Chat and Communication Direction (اتجاه المحادثات والنقاشات)
 - **CRITICAL RULE:** All responses, chats, and discussions sent to the user must be formatted and structured from Right-to-Left (RTL) to ensure readability.
-- يجب كتابة جميع الردود والمناقشات البرمجية باللغة العربية ومن اليمين إلى اليسار لضمان سهولة القراءة في واجهة المستخدم.
+- يجب كتابة جميع الردود والمناقشات باللغة العربية وتغليفها بوسم `<div dir="rtl">` لضمان محاذاتها من اليمين إلى اليسار بشكل صحيح في واجهة المستخدم.
+- **Example Usage:**
+  ```html
+  <div dir="rtl">
+  مرحباً بك! هنا الرد الخاص بي...
+  </div>
+  ```
+
 

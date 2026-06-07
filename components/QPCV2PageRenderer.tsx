@@ -265,6 +265,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     }, [enableWordLongPressAudio]);
 
     const t = translations[language as Language] || translations.ar;
+    const isNativeApp = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
 
     // --- State ---
     const [pageData, setPageData] = useState<AdaptedPage | null>(null);
@@ -1526,7 +1527,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 })()}
             </div>
 
-            <div ref={linesContainerRef} className="quran-lines-container flex-1 flex flex-col w-full px-[1%]" style={{ direction: 'rtl' }}>
+            <div ref={linesContainerRef} className="quran-lines-container flex-1 flex flex-col w-full px-[1%]" style={{
+                direction: 'rtl',
+                // --- إزاحة بصرية لمنع قص الحروف الممتدة عند حافة الشاشة اليسرى (RTL) ---
+                transform: (isNativeApp && deviceType === 'mobile') ? 'translateX(6px) scale(0.99)' : 'none',
+                transformOrigin: 'center center'
+            }}>
                 {pageData.lines.map((line, idx) => (
                     <div key={`${idx}-${mode}-${toggleState}`}
                         data-line-type={line.lineType}
@@ -1585,9 +1591,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         lineHeight: '1.2',
                                                         flexShrink: line.isCentered ? 0 : 1,
                                                         color: shouldHide ? 'transparent' : (isDarkMode ? '#f5f5f5' : '#1a1a1a'),
-                                                        backgroundColor: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS
-                                                            ? (isDarkMode ? '#1e293b' : '#334155')
-                                                            : undefined,
+                                                        backgroundColor: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS ? (isDarkMode ? '#1e293b' : '#334155') : undefined,
                                                         borderRadius: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS ? '3px' : undefined,
                                                         zIndex: 10,
                                                     }}
