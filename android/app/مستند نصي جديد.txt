@@ -1,0 +1,9 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyALus6trZEvqIwl-RZh9T8nSWkmKfsO5g0",
+  authDomain: "quran-app-69891.firebaseapp.com",
+  projectId: "quran-app-69891",
+  storageBucket: "quran-app-69891.firebasestorage.app",
+  messagingSenderId: "495250099560",
+  appId: "1:495250099560:web:78d1eb07e0e6b47093dadd",
+  measurementId: "G-4FYJ6QRCQL"
+};

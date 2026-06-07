@@ -24,6 +24,10 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
       smallIcon: 'ic_stat_book',
       iconColor: '#000000'
+    },
+    SplashScreen: {
+      androidScaleType: 'CENTER_INSIDE',
+      splashFullScreen: true
     }
   }
 };

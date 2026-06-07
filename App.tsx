@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { flushSync } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
+import { StatusBar } from '@capacitor/status-bar';
 import { Badge } from '@capawesome/capacitor-badge';
 const isNative = Capacitor.isNativePlatform();
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
@@ -763,6 +764,15 @@ export default function App() {
   }, [ayahAudio, startPagePlayback, selectedReciterId, audioSettings]);
 
   const [showUi, setShowUi] = useState(true);
+
+  useEffect(() => {
+    if (showUi) {
+      StatusBar.show();
+    } else {
+      StatusBar.hide();
+    }
+  }, [showUi]);
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastToggleTime = useRef<number>(0);
   const swiperRef = useRef<SwiperClass | null>(null);
