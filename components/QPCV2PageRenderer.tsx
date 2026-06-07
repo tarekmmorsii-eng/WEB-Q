@@ -1527,11 +1527,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 })()}
             </div>
 
-            <div ref={linesContainerRef} className="quran-lines-container flex-1 flex flex-col w-full px-[1%]" style={{
+            <div ref={linesContainerRef} className="quran-lines-container flex-1 flex flex-col" style={{ 
                 direction: 'rtl',
-                // --- إزاحة بصرية لمنع قص الحروف الممتدة عند حافة الشاشة اليسرى (RTL) ---
-                transform: (isNativeApp && deviceType === 'mobile') ? 'translateX(6px) scale(0.99)' : 'none',
-                transformOrigin: 'center center'
+                margin: '0 auto',
+                width: (isNativeApp && deviceType === 'mobile') ? '92%' : '100%'
             }}>
                 {pageData.lines.map((line, idx) => (
                     <div key={`${idx}-${mode}-${toggleState}`}
