@@ -236,7 +236,7 @@ div[data-atlas] {
   flex-shrink: 0 !important;
   min-height: 0 !important;
   overflow: visible !important;
-  width: 100% !important;
+  /* width controlled by React inline style */
 }
 
 .page-footer {
@@ -267,7 +267,7 @@ div[data-atlas] {
 .mushaf-page-qpc[data-device-type="mobile"][data-orientation="portrait"] [class*="quran-text-"],
 .mushaf-page-qpc[data-device-type="mobile"][data-orientation="portrait"] [class*="qpc-font-page-"],
 .mushaf-page-qpc[data-device-type="mobile"][data-orientation="portrait"] .qpc-v2-text {
-  font-size: min(2.8vh, 5.2vw) !important;
+  font-size: min(2.7vh, 5.0vw) !important;
   /* Increased font size utilizing saved space */
   line-height: normal !important;
   height: 100% !important;

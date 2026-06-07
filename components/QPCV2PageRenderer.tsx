@@ -1320,9 +1320,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     const fontSizeClass = useMemo(() => {
         if (deviceType === 'desktop') return 'clamp(16px, 1.8vw, 19px)';
-        if (deviceType === 'mobile') return isMobileLandscape ? '40px' : 'min(2.8vh, 5.2vw)'; 
-        if (deviceType === 'tablet') return isTabletLandscape ? '56px' : '21px';
-        return '21px';
+        if (deviceType === 'mobile') return isMobileLandscape ? '38px' : 'min(2.7vh, 5.0vw)';
+        if (deviceType === 'tablet') return isTabletLandscape ? '54px' : '20px';
+        return '20px';
     }, [deviceType, isMobileLandscape, isTabletLandscape]);
 
     // Handle Space Key for Sequential Reveal (Always Active)
@@ -1530,7 +1530,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             <div ref={linesContainerRef} className="quran-lines-container flex-1 flex flex-col" style={{ 
                 direction: 'rtl',
                 margin: '0 auto',
-                width: (isNativeApp && deviceType === 'mobile') ? '92%' : '100%'
+                width: isNativeApp && (deviceType === 'mobile' || deviceType === 'tablet') ? '96%' : '100%'
             }}>
                 {pageData.lines.map((line, idx) => (
                     <div key={`${idx}-${mode}-${toggleState}`}
