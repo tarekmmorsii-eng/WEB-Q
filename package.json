@@ -16,6 +16,7 @@
     "@capacitor/share": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "@capawesome/capacitor-badge": "^6.0.0",
+    "@capgo/capacitor-navigation-bar": "^8.1.8",
     "better-sqlite3": "^12.5.0",
     "capacitor-native-settings": "^8.1.0",
     "clsx": "^2.1.1",

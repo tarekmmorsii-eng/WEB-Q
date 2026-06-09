@@ -51,6 +51,7 @@ import ColorPickerModal from './components/ColorPickerModal';
 import { translations, Language } from './i18n/translations';
 import { THEMES, getThemeById } from './constants/themes';
 import { startTour } from './utils/TourManager';
+import { applyDynamicSystemBars } from './utils/systemBars';
 
 import { useAyahAudio } from './hooks/useAyahAudio';
 import { useWakeLock } from './hooks/useWakeLock';
@@ -327,11 +328,24 @@ export default function App() {
     root.setAttribute('dir', t.dir);
     root.setAttribute('lang', settings.language);
 
-    // Dynamically update Native Status Bar to match theme
-    if (isNative) {
-      StatusBar.setBackgroundColor({ color: theme.colors.background }).catch(console.error);
-      StatusBar.setStyle({ style: theme.isDark ? Style.Light : Style.Dark }).catch(console.error);
+    // Sync HTML/Body backgrounds to theme color to fix safe-area gap
+    let hexColor = theme.colors.background.trim();
+    if (hexColor.startsWith('#') && hexColor.length === 4) {
+      hexColor = '#' + hexColor[1] + hexColor[1] + hexColor[2] + hexColor[2] + hexColor[3] + hexColor[3];
     }
+    document.documentElement.style.backgroundColor = hexColor;
+    document.body.style.backgroundColor = hexColor;
+
+    // Update meta theme-color
+    let metaThemeColor = document.querySelector("meta[name='theme-color']");
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", hexColor);
+    }
+
+    // Dynamically update Native System Bars with Camouflage logic (DISABLED for Immersive Mode)
+    // if (isNative) {
+    //   applyDynamicSystemBars(theme.colors.background);
+    // }
   }, [settings, t]);
 
   // Force disable window scrolling programmatically (except in landscape for scrolling)
@@ -772,11 +786,7 @@ export default function App() {
 
   const [showUi, setShowUi] = useState(true);
 
-  useEffect(() => {
-    if (isNative) {
-      StatusBar.setStyle({ style: Style.Dark }).catch(console.error);
-    }
-  }, []);
+  // Removed old hardcoded StatusBar style to allow dynamic camouflage
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastToggleTime = useRef<number>(0);
