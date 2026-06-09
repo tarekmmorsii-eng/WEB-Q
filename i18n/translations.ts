@@ -568,6 +568,8 @@ export interface Translations {
     pushNotifUnread: string;
     pushNotifFooterSaved: string;
     pushNotifFooterInLog: string;
+    shareAppTitle: string;
+    shareAppText: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';

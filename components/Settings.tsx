@@ -1080,22 +1080,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                             {/* Share Section */}
                             <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
                                 <button
-                                    onClick={async () => {
-                                        if (isNative && navigator.share) {
-                                            try {
-                                                await navigator.share({
-                                                    title: t.mushafApp,
-                                                    text: t.amazingApp,
-                                                    url: window.location.origin
-                                                });
-                                            } catch (err) {
-                                                console.error('Error sharing:', err);
-                                                onOpenShare?.();
-                                            }
-                                        } else {
-                                            onOpenShare?.();
-                                        }
-                                    }}
+                                    onClick={() => onOpenShare?.()}
                                     className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-slate-800 border-2 border-amber-500/20 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98] shadow-sm group"
                                 >
                                     <div className="flex flex-col items-start text-right">

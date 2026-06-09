@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { flushSync } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
-import { StatusBar } from '@capacitor/status-bar';
+import { Share } from '@capacitor/share';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { Badge } from '@capawesome/capacitor-badge';
 const isNative = Capacitor.isNativePlatform();
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
@@ -325,6 +326,12 @@ export default function App() {
     // Set direction and language metadata
     root.setAttribute('dir', t.dir);
     root.setAttribute('lang', settings.language);
+
+    // Dynamically update Native Status Bar to match theme
+    if (isNative) {
+      StatusBar.setBackgroundColor({ color: theme.colors.background }).catch(console.error);
+      StatusBar.setStyle({ style: theme.isDark ? Style.Light : Style.Dark }).catch(console.error);
+    }
   }, [settings, t]);
 
   // Force disable window scrolling programmatically (except in landscape for scrolling)
@@ -766,12 +773,10 @@ export default function App() {
   const [showUi, setShowUi] = useState(true);
 
   useEffect(() => {
-    if (showUi) {
-      StatusBar.show();
-    } else {
-      StatusBar.hide();
+    if (isNative) {
+      StatusBar.setStyle({ style: Style.Dark }).catch(console.error);
     }
-  }, [showUi]);
+  }, []);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastToggleTime = useRef<number>(0);
@@ -1466,25 +1471,29 @@ export default function App() {
   const handleOpenShare = useCallback(async () => {
     if (isNative) {
       try {
-        const title = settings.language === 'ar' ? 'مشاركة التطبيق' : 'Share App';
-        const text = settings.language === 'ar' 
-          ? 'قم بتحميل تطبيق المصحف الإلكتروني للقرآن الكريم' 
-          : 'Download the electronic Quran app';
-        const url = window.location.origin;
+        const title = t.shareAppTitle;
+        const text = t.shareAppText;
 
-        await navigator.share({
+        await Share.share({
           title,
           text,
-          url
+          dialogTitle: 'مشاركة التطبيق'
         });
       } catch (error) {
         console.error('Error sharing:', error);
-        setIsShareModalOpen(true);
+        // Fallback to clipboard if share fails
+        try {
+          await navigator.clipboard.writeText(`${t.shareAppTitle}\n${t.shareAppText}\n${window.location.origin}`);
+          setToastMessage(t.shareCopied || 'تم نسخ نص المشاركة بنجاح');
+        } catch (clipboardError) {
+          console.error('Clipboard fallback failed:', clipboardError);
+          setIsShareModalOpen(true);
+        }
       }
     } else {
       setIsShareModalOpen(true);
     }
-  }, [settings.language]);
+  }, [t, isNative]);
 
   const handleStartInteractiveTour = () => {
     // Close settings modal if it's open

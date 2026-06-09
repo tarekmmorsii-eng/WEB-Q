@@ -4,6 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.mushafalmurajaa.app',
   appName: 'مصحف المراجعة',
   webDir: 'dist',
+  backgroundColor: '#000000',
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_book',
@@ -26,8 +27,16 @@ const config: CapacitorConfig = {
       iconColor: '#000000'
     },
     SplashScreen: {
+      launchShowDuration: 0,
+      launchAutoHide: true,
       androidScaleType: 'CENTER_INSIDE',
-      splashFullScreen: true
+      backgroundColor: '#000000',
+      splashFullScreen: false,
+      splashImmersive: false
+    },
+    StatusBar: {
+      overlaysWebView: false,
+      backgroundColor: '#FFFFFF'
     }
   }
 };

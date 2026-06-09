@@ -50,96 +50,76 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
     };
 
     return (
-        <div className="fixed inset-0 z-[110000] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-6 animate-in fade-in duration-700">
+        <div className="fixed inset-0 z-[110000] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-4 animate-in fade-in duration-700">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
-                <div className="absolute -top-24 -left-24 w-96 h-96 bg-amber-600 rounded-full blur-[120px]" />
-                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-900 rounded-full blur-[120px]" />
+                <div className="absolute -top-24 -left-24 w-64 h-64 bg-amber-600 rounded-full blur-[120px]" />
+                <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-900 rounded-full blur-[120px]" />
             </div>
 
-            <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
-                <div className="mb-8 text-center animate-in slide-in-from-top-10 duration-1000">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-4 shadow-xl">
-                        <Globe className="text-amber-500 w-8 h-8" />
+            <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
+                <div className="mb-6 text-center animate-in slide-in-from-top-10 duration-1000">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-3 shadow-xl">
+                        <Globe className="text-amber-500 w-6 h-6" />
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 tracking-tight">
+                    <h1 className="text-2xl font-black text-[var(--text-primary)] mb-1 tracking-tight">
                         Choose Your Language
                     </h1>
-                    <div className="inline-block bg-black/60 rounded-full px-4 py-1.5 mt-1">
-                        <p className="text-amber-200/80 text-lg font-medium">
+                    <div className="inline-block bg-black/60 rounded-full px-3 py-1 mt-1">
+                        <p className="text-amber-200/80 text-sm font-medium">
                             اختر اللغة المفضلة لبدء الاستخدام
                         </p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 w-full max-h-[50vh] overflow-y-auto px-2 py-4 custom-scrollbar animate-in fade-in zoom-in-95 duration-1000 delay-200 fill-mode-forwards">
+                <div className="grid grid-cols-2 gap-2 w-full max-h-[45vh] overflow-y-auto px-1 py-2 custom-scrollbar animate-in fade-in zoom-in-95 duration-1000 delay-200">
                     {LANGUAGES.map((lang, index) => (
                         <button
                             key={lang.code}
                             onClick={() => setSelected(lang.code)}
                             className={`
-                                relative group flex flex-col items-center p-4 rounded-2xl border transition-all duration-300
+                                relative group flex flex-col items-center p-3 rounded-xl border transition-all duration-300
                                 ${selected === lang.code
-                                    ? 'bg-amber-500 border-amber-400 shadow-lg scale-105'
-                                    : 'bg-[var(--bg-secondary)] border-[var(--border-primary)] hover:bg-[var(--bg-primary)] hover:bg-opacity-20'
+                                    ? 'bg-amber-500 border-amber-400 shadow-lg scale-[1.02]'
+                                    : 'bg-[var(--bg-secondary)] border-[var(--border-primary)] hover:bg-[var(--bg-primary)]'
                                 }
                             `}
-                            style={{ animationDelay: `${index * 50}ms` }}
                         >
-                            <span className="text-3xl mb-2 filter drop-shadow-md">{lang.flag}</span>
-                            <span className={`text-sm font-bold transition-colors ${selected === lang.code ? 'text-black' : 'text-[var(--text-primary)]'}`}>
+                            <span className="text-2xl mb-1 filter drop-shadow-md">{lang.flag}</span>
+                            <span className={`text-xs font-bold ${selected === lang.code ? 'text-black' : 'text-[var(--text-primary)]'}`}>
                                 {lang.nativeName}
                             </span>
-                            <span className={`text-[10px] opacity-60 ${selected === lang.code ? 'text-black' : 'text-[var(--text-primary)]'}`}>
-                                {lang.name}
-                            </span>
-
-                            {selected === lang.code && (
-                                <div className="absolute top-2 right-2 bg-black/20 rounded-full p-1 animate-in zoom-in duration-300">
-                                    <Check size={12} className="text-white" />
-                                </div>
-                            )}
                         </button>
                     ))}
                 </div>
 
-                <div className="mt-12 w-full max-w-xs animate-in slide-in-from-bottom-10 duration-1000 delay-500 fill-mode-forwards">
+                <div className="mt-6 w-full max-w-xs animate-in slide-in-from-bottom-10 duration-1000 delay-500">
                     <button
                         onClick={handleConfirm}
                         disabled={!selected}
                         className={`
-                            w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-lg shadow-2xl transition-all duration-500
+                            w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-base shadow-2xl transition-all duration-500
                             ${selected
-                                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:scale-105 active:scale-95'
-                                : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] opacity-20 cursor-not-allowed border border-[var(--border-primary)]'
+                                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:scale-105'
+                                : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] opacity-30 cursor-not-allowed border border-[var(--border-primary)]'
                             }
                         `}
                     >
                         <span>Start Now</span>
-                        <ChevronRight className={`transition-transform duration-500 ${selected ? 'translate-x-1' : ''}`} />
+                        <ChevronRight size={18} />
                     </button>
                     
-                    <p className="mt-4 text-center text-[var(--text-primary)] opacity-30 text-xs font-medium uppercase tracking-widest">
+                    <p className="mt-3 text-center text-[var(--text-primary)] opacity-30 text-[10px] font-medium uppercase tracking-widest">
                         You can change this later in settings
                     </p>
                 </div>
             </div>
-
+            
             <style>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(255, 255, 255, 0.02);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(245, 158, 11, 0.2);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(245, 158, 11, 0.4);
-                }
+                .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.3); border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.4); }
             `}</style>
         </div>
     );

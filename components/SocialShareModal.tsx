@@ -24,8 +24,8 @@ export default function SocialShareModal({
     
     if (!isOpen) return null;
 
-    const defaultTitle = t.mushafAlMurajaa;
-    const defaultText = t.shareAppDescNative;
+    const defaultTitle = t.shareAppTitle;
+    const defaultText = t.shareAppText;
 
     const finalTitle = shareTitle || defaultTitle;
     const finalText = shareText || defaultText;
