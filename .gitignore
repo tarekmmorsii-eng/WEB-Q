@@ -6,6 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+build_*.txt
+*_log.txt
+*_output.txt
 
 node_modules
 dist
@@ -34,50 +37,7 @@ dist-ssr
 temp_*.txt
 *.tmp
 *.bak
-
-# Production builds
-hostinger-upload/
-hostinger-upload.zip
-.ftp-deploy-sync-state.json
-
-# Environment
-.env
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Backups and temporary files
-*.backup
-*.backup_*
-*.broken_*
-*.corrupted
-*.corrupted_*
-*.old_*
-*_NEW.txt
-temp_*.txt
-*.tmp
-*.bak
+*.rej
 
 # Production builds
 hostinger-upload/
