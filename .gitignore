@@ -63,3 +63,9 @@ android/jdk-17.zip
 # Android app packages (large binary files - should not be in Git)
 *.apk
 *.aab
+
+# Android signing keys and credentials (NEVER commit these)
+android/app/release-key.jks
+android/app/*.jks
+android/app/*.keystore
+android/keystore.properties

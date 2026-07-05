@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// تحميل بيانات التوقيع من ملف keystore.properties خارج تتبع git
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.mushafalmurajaa.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -18,10 +25,10 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("release-key.keystore")
-            storePassword "REMOVED"
-            keyAlias "quran-key"
-            keyPassword "REMOVED"
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
         }
     }
     buildTypes {
