@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-05-11-FCM'; // دمج Firebase Messaging داخل Service Worker الموحد
+const CACHE_VERSION = 'v2026-07-05-fonts-fix'; // دمج Firebase Messaging داخل Service Worker الموحد
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
