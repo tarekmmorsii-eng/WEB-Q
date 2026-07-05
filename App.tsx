@@ -7,6 +7,8 @@ import { Badge } from '@capawesome/capacitor-badge';
 const isNative = Capacitor.isNativePlatform();
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { Virtual } from 'swiper/modules';
+import 'swiper/css/virtual';
 import type { Swiper as SwiperClass } from 'swiper';
 import 'swiper/css';
 
@@ -128,7 +130,23 @@ const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
 ];
 
 // --- STABLE SWIPER CONFIGURATION ---
-const SWIPER_MODULES: any[] = [];
+const SWIPER_MODULES: any[] = [Virtual];
+
+// Full page list for the virtualized pager. Swiper's Virtual module mounts only
+// a small window of slides around the active one, so swiping renders ONLY the
+// single newly-entering page (not a 3-slide recenter). Stable module-level
+// reference so it's never recreated.
+const ALL_PAGES: number[] = Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1);
+
+// Run a (heavy, non-critical) task off the startup critical path. Used to keep
+// large background JSON loads from blocking first paint / interactivity.
+const runWhenIdle = (cb: () => void, fallbackDelay = 2500) => {
+  if (typeof (window as any).requestIdleCallback === 'function') {
+    (window as any).requestIdleCallback(cb, { timeout: 6000 });
+  } else {
+    setTimeout(cb, fallbackDelay);
+  }
+};
 
 // Integrations
 import { FeedbackProvider, useFeedback } from './contexts/FeedbackContext';
@@ -863,15 +881,20 @@ export default function App() {
   const [selectorIsInsideSurah, setSelectorIsInsideSurah] = useState<boolean>(false);
   const [isHowToUseOpen, setIsHowToUseOpen] = useState(false);
 
-  // ⭐ تحميل بيانات المعاني بشكل غير متزامن (بدون حظر الشاشة)
+  // ⭐ تحميل بيانات المعاني (16MB) — مؤجل خارج مسار الإقلاع الحرج
+  // The 16MB fetch + JSON.parse must NOT run during startup (it freezes the main
+  // thread for seconds). Word meanings are only needed on long-press, so we load
+  // them once the app is idle/interactive.
   useEffect(() => {
-    fetch('/data/new_ma3any_pos.json')
-      .then(res => res.ok ? res.json() : {})
-      .then(data => {
-        (window as any).__ma3anyData = data;
-        console.log('✅ Ma3any data loaded asynchronously');
-      })
-      .catch(err => console.warn('⚠️ Failed to load ma3any data:', err));
+    runWhenIdle(() => {
+      fetch('/data/new_ma3any_pos.json')
+        .then(res => res.ok ? res.json() : {})
+        .then(data => {
+          (window as any).__ma3anyData = data;
+          console.log('✅ Ma3any data loaded (deferred)');
+        })
+        .catch(err => console.warn('⚠️ Failed to load ma3any data:', err));
+    });
   }, []);
 
   // Load mutashabihat data on mount with custom user data
@@ -903,7 +926,9 @@ export default function App() {
       }
     };
 
-    loadData();
+    // Defer the 4MB mutashabihat parse off the startup critical path — it's not
+    // needed for the first render and was blocking the main thread on launch.
+    runWhenIdle(loadData);
   }, []);
 
   const handleOpenMutashabihatSelector = () => {
@@ -2215,27 +2240,29 @@ export default function App() {
     }
   };
 
-  // Helper function to change page without scrolling
-  // Smooth slide logic with Swiper integration
+  // Helper function to change page without scrolling.
+  // Let Swiper drive: slideNext/Prev updates the active index, and
+  // handleActiveIndexChange then syncs currentPage + sound. Avoids double state.
   const changePageWithoutScroll = (direction: 'next' | 'prev') => {
-    playPageFlipSound();
-
+    const s = swiperRef.current;
+    if (!s || s.destroyed) return;
     if (direction === 'next' && currentPage < TOTAL_PAGES) {
-      setCurrentPage(prev => Math.min(prev + 1, TOTAL_PAGES));
-      if (swiperRef.current) swiperRef.current.slideNext(400);
+      s.slideNext(400);
     } else if (direction === 'prev' && currentPage > 1) {
-      setCurrentPage(prev => Math.max(prev - 1, 1));
-      if (swiperRef.current) swiperRef.current.slidePrev(400);
+      s.slidePrev(400);
     }
   };
 
   const jumpToPage = (pageNum: number) => {
     if (pageNum === currentPage) return;
-    playPageFlipSound();
-    setCurrentPage(pageNum);
-    // When jumping, we reset Swiper completely
-    setSwiperReady(false);
-    setTimeout(() => setSwiperReady(true), 10);
+    // Move Swiper directly; handleActiveIndexChange syncs currentPage. The
+    // external-sync effect is a fallback if the swiper ref isn't ready yet.
+    const s = swiperRef.current;
+    if (s && !s.destroyed) {
+      s.slideTo(pageNum - 1, 0, false);
+    } else {
+      setCurrentPage(pageNum);
+    }
   };
 
   const handleNextPage = () => {
@@ -2497,35 +2524,20 @@ export default function App() {
   // (currentPageRef moved to top of component)
 
   // Independent page numbers for each slide — prevents cross-slide content flashing
-  const [slidePages, setSlidePages] = useState([
-    Math.max(1, currentPage - 1),  // slide 0: prev
-    currentPage,                    // slide 1: center
-    Math.min(TOTAL_PAGES, currentPage + 1), // slide 2: next
-  ]);
+  // Virtual pager: Swiper drives the active page. activeIndex (0-based) maps
+  // directly to page (1-based). Swiping mounts only the newly-entering slide,
+  // so there is no per-swipe 3-page recenter burst.
+  const handleActiveIndexChange = useCallback((swiper: any) => {
+    if (!swiper || swiper.destroyed) return;
+    const newPage = swiper.activeIndex + 1;
+    if (newPage === currentPageRef.current) return;
 
-  // Handle Swipe/Slide change
-  const handleSwiperSlideChange = useCallback((swiper: any) => {
-    // Reset window scroll to top immediately in landscape/mobile
+    currentPageRef.current = newPage;
+    setCurrentPage(newPage);
+
+    // Reset scroll to top on page change (landscape/mobile)
     window.scrollTo(0, 0);
     if (mainRef.current) mainRef.current.scrollTop = 0;
-
-    if (!swiper || swiper.destroyed) return;
-    const idx = swiper.activeIndex;
-    if (idx === 1) return;
-
-    const page = currentPageRef.current;
-    const newPage = idx === 0 ? Math.max(1, page - 1) : Math.min(TOTAL_PAGES, page + 1);
-
-    // Prevent back-swipe on first page
-    if (newPage === page || (idx === 0 && page <= 1)) {
-      swiper.slideTo(1, 300, false);
-      return;
-    }
-
-    // Batch state updates: only update currentPage. 
-    // The effect watching currentPage will handle slidePages update and jump back.
-    setCurrentPage(newPage);
-    currentPageRef.current = newPage;
 
     if (typeof (window as any).playPageFlipSound === 'function') {
       (window as any).playPageFlipSound();
@@ -2542,21 +2554,114 @@ export default function App() {
     swiperRef.current = swiper;
   }, []);
 
-  // Sync external page changes (Index navigation) and handle Swiper jump-back
-  React.useLayoutEffect(() => {
-    setSlidePages([
-      Math.max(1, currentPage - 1),
-      currentPage,
-      Math.min(TOTAL_PAGES, currentPage + 1),
-    ]);
-
-    // Jump back to center slide synchronously after slidePages update but before paint
-    if (swiperRef.current && !swiperRef.current.destroyed) {
-      if (swiperRef.current.activeIndex !== 1) {
-        swiperRef.current.slideTo(1, 0, false);
-      }
+  // Sync EXTERNAL page changes (index/search/bookmark/restore) into Swiper.
+  // When currentPage is changed by something other than a swipe, move Swiper to
+  // it. After a real swipe, activeIndex already equals currentPage-1, so this is
+  // a no-op (no feedback loop).
+  useEffect(() => {
+    const s = swiperRef.current;
+    if (s && !s.destroyed && s.activeIndex !== currentPage - 1) {
+      s.slideTo(currentPage - 1, 0, false);
     }
   }, [currentPage]);
+
+  // ── Orientation round-trip fix ──────────────────────────────────────────
+  // Rotating portrait → landscape → portrait left the page "broken": the
+  // Virtual pager keeps slide offsets sized for the OTHER orientation (with
+  // slidesPerView=1 the Virtual module short-circuits its re-render because the
+  // visible from/to range is unchanged, so stale widths/left offsets survive),
+  // and a landscape page that grew taller than the viewport leaves a leftover
+  // scroll offset. Both only bite on the way *back*, which is why the first
+  // rotation looked fine but returning to portrait did not.
+  //
+  // Fix: after the rotation animation + WebView viewport resize FULLY settle,
+  // hard-recompute Swiper + the Virtual module against the new viewport, re-snap
+  // (no animation) to the active page, and reset scroll to the top. Debounced so
+  // it runs once after rotation settles, never on transitional resize ticks.
+  useEffect(() => {
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const resettle = () => {
+      const s = swiperRef.current;
+      if (!s || s.destroyed) return;
+      try {
+        s.updateSize();
+        s.updateSlides();
+        // Force the Virtual module to re-render its slides with the new sizes
+        // (plain update() no-ops when the from/to window is unchanged).
+        if (s.virtual) s.virtual.update(true);
+        s.update();
+        // Re-snap to the active slide so its translate matches the new width.
+        s.slideTo(s.activeIndex, 0, false);
+      } catch { /* swiper mid-teardown — safe to ignore */ }
+      // Clear any leftover scroll from the taller landscape layout.
+      window.scrollTo(0, 0);
+      if (mainRef.current) mainRef.current.scrollTop = 0;
+    };
+
+    const onOrientationSettle = () => {
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        // Two rAFs after the debounce so we measure only once layout has
+        // fully committed. 550ms clears the containers' 500ms width transition,
+        // so Swiper re-snaps against the settled width, not a transitional one.
+        requestAnimationFrame(() => requestAnimationFrame(resettle));
+      }, 550);
+    };
+
+    window.addEventListener('resize', onOrientationSettle);
+    window.addEventListener('orientationchange', onOrientationSettle);
+    return () => {
+      if (settleTimer) clearTimeout(settleTimer);
+      window.removeEventListener('resize', onOrientationSettle);
+      window.removeEventListener('orientationchange', onOrientationSettle);
+    };
+  }, []);
+
+  // Single source of truth for a page slide's content (used by every virtual
+  // slide). isActive is derived from currentPage so only the entering/leaving
+  // page re-renders (the rest are skipped by React.memo on QPCV2PageRenderer).
+  const renderPageSlide = (p: number) => (
+    <QPCV2PageRenderer
+      key={`page-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
+      pageNumber={p}
+      isActive={p === currentPage}
+      fontSize={settings.defaultFontSize as any}
+      isDarkMode={currentTheme.isDark}
+      className="!pb-0 w-full"
+      mode={viewMode}
+      toggleState={toggleState}
+      memorizationRatings={memorizationRatings}
+      surahRatings={surahRatings}
+      onRateAyah={handleRateAyah}
+      onRateSurah={handleRateSurah}
+      verseBookmarks={verseBookmarks}
+      colorStopSigns={settings.colorStopSigns}
+      accentColor={currentTheme.colors.accent}
+      highlightedAyah={highlightedAyah}
+      isPrayerMode={settings.prayerMode}
+      language={settings.language}
+      mutashabihatData={actualMutashabihatData}
+      showMutashabihatIndicators={settings.showMutashabihatIndicators}
+      enableWordLongPressAudio={settings.enableWordLongPressAudio}
+      showWordMeanings={settings.showWordMeanings}
+      wordMeaningsSource={settings.wordMeaningsSource}
+      onOpenMutashabihat={(mutOrSurah, optAyah) => {
+        if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+          setCurrentMutashabiha(mutOrSurah);
+          setIsMutashabihatModalOpen(true);
+        } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
+          handleOpenMutashabihat(mutOrSurah, optAyah);
+        }
+      }}
+      onDeleteSimilarAyah={handleDeleteSimilarAyah}
+      onAddSimilarAyah={handleAddSimilarAyah}
+      resetCounter={resetCounter}
+      audioModeActive={audioModeActive}
+      playingAyahId={playingAyahId}
+      onAyahClickForAudio={handleAyahClickForAudio}
+    />
+  );
 
   return (
     <FeedbackProvider language={settings.language}>
@@ -2664,8 +2769,10 @@ export default function App() {
                       dir="rtl"
                       modules={SWIPER_MODULES}
                       onSwiper={handleOnSwiper}
-                      onSlideChangeTransitionEnd={handleSwiperSlideChange}
-                      initialSlide={1}
+                      onSlideChangeTransitionEnd={handleActiveIndexChange}
+                      virtual={{ enabled: true, addSlidesBefore: 2, addSlidesAfter: 2 }}
+                      initialSlide={Math.max(0, currentPage - 1)}
+                      speed={260}
                       className="w-full h-full flex-1"
                       resistance={true}
                       resistanceRatio={0.85}
@@ -2674,129 +2781,11 @@ export default function App() {
                       simulateTouch={true}
                       style={{ touchAction: isLandscapeMode ? 'pan-y' : 'pan-x' }}
                     >
-                      <SwiperSlide className="w-full h-full flex items-start justify-center">
-                        <QPCV2PageRenderer
-                          key={`slide-0-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
-                          pageNumber={slidePages[0]}
-                          isActive={false}
-                          fontSize={settings.defaultFontSize as any}
-                          isDarkMode={currentTheme.isDark}
-                          className="!pb-0 w-full"
-                          mode={viewMode}
-                          toggleState={toggleState}
-                          memorizationRatings={memorizationRatings}
-                          surahRatings={surahRatings}
-                          onRateAyah={handleRateAyah}
-                          onRateSurah={handleRateSurah}
-                          verseBookmarks={verseBookmarks}
-                          colorStopSigns={settings.colorStopSigns}
-                          accentColor={currentTheme.colors.accent}
-                          highlightedAyah={highlightedAyah}
-                          isPrayerMode={settings.prayerMode}
-                          language={settings.language}
-                          mutashabihatData={actualMutashabihatData}
-                          showMutashabihatIndicators={settings.showMutashabihatIndicators}
-                          enableWordLongPressAudio={settings.enableWordLongPressAudio}
-                          showWordMeanings={settings.showWordMeanings}
-                          wordMeaningsSource={settings.wordMeaningsSource}
-                          onOpenMutashabihat={(mutOrSurah, optAyah) => {
-                            if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
-                              setCurrentMutashabiha(mutOrSurah);
-                              setIsMutashabihatModalOpen(true);
-                            } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
-                              handleOpenMutashabihat(mutOrSurah, optAyah);
-                            }
-                          }}
-                          onDeleteSimilarAyah={handleDeleteSimilarAyah}
-                          onAddSimilarAyah={handleAddSimilarAyah}
-                          resetCounter={resetCounter}
-                          audioModeActive={audioModeActive}
-                          playingAyahId={playingAyahId}
-                          onAyahClickForAudio={handleAyahClickForAudio}
-                        />
-                      </SwiperSlide>
-                      <SwiperSlide className="w-full h-full flex items-start justify-center">
-                        <QPCV2PageRenderer
-                          key={`slide-1-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
-                          pageNumber={slidePages[1]}
-                          isActive={true}
-                          fontSize={settings.defaultFontSize as any}
-                          isDarkMode={currentTheme.isDark}
-                          className="!pb-0 w-full"
-                          mode={viewMode}
-                          toggleState={toggleState}
-                          memorizationRatings={memorizationRatings}
-                          surahRatings={surahRatings}
-                          onRateAyah={handleRateAyah}
-                          onRateSurah={handleRateSurah}
-                          verseBookmarks={verseBookmarks}
-                          colorStopSigns={settings.colorStopSigns}
-                          accentColor={currentTheme.colors.accent}
-                          highlightedAyah={highlightedAyah}
-                          isPrayerMode={settings.prayerMode}
-                          language={settings.language}
-                          mutashabihatData={actualMutashabihatData}
-                          showMutashabihatIndicators={settings.showMutashabihatIndicators}
-                          enableWordLongPressAudio={settings.enableWordLongPressAudio}
-                          showWordMeanings={settings.showWordMeanings}
-                          wordMeaningsSource={settings.wordMeaningsSource}
-                          onOpenMutashabihat={(mutOrSurah, optAyah) => {
-                            if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
-                              setCurrentMutashabiha(mutOrSurah);
-                              setIsMutashabihatModalOpen(true);
-                            } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
-                              handleOpenMutashabihat(mutOrSurah, optAyah);
-                            }
-                          }}
-                          onDeleteSimilarAyah={handleDeleteSimilarAyah}
-                          onAddSimilarAyah={handleAddSimilarAyah}
-                          resetCounter={resetCounter}
-                          audioModeActive={audioModeActive}
-                          playingAyahId={playingAyahId}
-                          onAyahClickForAudio={handleAyahClickForAudio}
-                        />
-                      </SwiperSlide>
-                      <SwiperSlide className="w-full h-full flex items-start justify-center">
-                        <QPCV2PageRenderer
-                          key={`slide-2-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
-                          pageNumber={slidePages[2]}
-                          isActive={false}
-                          fontSize={settings.defaultFontSize as any}
-                          isDarkMode={currentTheme.isDark}
-                          className="!pb-0 w-full"
-                          mode={viewMode}
-                          toggleState={toggleState}
-                          memorizationRatings={memorizationRatings}
-                          surahRatings={surahRatings}
-                          onRateAyah={handleRateAyah}
-                          onRateSurah={handleRateSurah}
-                          verseBookmarks={verseBookmarks}
-                          colorStopSigns={settings.colorStopSigns}
-                          accentColor={currentTheme.colors.accent}
-                          highlightedAyah={highlightedAyah}
-                          isPrayerMode={settings.prayerMode}
-                          language={settings.language}
-                          mutashabihatData={actualMutashabihatData}
-                          showMutashabihatIndicators={settings.showMutashabihatIndicators}
-                          enableWordLongPressAudio={settings.enableWordLongPressAudio}
-                          showWordMeanings={settings.showWordMeanings}
-                          wordMeaningsSource={settings.wordMeaningsSource}
-                          onOpenMutashabihat={(mutOrSurah, optAyah) => {
-                            if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
-                              setCurrentMutashabiha(mutOrSurah);
-                              setIsMutashabihatModalOpen(true);
-                            } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
-                              handleOpenMutashabihat(mutOrSurah, optAyah);
-                            }
-                          }}
-                          onDeleteSimilarAyah={handleDeleteSimilarAyah}
-                          onAddSimilarAyah={handleAddSimilarAyah}
-                          resetCounter={resetCounter}
-                          audioModeActive={audioModeActive}
-                          playingAyahId={playingAyahId}
-                          onAyahClickForAudio={handleAyahClickForAudio}
-                        />
-                      </SwiperSlide>
+                      {ALL_PAGES.map((p) => (
+                        <SwiperSlide key={p} virtualIndex={p - 1} className="w-full h-full flex items-start justify-center">
+                          {renderPageSlide(p)}
+                        </SwiperSlide>
+                      ))}
                     </Swiper>
                   )}
                 </div>

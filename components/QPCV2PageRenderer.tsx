@@ -27,6 +27,42 @@ import { LINE_STYLE_OVERRIDES } from '../constants/lineOverrides';
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
 
+// --- Font pre-warming ---
+// Each Mushaf page has its OWN ~150KB QCF v2 font (pN-v2). The page's glyphs
+// (PUA codepoints) are INVISIBLE until that page's font is decoded, so turning
+// to a page whose font isn't warm causes a ~0.5s blank delay. We decode the
+// fonts for a window of upcoming/previous pages AHEAD of time so the swap is
+// instant on swipe. This touches NOTHING about layout/data — only font decode.
+const warmedFontPages = new Set<number>();
+const ensurePageFontWarm = (p: number) => {
+    if (p < 1 || p > 604 || typeof document === 'undefined') return;
+    const fontName = `p${p}-v2`;
+    const styleId = `font-v2-p${p}`;
+    if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `@font-face { font-family: '${fontName}'; src: url('/fonts/v2/p${p}.woff2') format('woff2'); font-display: swap; }`;
+        document.head.appendChild(style);
+    }
+    if (warmedFontPages.has(p)) return;
+    warmedFontPages.add(p);
+    // Trigger an actual decode now (registered @font-face required first).
+    const fonts = (document as any).fonts;
+    if (fonts?.load) {
+        fonts.load(`1em '${fontName}'`).catch(() => { /* ignore */ });
+    }
+};
+
+// --- Processed-page cache ---
+// The 3-slide carousel shifts its window on every swipe, so 2 of the 3 page
+// renderers re-process a page that was ALREADY processed in another slot. That
+// redundant CPU work on every swipe is what makes rapid consecutive swipes
+// stall. processPageData is a pure function of (page, meaning flags), so we
+// memoize its output across all instances and across swipes. Keyed to include
+// the meanings-ready state so it never serves stale (meaning-less) data once
+// __ma3anyData finishes loading.
+const processedPageCache = new Map<string, AdaptedPage>();
+
 const normalizeArabic = (text: string) => {
     if (!text) return '';
     return text
@@ -416,52 +452,50 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             lineEls.forEach((lineEl) => {
                 const el = lineEl as HTMLElement;
                 
-                // Find highlighted words AND ayah separators in this line
+                // Match ONLY the outer word spans (direct children of the line,
+                // so their offsetParent IS the line). The ayah-end number is
+                // itself an outer word span, so it's included — no need for the
+                // nested [data-surah][data-ayah] separator selector, which pointed
+                // at an element nested inside the word span whose offsetLeft is
+                // relative to its OWN wrapper (~0), corrupting the bounds and
+                // making the highlight span the whole line.
                 const hlElements = el.querySelectorAll<HTMLElement>(
-                    `[data-word-surah="${targetSurah}"][data-word-ayah="${targetAyah}"], [data-surah="${targetSurah}"][data-ayah="${targetAyah}"]`
+                    `:scope > [data-word-surah="${targetSurah}"][data-word-ayah="${targetAyah}"]`
                 );
                 
                 if (hlElements.length === 0) return;
 
-                // Detect if this is a "Pure Line"
-                const allRealWordsInLine = el.querySelectorAll('[data-word-surah]');
-                const isPureLine = allRealWordsInLine.length > 0 && Array.from(allRealWordsInLine).every(w => {
-                    const s = w.getAttribute('data-word-surah');
-                    const a = w.getAttribute('data-word-ayah');
-                    return s === targetSurah?.toString() && a === targetAyah?.toString();
+                // Highlight EXACTLY this ayah's span on this line — from its first
+                // word to its last word / verse-end marker — never the whole line.
+                // (Removed the old "pure line = full width" case, which bled edge
+                // to edge and into the neighbouring ayah on shared lines.)
+                //
+                // Position the line first so it is the offsetParent, then measure
+                // in LAYOUT coords (offsetLeft/offsetWidth). These are immune to
+                // the scaleX auto-fit transform, so the overlay scales together
+                // with the words and stays perfectly aligned.
+                el.style.position = 'relative';
+                let minLeft = Infinity, maxRight = -Infinity;
+                hlElements.forEach(item => {
+                    const l = item.offsetLeft;
+                    const r = l + item.offsetWidth;
+                    minLeft = Math.min(minLeft, l);
+                    maxRight = Math.max(maxRight, r);
                 });
+                if (minLeft === Infinity) return;
 
-                // Create absolutely-positioned overlay
+                // Small 2px bleed so glyph edges aren't clipped; clamp to the line.
+                const finalLeft = Math.max(0, minLeft - 2);
+                const finalRight = Math.min(el.clientWidth, maxRight + 2);
+
                 const overlay = document.createElement('div');
                 overlay.className = 'hl-ayah-overlay';
-                
-                if (isPureLine) {
-                    overlay.style.position = 'absolute';
-                    overlay.style.height = `${el.offsetHeight + 4}px`;
-                    overlay.style.top = '50%';
-                    overlay.style.transform = 'translateY(-47%)'; // Optimal visual centering for Arabic text
-                    overlay.style.left = '0';
-                    overlay.style.right = '0';
-                } else {
-                    const lineRect = el.getBoundingClientRect();
-                    let minLeft = Infinity, maxRight = -Infinity;
-                    hlElements.forEach(item => {
-                        const r = item.getBoundingClientRect();
-                        minLeft = Math.min(minLeft, r.left);
-                        maxRight = Math.max(maxRight, r.right);
-                    });
-
-                    // Add 4px horizontal bleed for better look
-                    const finalLeft = Math.max(0, minLeft - lineRect.left - 4);
-                    const finalRight = Math.min(lineRect.width, maxRight - lineRect.left + 4);
-
-                    overlay.style.position = 'absolute';
-                    overlay.style.height = `${el.offsetHeight + 4}px`;
-                    overlay.style.top = '50%';
-                    overlay.style.transform = 'translateY(-47%)';
-                    overlay.style.left = `${finalLeft}px`;
-                    overlay.style.width = `${finalRight - finalLeft}px`;
-                }
+                overlay.style.position = 'absolute';
+                overlay.style.height = `${el.offsetHeight + 4}px`;
+                overlay.style.top = '50%';
+                overlay.style.transform = 'translateY(-47%)';
+                overlay.style.left = `${finalLeft}px`;
+                overlay.style.width = `${finalRight - finalLeft}px`;
 
                 el.style.position = 'relative';
                 el.appendChild(overlay);
@@ -519,6 +553,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     // --- Data Processing (V2 Logic) ---
     const processPageData = (rawPage: any, pageNum: number, fullMushafData?: MushafDataV2, showWordMeanings: boolean = true, wordMeaningsSource: 'siraj' | 'new' = 'siraj'): AdaptedPage => {
+        // Serve memoized result if this page was already processed (cuts the
+        // redundant per-swipe work for pages shifting between carousel slots).
+        const meaningsVersion = (window as any).__ma3anyData ? 1 : 0;
+        const cacheKey = `${pageNum}|${showWordMeanings ? 1 : 0}|${wordMeaningsSource}|${meaningsVersion}`;
+        const cachedProcessed = processedPageCache.get(cacheKey);
+        if (cachedProcessed) return cachedProcessed;
+
         // rawPage is { lines: { "1": [...], "2": [...] } }
         const linesMap = rawPage.lines;
         if (!linesMap) return { pageNumber: pageNum, lines: [] };
@@ -697,7 +738,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             }
         }
 
-        return { pageNumber: pageNum, lines: finalLines };
+        const result = { pageNumber: pageNum, lines: finalLines };
+        processedPageCache.set(cacheKey, result);
+        return result;
     };
 
     // --- Synchronous cache update (runs before browser paint) ---
@@ -1149,20 +1192,23 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
                 if (hiddenWordEls.length === 0) return;
 
-                // Calculate bounding box relative to the line for hidden words only
-                const lineRect = line.getBoundingClientRect();
+                // Calculate bounding box in LAYOUT coords (offsetLeft/offsetWidth)
+                // so the shadow shares the words' untransformed coordinate space
+                // and stays aligned even when the line has a scaleX auto-fit
+                // transform (getBoundingClientRect would double-apply the scale).
                 let minLeft = Infinity, maxRight = -Infinity;
 
                 hiddenWordEls.forEach(wordEl => {
-                    const r = wordEl.getBoundingClientRect();
-                    minLeft = Math.min(minLeft, r.left);
-                    maxRight = Math.max(maxRight, r.right);
+                    const l = wordEl.offsetLeft;
+                    const r = l + wordEl.offsetWidth;
+                    minLeft = Math.min(minLeft, l);
+                    maxRight = Math.max(maxRight, r);
                 });
 
                 if (minLeft === Infinity) return;
 
-                const finalLeft = Math.max(0, minLeft - lineRect.left - 3);
-                const finalRight = Math.min(lineRect.width, maxRight - lineRect.left + 3);
+                const finalLeft = Math.max(0, minLeft - 3);
+                const finalRight = Math.min(line.clientWidth, maxRight + 3);
 
                 // Create overlay
                 const overlay = document.createElement('div');
@@ -1411,10 +1457,123 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         </div>
     );
 
+    // =============================================================
+    // AUTO-FIT LINES: Prevent edge clipping of last word / ayah number
+    // Each KFGQPC line is rendered with flex `space-between` + nowrap inside
+    // a container with `overflow-x: hidden`. When a line's natural content
+    // width exceeds the line box (e.g. responsive font drift across devices),
+    // the inline-start side (last word / ayah number in RTL) overflows and is
+    // clipped. We measure the natural width and apply a horizontal `scaleX`
+    // (origin = right in RTL) just enough to bring it back inside the box.
+    //
+    // - transform is immune to the `!important` font-size rules in index.css.
+    // - Lines that have a manual LINE_STYLE_OVERRIDES entry are left untouched
+    //   so hand-tuned fixes keep priority.
+    // - Must re-measure AFTER the page font loads (font is injected dynamically),
+    //   otherwise widths are measured against a fallback font.
+    // =============================================================
+    useLayoutEffect(() => {
+        const container = linesContainerRef.current;
+        if (!container) return;
+        let raf = 0;
+
+        const fitLines = () => {
+            // Auto-fit is a PORTRAIT-only concern: there the lines are
+            // fixed-height and clipped by overflow:hidden. In LANDSCAPE the page
+            // scrolls, lines are auto-height, and applying scaleX distorts the
+            // whole layout — so skip it and clear any previous fit there.
+            const isLandscape = orientation === 'landscape';
+            const lines = container.querySelectorAll<HTMLElement>('.qpc-v2-line[data-line-type="ayah"]');
+            lines.forEach((line) => {
+                const lineIdx = Number(line.getAttribute('data-line-index'));
+                // Respect manual overrides (hand-tuned) — don't fight them.
+                if (LINE_STYLE_OVERRIDES[pageNumber]?.[lineIdx]) return;
+
+                // Reset any previous fit so the measurement is accurate.
+                line.style.transform = '';
+                line.style.transformOrigin = '';
+
+                if (isLandscape) return; // portrait-only
+
+                const avail = line.clientWidth;
+                if (!avail) return;
+
+                // Natural content width = sum of direct children's layout widths.
+                // offsetWidth is unaffected by transforms, so this is stable.
+                // Skip absolutely-positioned overlays (shadow/highlight) that are
+                // appended as direct children in hiding/search/audio modes.
+                let natural = 0;
+                line.querySelectorAll<HTMLElement>(':scope > *').forEach((ch) => {
+                    if (ch.classList.contains('ayah-shadow-overlay') || ch.classList.contains('hl-ayah-overlay')) return;
+                    natural += ch.offsetWidth;
+                });
+
+                // +1px tolerance to ignore sub-pixel rounding.
+                if (natural > avail + 1) {
+                    // Clamp so dense lines never get unreadably thin.
+                    const scale = Math.max(0.78, avail / natural);
+                    line.style.transformOrigin =
+                        line.getAttribute('data-is-centered') === 'true' ? 'center' : 'right center';
+                    line.style.transform = `scaleX(${scale})`;
+                }
+            });
+        };
+
+        raf = requestAnimationFrame(fitLines);
+        // Re-fit once THIS page's own font is ready (targeted, not the global
+        // document.fonts.ready — that re-fires on every font load during swipes
+        // and caused repeated forced reflows).
+        const fonts = (document as any).fonts;
+        if (fonts?.load) {
+            fonts.load(`1em '${fontName}'`).then(() => requestAnimationFrame(fitLines)).catch(() => { });
+        }
+        window.addEventListener('resize', fitLines);
+
+        // Post-transition re-fit. On an orientation change the layout containers
+        // animate their width over ~500ms (transition-all). The `resize` event
+        // fires at the START of that animation, so a fit triggered by it measures
+        // a transitional (wrong) width and would lock in a wrong scaleX — the
+        // cause of a portrait page looking "broken" after rotating to landscape
+        // and back. Re-measure once the animation has fully settled so the final
+        // scaleX is computed against the true portrait width.
+        const settleTimer = setTimeout(() => requestAnimationFrame(fitLines), 550);
+
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(settleTimer);
+            window.removeEventListener('resize', fitLines);
+        };
+    }, [pageData, pageNumber, deviceType, orientation, mode, toggleState, fontSizeClass]);
+
     // Clear meaning on page change
     useEffect(() => {
         setSelectedWordMeaning(null);
     }, [pageNumber]);
+
+    // Pre-decode upcoming page fonts during IDLE so swiping doesn't freeze.
+    // Each page has its own ~150KB font; decoding it the first time you land on
+    // a page blocks the main thread (the "freeze on swipe"). We warm a small
+    // window AHEAD of time, but carefully to avoid the past startup regression:
+    //   - ONLY the active page schedules warming (not all 5 buffered slides),
+    //   - deferred to idle (never blocks first paint or the swipe gesture),
+    //   - modest radius just beyond the mount buffer.
+    useEffect(() => {
+        if (!isActive) return;
+        const RADIUS = 3;
+        let timer: any;
+        const warm = () => {
+            for (let d = 1; d <= RADIUS; d++) {
+                ensurePageFontWarm(pageNumber + d);
+                ensurePageFontWarm(pageNumber - d);
+            }
+        };
+        if (typeof (window as any).requestIdleCallback === 'function') {
+            timer = (window as any).requestIdleCallback(warm, { timeout: 1500 });
+            return () => { try { (window as any).cancelIdleCallback(timer); } catch { } };
+        }
+        timer = setTimeout(warm, 400);
+        return () => clearTimeout(timer);
+    }, [isActive, pageNumber]);
 
     // Final check: is this page in our global memory cache?
     const isPageInCache = !!(window as any).qpcV2Cache?.[pageNumber.toString()];
@@ -1536,6 +1695,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     <div key={`${idx}-${mode}-${toggleState}`}
                         data-line-type={line.lineType}
                         data-is-centered={line.isCentered}
+                        data-line-index={idx}
                         data-word-count={line.words.length}
                         className={clsx(
                             "w-full flex items-center qpc-v2-line",
@@ -1557,7 +1717,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             gap: line.isCentered ? '4px' : '0px',
                             marginTop: deviceType === 'desktop' ? '1.5vh' : undefined,
                             marginBottom: deviceType === 'desktop' ? '1.5vh' : undefined,
-                            ...(LINE_STYLE_OVERRIDES[pageNumber]?.[idx] || {}),
+                            // Manual clipping fixes are portrait-only; their scaleX
+                            // would distort the scrollable landscape layout.
+                            ...(orientation === 'portrait' ? (LINE_STYLE_OVERRIDES[pageNumber]?.[idx] || {}) : {}),
                         }}
                     >
                         {line.lineType === 'surah_name' && renderSurahName(line)}
@@ -1832,4 +1994,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     return renderContent();
 };
 
-export default QPCV2PageRenderer;
+// Memoized: skip re-rendering this heavy page when its props are referentially
+// unchanged (e.g. App re-renders for timers/audio/counter unrelated to this
+// slide). Reference comparison only — no risk of stale handler closures.
+export default React.memo(QPCV2PageRenderer);

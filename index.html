@@ -113,6 +113,12 @@
 
   <!-- Service Worker Registration -->
   <script>
+    // Detect the Capacitor native app (bridge is injected before this runs).
+    // Used to skip the pointless 95MB font precache on native (see below).
+    var isNativeApp = !!(window.Capacitor && (
+      (typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform())
+      || window.Capacitor.isNative === true
+    ));
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('/sw.js')
@@ -129,21 +135,36 @@
               });
             });
 
-            // 🚀 resume/start font download check
-            if (registration.active) {
-              registration.active.postMessage('CHECK_OFFLINE_DATA');
-            } else if (navigator.serviceWorker.controller) {
-              navigator.serviceWorker.controller.postMessage('CHECK_OFFLINE_DATA');
+            // 🚀 resume/start font download check — DEFERRED so the 95MB
+            // offline font precache does not compete with app startup.
+            // In the NATIVE app the 604 fonts (95MB) are already bundled in the
+            // APK and served locally by the WebView, so copying them into Cache
+            // Storage is pure waste: it doubles on-device storage (+95MB) and
+            // hammers disk I/O for a long time after launch for zero benefit
+            // (native reading already works fully offline). Skip it entirely on
+            // native; keep it for the web/PWA build where offline caching helps.
+            if (!isNativeApp) {
+              setTimeout(function () {
+                if (registration.active) {
+                  registration.active.postMessage('CHECK_OFFLINE_DATA');
+                } else if (navigator.serviceWorker.controller) {
+                  navigator.serviceWorker.controller.postMessage('CHECK_OFFLINE_DATA');
+                }
+              }, 12000);
             }
           })
           .catch(function (err) {
             console.log('❌ Service Worker registration failed:', err);
           });
 
-        // Handle case where controller creates/changes
+        // Handle case where controller creates/changes (also deferred, web-only)
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage('CHECK_OFFLINE_DATA');
+          if (!isNativeApp && navigator.serviceWorker.controller) {
+            setTimeout(function () {
+              if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage('CHECK_OFFLINE_DATA');
+              }
+            }, 12000);
           }
         });
       });

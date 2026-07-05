@@ -10,39 +10,40 @@ import React from 'react';
  * Format: { pageNumber: { lineIndex0Based: { ...CSSProperties } } }
  */
 export const LINE_STYLE_OVERRIDES: Record<number, Record<number, React.CSSProperties>> = {
-    // Page 576, Line 10 (index 9) - Compressed further to reveal the first letter of "إِنَّهَا"
+    // NOTE: These lines clip their last word at the inline-start (left) edge.
+    // scaleX with transformOrigin:'right' keeps the right edge fixed and pulls
+    // the overflowing left side back into view. Values are stronger than before
+    // (~12-14% compression) because the old 0.93-0.94 only recovered ~6-7%,
+    // leaving 1-3 letters still cut off. wordSpacing was dropped — it has no
+    // effect on these flex/space-between lines (no real spaces between words).
+    // Auto-fit intentionally skips lines that have an override here.
+
+    // Page 576, Line 10 (index 9) - "إِنَّهَا"
     576: {
-        9: { 
-            transform: 'scaleX(0.94)', 
+        9: {
+            transform: 'scaleX(0.88)',
             transformOrigin: 'right',
-            wordSpacing: '-12px',
-            paddingLeft: '10px'
         }
     },
-    // Page 577, Line 12 (index 11) - Fixes clipping on "هَلْ أَتَى..." (Al-Insan 1)
+    // Page 577, Line 12 (index 11) - "هَلْ أَتَى..." (Al-Insan 1)
     577: {
         11: {
-            transform: 'scaleX(0.94)',
+            transform: 'scaleX(0.88)',
             transformOrigin: 'right',
-            wordSpacing: '-12px',
-            paddingLeft: '10px'
         }
     },
-    // Page 578, Line 12 (index 11) - Fixes clipping of 'خَلَقْنَا' without thinning the text
+    // Page 578, Line 12 (index 11) - "خَلَقْنَا"
     578: {
         11: {
-            transform: 'none',
-            letterSpacing: '-2.5px',
-            paddingLeft: '5px'
+            transform: 'scaleX(0.88)',
+            transformOrigin: 'right',
         }
     },
-    // Page 585, Line 11 (index 10) - Balanced fix for "(30) وَفَاكِهَةً" visibility
+    // Page 585, Line 11 (index 10) - "(30) وَفَاكِهَةً" (longer word → a bit more)
     585: {
         10: {
-            transform: 'scaleX(0.93)',
+            transform: 'scaleX(0.86)',
             transformOrigin: 'right',
-            wordSpacing: '-10px',
-            paddingLeft: '10px'
         }
     }
 };

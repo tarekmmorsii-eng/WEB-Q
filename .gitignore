@@ -100,3 +100,6 @@ android/.gradle/
 android/capacitor-cordova-android-plugins/
 android/jdk-17/
 android/jdk-17.zip
+# Android app packages (large binary files - should not be in Git)
+*.apk
+*.aab
