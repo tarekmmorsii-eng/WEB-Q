@@ -1,7 +1,7 @@
 /**
  * تهيئة Firebase للويب - Push Notifications
- * ⭐ تم التحديث: يستخدم sw.js الموحد (الذي يحتوي على Firebase SDK مدمجاً)
- * بدلاً من تسجيل firebase-messaging-sw.js منفصلاً
+ * ⭐ يستخدم sw.js الموحد (الذي يحتوي على Firebase SDK مدمجاً)
+ * تمت إزالة ملف Service Worker المنفصل القديم — الإشعارات تُدار بالكامل عبر sw.js
  */
 
 import { initializeApp } from 'firebase/app';

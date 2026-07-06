@@ -1312,9 +1312,11 @@ ar, ru, bn, ur, fr, de, es, tr, id, hi, fa, ja, ko, zh, ms, ta, tl, sw, ha, am, 
 ### المشكلة
 كانت الإشعارات لا تصل للمتصفح بسبب تعارض بين ملفي Service Worker:
 - `sw.js` — مسجل من `index.html` للعمل دون اتصال
-- `firebase-messaging-sw.js` — مسجل من `firebase-config.ts` للإشعارات
+- `firebase-messaging-sw.js` — كان مسجَّلاً قديماً من `firebase-config.ts` للإشعارات
 
 المتصفح يسمح بـ Service Worker واحد فقط لكل نطاق، فكان `sw.js` يسيطر ويتم تجاهل أحداث Firebase.
+
+> ملاحظة لاحقة: بعد اعتماد الحل أدناه، أُزيل `firebase-messaging-sw.js` نهائياً، وتُدار الإشعارات الآن بالكامل عبر `sw.js` الموحد.
 
 ### الحل: دمج Firebase SDK داخل sw.js الموحد
 بدلاً من ملفين منفصلين، أصبح `sw.js` يتعامل مع **التخزين المؤقت + الإشعارات** معاً عبر `importScripts`:
@@ -1334,10 +1336,10 @@ ar, ru, bn, ur, fr, de, es, tr, id, hi, fa, ja, ko, zh, ms, ta, tl, sw, ha, am, 
 | `utils/firebase-config.ts` | إزالة تسجيل `firebase-messaging-sw.js` المنفصل — يستخدم `sw.js` الموحد |
 | `hooks/usePushNotifications.ts` | تمرير `serviceWorkerRegistration` صراحةً في `getToken()` |
 
-### ملف محفوظظ (لم يعد يُستخدم مباشرة)
+### الملف القديم المُزال
 | الملف | الحالة |
 |-------|--------|
-| `public/firebase-messaging-sw.js` | محفوظ كمرجع — لكن لا يتم تسجيله بعد الآن |
+| `public/firebase-messaging-sw.js` | أُزيل نهائياً — تُدار الإشعارات بالكامل عبر `sw.js` الموحد |
 
 ### كيفية العمل
 1. **للويب (PWA):** يستخدم Firebase Messaging مباشرة مع Service Worker
@@ -1346,7 +1348,6 @@ ar, ru, bn, ur, fr, de, es, tr, id, hi, fa, ja, ko, zh, ms, ta, tl, sw, ha, am, 
 
 ### ⚠️ مطلوب منك
 - افتح `utils/firebase-config.ts` والصق مفاتيح Firebase في كائن `firebaseConfig`
-- افتح `public/firebase-messaging-sw.js` والصق نفس المفاتيح
 - تأكد من إضافة مفتاح VAPID في `hooks/usePushNotifications.ts`
 
 ---
@@ -2379,17 +2380,11 @@ useEffect(() => {
 - تهيئة `getMessaging` مع التحقق من دعم المتصفح عبر `isSupported()`
 - **⚠️ يتطلب منك**: لصق مفاتيح Firebase الخاصة بك في كائن `firebaseConfig`
 
-#### 2. Service Worker للإشعارات `public/firebase-messaging-sw.js` (جديد)
-- استقبال الإشعارات في الخلفية عبر `onBackgroundMessage`
-- دعم النقر على الإشعار وفتح التطبيق
-- دعم RTL للغة العربية
-- **⚠️ يتطلب منك**: تحديث نفس مفاتيح Firebase الموجودة في `firebase-config.ts`
-
-#### 3. إعدادات Capacitor `capacitor.config.ts` (معدّل)
+#### 2. إعدادات Capacitor `capacitor.config.ts` (معدّل)
 - إضافة إعدادات `PushNotifications` ضمن `plugins`
 - تضمين: `presentationOptions`, `smallIcon`, `iconColor`, `defaultChannel`
 
-#### 4. هوك الصلاحيات `hooks/usePushNotifications.ts` (جديد)
+#### 3. هوك الصلاحيات `hooks/usePushNotifications.ts` (جديد)
 - طلب صلاحية الإشعارات من المستخدم
 - دعم الويب: Firebase Messaging + `Notification.requestPermission()` + VAPID Key
 - دعم الأندرويد: Capacitor `PushNotifications` API
@@ -2400,7 +2395,6 @@ useEffect(() => {
 ### ما يجب عليك فعله بعد هذا التحديث
 1. **Firebase Console** → Project Settings → Web App → نسخ مفاتيح `firebaseConfig` ولصقها في:
    - `utils/firebase-config.ts`
-   - `public/firebase-messaging-sw.js`
 2. **Firebase Console** → Project Settings → Cloud Messaging → Web Push certificates → إنشاء/نسخ مفتاح VAPID ولصقه في:
    - `hooks/usePushNotifications.ts` (ابحث عن `YOUR_VAPID_KEY_HERE`)
 3. استدعاء `usePushNotifications()` في المكان المناسب من التطبيق وربط `requestPermission()` بزر في الواجهة
