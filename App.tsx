@@ -16,20 +16,20 @@ import clsx from 'clsx';
 import Header from './components/Header';
 import QPCV2PageRenderer from './components/QPCV2PageRenderer';
 import SurahIndex from './components/SurahIndex';
-import SearchModal from './components/SearchModal';
+const SearchModal = lazy(() => import('./components/SearchModal'));
 import NotificationManager from './components/NotificationManager';
 const MemorizationStats = lazy(() => import('./components/MemorizationStats'));
 import Toast from './components/Toast';
 const Settings = lazy(() => import('./components/Settings'));
 const AyahOptionsModal = lazy(() => import('./components/AyahOptionsModal'));
 const SurahRatingModal = lazy(() => import('./components/SurahRatingModal'));
-import MutashabihatModal from './components/MutashabihatModal';
-import MutashabihatIndex from './components/MutashabihatIndex';
-import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
+const MutashabihatModal = lazy(() => import('./components/MutashabihatModal'));
+const MutashabihatIndex = lazy(() => import('./components/MutashabihatIndex'));
+const MutashabihatSelectorModal = lazy(() => import('./components/MutashabihatSelectorModal'));
 const HowToUseGuide = lazy(() => import('./components/HowToUseGuide'));
 import SocialShareModal from './components/SocialShareModal';
 import FloatingSideMenu from './components/FloatingSideMenu';
-import AudioDownloadModal from './components/AudioDownloadModal';
+const AudioDownloadModal = lazy(() => import('./components/AudioDownloadModal'));
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 import { getProcessedMutashabihat, findMutashabihatForAyah, findAllMutashabihatForAyah, getMergedMutashabihaForAyah } from './utils/mutashabihatProcessor';
@@ -58,7 +58,7 @@ import { applyDynamicSystemBars } from './utils/systemBars';
 import { useAyahAudio } from './hooks/useAyahAudio';
 import { useWakeLock } from './hooks/useWakeLock';
 import FloatingAudioPlayer from './components/FloatingAudioPlayer';
-import TranslationManagerModal from './components/TranslationManagerModal';
+const TranslationManagerModal = lazy(() => import('./components/TranslationManagerModal'));
 import AudioSettingsModal from './components/AudioSettingsModal';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
 import { useNotifications } from './hooks/useNotifications';
@@ -3001,18 +3001,22 @@ export default function App() {
           currentPage={currentPage}
         />
 
-        <SearchModal
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          onSelectPage={(page) => {
-            setCurrentPage(page);
-            setIsSearchOpen(false);
-          }}
-          onSelectResult={handleSearchResultSelect}
-          totalPages={TOTAL_PAGES}
-          language={settings.language}
-          t={t}
-        />
+        {isSearchOpen && (
+          <Suspense fallback={null}>
+            <SearchModal
+              isOpen
+              onClose={() => setIsSearchOpen(false)}
+              onSelectPage={(page) => {
+                setCurrentPage(page);
+                setIsSearchOpen(false);
+              }}
+              onSelectResult={handleSearchResultSelect}
+              totalPages={TOTAL_PAGES}
+              language={settings.language}
+              t={t}
+            />
+          </Suspense>
+        )}
 
         <NotificationManager
           isOpen={isNotificationOpen}
@@ -3088,17 +3092,25 @@ export default function App() {
           currentLanguage={settings.language as Language}
         />
 
-        <TranslationManagerModal
-          isOpen={isTranslationManagerOpen}
-          onClose={() => setIsTranslationManagerOpen(false)}
-          currentLanguage={settings.language}
-        />
+        {isTranslationManagerOpen && (
+          <Suspense fallback={null}>
+            <TranslationManagerModal
+              isOpen
+              onClose={() => setIsTranslationManagerOpen(false)}
+              currentLanguage={settings.language}
+            />
+          </Suspense>
+        )}
 
-        <AudioDownloadModal 
-          isOpen={isAudioDownloadOpen} 
-          onClose={() => setIsAudioDownloadOpen(false)} 
-          language={settings.language} 
-        />
+        {isAudioDownloadOpen && (
+          <Suspense fallback={null}>
+            <AudioDownloadModal
+              isOpen
+              onClose={() => setIsAudioDownloadOpen(false)}
+              language={settings.language}
+            />
+          </Suspense>
+        )}
 
         <FloatingSideMenu
           currentLanguage={settings.language as Language}
@@ -3240,53 +3252,65 @@ export default function App() {
           t={t}
         />
 
-        <MutashabihatIndex
-          isOpen={isMutashabihatIndexOpen}
-          onClose={() => setIsMutashabihatIndexOpen(false)}
-          mutashabihatData={actualMutashabihatData}
-          isDarkMode={currentTheme.isDark}
-          initialSurahId={mutashabihatIndexSurah}
-          initialAyahId={mutashabihatIndexAyah}
-          onNavigateToAyah={async (surah, ayah) => {
-            const page = await getAyahPage(surah, ayah);
-            setCurrentPage(page);
-            setHighlightedAyah({ surah, ayah });
-            setIsMutashabihatIndexOpen(false);
-          }}
-          t={t}
-          language={settings.language}
-        />
+        {isMutashabihatIndexOpen && (
+          <Suspense fallback={null}>
+            <MutashabihatIndex
+              isOpen
+              onClose={() => setIsMutashabihatIndexOpen(false)}
+              mutashabihatData={actualMutashabihatData}
+              isDarkMode={currentTheme.isDark}
+              initialSurahId={mutashabihatIndexSurah}
+              initialAyahId={mutashabihatIndexAyah}
+              onNavigateToAyah={async (surah, ayah) => {
+                const page = await getAyahPage(surah, ayah);
+                setCurrentPage(page);
+                setHighlightedAyah({ surah, ayah });
+                setIsMutashabihatIndexOpen(false);
+              }}
+              t={t}
+              language={settings.language}
+            />
+          </Suspense>
+        )}
 
-        <MutashabihatModal
-          isOpen={isMutashabihatModalOpen}
-          onClose={() => setIsMutashabihatModalOpen(false)}
-          mutashabiha={currentMutashabiha}
-          mutashabihatData={actualMutashabihatData}
-          language={settings.language}
-          onNavigateToAyah={async (surah, ayah) => {
-            const page = await getAyahPage(surah, ayah);
-            setCurrentPage(page);
-            setHighlightedAyah({ surah, ayah });
-            setIsMutashabihatModalOpen(false);
-          }}
-          onOpenInIndex={(surah, ayah) => {
-            setMutashabihatIndexSurah(surah);
-            setMutashabihatIndexAyah(ayah);
-            setIsMutashabihatModalOpen(false);
-            setIsMutashabihatIndexOpen(true);
-          }}
-          onDeleteSimilarAyah={handleDeleteSimilarAyah}
-          onAddSimilarAyah={handleAddSimilarAyah}
-        />
+        {isMutashabihatModalOpen && (
+          <Suspense fallback={null}>
+            <MutashabihatModal
+              isOpen
+              onClose={() => setIsMutashabihatModalOpen(false)}
+              mutashabiha={currentMutashabiha}
+              mutashabihatData={actualMutashabihatData}
+              language={settings.language}
+              onNavigateToAyah={async (surah, ayah) => {
+                const page = await getAyahPage(surah, ayah);
+                setCurrentPage(page);
+                setHighlightedAyah({ surah, ayah });
+                setIsMutashabihatModalOpen(false);
+              }}
+              onOpenInIndex={(surah, ayah) => {
+                setMutashabihatIndexSurah(surah);
+                setMutashabihatIndexAyah(ayah);
+                setIsMutashabihatModalOpen(false);
+                setIsMutashabihatIndexOpen(true);
+              }}
+              onDeleteSimilarAyah={handleDeleteSimilarAyah}
+              onAddSimilarAyah={handleAddSimilarAyah}
+            />
+          </Suspense>
+        )}
 
-        <MutashabihatSelectorModal
-          isOpen={isSelectorOpen}
-          onClose={() => setIsSelectorOpen(false)}
-          onSelect={handleSelectSimilarAyah}
-          language={settings.language}
-          lockedSurah={selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
-          excludedSurah={!selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
-        />
+        {isSelectorOpen && (
+          <Suspense fallback={null}>
+            <MutashabihatSelectorModal
+              isOpen
+              onClose={() => setIsSelectorOpen(false)}
+              onSelect={handleSelectSimilarAyah}
+              language={settings.language}
+              lockedSurah={selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
+              excludedSurah={!selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
+            />
+          </Suspense>
+        )}
 
         {
           toastMessage && (
