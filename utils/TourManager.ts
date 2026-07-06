@@ -1,5 +1,3 @@
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
 import { Translations } from "../i18n/translations";
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
@@ -82,6 +80,12 @@ const cycleMutashabihatColors = () => {
 };
 
 export const startTour = (t: Translations, stepIndex: number = 0, onExit?: () => void) => {
+    void loadAndStartTour(t, stepIndex, onExit);
+};
+
+const loadAndStartTour = async (t: Translations, stepIndex: number, onExit?: () => void) => {
+    const { driver } = await import("driver.js");
+    await import("driver.js/dist/driver.css");
     const driverObj = driver({
         showProgress: false,
         animate: true,
