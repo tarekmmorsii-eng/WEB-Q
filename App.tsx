@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition, lazy, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
@@ -18,15 +18,15 @@ import QPCV2PageRenderer from './components/QPCV2PageRenderer';
 import SurahIndex from './components/SurahIndex';
 import SearchModal from './components/SearchModal';
 import NotificationManager from './components/NotificationManager';
-import MemorizationStats from './components/MemorizationStats';
+const MemorizationStats = lazy(() => import('./components/MemorizationStats'));
 import Toast from './components/Toast';
-import Settings from './components/Settings';
-import AyahOptionsModal from './components/AyahOptionsModal';
-import SurahRatingModal from './components/SurahRatingModal';
+const Settings = lazy(() => import('./components/Settings'));
+const AyahOptionsModal = lazy(() => import('./components/AyahOptionsModal'));
+const SurahRatingModal = lazy(() => import('./components/SurahRatingModal'));
 import MutashabihatModal from './components/MutashabihatModal';
 import MutashabihatIndex from './components/MutashabihatIndex';
 import MutashabihatSelectorModal from './components/MutashabihatSelectorModal';
-import HowToUseGuide from './components/HowToUseGuide';
+const HowToUseGuide = lazy(() => import('./components/HowToUseGuide'));
 import SocialShareModal from './components/SocialShareModal';
 import FloatingSideMenu from './components/FloatingSideMenu';
 import AudioDownloadModal from './components/AudioDownloadModal';
@@ -3032,47 +3032,55 @@ export default function App() {
           language={settings.language}
         />
 
-        <MemorizationStats
-          isOpen={isMemorizationStatsOpen}
-          onClose={() => setIsMemorizationStatsOpen(false)}
-          ratings={memorizationRatings}
-          onNavigateToSurah={handleNavigateToSurah}
-          onRateSurah={handleRateSurah}
-          onClearAll={handleClearAllRatings}
-          t={t}
-        />
+        {isMemorizationStatsOpen && (
+          <Suspense fallback={null}>
+            <MemorizationStats
+              isOpen
+              onClose={() => setIsMemorizationStatsOpen(false)}
+              ratings={memorizationRatings}
+              onNavigateToSurah={handleNavigateToSurah}
+              onRateSurah={handleRateSurah}
+              onClearAll={handleClearAllRatings}
+              t={t}
+            />
+          </Suspense>
+        )}
 
-        <Settings
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          settings={settings}
-          onSave={setSettings}
-          currentLanguage={settings.language as Language}
-          onOpenIndex={() => setIsIndexOpen(true)}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
-          onOpenNotifications={handleOpenAlarmManager}
-          notificationUnreadCount={totalUnread}
-          onOpenMutashabihat={() => {
-            const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
-            setMutashabihatIndexSurah(currentS);
-            setMutashabihatIndexAyah(undefined);
-            setIsMutashabihatIndexOpen(true);
-          }}
-          onOpenColorPicker={() => setIsColorPickerOpen(true)}
-          onOpenReciterSelection={openAudioPlayer}
-          onTogglePageBookmark={togglePageBookmark}
-          isPageBookmarked={isPageBookmarked}
-          hasUpdate={hasAppUpdate}
-          onUpdateApp={handleUpdateApp}
-          memorizationRatings={memorizationRatings}
-          onStartInteractiveTour={handleStartInteractiveTour}
-          highlightHelp={highlightSettingsHelp}
-          highlightOffline={highlightOffline}
-          onOpenShare={handleOpenShare}
-          onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
-          onOpenTranslationManager={() => setIsTranslationManagerOpen(true)}
-        />
+        {isSettingsOpen && (
+          <Suspense fallback={null}>
+            <Settings
+              isOpen
+              onClose={() => setIsSettingsOpen(false)}
+              settings={settings}
+              onSave={setSettings}
+              currentLanguage={settings.language as Language}
+              onOpenIndex={() => setIsIndexOpen(true)}
+              onOpenSearch={() => setIsSearchOpen(true)}
+              onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
+              onOpenNotifications={handleOpenAlarmManager}
+              notificationUnreadCount={totalUnread}
+              onOpenMutashabihat={() => {
+                const currentS = pageData?.ayahs?.[0]?.surah?.number || 1;
+                setMutashabihatIndexSurah(currentS);
+                setMutashabihatIndexAyah(undefined);
+                setIsMutashabihatIndexOpen(true);
+              }}
+              onOpenColorPicker={() => setIsColorPickerOpen(true)}
+              onOpenReciterSelection={openAudioPlayer}
+              onTogglePageBookmark={togglePageBookmark}
+              isPageBookmarked={isPageBookmarked}
+              hasUpdate={hasAppUpdate}
+              onUpdateApp={handleUpdateApp}
+              memorizationRatings={memorizationRatings}
+              onStartInteractiveTour={handleStartInteractiveTour}
+              highlightHelp={highlightSettingsHelp}
+              highlightOffline={highlightOffline}
+              onOpenShare={handleOpenShare}
+              onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
+              onOpenTranslationManager={() => setIsTranslationManagerOpen(true)}
+            />
+          </Suspense>
+        )}
 
         <SocialShareModal
           isOpen={isShareModalOpen}
@@ -3161,6 +3169,7 @@ export default function App() {
 
         {
           ratingModalData && (
+            <Suspense fallback={null}>
             <AyahOptionsModal
               isOpen={!!ratingModalData}
               onClose={() => setRatingModalData(null)}
@@ -3200,11 +3209,13 @@ export default function App() {
               tafsir={((window as any).__ma3anyData || {})[`${ratingModalData.surah}:${ratingModalData.ayah}`]?._tafsir}
               onOpenTranslationManager={() => setIsTranslationManagerOpen(true)}
             />
+            </Suspense>
           )
         }
 
         {
           surahRatingModalData && (
+            <Suspense fallback={null}>
             <SurahRatingModal
               isOpen={!!surahRatingModalData}
               onClose={() => setSurahRatingModalData(null)}
@@ -3215,6 +3226,7 @@ export default function App() {
               ayahCount={SURAHS.find(s => s.number === surahRatingModalData)?.ayahCount || 1}
               language={settings.language}
             />
+            </Suspense>
           )
         }
 
@@ -3662,11 +3674,15 @@ export default function App() {
           t={t}
         />
 
-        <HowToUseGuide
-          isOpen={isHowToUseOpen}
-          onClose={() => setIsHowToUseOpen(false)}
-          language={settings.language as Language}
-        />
+        {isHowToUseOpen && (
+          <Suspense fallback={null}>
+            <HowToUseGuide
+              isOpen
+              onClose={() => setIsHowToUseOpen(false)}
+              language={settings.language as Language}
+            />
+          </Suspense>
+        )}
       </div >
     </FeedbackProvider >
   );
