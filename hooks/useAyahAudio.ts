@@ -45,6 +45,9 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
   // New Ref to handle live-updatable settings during a sequence
   const runtimeSettingsRef = useRef<PlayerSettings | null>(null);
 
+  // مرجع لتتبع دالة الحل النشطة لوعد تشغيل الآية، حتى نتمكن من حلها يدوياً عند الإيقاف
+  const activeResolveRef = useRef<(() => void) | null>(null);
+
   // Helper: show error message
   const showError = useCallback((msg: string) => {
     if (onAudioError) {
@@ -66,6 +69,9 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
   // تشغيل آية واحدة مخصصة (وإرجاع Promise للانتظار)
   const playAyahAudio = useCallback((globalAyahNumber: number, reciterID: string, playbackRate: number = 1.0, nextGlobalAyahNumber?: number): Promise<void> => {
     return new Promise(async (resolve) => {
+      // حفظ دالة الحل لإمكانية استدعائها لاحقاً عند الإيقاف فلا يبقى الوعد معلّقاً
+      activeResolveRef.current = resolve;
+
       // إيقاف أي صوت سابق
       if (audioRef.current) {
         audioRef.current.pause();
@@ -236,6 +242,12 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
   }, []);
 
   const stopAudio = useCallback(() => {
+    // حل الوعد المعلّق إن وُجد لمنع بقائه محتجزاً وتراكمه وتعليق تسلسل التلاوة
+    if (activeResolveRef.current) {
+      const resolveFn = activeResolveRef.current;
+      activeResolveRef.current = null;
+      resolveFn();
+    }
     isPlayingRef.current = false;
     setIsPlayingSeq(false);
     setIsPaused(false);
