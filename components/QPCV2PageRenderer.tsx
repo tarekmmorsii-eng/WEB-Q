@@ -1475,9 +1475,29 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     useLayoutEffect(() => {
         const container = linesContainerRef.current;
         if (!container) return;
-        let raf = 0;
+
+        // ---- Dev-only perf badge (top-left corner). Injected via the DOM so it
+        // never touches the visual JSX tree, and removed again on cleanup. ----
+        const perfBadge = import.meta.env.DEV ? document.createElement('div') : null;
+        if (perfBadge) {
+            perfBadge.style.cssText =
+                'position:fixed;top:6px;inset-inline-start:6px;z-index:99999;' +
+                'background:rgba(0,0,0,0.72);color:#7CFFB2;' +
+                'font:11px/1.45 ui-monospace,Menlo,Consolas,monospace;' +
+                'padding:3px 7px;border-radius:5px;pointer-events:none;' +
+                'white-space:nowrap;direction:ltr;letter-spacing:0.2px';
+            perfBadge.textContent = `fit – | font – (p${pageNumber})`;
+            document.body.appendChild(perfBadge);
+        }
+
+        let raf = 0;                 // pending rAF id (0 = none)
+        let fitScheduled = false;    // guard: at most one rAF fit per frame
+        let needsRefit = false;      // a trigger fired mid-flight → one more pass
+        let fontDecodeMs = 0;        // last measured font-decode duration
 
         const fitLines = () => {
+            // perf: capture how long the fit itself takes (forced reflow cost).
+            const fitStart = typeof performance !== 'undefined' ? performance.now() : 0;
             // Auto-fit is a PORTRAIT-only concern: there the lines are
             // fixed-height and clipped by overflow:hidden. In LANDSCAPE the page
             // scrolls, lines are auto-height, and applying scaleX distorts the
@@ -1517,17 +1537,72 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     line.style.transform = `scaleX(${scale})`;
                 }
             });
+
+            // perf: how long the fit itself took (a forced reflow each run).
+            const fitEnd = typeof performance !== 'undefined' ? performance.now() : fitStart;
+            const fitDuration = fitEnd - fitStart;
+            console.log(`[perf] fitLines duration: ${fitDuration.toFixed(1)}ms (page ${pageNumber})`);
+            if (perfBadge) {
+                perfBadge.textContent =
+                    `fit ${fitDuration.toFixed(1)}ms | font ${fontDecodeMs.toFixed(1)}ms (p${pageNumber})`;
+            }
+
+            // Release the per-frame guard AFTER running. If another trigger
+            // landed while we were pending/running, give it exactly one more
+            // pass — this is what keeps the post-font re-measure (visual parity)
+            // while never running more than once per animation frame.
+            fitScheduled = false;
+            if (needsRefit) {
+                needsRefit = false;
+                scheduleFit();
+            }
         };
 
-        raf = requestAnimationFrame(fitLines);
+        // Unified scheduler. This effect used to fire fitLines from THREE
+        // separate triggers (mount rAF, font-ready rAF, settle timer) plus a raw
+        // `resize` listener that fired on every tick — each one a full forced
+        // reflow. Now every trigger goes through scheduleFit, which collapses
+        // concurrent triggers into a single fit per animation frame (the guard)
+        // while still guaranteeing one extra pass if a trigger lands mid-flight
+        // (needsRefit) — so the post-font re-measure is never lost.
+        const scheduleFit = () => {
+            if (fitScheduled) {
+                needsRefit = true;
+                return;
+            }
+            fitScheduled = true;
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(fitLines);
+        };
+
+        scheduleFit();   // was: requestAnimationFrame(fitLines)
+
         // Re-fit once THIS page's own font is ready (targeted, not the global
         // document.fonts.ready — that re-fires on every font load during swipes
-        // and caused repeated forced reflows).
+        // and caused repeated forced reflows). Now timed for the perf badge.
         const fonts = (document as any).fonts;
         if (fonts?.load) {
-            fonts.load(`1em '${fontName}'`).then(() => requestAnimationFrame(fitLines)).catch(() => { });
+            const fontStart = typeof performance !== 'undefined' ? performance.now() : 0;
+            fonts.load(`1em '${fontName}'`)
+                .then(() => {
+                    const fontEnd = typeof performance !== 'undefined' ? performance.now() : fontStart;
+                    fontDecodeMs = fontEnd - fontStart;
+                    console.log(`[perf] font decode duration: ${fontDecodeMs.toFixed(1)}ms (${fontName})`);
+                    scheduleFit();   // was: requestAnimationFrame(fitLines)
+                })
+                .catch(() => { });
         }
-        window.addEventListener('resize', fitLines);
+
+        // Debounced resize. A live drag fires `resize` dozens of times per
+        // second; the old code reflowed on each. Now we coalesce into one fit
+        // shortly after the gesture settles. (settleTimer below still covers the
+        // orientation-transition case.)
+        let resizeTimer: ReturnType<typeof setTimeout>;
+        const onResize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(scheduleFit, 120);
+        };
+        window.addEventListener('resize', onResize);
 
         // Post-transition re-fit. On an orientation change the layout containers
         // animate their width over ~500ms (transition-all). The `resize` event
@@ -1536,12 +1611,14 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         // cause of a portrait page looking "broken" after rotating to landscape
         // and back. Re-measure once the animation has fully settled so the final
         // scaleX is computed against the true portrait width.
-        const settleTimer = setTimeout(() => requestAnimationFrame(fitLines), 550);
+        const settleTimer = setTimeout(() => scheduleFit(), 550);   // was: ...requestAnimationFrame(fitLines)...
 
         return () => {
             cancelAnimationFrame(raf);
             clearTimeout(settleTimer);
-            window.removeEventListener('resize', fitLines);
+            clearTimeout(resizeTimer);
+            window.removeEventListener('resize', onResize);
+            if (perfBadge && perfBadge.parentNode) perfBadge.parentNode.removeChild(perfBadge);
         };
     }, [pageData, pageNumber, deviceType, orientation, mode, toggleState, fontSizeClass]);
 
@@ -1550,29 +1627,52 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         setSelectedWordMeaning(null);
     }, [pageNumber]);
 
-    // Pre-decode upcoming page fonts during IDLE so swiping doesn't freeze.
+    // Pre-decode upcoming page fonts so swiping doesn't freeze.
     // Each page has its own ~150KB font; decoding it the first time you land on
-    // a page blocks the main thread (the "freeze on swipe"). We warm a small
-    // window AHEAD of time, but carefully to avoid the past startup regression:
+    // a page blocks the main thread (the "freeze on swipe"). We warm a window
+    // AHEAD of time, but carefully to avoid the past startup regression:
     //   - ONLY the active page schedules warming (not all 5 buffered slides),
-    //   - deferred to idle (never blocks first paint or the swipe gesture),
-    //   - modest radius just beyond the mount buffer.
+    //   - deferred to idle (never blocks first paint or the swipe gesture).
+    // TWO tiers (this is the fix for the swipe freeze):
+    //   - URGENT ±1/±2 with a SHORT idle timeout so the very next swipe lands
+    //     on an already-decoded font even during fast consecutive paging. The
+    //     old single tier used a 1500ms timeout, so mid-swipe the next page's
+    //     font was usually still cold -> ~0.5s blank on arrival.
+    //   - BACKGROUND ±3..±5 with a longer timeout to absorb momentum swipes.
     useEffect(() => {
         if (!isActive) return;
-        const RADIUS = 3;
-        let timer: any;
-        const warm = () => {
-            for (let d = 1; d <= RADIUS; d++) {
+        let urgentTimer: any;
+        let idleTimer: any;
+
+        // Urgent tier: the pages most likely to be swiped to next.
+        const warmUrgent = () => {
+            ensurePageFontWarm(pageNumber + 1);
+            ensurePageFontWarm(pageNumber - 1);
+            ensurePageFontWarm(pageNumber + 2);
+            ensurePageFontWarm(pageNumber - 2);
+        };
+        // Background tier: extend the warm window further out for rapid momentum.
+        const BG_RADIUS = 5;
+        const warmBackground = () => {
+            for (let d = 3; d <= BG_RADIUS; d++) {
                 ensurePageFontWarm(pageNumber + d);
                 ensurePageFontWarm(pageNumber - d);
             }
         };
-        if (typeof (window as any).requestIdleCallback === 'function') {
-            timer = (window as any).requestIdleCallback(warm, { timeout: 1500 });
-            return () => { try { (window as any).cancelIdleCallback(timer); } catch { } };
+
+        const ric = (window as any).requestIdleCallback;
+        if (typeof ric === 'function') {
+            urgentTimer = ric(warmUrgent, { timeout: 120 });
+            idleTimer = ric(warmBackground, { timeout: 1500 });
+            return () => {
+                try { (window as any).cancelIdleCallback(urgentTimer); } catch { }
+                try { (window as any).cancelIdleCallback(idleTimer); } catch { }
+            };
         }
-        timer = setTimeout(warm, 400);
-        return () => clearTimeout(timer);
+        // Fallback when requestIdleCallback is unavailable.
+        urgentTimer = setTimeout(warmUrgent, 30);
+        idleTimer = setTimeout(warmBackground, 400);
+        return () => { clearTimeout(urgentTimer); clearTimeout(idleTimer); };
     }, [isActive, pageNumber]);
 
     // Final check: is this page in our global memory cache?
