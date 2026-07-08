@@ -63,6 +63,34 @@ const ensurePageFontWarm = (p: number) => {
 // __ma3anyData finishes loading.
 const processedPageCache = new Map<string, AdaptedPage>();
 
+// --- Fit-lines cache (avoids re-measuring already-aligned pages) ---
+// fitLines forces a layout read per line (clientWidth/offsetWidth). On the
+// 3-slide carousel, 2 of the 3 slots re-render a page that was ALREADY aligned
+// in another slot — re-measuring it every swipe is wasted forced-reflow work.
+// The fit result is a PURE function of (page + deviceType + orientation +
+// fontSize + viewMode) once the page's own font is decoded, so we memoize the
+// resolved per-line transforms and replay them on a hit (writes only, no reads).
+//
+// Keyed to include every input the fit depends on; when any of those global
+// settings changes the whole map is cleared (old values are invalid for the new
+// layout). Bounded to the most recent pages so it never grows without limit.
+type FitLineEntry = { scale: number | null; origin: string };
+type FitPageEntry = { byLineIdx: Record<number, FitLineEntry>; lineCount: number };
+const fitCache = new Map<string, FitPageEntry>();
+const FIT_CACHE_LIMIT = 50;
+let fitCacheGen = ''; // last seen `${deviceType}|${orientation}|${fontSize}|${mode}`
+const clearFitCache = () => fitCache.clear();
+// Touch a cache slot: insert + evict the oldest entry past the cap (Map keeps
+// insertion order, so keys().next().value is the oldest).
+const storeFitCache = (key: string, entry: FitPageEntry) => {
+    fitCache.set(key, entry);
+    while (fitCache.size > FIT_CACHE_LIMIT) {
+        const oldest = fitCache.keys().next().value;
+        if (oldest === undefined) break;
+        fitCache.delete(oldest);
+    }
+};
+
 const normalizeArabic = (text: string) => {
     if (!text) return '';
     return text
@@ -1495,48 +1523,135 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         let needsRefit = false;      // a trigger fired mid-flight → one more pass
         let fontDecodeMs = 0;        // last measured font-decode duration
 
+        // Fit-cache key: the fit result is a pure function of (page + deviceType
+        // + orientation + fontSize + viewMode) once this page's font is decoded.
+        // A change in any GLOBAL setting invalidates the whole cache; the page
+        // number is the natural varying key. Resolved once per effect instance so
+        // the (possibly re-scheduled) fit reads a stable key.
+        const settingsKey = `${deviceType}|${orientation}|${fontSizeClass}|${mode}`;
+        if (fitCacheGen !== settingsKey) {
+            fitCacheGen = settingsKey;
+            clearFitCache();
+        }
+        const cacheKey = `${settingsKey}|p${pageNumber}`;
+
         const fitLines = () => {
             // perf: capture how long the fit itself takes (forced reflow cost).
             const fitStart = typeof performance !== 'undefined' ? performance.now() : 0;
+
             // Auto-fit is a PORTRAIT-only concern: there the lines are
             // fixed-height and clipped by overflow:hidden. In LANDSCAPE the page
             // scrolls, lines are auto-height, and applying scaleX distorts the
             // whole layout — so skip it and clear any previous fit there.
             const isLandscape = orientation === 'landscape';
             const lines = container.querySelectorAll<HTMLElement>('.qpc-v2-line[data-line-type="ayah"]');
+
+            // ===== CACHE HIT: replay the resolved transforms WRITE-ONLY. =====
+            // This page was already aligned under the exact same settings, so we
+            // skip every layout read (clientWidth/offsetWidth) — zero forced
+            // reflow — and just re-apply the stored per-line transforms. The DOM
+            // elements are freshly mounted on carousel re-render, so we must
+            // re-apply (we can't rely on a previous transform still being inline).
+            // We also guard on line count: if the page's structure changed since
+            // the entry was stored (e.g. pageData refreshed with different lines),
+            // we treat it as a miss and re-measure instead of trusting stale data.
+            const cached = fitCache.get(cacheKey);
+            if (cached && cached.lineCount === lines.length) {
+                lines.forEach((line) => {
+                    const lineIdx = Number(line.getAttribute('data-line-index'));
+                    const entry = cached.byLineIdx[lineIdx];
+                    if (entry) {
+                        line.style.transformOrigin = entry.origin;
+                        line.style.transform = entry.scale === null ? '' : `scaleX(${entry.scale})`;
+                    } else {
+                        // A line added since the cache was filled (defensive) -> clear.
+                        line.style.transform = '';
+                        line.style.transformOrigin = '';
+                    }
+                });
+                const hitEnd = typeof performance !== 'undefined' ? performance.now() : fitStart;
+                const hitDuration = hitEnd - fitStart;
+                console.log(`[perf] fitLines CACHE HIT: ${hitDuration.toFixed(2)}ms (page ${pageNumber})`);
+                if (perfBadge) {
+                    perfBadge.textContent =
+                        `fit ${hitDuration.toFixed(1)}ms (cached) | font ${fontDecodeMs.toFixed(1)}ms (p${pageNumber})`;
+                }
+                fitScheduled = false;
+                if (needsRefit) {
+                    needsRefit = false;
+                    scheduleFit();
+                }
+                return;
+            }
+
+            // ===== PHASE 1: READ — gather every line's measurement in one pass
+            // with NO style write interleaved. The OLD code wrote transform then
+            // read the next line's width (and summed children offsetWidth) inside
+            // the same loop, forcing the browser to flush its layout queue on
+            // every single line — classic "layout thrashing" (the ~200ms cost).
+            // Reading everything first, with nothing written in between, lets the
+            // browser batch a single layout pass. offsetWidth is unaffected by
+            // transforms, so no per-line reset is needed before measuring. =====
+            const pending: Array<{ el: HTMLElement; scale: number | null; origin: string }> = [];
             lines.forEach((line) => {
                 const lineIdx = Number(line.getAttribute('data-line-index'));
                 // Respect manual overrides (hand-tuned) — don't fight them.
-                if (LINE_STYLE_OVERRIDES[pageNumber]?.[lineIdx]) return;
+                if (LINE_STYLE_OVERRIDES[pageNumber]?.[lineIdx]) {
+                    pending.push({ el: line, scale: null, origin: '' });
+                    return;
+                }
+                if (isLandscape) { // portrait-only — clear any previous fit.
+                    pending.push({ el: line, scale: null, origin: '' });
+                    return;
+                }
 
-                // Reset any previous fit so the measurement is accurate.
-                line.style.transform = '';
-                line.style.transformOrigin = '';
-
-                if (isLandscape) return; // portrait-only
-
-                const avail = line.clientWidth;
-                if (!avail) return;
+                const avail = line.clientWidth; // READ
+                if (!avail) {
+                    pending.push({ el: line, scale: null, origin: '' });
+                    return;
+                }
 
                 // Natural content width = sum of direct children's layout widths.
-                // offsetWidth is unaffected by transforms, so this is stable.
                 // Skip absolutely-positioned overlays (shadow/highlight) that are
                 // appended as direct children in hiding/search/audio modes.
                 let natural = 0;
                 line.querySelectorAll<HTMLElement>(':scope > *').forEach((ch) => {
                     if (ch.classList.contains('ayah-shadow-overlay') || ch.classList.contains('hl-ayah-overlay')) return;
-                    natural += ch.offsetWidth;
+                    natural += ch.offsetWidth; // READ
                 });
 
                 // +1px tolerance to ignore sub-pixel rounding.
                 if (natural > avail + 1) {
                     // Clamp so dense lines never get unreadably thin.
                     const scale = Math.max(0.78, avail / natural);
-                    line.style.transformOrigin =
-                        line.getAttribute('data-is-centered') === 'true' ? 'center' : 'right center';
-                    line.style.transform = `scaleX(${scale})`;
+                    const origin = line.getAttribute('data-is-centered') === 'true' ? 'center' : 'right center';
+                    pending.push({ el: line, scale, origin });
+                } else {
+                    pending.push({ el: line, scale: null, origin: '' });
                 }
             });
+
+            // ===== PHASE 2: WRITE — apply every transform AFTER all reads are
+            // done, so the browser invalidates layout once for the whole batch
+            // instead of once per line. The computed scaleX values are identical
+            // to the old per-line version; only the ORDER changed (reads, then
+            // writes), which is what removes the thrashing. =====
+            const byLineIdx: Record<number, FitLineEntry> = {};
+            pending.forEach(({ el, scale, origin }) => {
+                if (scale === null) {
+                    el.style.transform = '';
+                    el.style.transformOrigin = '';
+                } else {
+                    el.style.transformOrigin = origin;
+                    el.style.transform = `scaleX(${scale})`;
+                }
+                const idx = Number(el.getAttribute('data-line-index'));
+                byLineIdx[idx] = { scale, origin };
+            });
+
+            // Cache the resolved fit so the next visit (or a carousel re-render
+            // of an already-aligned page) replays it write-only.
+            storeFitCache(cacheKey, { byLineIdx, lineCount: lines.length });
 
             // perf: how long the fit itself took (a forced reflow each run).
             const fitEnd = typeof performance !== 'undefined' ? performance.now() : fitStart;
@@ -1588,6 +1703,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                     const fontEnd = typeof performance !== 'undefined' ? performance.now() : fontStart;
                     fontDecodeMs = fontEnd - fontStart;
                     console.log(`[perf] font decode duration: ${fontDecodeMs.toFixed(1)}ms (${fontName})`);
+                    // The pre-font pass measured against the fallback font; drop
+                    // that cached entry so the re-fit measures the true glyph
+                    // widths and stores the correct transforms.
+                    fitCache.delete(cacheKey);
                     scheduleFit();   // was: requestAnimationFrame(fitLines)
                 })
                 .catch(() => { });
@@ -1600,7 +1719,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         let resizeTimer: ReturnType<typeof setTimeout>;
         const onResize = () => {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(scheduleFit, 120);
+            resizeTimer = setTimeout(() => {
+                // Every page's available width changes with the window, so the
+                // stored transforms are wrong at the new size — drop them all
+                // and let each page re-measure on its next fit.
+                clearFitCache();
+                scheduleFit();
+            }, 120);
         };
         window.addEventListener('resize', onResize);
 
@@ -1611,7 +1736,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         // cause of a portrait page looking "broken" after rotating to landscape
         // and back. Re-measure once the animation has fully settled so the final
         // scaleX is computed against the true portrait width.
-        const settleTimer = setTimeout(() => scheduleFit(), 550);   // was: ...requestAnimationFrame(fitLines)...
+        const settleTimer = setTimeout(() => {
+            // Drop the transitional-width entry so the re-fit measures against
+            // the true settled portrait width (not the mid-animation width).
+            fitCache.delete(cacheKey);
+            scheduleFit();
+        }, 550);   // was: ...requestAnimationFrame(fitLines)...
 
         return () => {
             cancelAnimationFrame(raf);
@@ -1634,27 +1764,29 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     //   - ONLY the active page schedules warming (not all 5 buffered slides),
     //   - deferred to idle (never blocks first paint or the swipe gesture).
     // TWO tiers (this is the fix for the swipe freeze):
-    //   - URGENT ±1/±2 with a SHORT idle timeout so the very next swipe lands
-    //     on an already-decoded font even during fast consecutive paging. The
-    //     old single tier used a 1500ms timeout, so mid-swipe the next page's
-    //     font was usually still cold -> ~0.5s blank on arrival.
-    //   - BACKGROUND ±3..±5 with a longer timeout to absorb momentum swipes.
+    //   - URGENT ±1/±2/±3 with a SHORT idle timeout (~100ms) so the very next
+    //     few swipes land on an already-decoded font even during fast
+    //     consecutive paging. The old single tier used a 1500ms timeout, so
+    //     mid-swipe the next page's font was usually still cold -> ~0.5s blank.
+    //   - BACKGROUND ±4..±7 with a longer timeout to absorb momentum swipes.
     useEffect(() => {
         if (!isActive) return;
         let urgentTimer: any;
         let idleTimer: any;
 
-        // Urgent tier: the pages most likely to be swiped to next.
+        // Urgent tier: the pages most likely to be swiped to next (±3 each side).
         const warmUrgent = () => {
             ensurePageFontWarm(pageNumber + 1);
             ensurePageFontWarm(pageNumber - 1);
             ensurePageFontWarm(pageNumber + 2);
             ensurePageFontWarm(pageNumber - 2);
+            ensurePageFontWarm(pageNumber + 3);
+            ensurePageFontWarm(pageNumber - 3);
         };
-        // Background tier: extend the warm window further out for rapid momentum.
-        const BG_RADIUS = 5;
+        // Background tier: extend the warm window further out (±4..±7) for rapid momentum.
+        const BG_RADIUS = 7;
         const warmBackground = () => {
-            for (let d = 3; d <= BG_RADIUS; d++) {
+            for (let d = 4; d <= BG_RADIUS; d++) {
                 ensurePageFontWarm(pageNumber + d);
                 ensurePageFontWarm(pageNumber - d);
             }
@@ -1662,7 +1794,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
         const ric = (window as any).requestIdleCallback;
         if (typeof ric === 'function') {
-            urgentTimer = ric(warmUrgent, { timeout: 120 });
+            urgentTimer = ric(warmUrgent, { timeout: 100 });
             idleTimer = ric(warmBackground, { timeout: 1500 });
             return () => {
                 try { (window as any).cancelIdleCallback(urgentTimer); } catch { }
@@ -1670,7 +1802,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             };
         }
         // Fallback when requestIdleCallback is unavailable.
-        urgentTimer = setTimeout(warmUrgent, 30);
+        urgentTimer = setTimeout(warmUrgent, 100);
         idleTimer = setTimeout(warmBackground, 400);
         return () => { clearTimeout(urgentTimer); clearTimeout(idleTimer); };
     }, [isActive, pageNumber]);
