@@ -61,6 +61,7 @@ import FloatingAudioPlayer from './components/FloatingAudioPlayer';
 const TranslationManagerModal = lazy(() => import('./components/TranslationManagerModal'));
 import AudioSettingsModal from './components/AudioSettingsModal';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
+import { setSwipeActive } from './utils/swipeStore';
 import { useNotifications } from './hooks/useNotifications';
 import InAppNotificationsModal from './components/InAppNotificationsModal';
 import PushNotificationCenter from './components/PushNotificationCenter';
@@ -2544,6 +2545,21 @@ export default function App() {
     }
   }, []);
 
+  // ── Flip-transition signals for the renderer's perf scheduler ──────────────
+  // These do NOT touch React state on purpose: setSwipeActive mutates a tiny
+  // external store that the page renderer subscribes to via a ref (no re-render
+  // of App, no re-render of the renderer). The renderer uses the signal to keep
+  // its reflow-forcing line-fit work OFF the animation, running it only once the
+  // flip has fully ended.
+  const handleSlideTransitionStart = useCallback(() => {
+    setSwipeActive(true);
+  }, []);
+
+  const handleSlideTransitionEnd = useCallback((swiper: any) => {
+    setSwipeActive(false);
+    handleActiveIndexChange(swiper);
+  }, [handleActiveIndexChange]);
+
   // Handle Swiper initialization
   useEffect(() => {
     setSwiperReady(true);
@@ -2769,7 +2785,8 @@ export default function App() {
                       dir="rtl"
                       modules={SWIPER_MODULES}
                       onSwiper={handleOnSwiper}
-                      onSlideChangeTransitionEnd={handleActiveIndexChange}
+                      onSlideChangeTransitionStart={handleSlideTransitionStart}
+                      onSlideChangeTransitionEnd={handleSlideTransitionEnd}
                       virtual={{ enabled: true, addSlidesBefore: 2, addSlidesAfter: 2 }}
                       initialSlide={Math.max(0, currentPage - 1)}
                       speed={260}

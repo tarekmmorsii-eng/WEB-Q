@@ -23,6 +23,7 @@ import { findMutashabihatForAyah, findAllMutashabihatForAyah } from '../utils/mu
 import { formatNumber } from '../utils/quranUtils';
 import { useWordByWordAudio } from '../hooks/useWordByWordAudio';
 import { LINE_STYLE_OVERRIDES } from '../constants/lineOverrides';
+import { subscribeSwipeActive } from '../utils/swipeStore';
 
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
@@ -327,6 +328,27 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     useEffect(() => {
         audioEnabledRef.current = enableWordLongPressAudio;
     }, [enableWordLongPressAudio]);
+
+    // ── Swipe-transition awareness (perf: keep fitLines off the animation) ──
+    // swipeActiveRef tracks whether a page-flip transition is currently running.
+    // The cold measurement pass of fitLines forces a layout reflow; running it
+    // MID-transition is what freezes the flip. We defer that pass until the
+    // transition ends. This is a ref (not state) updated via an external-store
+    // subscription, so reacting to swipe start/end does NOT re-render this
+    // (heavy) component — it just flips the ref and nudges the fit scheduler.
+    const swipeActiveRef = useRef(false);
+    // scheduleFitRef holds the latest fit scheduler so the swipe-end subscription
+    // callback can trigger a deferred fit without depending on effect closures.
+    const scheduleFitRef = useRef<(() => void) | null>(null);
+    useEffect(() => {
+        return subscribeSwipeActive((v) => {
+            swipeActiveRef.current = v;
+            // When a flip finishes, run any deferred cold measurement now: the
+            // page is on-screen and fully rendered, so measuring is safe and no
+            // longer competes with an animation.
+            if (!v && scheduleFitRef.current) scheduleFitRef.current();
+        });
+    }, []);
 
     const t = translations[language as Language] || translations.ar;
     const isNativeApp = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
@@ -1584,6 +1606,46 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 return;
             }
 
+            // ===== DEFER COLD MEASUREMENT while it would harm the user =====
+            // Two situations where measuring now is wrong or wasteful, never both
+            // corrupting the cache:
+            //
+            // 1) A flip transition is running (swipeActiveRef). The measurement
+            //    forces a synchronous layout reflow; doing it mid-flip is exactly
+            //    what freezes the animation. The cached replay above already keeps
+            //    already-visited pages fitted for free (writes only, no reflow), so
+            //    deferring ONLY the cold measurement costs nothing visible — when
+            //    the flip ends the scheduler is nudged (see subscribeSwipeActive)
+            //    and this runs against a fully settled page.
+            // 2) This slide is currently paint-skipped by content-visibility:auto
+            //    (off-screen, non-active). Layout is NOT computed for skipped
+            //    content, so widths read as the placeholder (0), and we would cache
+            //    a corrupt fit. Wait until the page is actually rendered. We detect
+            //    this via checkVisibility when available; if the API is missing we
+            //    fall through and measure normally.
+            if (swipeActiveRef.current) {
+                fitScheduled = false;
+                if (perfBadge) {
+                    perfBadge.textContent =
+                        `fit deferred (swipe) | font ${fontDecodeMs.toFixed(1)}ms (p${pageNumber})`;
+                }
+                console.log(`[perf] fitLines DEFERRED until flip ends (page ${pageNumber})`);
+                return; // re-triggered on swipe end via scheduleFitRef nudge
+            }
+            // Check the ROOT element (the one carrying content-visibility:auto),
+            // not this child container — a skipped ancestor means the child's
+            // layout isn't computed either, and we must not measure/cache here.
+            const cvHost = (container.closest('.mushaf-page-qpc') as any) || container;
+            const cvCheck = cvHost?.checkVisibility;
+            if (typeof cvCheck === 'function' &&
+                cvCheck.call(cvHost, { contentVisibilityAuto: true }) === false) {
+                // Skipped by content-visibility — measuring would read placeholder
+                // sizes. Defer; the page is re-fitted when it is actually viewed.
+                fitScheduled = false;
+                console.log(`[perf] fitLines DEFERRED (content-visibility skipped) (page ${pageNumber})`);
+                return;
+            }
+
             // ===== PHASE 1: READ — gather every line's measurement in one pass
             // with NO style write interleaved. The OLD code wrote transform then
             // read the next line's width (and summed children offsetWidth) inside
@@ -1690,6 +1752,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             raf = requestAnimationFrame(fitLines);
         };
 
+        // Expose the latest scheduler so the swipe-end subscription (outside this
+        // effect) can nudge a deferred cold measurement to run once the flip ends.
+        scheduleFitRef.current = scheduleFit;
+
         scheduleFit();   // was: requestAnimationFrame(fitLines)
 
         // Re-fit once THIS page's own font is ready (targeted, not the global
@@ -1748,6 +1814,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             clearTimeout(settleTimer);
             clearTimeout(resizeTimer);
             window.removeEventListener('resize', onResize);
+            scheduleFitRef.current = null; // effect torn down — drop the stale nudge handle
             if (perfBadge && perfBadge.parentNode) perfBadge.parentNode.removeChild(perfBadge);
         };
     }, [pageData, pageNumber, deviceType, orientation, mode, toggleState, fontSizeClass]);
@@ -1842,7 +1909,22 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
                 // Apply "Book" constraint
-                aspectRatio: (deviceType === 'desktop' && !isSpecialPage) ? '0.65' : undefined
+                aspectRatio: (deviceType === 'desktop' && !isSpecialPage) ? '0.65' : undefined,
+                // ── Defer painting of NON-active slides ──
+                // content-visibility:auto tells the browser to skip laying out &
+                // painting this slide's (very heavy glyph) content until it is
+                // close to the viewport, freeing the CPU from rendering pages the
+                // user cannot see. It is NEVER applied to the active page, so the
+                // visible Quran text is always painted. The `auto` keyword in
+                // contain-intrinsic-size makes the browser remember the real size
+                // once a page has been painted, so there is no layout shift; the
+                // px fallback only applies before the very first paint.
+                ...(isActive ? {} : {
+                    contentVisibility: 'auto' as const,
+                    containIntrinsicSize: (typeof window !== 'undefined'
+                        ? `auto ${Math.min(window.innerWidth, 1000)}px ${window.innerHeight || 1200}px`
+                        : 'auto 800px 1200px'),
+                }),
             }}
         >
             {/* الترويسة العلوية لكافة الأجهزة */}
