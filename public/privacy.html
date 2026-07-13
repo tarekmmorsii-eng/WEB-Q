@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="سياسة خصوصية تطبيق مصحف المراجعة - Privacy Policy for Revision Mushaf" />
+  <meta name="theme-color" content="#b45308" />
+  <title>سياسة الخصوصية - مصحف المراجعة</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f7f1e7;
+      background-image: radial-gradient(circle at 50% 0%, #fbf6ec 0%, #f3ead9 60%, #efe4d1 100%);
+      color: #3c3327;
+      font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", "Traditional Arabic", Geneva, sans-serif;
+      font-size: 17px;
+      line-height: 2;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 840px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+
+    /* الشريط العلوي */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 26px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: #b45308;
+      font-size: 19px;
+      text-decoration: none;
+    }
+
+    .brand-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #d99a2b, #b45308);
+      box-shadow: 0 2px 6px rgba(180, 83, 8, 0.3);
+    }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background-color: #ffffff;
+      color: #b45308;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      border: 1.5px solid #e6d3b3;
+      transition: background-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .home-link:hover { background-color: #fdf4e3; }
+    .home-link:active { transform: scale(0.97); }
+
+    /* بطاقة المحتوى */
+    .card {
+      background-color: #fffdf9;
+      border-radius: 18px;
+      padding: 40px 36px;
+      box-shadow: 0 6px 28px rgba(120, 81, 20, 0.1);
+      border: 1px solid #efe3cf;
+    }
+
+    /* مبدّل اللغة */
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      padding: 6px;
+      background-color: #f6ecda;
+      border-radius: 999px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .lang-btn {
+      padding: 9px 22px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      color: #8a6a3b;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .lang-btn.active,
+    .lang-btn:hover {
+      background-color: #b45308;
+      color: #ffffff;
+    }
+
+    /* العناوين */
+    h1 {
+      color: #b45308;
+      font-size: 28px;
+      margin: 0 0 14px;
+      line-height: 1.5;
+      font-weight: 800;
+    }
+
+    h2 {
+      color: #b45308;
+      font-size: 21px;
+      margin: 34px 0 12px;
+      font-weight: 800;
+      line-height: 1.6;
+    }
+
+    .lead {
+      color: #6f5d44;
+      font-size: 16.5px;
+      margin: 0 0 6px;
+    }
+
+    p { margin: 0 0 18px; }
+
+    .intro {
+      padding-bottom: 20px;
+      margin-bottom: 8px;
+      border-bottom: 2px dashed #ecdcbf;
+    }
+
+    /* الفاصل الزخرفي بين القسمين */
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 44px 0;
+      color: #c69a4e;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 2px;
+      flex: 1;
+      max-width: 120px;
+      background: linear-gradient(to right, transparent, #d8b873, transparent);
+    }
+
+    .divider span {
+      font-size: 20px;
+      letter-spacing: 2px;
+    }
+
+    /* القسم الإنجليزي */
+    .section-en {
+      direction: ltr;
+      text-align: left;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .section-en h1,
+    .section-en h2 { color: #b45308; }
+
+    .section-en p { line-height: 1.85; }
+
+    /* رابط البريد */
+    .mail-link {
+      display: inline-block;
+      color: #b45308;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      background-color: #fdf4e3;
+      border: 1px solid #ecd9b6;
+      margin-top: 6px;
+      word-break: break-all;
+    }
+
+    .mail-link:hover { background-color: #fbe9cb; }
+
+    /* التذييل */
+    .footer {
+      text-align: center;
+      color: #9c8763;
+      font-size: 13.5px;
+      margin-top: 30px;
+    }
+
+    .footer a { color: #b45308; text-decoration: none; }
+
+    /* التجاوب مع الجوال */
+    @media (max-width: 600px) {
+      .page { padding: 18px 12px 44px; }
+      .card { padding: 26px 18px; border-radius: 14px; }
+      h1 { font-size: 23px; }
+      h2 { font-size: 18.5px; }
+      body { font-size: 16px; }
+      .topbar { justify-content: center; }
+      .home-link { font-size: 14px; padding: 9px 14px; }
+      .lang-btn { padding: 8px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- الشريط العلوي: الرابط الرئيسي + الهوية -->
+    <div class="topbar">
+      <a class="brand" href="https://mushafalmurajaa.com">
+        <span class="brand-dot"></span>
+        <span>مصحف المراجعة</span>
+      </a>
+      <a class="home-link" href="https://mushafalmurajaa.com">
+        العودة إلى الصفحة الرئيسية ↩
+      </a>
+    </div>
+
+    <div class="card">
+
+      <!-- مبدّل اللغة -->
+      <div class="lang-switch">
+        <a class="lang-btn active" href="#ar">العربية</a>
+        <a class="lang-btn" href="#en">English</a>
+      </div>
+
+      <!-- القسم العربي -->
+      <section id="ar" dir="rtl">
+        <h1>سياسة الخصوصية لتطبيق مصحف المراجعة</h1>
+        <div class="intro">
+          <p class="lead">تهدف هذه السياسة إلى توضيح كيفية تعامل تطبيق مصحف المراجعة مع البيانات عند استخدامك للتطبيق</p>
+          <p class="lead">نحن نولي خصوصية المستخدمين أهمية بالغة ونتعهد بحماية كافة البيانات</p>
+        </div>
+
+        <h2>أولاً: جمع المعلومات واستخدامها</h2>
+        <p>تطبيق مصحف المراجعة هو تطبيق مجاني مخصص لمساعدة حفظة كتاب الله على مراجعة وتثبيت حفظ القرآن الكريم. التطبيق يعمل بالكامل بدون الحاجة للاتصال بشبكة الإنترنت ولا يتطلب من المستخدم إنشاء حساب أو تسجيل أي بيانات شخصية مثل الاسم أو البريد الإلكتروني أو رقم الهاتف. بناءً على ذلك فإن التطبيق لا يقوم بجمع أو تخزين أو مشاركة أي بيانات شخصية خاصة بالمستخدمين مطلقاً.</p>
+
+        <h2>ثانياً: الأذونات والصلاحيات</h2>
+        <p>قد يطلب التطبيق بعض الأذونات الأساسية من نظام التشغيل لضمان عمل الميزات بشكل صحيح مثل إذن تشغيل الإشعارات في الخلفية لتذكيرك بمواعيد الورد اليومي. كذلك قد يطلب صلاحية الوصول إلى ملفات النظام لتخزين إعدادات تفضيلات الألوان أو حفظ تقدمك في المراجعة محلياً على جهازك الشخصي فقط. جميع هذه الصلاحيات تدار بالكامل محلياً على جهاز المستخدم ولا يتم إرسال أي تفاصيل منها إلى أي خوادم خارجية.</p>
+
+        <h2>ثالثاً: الإعلانات والخدمات الخارجية</h2>
+        <p>التطبيق مجاني تماماً وخالٍ بشكل مطلق من أي إعلانات تجارية. كذلك لا يدمج التطبيق أي أدوات تتبع خارجية أو خدمات تابعة لجهات خارجية تقوم بجمع بيانات سلوك المستخدم.</p>
+
+        <h2>رابعاً: التغييرات على سياسة الخصوصية</h2>
+        <p>قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر لمواكبة التحديثات التقنية. سيتم نشر أي تغييرات جديدة في هذه الصفحة فور اعتمادها.</p>
+
+        <h2>خامساً: التواصل معنا</h2>
+        <p>إذا كان لديك أي استفسار بشأن سياسة الخصوصية يمكنك التواصل مع المطور مباشرة عبر البريد الإلكتروني المخصص للدعم:</p>
+        <a class="mail-link" href="mailto:support@mushafalmurajaa.com">support@mushafalmurajaa.com</a>
+      </section>
+
+      <!-- الفاصل الزخرفي -->
+      <div class="divider"><span>✦ ✦ ✦</span></div>
+
+      <!-- القسم الإنجليزي -->
+      <section id="en" class="section-en" dir="ltr">
+        <h1>Privacy Policy for Revision Mushaf</h1>
+        <div class="intro">
+          <p class="lead">This policy aims to clarify how the Revision Mushaf application handles data when you use the app.</p>
+          <p class="lead">We attach great importance to user privacy and are committed to protecting all data.</p>
+        </div>
+
+        <h2>1. Information Collection and Use</h2>
+        <p>The Revision Mushaf app is a free application dedicated to helping the memorizers of the Book of Allah revise and consolidate their memorization of the Holy Quran. The app works entirely without the need for an internet connection and does not require the user to create an account or register any personal data such as name, email, or phone number. Accordingly, the app does not collect, store, or share any personal data belonging to users whatsoever.</p>
+
+        <h2>2. Permissions and Access</h2>
+        <p>The app may request certain basic permissions from the operating system to ensure that features work properly, such as permission to run background notifications to remind you of your daily portion. It may also request access to system files to store color preference settings or save your revision progress locally on your personal device only. All of these permissions are managed entirely locally on the user's device, and no details of them are sent to any external servers.</p>
+
+        <h2>3. Advertisements and External Services</h2>
+        <p>The app is completely free and entirely free of any commercial advertisements. The app also does not integrate any external tracking tools or third-party services that collect user behavior data.</p>
+
+        <h2>4. Changes to the Privacy Policy</h2>
+        <p>We may update this privacy policy from time to time to keep up with technical updates. Any new changes will be published on this page as soon as they are adopted.</p>
+
+        <h2>5. Contact Us</h2>
+        <p>If you have any inquiry regarding the privacy policy, you can contact the developer directly via the email designated for support:</p>
+        <a class="mail-link" href="mailto:support@mushafalmurajaa.com">support@mushafalmurajaa.com</a>
+      </section>
+
+    </div>
+
+    <p class="footer">© مصحف المراجعة — <a href="https://mushafalmurajaa.com">mushafalmurajaa.com</a></p>
+
+  </div>
+</body>
+</html>
