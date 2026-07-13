@@ -343,7 +343,7 @@ div[data-atlas] {
 }
 
 .mushaf-page-qpc[data-device-type="tablet"][data-orientation="landscape"] .qpc-v2-text {
-  font-size: 56px !important;
+  font-size: clamp(38px, 4.4vw, 54px) !important;
   font-weight: bold !important;
   line-height: normal !important;
   height: auto !important;

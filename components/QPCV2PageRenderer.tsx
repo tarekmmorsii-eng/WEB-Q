@@ -337,16 +337,34 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // subscription, so reacting to swipe start/end does NOT re-render this
     // (heavy) component — it just flips the ref and nudges the fit scheduler.
     const swipeActiveRef = useRef(false);
+    // isActiveRef lets the swipe-end callback tell apart the VISIBLE page (which
+    // must be fitted immediately) from neighbour pages (which should be pre-fit
+    // in idle time, so they don't compete with the gesture and never freeze it).
+    const isActiveRef = useRef(isActive);
+    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
     // scheduleFitRef holds the latest fit scheduler so the swipe-end subscription
     // callback can trigger a deferred fit without depending on effect closures.
     const scheduleFitRef = useRef<(() => void) | null>(null);
     useEffect(() => {
         return subscribeSwipeActive((v) => {
             swipeActiveRef.current = v;
-            // When a flip finishes, run any deferred cold measurement now: the
-            // page is on-screen and fully rendered, so measuring is safe and no
-            // longer competes with an animation.
-            if (!v && scheduleFitRef.current) scheduleFitRef.current();
+            if (v || !scheduleFitRef.current) return; // mid-flip: do nothing
+            if (isActiveRef.current) {
+                // The now-visible page: fit it right away so the user sees it
+                // correctly aligned the instant the flip lands.
+                scheduleFitRef.current();
+            } else {
+                // A neighbour page: pre-fit it in IDLE time so it's cached and
+                // ready (free replay) when the user swipes to it. Running it
+                // eagerly here, together with the active page, was what caused
+                // the per-flip freeze — all neighbours measuring at once.
+                const ric = (window as any).requestIdleCallback;
+                if (typeof ric === 'function') {
+                    ric(scheduleFitRef.current, { timeout: 1000 });
+                } else {
+                    setTimeout(scheduleFitRef.current, 300);
+                }
+            }
         });
     }, []);
 
@@ -1417,7 +1435,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     const fontSizeClass = useMemo(() => {
         if (deviceType === 'desktop') return 'clamp(16px, 1.8vw, 19px)';
         if (deviceType === 'mobile') return isMobileLandscape ? '4.8vw' : 'min(2.7vh, 5.0vw)';
-        if (deviceType === 'tablet') return isTabletLandscape ? '54px' : '20px';
+        // خط اللوحي الأفقي كان ثابتاً 54px لا يتكيف مع عرض الشاشة، فكانت
+        // الأسطر المزدحمة تتجاوز وتُقتطع على الأجهزة ذات العرض الأفقي 900-1100px
+        // (يشملها الجوالات الكبيرة عند التدوير). صرناه مرناً بنفس منطق الجوال.
+        if (deviceType === 'tablet') return isTabletLandscape ? 'clamp(36px, 4.4vw, 54px)' : '20px';
         return '20px';
     }, [deviceType, isMobileLandscape, isTabletLandscape]);
 
@@ -1561,11 +1582,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             // perf: capture how long the fit itself takes (forced reflow cost).
             const fitStart = typeof performance !== 'undefined' ? performance.now() : 0;
 
-            // Auto-fit is a PORTRAIT-only concern: there the lines are
-            // fixed-height and clipped by overflow:hidden. In LANDSCAPE the page
-            // scrolls, lines are auto-height, and applying scaleX distorts the
-            // whole layout — so skip it and clear any previous fit there.
-            const isLandscape = orientation === 'landscape';
+            // Auto-fit applies in BOTH portrait and landscape: in portrait lines
+            // are fixed-height/overflow-hidden; in landscape they scroll, yet a
+            // line wider than the viewport still gets clipped at the edge. Scaling
+            // only the overflowing lines (origin 'right') pulls the cut-off side
+            // back in without distorting the rest of the page.
             const lines = container.querySelectorAll<HTMLElement>('.qpc-v2-line[data-line-type="ayah"]');
 
             // ===== CACHE HIT: replay the resolved transforms WRITE-ONLY. =====
@@ -1581,6 +1602,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             if (cached && cached.lineCount === lines.length) {
                 lines.forEach((line) => {
                     const lineIdx = Number(line.getAttribute('data-line-index'));
+                    // احترم الإصلاح اليدوي: لا نلمس هذه الأسطر، نترك React inline
+                    // (scaleX من LINE_STYLE_OVERRIDES) ساريًا. مسح الـ transform هنا
+                    // كان يُعطّل الإصلاح اليدوي فيعود اقتطاع نهاية السطر.
+                    if (LINE_STYLE_OVERRIDES[pageNumber]?.[lineIdx]) return;
                     const entry = cached.byLineIdx[lineIdx];
                     if (entry) {
                         line.style.transformOrigin = entry.origin;
@@ -1632,19 +1657,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 console.log(`[perf] fitLines DEFERRED until flip ends (page ${pageNumber})`);
                 return; // re-triggered on swipe end via scheduleFitRef nudge
             }
-            // Check the ROOT element (the one carrying content-visibility:auto),
-            // not this child container — a skipped ancestor means the child's
-            // layout isn't computed either, and we must not measure/cache here.
-            const cvHost = (container.closest('.mushaf-page-qpc') as any) || container;
-            const cvCheck = cvHost?.checkVisibility;
-            if (typeof cvCheck === 'function' &&
-                cvCheck.call(cvHost, { contentVisibilityAuto: true }) === false) {
-                // Skipped by content-visibility — measuring would read placeholder
-                // sizes. Defer; the page is re-fitted when it is actually viewed.
-                fitScheduled = false;
-                console.log(`[perf] fitLines DEFERRED (content-visibility skipped) (page ${pageNumber})`);
-                return;
-            }
 
             // ===== PHASE 1: READ — gather every line's measurement in one pass
             // with NO style write interleaved. The OLD code wrote transform then
@@ -1657,16 +1669,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             const pending: Array<{ el: HTMLElement; scale: number | null; origin: string }> = [];
             lines.forEach((line) => {
                 const lineIdx = Number(line.getAttribute('data-line-index'));
-                // Respect manual overrides (hand-tuned) — don't fight them.
+                // احترم الإصلاح اليدوي: لا نضيفه لقائمة التعديل ولا نلمس transform.
+                // (سابقًا كنا ندفع scale:null ثم نمسح transform في المرحلة الثانية،
+                //  فكنا نُلغي scaleX الذي ضبطه LINE_STYLE_OVERRIDES.)
                 if (LINE_STYLE_OVERRIDES[pageNumber]?.[lineIdx]) {
-                    pending.push({ el: line, scale: null, origin: '' });
                     return;
                 }
-                if (isLandscape) { // portrait-only — clear any previous fit.
-                    pending.push({ el: line, scale: null, origin: '' });
-                    return;
-                }
-
                 const avail = line.clientWidth; // READ
                 if (!avail) {
                     pending.push({ el: line, scale: null, origin: '' });
@@ -1910,21 +1918,15 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 color: 'var(--text-primary)',
                 // Apply "Book" constraint
                 aspectRatio: (deviceType === 'desktop' && !isSpecialPage) ? '0.65' : undefined,
-                // ── Defer painting of NON-active slides ──
-                // content-visibility:auto tells the browser to skip laying out &
-                // painting this slide's (very heavy glyph) content until it is
-                // close to the viewport, freeing the CPU from rendering pages the
-                // user cannot see. It is NEVER applied to the active page, so the
-                // visible Quran text is always painted. The `auto` keyword in
-                // contain-intrinsic-size makes the browser remember the real size
-                // once a page has been painted, so there is no layout shift; the
-                // px fallback only applies before the very first paint.
-                ...(isActive ? {} : {
-                    contentVisibility: 'auto' as const,
-                    containIntrinsicSize: (typeof window !== 'undefined'
-                        ? `auto ${Math.min(window.innerWidth, 1000)}px ${window.innerHeight || 1200}px`
-                        : 'auto 800px 1200px'),
-                }),
+                // NOTE: content-visibility:auto is intentionally NOT used here.
+                // Diagnostics proved it HURTS: when a slide leaves the viewport it
+                // gets un-painted, and on return the browser RE-PAINTS it from
+                // scratch — that re-paint was the recurring freeze even when
+                // flipping back and forth between the SAME two pages. Instead we
+                // rely on `will-change`/`contain` on .swiper-slide (index.css)
+                // which keeps each painted slide on a GPU layer, so a return visit
+                // is a cheap composite, not a re-paint. The active page is always
+                // painted normally.
             }}
         >
             {/* الترويسة العلوية لكافة الأجهزة */}
@@ -2031,9 +2033,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             gap: line.isCentered ? '4px' : '0px',
                             marginTop: deviceType === 'desktop' ? '1.5vh' : undefined,
                             marginBottom: deviceType === 'desktop' ? '1.5vh' : undefined,
-                            // Manual clipping fixes are portrait-only; their scaleX
-                            // would distort the scrollable landscape layout.
-                            ...(orientation === 'portrait' ? (LINE_STYLE_OVERRIDES[pageNumber]?.[idx] || {}) : {}),
+                            // Manual clipping fixes apply in both orientations: the
+                            // same overflowing lines get cut in landscape too.
+                            ...(LINE_STYLE_OVERRIDES[pageNumber]?.[idx] || {}),
                         }}
                     >
                         {line.lineType === 'surah_name' && renderSurahName(line)}

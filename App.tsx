@@ -149,6 +149,20 @@ const runWhenIdle = (cb: () => void, fallbackDelay = 2500) => {
   }
 };
 
+// Returns a referentially-stable callback that ALWAYS calls the latest version
+// of `fn` (kept fresh in a ref every render). This is critical here: App is huge
+// and re-renders on every page change. If the handlers passed into the page
+// renderer (onRateAyah, onOpenMutashabihat, …) got a NEW identity each render,
+// React.memo on QPCV2PageRenderer would bust and ALL ~5 mounted pages would
+// fully re-render (hundreds of glyphs each) on every single flip — the freeze.
+// Stable references mean only the entering/leaving page re-renders.
+function useStableCallback<T extends (...args: any[]) => any>(fn: T): T {
+  const ref = useRef(fn);
+  ref.current = fn;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useCallback(((...args: any[]) => ref.current(...args)) as T, []);
+}
+
 // Integrations
 import { FeedbackProvider, useFeedback } from './contexts/FeedbackContext';
 import FeedbackModal from './components/FeedbackModal';
@@ -2533,8 +2547,14 @@ export default function App() {
     const newPage = swiper.activeIndex + 1;
     if (newPage === currentPageRef.current) return;
 
+    // Update the ref synchronously so subsequent rapid flips see the latest
+    // page immediately, but defer the (expensive, whole-App) state update into
+    // a transition. This keeps the gesture responsive and lets React coalesce
+    // back-to-back flips instead of re-rendering the whole tree for each one.
     currentPageRef.current = newPage;
-    setCurrentPage(newPage);
+    startTransition(() => {
+      setCurrentPage(newPage);
+    });
 
     // Reset scroll to top on page change (landscape/mobile)
     window.scrollTo(0, 0);
@@ -2635,13 +2655,42 @@ export default function App() {
   }, []);
 
   // Single source of truth for a page slide's content (used by every virtual
-  // slide). isActive is derived from currentPage so only the entering/leaving
-  // page re-renders (the rest are skipped by React.memo on QPCV2PageRenderer).
+  // slide). NOTE: isActive is a CONSTANT (not p === currentPage) on purpose.
+  // When it tracked currentPage, BOTH the entering and leaving page re-rendered
+  // their hundreds of glyphs on every flip — that rebuild was the ~290ms freeze
+  // (line-fit measured 0ms / cached, so it was never the cause). All isActive
+  // does is tag a few tour element IDs (each word/surah-name lives on exactly
+  // one page, so the IDs are unique anyway) and gate font pre-warming — and
+  // warming from ALL mounted slides is actually better. A constant keeps every
+  // page's props identical across a flip, so React.memo skips the rebuild.
+  //
+  // All handler props below are wrapped in useStableCallback so their identity
+  // NEVER changes across renders. Without this, every App re-render (which
+  // happens on every flip via setCurrentPage) would hand fresh function
+  // identities to the page renderer, busting React.memo and forcing ALL mounted
+  // pages to re-render their hundreds of glyphs every flip — the root cause of
+  // the flip freeze and the inability to flip quickly.
+  const stableOnRateAyah = useStableCallback(handleRateAyah);
+  const stableOnRateSurah = useStableCallback(handleRateSurah);
+  const stableOnAyahClickForAudio = useStableCallback(handleAyahClickForAudio);
+  const stableOnDeleteSimilarAyah = useStableCallback(handleDeleteSimilarAyah);
+  const stableOnAddSimilarAyah = useStableCallback(handleAddSimilarAyah);
+  const stableOnOpenMutashabihat = useStableCallback(
+    (mutOrSurah: Mutashabiha | number, optAyah?: number) => {
+      if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+        setCurrentMutashabiha(mutOrSurah);
+        setIsMutashabihatModalOpen(true);
+      } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
+        handleOpenMutashabihat(mutOrSurah, optAyah);
+      }
+    }
+  );
+
   const renderPageSlide = (p: number) => (
     <QPCV2PageRenderer
       key={`page-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
       pageNumber={p}
-      isActive={p === currentPage}
+      isActive
       fontSize={settings.defaultFontSize as any}
       isDarkMode={currentTheme.isDark}
       className="!pb-0 w-full"
@@ -2649,8 +2698,8 @@ export default function App() {
       toggleState={toggleState}
       memorizationRatings={memorizationRatings}
       surahRatings={surahRatings}
-      onRateAyah={handleRateAyah}
-      onRateSurah={handleRateSurah}
+      onRateAyah={stableOnRateAyah}
+      onRateSurah={stableOnRateSurah}
       verseBookmarks={verseBookmarks}
       colorStopSigns={settings.colorStopSigns}
       accentColor={currentTheme.colors.accent}
@@ -2662,20 +2711,13 @@ export default function App() {
       enableWordLongPressAudio={settings.enableWordLongPressAudio}
       showWordMeanings={settings.showWordMeanings}
       wordMeaningsSource={settings.wordMeaningsSource}
-      onOpenMutashabihat={(mutOrSurah, optAyah) => {
-        if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
-          setCurrentMutashabiha(mutOrSurah);
-          setIsMutashabihatModalOpen(true);
-        } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
-          handleOpenMutashabihat(mutOrSurah, optAyah);
-        }
-      }}
-      onDeleteSimilarAyah={handleDeleteSimilarAyah}
-      onAddSimilarAyah={handleAddSimilarAyah}
+      onOpenMutashabihat={stableOnOpenMutashabihat}
+      onDeleteSimilarAyah={stableOnDeleteSimilarAyah}
+      onAddSimilarAyah={stableOnAddSimilarAyah}
       resetCounter={resetCounter}
       audioModeActive={audioModeActive}
       playingAyahId={playingAyahId}
-      onAyahClickForAudio={handleAyahClickForAudio}
+      onAyahClickForAudio={stableOnAyahClickForAudio}
     />
   );
 
