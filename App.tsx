@@ -2736,7 +2736,7 @@ export default function App() {
       <div
         className={clsx(
           "w-full flex flex-col relative transition-colors duration-300",
-          !isTouchDevice ? "min-h-[100vh] overflow-visible" : "h-[100vh] overflow-hidden"
+          !isTouchDevice ? "min-h-[100vh] overflow-visible" : "h-[100dvh] overflow-hidden"
         )}
         style={{
           backgroundColor: currentTheme.colors.background,

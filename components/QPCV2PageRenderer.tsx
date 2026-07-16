@@ -1550,24 +1550,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const container = linesContainerRef.current;
         if (!container) return;
 
-        // ---- Dev-only perf badge (top-left corner). Injected via the DOM so it
-        // never touches the visual JSX tree, and removed again on cleanup. ----
-        const perfBadge = import.meta.env.DEV ? document.createElement('div') : null;
-        if (perfBadge) {
-            perfBadge.style.cssText =
-                'position:fixed;top:6px;inset-inline-start:6px;z-index:99999;' +
-                'background:rgba(0,0,0,0.72);color:#7CFFB2;' +
-                'font:11px/1.45 ui-monospace,Menlo,Consolas,monospace;' +
-                'padding:3px 7px;border-radius:5px;pointer-events:none;' +
-                'white-space:nowrap;direction:ltr;letter-spacing:0.2px';
-            perfBadge.textContent = `fit – | font – (p${pageNumber})`;
-            document.body.appendChild(perfBadge);
-        }
-
         let raf = 0;                 // pending rAF id (0 = none)
         let fitScheduled = false;    // guard: at most one rAF fit per frame
         let needsRefit = false;      // a trigger fired mid-flight → one more pass
-        let fontDecodeMs = 0;        // last measured font-decode duration
 
         // Fit-cache key: the fit result is a pure function of (page + deviceType
         // + orientation + fontSize + viewMode) once this page's font is decoded.
@@ -1582,9 +1567,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const cacheKey = `${settingsKey}|p${pageNumber}`;
 
         const fitLines = () => {
-            // perf: capture how long the fit itself takes (forced reflow cost).
-            const fitStart = typeof performance !== 'undefined' ? performance.now() : 0;
-
             // Auto-fit applies in BOTH portrait and landscape: in portrait lines
             // are fixed-height/overflow-hidden; in landscape they scroll, yet a
             // line wider than the viewport still gets clipped at the edge. Scaling
@@ -1619,13 +1601,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                         line.style.transformOrigin = '';
                     }
                 });
-                const hitEnd = typeof performance !== 'undefined' ? performance.now() : fitStart;
-                const hitDuration = hitEnd - fitStart;
-                console.log(`[perf] fitLines CACHE HIT: ${hitDuration.toFixed(2)}ms (page ${pageNumber})`);
-                if (perfBadge) {
-                    perfBadge.textContent =
-                        `fit ${hitDuration.toFixed(1)}ms (cached) | font ${fontDecodeMs.toFixed(1)}ms (p${pageNumber})`;
-                }
                 fitScheduled = false;
                 if (needsRefit) {
                     needsRefit = false;
@@ -1653,11 +1628,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             //    fall through and measure normally.
             if (swipeActiveRef.current) {
                 fitScheduled = false;
-                if (perfBadge) {
-                    perfBadge.textContent =
-                        `fit deferred (swipe) | font ${fontDecodeMs.toFixed(1)}ms (p${pageNumber})`;
-                }
-                console.log(`[perf] fitLines DEFERRED until flip ends (page ${pageNumber})`);
                 return; // re-triggered on swipe end via scheduleFitRef nudge
             }
 
@@ -1726,15 +1696,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             // of an already-aligned page) replays it write-only.
             storeFitCache(cacheKey, { byLineIdx, lineCount: lines.length });
 
-            // perf: how long the fit itself took (a forced reflow each run).
-            const fitEnd = typeof performance !== 'undefined' ? performance.now() : fitStart;
-            const fitDuration = fitEnd - fitStart;
-            console.log(`[perf] fitLines duration: ${fitDuration.toFixed(1)}ms (page ${pageNumber})`);
-            if (perfBadge) {
-                perfBadge.textContent =
-                    `fit ${fitDuration.toFixed(1)}ms | font ${fontDecodeMs.toFixed(1)}ms (p${pageNumber})`;
-            }
-
             // Release the per-frame guard AFTER running. If another trigger
             // landed while we were pending/running, give it exactly one more
             // pass — this is what keeps the post-font re-measure (visual parity)
@@ -1771,15 +1732,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
         // Re-fit once THIS page's own font is ready (targeted, not the global
         // document.fonts.ready — that re-fires on every font load during swipes
-        // and caused repeated forced reflows). Now timed for the perf badge.
+        // and caused repeated forced reflows).
         const fonts = (document as any).fonts;
         if (fonts?.load) {
-            const fontStart = typeof performance !== 'undefined' ? performance.now() : 0;
             fonts.load(`1em '${fontName}'`)
                 .then(() => {
-                    const fontEnd = typeof performance !== 'undefined' ? performance.now() : fontStart;
-                    fontDecodeMs = fontEnd - fontStart;
-                    console.log(`[perf] font decode duration: ${fontDecodeMs.toFixed(1)}ms (${fontName})`);
                     // The pre-font pass measured against the fallback font; drop
                     // that cached entry so the re-fit measures the true glyph
                     // widths and stores the correct transforms.
@@ -1826,7 +1783,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             clearTimeout(resizeTimer);
             window.removeEventListener('resize', onResize);
             scheduleFitRef.current = null; // effect torn down — drop the stale nudge handle
-            if (perfBadge && perfBadge.parentNode) perfBadge.parentNode.removeChild(perfBadge);
         };
     }, [pageData, pageNumber, deviceType, orientation, mode, toggleState, fontSizeClass]);
 
