@@ -1464,7 +1464,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     }, [revealNextHidden]);
 
     // Line Height
-    const lineHeightVal = deviceType === 'desktop' ? '2.2' : '1.1'; // Standard QPC V2 Line height
+    // خُفّض ارتفاع السطر قليلاً للموبايل والتابلت (من 1.1 إلى 1.05) ليتسع
+    // ارتفاع الأسطر الخمسة عشر داخل الحاوية دون قص السطر الأخير.
+    // قيمة الكمبيوتر (2.2) لم تُمَس.
+    const lineHeightVal = deviceType === 'desktop' ? '2.2' : '1.05'; // Standard QPC V2 Line height
 
     const fontName = `p${pageNumber}-v2`;
 
