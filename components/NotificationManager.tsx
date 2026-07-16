@@ -115,27 +115,10 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     const [dontShowAgain, setDontShowAgain] = useState(false);
     // const [showTokenPopup, setShowTokenPopup] = useState(false);
 
-    // ⭐ فحص صلاحية المنبه الدقيق (SCHEDULE_EXACT_ALARM) لأندرويد 12+ (API 31+)
-    // أندرويد 12+ يتطلب منح هذه الصلاحية يدوياً من الإعدادات
+    // ⭐ فحص صلاحية المنبه الدقيق — معطّل بعد إزالة إذن SCHEDULE_EXACT_ALARM من AndroidManifest
+    // لتمرير مراجعة جوجل بلاي. الإشعارات تعمل الآن كإشعارات عادية عبر Capacitor بدون دقة الثانية،
+    // وهذا كافٍ لتذكير الورد. نُرجع true دائماً حتى لا تُفتح شاشة إعدادات المنبه بلا داعٍ.
     const checkExactAlarmPermission = async (): Promise<boolean> => {
-        if (!isNative) return true;
-        try {
-            const lnAny = LocalNotifications as any;
-            if (typeof lnAny.canScheduleExactAlarms === 'function') {
-                const result = await lnAny.canScheduleExactAlarms();
-                if (!result?.value) {
-                    console.warn('[NotifManager] ⚠️ صلاحية SCHEDULE_EXACT_ALARM غير ممنوحة، جاري فتح الإعدادات...');
-                    if (typeof lnAny.openAlarmSettings === 'function') {
-                        await lnAny.openAlarmSettings();
-                    }
-                    return false;
-                }
-                console.log('[NotifManager] ✅ صلاحية SCHEDULE_EXACT_ALARM ممنوحة');
-                return true;
-            }
-        } catch (e) {
-            console.warn('[NotifManager] ⚠️ تعذر فحص SCHEDULE_EXACT_ALARM:', e);
-        }
         return true;
     };
 

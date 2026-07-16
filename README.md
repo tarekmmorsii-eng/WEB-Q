@@ -322,10 +322,12 @@ refreshPermissionStatus() ← الزر يظهر "مُفعّل" تلقائياً 
 
 #### 1. صلاحيات AndroidManifest.xml
 تم إضافة الصلاحيات اللازمة:
-- `SCHEDULE_EXACT_ALARM` — جدولة إشعارات دقيقة المواعيد (البديل المقبول من Google Play؛ يُمنح من إعدادات الجهاز على Android 12+)
+- `POST_NOTIFICATIONS` — إظهار الإشعارات (Android 13+)
 - `WAKE_LOCK` — إيقاظ الجهاز عند وقت الإشعار
 - `RECEIVE_BOOT_COMPLETED` — إعادة جدولة الإشعارات بعد إعادة التشغيل
 - `VIBRATE` — تفعيل الاهتزاز
+
+ملاحظة: أُزيل إذنا المنبه الدقيق (USE_EXACT_ALARM و SCHEDULE_EXACT_ALARM) لتمرير مراجعة Google Play؛ الإشعارات تعمل الآن كإشعارات عادية دون دقة الثانية، وهذا كافٍ لتذكير الورد.
 
 #### 2. قنوات الإشعارات (Notification Channels)
 تم إنشاء قناتين مخصصتين:
