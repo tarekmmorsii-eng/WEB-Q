@@ -153,14 +153,8 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
             console.warn('[useAyahAudio] IndexedDB lookup failed, falling back:', err);
           }
 
-          // ─── Step 2: Not in cache → check network ─────────────────
-          if (!navigator.onLine) {
-              showError('لا يوجد إنترنت، وهذا الملف غير محمل مسبقاً');
-              resetPlayState();
-              resolve();
-              return;
-          }
-
+          // ─── Step 2: Not in cache → play from network ─────────────
+          // (لا نعتمد على navigator.onLine لأنها غير موثوقة على بعض الأجهزة)
           // Online: Play from network + cache in background
           preCacheAudio([globalAyahNumber], reciterID).catch(() => {});
           
@@ -196,11 +190,7 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
           audio.onerror = () => {
               console.warn(`[useAyahAudio] Audio error for ${url}`);
               resetPlayState();
-              if (!navigator.onLine) {
-                  showError('لا يوجد إنترنت، وهذا الملف غير محمل مسبقاً');
-              } else {
-                  showError('عذراً، تلاوة هذا القارئ غير متوفرة حالياً (خطأ في الرابط).');
-              }
+              showError('عذراً، تعذّر تشغيل التلاوة، تحقق من اتصالك بالإنترنت أو جرّب قارئاً آخر.');
               resolve();
           };
 
@@ -210,13 +200,7 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
           } catch (e) {
               console.log('[audio.play] failed or interrupted:', e);
               resetPlayState();
-              
-              if (!navigator.onLine) {
-                  showError('لا يوجد إنترنت، وهذا الملف غير محمل مسبقاً');
-              } else {
-                  showError('عذراً، تلاوة هذا القارئ غير متوفرة حالياً (خطأ في الرابط).');
-              }
-              
+              showError('عذراً، تعذّر تشغيل التلاوة، تحقق من اتصالك بالإنترنت أو جرّب قارئاً آخر.');
               resolve();
           }
       };

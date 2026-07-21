@@ -113,25 +113,30 @@ export function useWordByWordAudio() {
             console.warn('[useWordByWordAudio] IndexedDB lookup failed:', err);
         }
 
-        // ─── Step 2: Not in cache → check network ─────────────────
-        if (navigator.onLine) {
-            // Passive Caching: Fetch and cache in the background while playing online
-            preCacheWords([{ surah, ayah, word }]).catch(() => {});
+        // ─── Step 2: Not in cache → play from network ─────────────
+        // (لا نعتمد على navigator.onLine لأنها غير موثوقة على بعض الأجهزة،
+        //  بل نحاول دائماً ونعرض رسالة عامة عند الفشل الفعلي فقط)
+        // Passive Caching: Fetch and cache in the background while playing
+        preCacheWords([{ surah, ayah, word }]).catch(() => {});
 
-            // Online: play directly from network
-            const audio = new Audio(url);
-            audio.onended = () => setActiveWord(null);
-            audio.onerror = () => { setActiveWord(null); };
-            audioRef.current = audio;
-            setActiveWord({ surah, ayah, word });
-            audio.play().catch(() => setActiveWord(null));
-            return;
-        }
-
-        // Offline and not cached
-        window.dispatchEvent(new CustomEvent('showToast', {
-            detail: { message: 'هذا الصوت غير محمل — يحتاج اتصال بالإنترنت', type: 'error' }
-        }));
+        // Play directly from network
+        const audio = new Audio(url);
+        audio.onended = () => setActiveWord(null);
+        audio.onerror = () => {
+            setActiveWord(null);
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { message: 'عذراً، تعذّر تشغيل هذا الصوت، تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.', type: 'error' }
+            }));
+        };
+        audioRef.current = audio;
+        setActiveWord({ surah, ayah, word });
+        audio.play().catch(() => {
+            setActiveWord(null);
+            window.dispatchEvent(new CustomEvent('showToast', {
+                detail: { message: 'عذراً، تعذّر تشغيل هذا الصوت، تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.', type: 'error' }
+            }));
+        });
+        return;
     }, [stopAudio, preCacheWords]);
 
     return {
