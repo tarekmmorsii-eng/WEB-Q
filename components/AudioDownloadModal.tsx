@@ -164,14 +164,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
             const surahInfo = SURAHS.find(s => s.number === selectedSurah);
             if (!surahInfo) return;
 
-            // Guard: must have internet to download
-            if (!navigator.onLine) {
-                window.dispatchEvent(new CustomEvent('showToast', {
-                    detail: { message: t.noConnectionRetry, type: 'error' }
-                }));
-                return;
-            }
-
+            // (لا نعتمد على navigator.onLine لأنها غير موثوقة على بعض الأجهزة،
+            //  بل نحاول التحميل دائماً ونعرض رسالة عامة عند الفشل الفعلي فقط)
             let startGlobal = 1;
             for (let i = 0; i < selectedSurah - 1; i++) {
                 startGlobal += SURAHS[i].ayahCount;
@@ -244,12 +238,8 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
     };
 
     const handleDownloadWords = async (surahNumber: number) => {
-        if (!navigator.onLine) {
-            window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { message: t.noConnection, type: 'error' }
-            }));
-            return;
-        }
+        // (لا نعتمد على navigator.onLine لأنها غير موثوقة على بعض الأجهزة،
+        //  بل نحاول التحميل دائماً ونعرض رسالة عامة عند الفشل الفعلي فقط)
         setDownloadingWordsSurahs(prev => new Set(prev).add(surahNumber));
         setProgressPercent(0);
         setProgressMsg('');
