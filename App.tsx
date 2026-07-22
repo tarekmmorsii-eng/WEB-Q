@@ -1828,7 +1828,7 @@ export default function App() {
   useEffect(() => {
     // 2.5 Test Alarm Listener
     const handleTestAlarm = (e: any) => {
-      const { name, sound } = e.detail;
+      const { name, sound, playSound } = e.detail;
       const finalSound = sound || '/islamic_song.mp3';
 
       setActiveAlarm({
@@ -1855,15 +1855,18 @@ export default function App() {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate([500, 200, 500, 200, 500]);
       }
-      if (alarmAudioRef.current) {
-        alarmAudioRef.current.pause();
+      // الصوت مكتوم افتراضياً، لا يُسمع إلا إذا طُلب صراحة عبر حقل playSound في بيانات الحدث
+      if (playSound === true) {
+        if (alarmAudioRef.current) {
+          alarmAudioRef.current.pause();
+        }
+        alarmAudioRef.current = new Audio(finalSound);
+        alarmAudioRef.current.loop = true;
+        alarmAudioRef.current.play().catch(p => {
+          console.error("Alarm sound failed:", p);
+          setToastMessage(t.alarmError);
+        });
       }
-      alarmAudioRef.current = new Audio(finalSound);
-      alarmAudioRef.current.loop = true;
-      alarmAudioRef.current.play().catch(p => {
-        console.error("Alarm sound failed:", p);
-        setToastMessage(t.alarmError);
-      });
     };
     window.addEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
 
@@ -1933,16 +1936,19 @@ export default function App() {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
               navigator.vibrate([500, 200, 500, 200, 500]);
             }
-            if (alarmAudioRef.current) {
-              alarmAudioRef.current.pause();
+            // الصوت مكتوم افتراضياً، لا يُسمع إلا إذا طُلب صراحة عبر حقل playSound في بيانات الإشعار
+            if ((n as any).playSound === true) {
+              if (alarmAudioRef.current) {
+                alarmAudioRef.current.pause();
+              }
+              const soundPath = n.sound || '/islamic_song.mp3';
+              alarmAudioRef.current = new Audio(soundPath);
+              alarmAudioRef.current.loop = true;
+              alarmAudioRef.current.play().catch(e => {
+                console.error("Automatic alarm sound failed:", e);
+                setToastMessage(t.notificationError);
+              });
             }
-            const soundPath = n.sound || '/islamic_song.mp3';
-            alarmAudioRef.current = new Audio(soundPath);
-            alarmAudioRef.current.loop = true;
-            alarmAudioRef.current.play().catch(e => {
-              console.error("Automatic alarm sound failed:", e);
-              setToastMessage(t.notificationError);
-            });
           }
 
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Bell, BellOff, CheckCheck, Trash2, Info, Lightbulb, Sparkles, Gift, Megaphone, Settings } from 'lucide-react';
+import { X, Bell, BellOff, CheckCheck, Info, Lightbulb, Sparkles, Gift, Megaphone, Settings } from 'lucide-react';
 import clsx from 'clsx';
 import { InAppNotification } from '../hooks/useNotifications';
 import { formatRelativeTime, Language } from '../i18n/translations';
@@ -178,7 +178,7 @@ export default function InAppNotificationsModal({
                                 onClick={onClearAll}
                                 className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors"
                             >
-                                <Trash2 size={14} />
+                                <X size={14} />
                                 <span>{t.inAppNotifClearAll}</span>
                             </button>
                         )}
@@ -271,7 +271,7 @@ export default function InAppNotificationsModal({
                                             }}
                                             className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-all shrink-0 self-center"
                                         >
-                                            <Trash2 size={14} className="text-red-500" />
+                                            <X size={14} className="text-red-500" />
                                         </button>
                                     </div>
                                 </div>

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { X, Bell, BellOff, Trash2, CheckCheck, Clock } from 'lucide-react';
+import { X, Bell, BellOff, CheckCheck, Clock } from 'lucide-react';
 import { useNotificationStore } from '../hooks/useNotificationStore';
 import { Language, translations, formatRelativeTime } from '../i18n/translations';
 
@@ -100,7 +100,7 @@ export default function PushNotificationCenter({
               onClick={clearAll}
               className="flex items-center gap-1.5 text-xs font-medium text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
             >
-              <Trash2 size={14} />
+              <X size={14} />
               {t.pushNotifClearAll || 'حذف الكل'}
             </button>
           </div>
@@ -157,7 +157,7 @@ export default function PushNotificationCenter({
                       className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0"
                       title={t.pushNotifDelete || 'حذف'}
                     >
-                      <Trash2 size={14} className="text-red-400 hover:text-red-600" />
+                      <X size={14} className="text-red-400 hover:text-red-600" />
                     </button>
                   </div>
                 </div>
