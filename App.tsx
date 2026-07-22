@@ -1224,6 +1224,50 @@ export default function App() {
   const [snoozeDuration, setSnoozeDuration] = useState<number>(5);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // ⭐ إيقاف المنبه بالهز أو الضغط على أزرار الصوت (يعمل أثناء تشغيل الصوت فقط)
+  // مراجع ثابتة للمستمعين كي تتطابق عملية الإضافة مع عملية الإزالة
+  const shakeHandlerRef = useRef<(e: DeviceMotionEvent) => void>(() => {});
+  const buttonHandlerRef = useRef<() => void>(() => {});
+
+  // دالة موحّدة لإيقاف صوت المنبه: تُستدعى عند الهز أو زر الصوت أو الإيقاف اليدوي
+  const stopAlarmAudio = useCallback(() => {
+    if (alarmAudioRef.current) {
+      alarmAudioRef.current.pause();
+      alarmAudioRef.current.currentTime = 0;
+    }
+    setActiveAlarm(null);
+    // إزالة المستمعين عند توقف الصوت ليبقيا متوازنين مع عملية الإضافة
+    window.removeEventListener('devicemotion', shakeHandlerRef.current);
+    window.removeEventListener('stopAlarmSound', buttonHandlerRef.current);
+  }, []);
+
+  // تعريف سلوك المستمعين مرة واحدة (معالج الهز يحسب قوة التسارع، ومعالج الزر يوقف فوراً)
+  useEffect(() => {
+    shakeHandlerRef.current = (e: DeviceMotionEvent) => {
+      const acc = (e as any).accelerationIncludingGravity;
+      if (acc) {
+        const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+        if (magnitude > 25) {
+          stopAlarmAudio();
+        }
+      }
+    };
+    buttonHandlerRef.current = () => {
+      stopAlarmAudio();
+    };
+  }, [stopAlarmAudio]);
+
+  // تفعيل المستمعين عند بدء تشغيل صوت المنبه
+  const startAlarmListeners = useCallback(() => {
+    // طلب إذن مستشعر الحركة على الأنظمة التي تتطلب ذلك لتفعيل كشف الهز
+    const DMEvent = (window as any).DeviceMotionEvent;
+    if (DMEvent && typeof DMEvent.requestPermission === 'function') {
+      DMEvent.requestPermission().catch(() => {});
+    }
+    window.addEventListener('devicemotion', shakeHandlerRef.current as EventListener);
+    window.addEventListener('stopAlarmSound', buttonHandlerRef.current as EventListener);
+  }, []);
+
   // 4. Update State
   const [hasAppUpdate, setHasAppUpdate] = useState(false);
 
@@ -1250,16 +1294,12 @@ export default function App() {
   useEffect(() => {
     if (activeAlarm) {
       const timer = setTimeout(() => {
-        if (alarmAudioRef.current) {
-          alarmAudioRef.current.pause();
-          alarmAudioRef.current.currentTime = 0;
-        }
-        setActiveAlarm(null);
+        stopAlarmAudio();
       }, 59000); // 59 seconds as requested
 
       return () => clearTimeout(timer);
     }
-  }, [activeAlarm]);
+  }, [activeAlarm, stopAlarmAudio]);
 
   // State Ref to access current state inside the event listener without dependencies
   const stateRef = useRef({
@@ -1866,6 +1906,8 @@ export default function App() {
           console.error("Alarm sound failed:", p);
           setToastMessage(t.alarmError);
         });
+        // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
+        startAlarmListeners();
       }
     };
     window.addEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
@@ -1948,6 +1990,8 @@ export default function App() {
                 console.error("Automatic alarm sound failed:", e);
                 setToastMessage(t.notificationError);
               });
+              // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
+              startAlarmListeners();
             }
           }
 
@@ -3536,11 +3580,7 @@ export default function App() {
               {/* Stop Alarm Button - Large and prominent for mobile */}
               <button
                 onClick={() => {
-                  if (alarmAudioRef.current) {
-                    alarmAudioRef.current.pause();
-                    alarmAudioRef.current.currentTime = 0;
-                  }
-                  setActiveAlarm(null);
+                  stopAlarmAudio();
                 }}
                 style={{
                   backgroundColor: 'white',
@@ -3591,12 +3631,9 @@ export default function App() {
                 <button
                   onClick={async () => {
                     if (!activeAlarm) return;
-                    
-                    if (alarmAudioRef.current) {
-                      alarmAudioRef.current.pause();
-                      alarmAudioRef.current.currentTime = 0;
-                      alarmAudioRef.current = null;
-                    }
+
+                    // إيقاف الصوت وإزالة مستمعي الهز والأزرار
+                    stopAlarmAudio();
                     
                     const snoozeTime = new Date(Date.now() + snoozeDuration * 60000);
                     const snoozeYear = snoozeTime.getFullYear();

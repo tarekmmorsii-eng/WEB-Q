@@ -1,5 +1,6 @@
 package com.mushafalmurajaa.app;
 
+import android.view.KeyEvent;
 import com.getcapacitor.BridgeActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -17,5 +18,16 @@ public class MainActivity extends BridgeActivity {
                 controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
             }
         }
+    }
+
+    // التقاط أزرار رفع وخفض الصوت أثناء تشغيل المنبه لإرسال إشارة إيقاف الصوت
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (bridge != null && bridge.getWebView() != null) {
+                bridge.getWebView().evaluateJavascript("window.dispatchEvent(new Event('stopAlarmSound'))", null);
+            }
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }
