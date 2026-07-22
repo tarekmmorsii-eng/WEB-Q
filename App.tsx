@@ -71,13 +71,13 @@ import { usePushNotifications } from './hooks/usePushNotifications';
 // ⭐ المنبهات الافتراضية - تظهر للمستخدم الجديد عند أول تشغيل
 // name فارغ = يتم بناء العرض ديناميكياً من surahNumber + t.surahNames
 // 🔄 إصدار المنبهات - عند رفعه يتم مسح القديمة وإعادة الحقن تلقائياً
-const ALARMS_VERSION = 2;
+const ALARMS_VERSION = 3;
 
 const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'default-alarm-kahf',
     name: SURAHS.find(s => s.number === 18)?.name || 'الكهف',
-    isEnabled: true,
+    isEnabled: false,
     isAlarm: true,
     sound: '/islamic_song.mp3',
     type: 'weekly',
@@ -95,7 +95,7 @@ const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'default-alarm-mulk',
     name: SURAHS.find(s => s.number === 67)?.name || 'الملك',
-    isEnabled: true,
+    isEnabled: false,
     isAlarm: true,
     sound: '/islamic_song.mp3',
     type: 'daily',
@@ -113,7 +113,7 @@ const DEFAULT_ALARM_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'default-alarm-baqarah',
     name: SURAHS.find(s => s.number === 2)?.name || 'البقرة',
-    isEnabled: true,
+    isEnabled: false,
     isAlarm: true,
     sound: '/islamic_song.mp3',
     type: 'weekly',
