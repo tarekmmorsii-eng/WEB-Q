@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Bell, BellOff, Trash2, Clock, Music, Play, Pause, Upload, Calendar } from 'lucide-react';
+import { X, Plus, Bell, BellOff, Clock, Music, Play, Pause, Upload, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 import { NotificationItem } from '../types';
 import { SURAHS } from '../constants/surahData';
@@ -755,7 +755,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         title={t.deleteNotification}
                                                         className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                                     >
-                                                        <Trash2 size={20} />
+                                                        <X size={20} />
                                                     </button>
                                                 </div>
                                             </div>
@@ -1322,7 +1322,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onClick={() => handleRemoveTime(index)}
                                                     className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                                 >
-                                                    <Trash2 size={20} />
+                                                    <X size={20} />
                                                 </button>
                                             )}
                                         </div>
