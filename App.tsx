@@ -1247,7 +1247,7 @@ export default function App() {
       const acc = (e as any).accelerationIncludingGravity;
       if (acc) {
         const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
-        if (magnitude > 25) {
+        if (magnitude > 15) {
           stopAlarmAudio();
         }
       }
