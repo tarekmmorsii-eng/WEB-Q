@@ -3160,6 +3160,7 @@ export default function App() {
           onOpenShare={handleOpenShare}
           onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
           onOpenNotifications={handleOpenNotifications}
+          onOpenSearch={() => setIsSearchOpen(true)}
           notificationUnreadCount={totalUnread}
         />
 

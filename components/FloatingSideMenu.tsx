@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, HelpCircle, Share2, PlayCircle, Headphones, Bell } from 'lucide-react';
+import { Download, HelpCircle, Share2, PlayCircle, Headphones, Bell, Search } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
 import { useOfflineManager } from '../hooks/useOfflineManager';
@@ -15,6 +15,7 @@ interface FloatingSideMenuProps {
     onOpenShare?: () => void;
     onOpenAudioDownload?: () => void;
     onOpenNotifications?: () => void;
+    onOpenSearch?: () => void;
     notificationUnreadCount?: number;
     isVisible?: boolean;
     isEnabled?: boolean;
@@ -30,6 +31,7 @@ export default function FloatingSideMenu({
     onOpenShare,
     onOpenAudioDownload,
     onOpenNotifications,
+    onOpenSearch,
     notificationUnreadCount = 0,
     isVisible = true,
     isEnabled = true,
@@ -118,6 +120,16 @@ export default function FloatingSideMenu({
                 title={t.shareApp}
             >
                 <Share2 size={24} />
+            </button>
+
+            {/* Search Button */}
+            <button
+                onClick={onOpenSearch}
+                disabled={!isVisible}
+                className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r border-emerald-500/30' : 'rounded-l-xl border-y border-l border-emerald-500/30'} flex items-center justify-center bg-[var(--bg-card)] text-emerald-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14`}
+                title={t.search}
+            >
+                <Search size={24} />
             </button>
         </div>
     );
