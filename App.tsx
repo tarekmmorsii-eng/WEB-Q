@@ -1895,20 +1895,18 @@ export default function App() {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate([500, 200, 500, 200, 500]);
       }
-      // الصوت مكتوم افتراضياً، لا يُسمع إلا إذا طُلب صراحة عبر حقل playSound في بيانات الحدث
-      if (playSound === true) {
-        if (alarmAudioRef.current) {
-          alarmAudioRef.current.pause();
-        }
-        alarmAudioRef.current = new Audio(finalSound);
-        alarmAudioRef.current.loop = true;
-        alarmAudioRef.current.play().catch(p => {
-          console.error("Alarm sound failed:", p);
-          setToastMessage(t.alarmError);
-        });
-        // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
-        startAlarmListeners();
+      // تشغيل صوت منبه التجربة دائماً عند انطلاقه (أُزيلت بوابة playSound التي كتمته بالخطأ)
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.pause();
       }
+      alarmAudioRef.current = new Audio(finalSound);
+      alarmAudioRef.current.loop = true;
+      alarmAudioRef.current.play().catch(p => {
+        console.error("Alarm sound failed:", p);
+        setToastMessage(t.alarmError);
+      });
+      // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
+      startAlarmListeners();
     };
     window.addEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
 
@@ -1978,21 +1976,19 @@ export default function App() {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
               navigator.vibrate([500, 200, 500, 200, 500]);
             }
-            // الصوت مكتوم افتراضياً، لا يُسمع إلا إذا طُلب صراحة عبر حقل playSound في بيانات الإشعار
-            if ((n as any).playSound === true) {
-              if (alarmAudioRef.current) {
-                alarmAudioRef.current.pause();
-              }
-              const soundPath = n.sound || '/islamic_song.mp3';
-              alarmAudioRef.current = new Audio(soundPath);
-              alarmAudioRef.current.loop = true;
-              alarmAudioRef.current.play().catch(e => {
-                console.error("Automatic alarm sound failed:", e);
-                setToastMessage(t.notificationError);
-              });
-              // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
-              startAlarmListeners();
+            // تشغيل صوت المنبه المجدول دائماً عند انطلاقه (أُزيلت بوابة playSound التي كتمته بالخطأ)
+            if (alarmAudioRef.current) {
+              alarmAudioRef.current.pause();
             }
+            const soundPath = n.sound || '/islamic_song.mp3';
+            alarmAudioRef.current = new Audio(soundPath);
+            alarmAudioRef.current.loop = true;
+            alarmAudioRef.current.play().catch(e => {
+              console.error("Automatic alarm sound failed:", e);
+              setToastMessage(t.notificationError);
+            });
+            // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
+            startAlarmListeners();
           }
 
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
