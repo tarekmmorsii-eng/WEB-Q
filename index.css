@@ -67,7 +67,7 @@ textarea,
 
   /* Explicit Large Desktop Overrides */
   .mushaf-page-qpc .qpc-v2-text {
-    line-height: calc((100vh - 100px) / 15) !important;
+    line-height: calc((100vh - 160px) / 15) !important;
   }
 }
 
@@ -167,7 +167,12 @@ div[data-atlas] {
     /* Start from top */
     align-items: center !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    /* سقف للارتفاع يساوي ارتفاع الشاشة، مع تمرير رأسي بدل إخفاء
+       التجاوز، حتى لا تُقتطع الأسطر الأخيرة أبداً. التمرير الرأسي
+       آمن ولا يتعارض مع السحب الأفقي للتنقل بين الصفحات. */
+    max-height: 100vh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
   }
 
   [class*="quran-text-"],
@@ -181,9 +186,12 @@ div[data-atlas] {
     font-size: clamp(1.6rem, 2.2vw, 2.2rem);
     font-weight: bold !important;
 
-    /* Line Locking Calculation: (100vh - 100px) / 15 lines */
-    line-height: calc((100vh - 100px) / 15) !important;
-    height: calc((100vh - 100px) / 15) !important;
+    /* Line Locking Calculation: (100vh - 160px) / 15 lines
+       زيادة الهامن المخصوم من 100px إلى 160px لترك مساحة كافية
+       لرأس السورة وتذييل رقم الصفحة والهوامش، حتى لا تُقتطع
+       الأسطر الأخيرة على الكمبيوتر (خاصةً على متصفح كروم). */
+    line-height: calc((100vh - 160px) / 15) !important;
+    height: calc((100vh - 160px) / 15) !important;
 
     /* Vertical Centering without Stretch */
     display: flex !important;
