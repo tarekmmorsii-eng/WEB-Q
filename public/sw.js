@@ -5,7 +5,7 @@
  * 2. App Core -> Network First (Always fresh + Offline fallback)
  */
 
-const CACHE_VERSION = 'v2026-07-05-fonts-fix'; // دمج Firebase Messaging داخل Service Worker الموحد
+const CACHE_VERSION = 'v2026-07-27-perf-no-precache'; // إزالة التخزين المسبق الضخم فور الإقلاع (أكبر سبب لبطء الفتح)
 const FONTS_CACHE = `quran-fonts-${CACHE_VERSION}`;
 const CORE_CACHE = `quran-core-${CACHE_VERSION}`;
 
@@ -253,19 +253,16 @@ self.addEventListener('activate', (event) => {
                     })
                 );
             })
-        ]).then(() => {
-            // Background silent download check on activation
-            // Delayed by 15 seconds to prevent network clogging on initial load
-            if (!currentDownloadPromise) {
-                setTimeout(() => {
-                    if (!currentDownloadPromise) {
-                        currentDownloadPromise = cacheAllDataSafely(false).finally(() => {
-                            currentDownloadPromise = null;
-                        });
-                    }
-                }, 15000);
-            }
-        })
+        ])
+        // NOTE: this previously auto-triggered a background precache of all 604
+        // pages (~130MB: 95MB fonts + 37MB JSON) 15s after activation. On the
+        // Android app that copies the whole bundle from APK assets into Cache
+        // Storage on every launch, hammering disk I/O for minutes and freezing
+        // the UI (the worst startup slowdown). Removed: on native the assets are
+        // already local and served directly via Capacitor, so the precache was
+        // pure waste. Pages are still cached on-demand as the user visits them
+        // (fetch handler below), and a full offline download remains available
+        // via the manual CACHE_ALL_FONTS message.
     );
 });
 
