@@ -1216,69 +1216,78 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const container = linesContainerRef.current;
         if (!container) return;
 
-        // 1. Remove old shadow overlays
+        // 1. Remove old shadow overlays (single query, batch removal)
         container.querySelectorAll('.ayah-shadow-overlay').forEach(el => el.remove());
 
-        // 2. Only active in ayah hiding modes (unified shadow) + TOGGLE_FIRST_WORD state 1
+        // 2. Only active in ayah hiding modes (unified shadow)
         if (mode !== ViewMode.HIDE_ALL_AYAHS && mode !== ViewMode.HIDE_RANDOM_AYAHS && !(mode === ViewMode.TOGGLE_FIRST_WORD) && !(mode === ViewMode.TOGGLE_LAST_WORD)) return;
 
-        // 3. Get all unique ayahs on this page
-        const ayahKeys = Array.from(ayahWordMap.keys());
+        // ===== PERF: read ALL layout once, then write. The old code ran a triple-
+        // nested loop (line × ayah × word) with a querySelectorAll PER (line,ayah)
+        // pair AND interleaved reads (offsetLeft/offsetWidth/clientWidth) with
+        // writes (appendChild) — classic layout thrashing that forced a synchronous
+        // reflow on EVERY iteration, across all 5 mounted pages = the multi-second
+        // freeze on every hide/show tap. PHASE 1 reads once; PHASE 2 writes once.
+        const groups = new Map<HTMLElement, Map<string, { minLeft: number; maxRight: number }>>();
+        const lineWidths = new Map<HTMLElement, number>();
 
-        // 4. Process each line
-        const lineEls = container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]');
+        // Bounding box is computed in LAYOUT coords (offsetLeft/offsetWidth) so the
+        // shadow shares the words' untransformed coordinate space and stays aligned
+        // even when the line has a scaleX auto-fit transform (getBoundingClientRect
+        // would double-apply the scale).
+        const hiddenWordEls = container.querySelectorAll<HTMLElement>('[data-reveal-key]');
+        for (let i = 0; i < hiddenWordEls.length; i++) {
+            const wordEl = hiddenWordEls[i];
+            const revealKey = wordEl.getAttribute('data-reveal-key');
+            // revealed words are not hidden → skip
+            if (!revealKey || revealedIndices.has(revealKey)) continue;
 
-        lineEls.forEach((lineEl) => {
-            const line = lineEl as HTMLElement;
-            line.style.position = 'relative';
+            const lineEl = wordEl.closest('.qpc-v2-line') as HTMLElement | null;
+            if (!lineEl) continue;
 
-            ayahKeys.forEach((key) => {
-                const [surahStr, ayahStr] = key.split('-');
+            // READ once per line (no writes yet → no forced reflow)
+            if (!lineWidths.has(lineEl)) {
+                lineWidths.set(lineEl, lineEl.clientWidth);
+            }
 
-                // Find hidden words of this ayah in this line
-                const wordEls = line.querySelectorAll<HTMLElement>(`[data-word-surah="${surahStr}"][data-word-ayah="${ayahStr}"]`);
+            // READ word layout (batched)
+            const l = wordEl.offsetLeft;
+            const r = l + wordEl.offsetWidth;
 
-                if (wordEls.length === 0) return;
+            const surah = wordEl.getAttribute('data-word-surah');
+            const ayah = wordEl.getAttribute('data-word-ayah');
+            const ayahKey = `${surah}-${ayah}`;
 
-                // Get ayah info for reveal state checking
-                const info = ayahWordMap.get(key);
-                if (!info || info.revealKeys.length === 0) return;
+            let lineMap = groups.get(lineEl);
+            if (!lineMap) { lineMap = new Map(); groups.set(lineEl, lineMap); }
+            let box = lineMap.get(ayahKey);
+            if (!box) { box = { minLeft: Infinity, maxRight: -Infinity }; lineMap.set(ayahKey, box); }
+            if (l < box.minLeft) box.minLeft = l;
+            if (r > box.maxRight) box.maxRight = r;
+        }
 
+        // ===== PHASE 2 (WRITE): create + append every overlay AFTER all reads,
+        // so the browser invalidates layout once for the whole batch, not per word.
+        // Mark every ayah/basmallah line as the positioning context (relative) —
+        // matches the original behavior for ALL lines, not only those with overlays.
+        container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]').forEach(lineEl => {
+            (lineEl as HTMLElement).style.position = 'relative';
+        });
+        groups.forEach((lineMap, lineEl) => {
+            const lineWidth = lineWidths.get(lineEl) || lineEl.clientWidth;
+
+            lineMap.forEach((box, ayahKey) => {
                 // Check if ALL words in this ayah are fully revealed → skip entirely
+                const info = ayahWordMap.get(ayahKey);
+                if (!info || info.revealKeys.length === 0) return;
                 const allRevealed = info.revealKeys.every((rk: string) => revealedIndices.has(rk));
                 if (allRevealed) return;
 
-                // Filter to only HIDDEN (unrevealed) word elements using data-reveal-key
-                const hiddenWordEls: HTMLElement[] = [];
-                wordEls.forEach(wordEl => {
-                    const revealKey = wordEl.getAttribute('data-reveal-key');
-                    // If word has a revealKey and it's NOT revealed yet → it's hidden
-                    if (revealKey && !revealedIndices.has(revealKey)) {
-                        hiddenWordEls.push(wordEl);
-                    }
-                });
+                if (box.minLeft === Infinity) return;
 
-                if (hiddenWordEls.length === 0) return;
+                const finalLeft = Math.max(0, box.minLeft - 3);
+                const finalRight = Math.min(lineWidth, box.maxRight + 3);
 
-                // Calculate bounding box in LAYOUT coords (offsetLeft/offsetWidth)
-                // so the shadow shares the words' untransformed coordinate space
-                // and stays aligned even when the line has a scaleX auto-fit
-                // transform (getBoundingClientRect would double-apply the scale).
-                let minLeft = Infinity, maxRight = -Infinity;
-
-                hiddenWordEls.forEach(wordEl => {
-                    const l = wordEl.offsetLeft;
-                    const r = l + wordEl.offsetWidth;
-                    minLeft = Math.min(minLeft, l);
-                    maxRight = Math.max(maxRight, r);
-                });
-
-                if (minLeft === Infinity) return;
-
-                const finalLeft = Math.max(0, minLeft - 3);
-                const finalRight = Math.min(line.clientWidth, maxRight + 3);
-
-                // Create overlay
                 const overlay = document.createElement('div');
                 overlay.className = 'ayah-shadow-overlay';
                 overlay.style.position = 'absolute';
@@ -1292,7 +1301,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 overlay.style.zIndex = '5';
                 overlay.style.pointerEvents = 'none';
 
-                line.appendChild(overlay);
+                lineEl.appendChild(overlay);
             });
         });
     }, [mode, pageData, revealedIndices, isDarkMode, toggleState, deviceType, orientation, ayahWordMap, randomMasks]);
@@ -1554,12 +1563,16 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         let fitScheduled = false;    // guard: at most one rAF fit per frame
         let needsRefit = false;      // a trigger fired mid-flight → one more pass
 
-        // Fit-cache key: the fit result is a pure function of (page + deviceType
-        // + orientation + fontSize + viewMode) once this page's font is decoded.
-        // A change in any GLOBAL setting invalidates the whole cache; the page
-        // number is the natural varying key. Resolved once per effect instance so
-        // the (possibly re-scheduled) fit reads a stable key.
-        const settingsKey = `${deviceType}|${orientation}|${fontSizeClass}|${mode}`;
+        // Fit-cache key: the fit result depends on (page + deviceType + orientation
+        // + fontSize). It does NOT depend on viewMode: hiding only turns words
+        // transparent / overlays an absolute-positioned shadow, neither of which
+        // changes the natural width of a line (shadow overlays are skipped in the
+        // width sum below). So switching hide modes must NOT invalidate the cache —
+        // the old key forced a cold re-measure on all 5 mounted pages on every mode
+        // tap (the multi-second freeze). The page number is the natural varying key.
+        // Resolved once per effect instance so the (possibly re-scheduled) fit
+        // reads a stable key.
+        const settingsKey = `${deviceType}|${orientation}|${fontSizeClass}`;
         if (fitCacheGen !== settingsKey) {
             fitCacheGen = settingsKey;
             clearFitCache();
@@ -1967,7 +1980,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 width: isNativeApp && (deviceType === 'mobile' || deviceType === 'tablet') ? '96%' : '100%'
             }}>
                 {pageData.lines.map((line, idx) => (
-                    <div key={`${idx}-${mode}-${toggleState}`}
+                    <div key={`line-${idx}`}
                         data-line-type={line.lineType}
                         data-is-centered={line.isCentered}
                         data-line-index={idx}
