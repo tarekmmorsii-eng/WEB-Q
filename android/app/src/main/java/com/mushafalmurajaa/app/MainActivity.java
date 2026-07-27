@@ -1,5 +1,6 @@
 package com.mushafalmurajaa.app;
 
+import android.os.Bundle;
 import android.view.KeyEvent;
 import com.getcapacitor.BridgeActivity;
 import androidx.core.view.WindowCompat;
@@ -7,6 +8,13 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        // تسجيل مكوّن التحكم بخدمة صوت المنبه قبل تهيئة الجسر
+        registerPlugin(AlarmSoundPlugin.class);
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);

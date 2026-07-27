@@ -249,7 +249,10 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
-                            surah: notification.metadata?.surahNumber
+                            surah: notification.metadata?.surahNumber,
+                            isAlarm: notification.isAlarm,
+                            sound: notification.sound || 'islamic_song',
+                            name: notification.name
                         },
                         autoCancel: !notification.isAlarm,
                         ongoing: false,
@@ -282,7 +285,10 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
-                            surah: notification.metadata?.surahNumber
+                            surah: notification.metadata?.surahNumber,
+                            isAlarm: notification.isAlarm,
+                            sound: notification.sound || 'islamic_song',
+                            name: notification.name
                         },
                         autoCancel: !notification.isAlarm,
                         ongoing: false,
@@ -313,7 +319,10 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         extra: {
                             page: notification.metadata?.startPage || notification.metadata?.page,
                             ayah: notification.metadata?.startAyah,
-                            surah: notification.metadata?.surahNumber
+                            surah: notification.metadata?.surahNumber,
+                            isAlarm: notification.isAlarm,
+                            sound: notification.sound || 'islamic_song',
+                            name: notification.name
                         },
                         autoCancel: !notification.isAlarm,
                         ongoing: false,

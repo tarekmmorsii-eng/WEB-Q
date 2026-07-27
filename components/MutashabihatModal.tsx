@@ -365,7 +365,7 @@ export default function MutashabihatModal({
             style={{ fontFamily: "'Almarai', sans-serif" }}
         >
             <div
-                className="w-full max-w-3xl rounded-2xl shadow-2xl border border-[var(--border-primary)] p-6 relative animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto bg-[var(--bg-card)]"
+                className="w-full max-w-3xl rounded-2xl shadow-2xl border border-[var(--border-primary)] p-6 relative animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-x-hidden overflow-y-auto bg-[var(--bg-card)]"
             >
                 {/* Close Button */}
                 <button
@@ -398,7 +398,7 @@ export default function MutashabihatModal({
 
                 {/* Source Ayah */}
                 <div className="mb-6 p-5 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl shadow-md">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                         <span className="text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-600/10 px-3 py-1 rounded-full">
                             📍 {t.sourceVerse}
                         </span>
@@ -465,57 +465,55 @@ export default function MutashabihatModal({
                 {(() => {
                     const displayMutashabiha = activeMutashabiha || mutashabiha;
                     return (
-                        <div className="flex bg-[var(--bg-secondary)] p-1.5 rounded-2xl mb-6 shadow-inner">
+                        <div className="flex bg-[var(--bg-secondary)] p-1.5 rounded-2xl mb-6 shadow-inner overflow-hidden gap-1">
                             <button
                                 onClick={() => setActiveTab('all')}
                                 className={clsx(
-                                    "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                                    "flex-1 min-w-0 py-2 px-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 overflow-hidden",
                                     activeTab === 'all'
                                         ? "bg-[var(--bg-card)] text-amber-600 dark:text-amber-400 shadow-sm"
                                         : "text-[var(--text-primary)] opacity-50 hover:bg-[var(--bg-card)] hover:bg-opacity-50"
                                 )}
                             >
-                                <span>🔗</span>
-                                {t.all}
-                                <span className="text-[10px] bg-[var(--bg-primary)] opacity-20 px-1.5 py-0.5 rounded-full">
+                                <span className="shrink-0">🔗</span>
+                                <span className="flex-1 min-w-0 text-center leading-tight">{t.all}</span>
+                                <span className="shrink-0 text-[9px] bg-[var(--bg-primary)] opacity-20 px-1 py-0.5 rounded-full min-w-[16px] text-center">
                                     {displayMutashabiha.similarAyahs.length}
                                 </span>
                             </button>
                             <button
                                 onClick={() => setActiveTab('inside')}
                                 className={clsx(
-                                    "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
+                                    "flex-1 min-w-0 py-1.5 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 overflow-hidden",
                                     activeTab === 'inside'
                                         ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
                                         : "text-[var(--text-primary)] opacity-50 hover:bg-[var(--bg-card)] hover:bg-opacity-50"
                                 )}
                             >
-                                <div className="flex items-center gap-2">
-                                    <MutashabihatIcon showGreenLine size="w-6 h-6" language={language} />
-                                    {t.insideSurah}
-                                    <span className="text-[10px] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded-full">
+                                <span className="flex-1 min-w-0 text-center leading-tight w-full">{t.insideSurah}</span>
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <span className="text-[9px] bg-[var(--bg-secondary)] px-1 py-0.5 rounded-full min-w-[14px] text-center">
                                         {displayMutashabiha.similarAyahs.filter(a => a.surahNumber === displayMutashabiha.sourceAyah.surahNumber).length}
                                     </span>
+                                    <MutashabihatIcon showGreenLine size="w-5 h-5" language={language} />
                                 </div>
-                                <div className="w-12 h-1 rounded-full bg-green-500 opacity-80" />
                             </button>
                             <button
                                 onClick={() => setActiveTab('outside')}
                                 className={clsx(
-                                    "flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5",
+                                    "flex-1 min-w-0 py-1.5 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 overflow-hidden",
                                     activeTab === 'outside'
                                         ? "bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm"
                                         : "text-[var(--text-primary)] opacity-50 hover:bg-[var(--bg-card)] hover:bg-opacity-50"
                                 )}
                             >
-                                <div className="flex items-center gap-2">
-                                    <MutashabihatIcon showRedLine size="w-6 h-6" language={language} />
-                                    {t.outsideSurah}
-                                    <span className="text-[10px] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded-full">
+                                <span className="flex-1 min-w-0 text-center leading-tight w-full">{t.outsideSurah}</span>
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <span className="text-[9px] bg-[var(--bg-secondary)] px-1 py-0.5 rounded-full min-w-[14px] text-center">
                                         {displayMutashabiha.similarAyahs.filter(a => a.surahNumber !== displayMutashabiha.sourceAyah.surahNumber).length}
                                     </span>
+                                    <MutashabihatIcon showRedLine size="w-5 h-5" language={language} />
                                 </div>
-                                <div className="w-12 h-1 rounded-full bg-red-500 opacity-80" />
                             </button>
                         </div>
                     );
@@ -603,25 +601,25 @@ export default function MutashabihatModal({
                                             }}
                                         >
                                             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                                                <div className="flex items-center gap-3 flex-1">
-                                                    <span className="bg-[var(--bg-card)] rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-[var(--text-primary)]">
+                                                <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
+                                                    <span className="bg-[var(--bg-card)] rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-[var(--text-primary)] shrink-0">
                                                         {globalIdx + 1}
                                                     </span>
 
-                                                    <p className="font-bold text-[var(--text-primary)]" dir="rtl">
+                                                    <p className="font-bold text-[var(--text-primary)] min-w-0" dir="rtl">
                                                         {similarSurahName} - {t.verse} {ayah.ayahNumber}
                                                     </p>
 
                                                     <button
                                                         onClick={() => onOpenInIndex?.(ayah.surahNumber, ayah.ayahNumber)}
-                                                        className="text-[10px] bg-[var(--bg-card)] hover:bg-[var(--bg-primary)] hover:bg-opacity-10 text-[var(--text-primary)] opacity-70 px-3 py-1 rounded-full transition-all border border-[var(--border-primary)] shadow-sm active:scale-95 flex items-center gap-1"
+                                                        className="text-[10px] bg-[var(--bg-card)] hover:bg-[var(--bg-primary)] hover:bg-opacity-10 text-[var(--text-primary)] opacity-70 px-3 py-1 rounded-full transition-all border border-[var(--border-primary)] shadow-sm active:scale-95 flex items-center gap-1 shrink-0"
                                                     >
                                                         <MutashabihatIcon showGreenLine showRedLine size="w-3 h-3" language={language} />
                                                         {t.openInIndex}
                                                     </button>
                                                     <button
                                                         onClick={() => onNavigateToAyah?.(ayah.surahNumber, ayah.ayahNumber)}
-                                                        className="text-xs bg-[var(--bg-card)] hover:bg-amber-100 dark:hover:bg-amber-900/40 text-[var(--text-primary)] px-3 py-1 rounded-full transition-all border border-[var(--border-primary)] shadow-sm active:scale-95"
+                                                        className="text-xs bg-[var(--bg-card)] hover:bg-amber-100 dark:hover:bg-amber-900/40 text-[var(--text-primary)] px-3 py-1 rounded-full transition-all border border-[var(--border-primary)] shadow-sm active:scale-95 shrink-0"
                                                     >
                                                         {t.goAction}
                                                     </button>
