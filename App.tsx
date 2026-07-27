@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import AlarmSound from './src/plugins/AlarmSound';
 import { Badge } from '@capawesome/capacitor-badge';
 const isNative = Capacitor.isNativePlatform();
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
@@ -996,7 +997,7 @@ export default function App() {
         }
       });
 
-      // ⭐ Task 2: تفعيل العداد عند وصول الإشعار والتطبيق مفتوح
+      // ⭐ Task 2: تفعيل العداد عند وصول الإشعار والتطبيق مفتوح + تشغيل خدمة الصوت للمنبهات
       const receiveListener = LocalNotifications.addListener('localNotificationReceived', (notification) => {
         // إضافة الإشعار للسجل ليزيد العداد unreadCount تلقائياً +1
         addInAppNotification({
@@ -1010,6 +1011,28 @@ export default function App() {
           ayahNumber: notification.extra?.startAyah || notification.extra?.ayah,
           data: notification.extra // نمرر كامل البيانات لضمان المرونة
         });
+
+        // 🔔 تشغيل خدمة الصوت الأصلية تلقائياً عند وصول منبه (يعمل في الخلفية أيضاً)
+        // هذا يضمن تشغيل الصوت العالي + الاهتزاز + كشف الهز حتى لو كان التطبيق مغلقاً
+        const isAlarmNotif = notification.extra?.isAlarm === true || !!notification.extra?.sound;
+        if (isAlarmNotif) {
+          // بناء كائن المنبه النشط لعرض شاشة المنبه داخل التطبيق
+          setActiveAlarm({
+            id: String(notification.id || 'scheduled'),
+            name: notification.title || t.alarmMessage,
+            isEnabled: true,
+            isAlarm: true,
+            sound: notification.extra?.sound || '/islamic_song.mp3',
+            type: 'daily',
+            days: [],
+            times: [],
+            metadata: notification.extra || {}
+          });
+          // بدء خدمة الصوت الأصلية (تشغيل صوت عالٍ + اهتزاز + كشف هز في الخلفية)
+          AlarmSound.start().catch((e: any) => console.error('[AlarmService] Failed to start:', e));
+          // تفعيل كشف الهز على الويب أيضاً
+          startAlarmListeners();
+        }
         
         // تحديث البادج الخارجي
         Badge.isSupported().then(res => {
@@ -1231,6 +1254,9 @@ export default function App() {
 
   // دالة موحّدة لإيقاف صوت المنبه: تُستدعى عند الهز أو زر الصوت أو الإيقاف اليدوي
   const stopAlarmAudio = useCallback(() => {
+    if (Capacitor.isNativePlatform()) {
+      AlarmSound.stop().catch(() => {});
+    }
     if (alarmAudioRef.current) {
       alarmAudioRef.current.pause();
       alarmAudioRef.current.currentTime = 0;
@@ -1895,17 +1921,22 @@ export default function App() {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate([500, 200, 500, 200, 500]);
       }
-      // تشغيل صوت منبه التجربة دائماً عند انطلاقه (أُزيلت بوابة playSound التي كتمته بالخطأ)
-      if (alarmAudioRef.current) {
-        alarmAudioRef.current.pause();
+      // تشغيل صوت منبه التجربة: على الأندرويد نستخدم خدمة أصلية تعمل في الخلفية
+      // وتكشف الهز، وعلى الويب نستخدم عنصر الصوت العادي
+      if (Capacitor.isNativePlatform()) {
+        AlarmSound.start().catch(() => {});
+      } else {
+        if (alarmAudioRef.current) {
+          alarmAudioRef.current.pause();
+        }
+        alarmAudioRef.current = new Audio(finalSound);
+        alarmAudioRef.current.loop = true;
+        alarmAudioRef.current.play().catch(p => {
+          console.error("Alarm sound failed:", p);
+          setToastMessage(t.alarmError);
+        });
       }
-      alarmAudioRef.current = new Audio(finalSound);
-      alarmAudioRef.current.loop = true;
-      alarmAudioRef.current.play().catch(p => {
-        console.error("Alarm sound failed:", p);
-        setToastMessage(t.alarmError);
-      });
-      // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
+      // تفعيل كشف الهز (ويب) والاستماع لإشارة أزرار الصوت (واجهة الأندرويد)
       startAlarmListeners();
     };
     window.addEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
@@ -1976,18 +2007,23 @@ export default function App() {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
               navigator.vibrate([500, 200, 500, 200, 500]);
             }
-            // تشغيل صوت المنبه المجدول دائماً عند انطلاقه (أُزيلت بوابة playSound التي كتمته بالخطأ)
-            if (alarmAudioRef.current) {
-              alarmAudioRef.current.pause();
+            // تشغيل صوت المنبه المجدول: على الأندرويد نستخدم خدمة أصلية تعمل في الخلفية
+            // وتكشف الهز، وعلى الويب نستخدم عنصر الصوت العادي
+            if (Capacitor.isNativePlatform()) {
+              AlarmSound.start().catch(() => {});
+            } else {
+              if (alarmAudioRef.current) {
+                alarmAudioRef.current.pause();
+              }
+              const soundPath = n.sound || '/islamic_song.mp3';
+              alarmAudioRef.current = new Audio(soundPath);
+              alarmAudioRef.current.loop = true;
+              alarmAudioRef.current.play().catch(e => {
+                console.error("Automatic alarm sound failed:", e);
+                setToastMessage(t.notificationError);
+              });
             }
-            const soundPath = n.sound || '/islamic_song.mp3';
-            alarmAudioRef.current = new Audio(soundPath);
-            alarmAudioRef.current.loop = true;
-            alarmAudioRef.current.play().catch(e => {
-              console.error("Automatic alarm sound failed:", e);
-              setToastMessage(t.notificationError);
-            });
-            // تفعيل كشف الهز والاستماع لإشارة أزرار الصوت أثناء تشغيل المنبه
+            // تفعيل كشف الهز (ويب) والاستماع لإشارة أزرار الصوت (واجهة الأندرويد)
             startAlarmListeners();
           }
 
@@ -2766,6 +2802,7 @@ export default function App() {
 
         {showSplash && (
           <SplashScreen
+            ready={pageData !== null}
             onFinish={() => {
               setShowSplash(false);
               const langSelected = localStorage.getItem('quran_language_selected');
