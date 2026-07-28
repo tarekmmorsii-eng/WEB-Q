@@ -1032,11 +1032,6 @@ export default function App() {
           AlarmSound.start().catch((e: any) => console.error('[AlarmService] Failed to start:', e));
           // تفعيل كشف الهز على الويب أيضاً
           startAlarmListeners();
-          // إلغاء إشعار النظام فور استلامه: منع ازدواج الصوت المنخفض مع الخدمة العالية،
-          // ولأن شاشة المنبه داخل التطبيق وخدمة الصوت الأصلية تكفيان لتنبيه المستخدم
-          if (notification.id !== undefined && notification.id !== null) {
-            LocalNotifications.cancel({ notifications: [{ id: notification.id }] }).catch(() => {});
-          }
         }
         
         // تحديث البادج الخارجي
@@ -1290,17 +1285,13 @@ export default function App() {
 
   // تفعيل المستمعين عند بدء تشغيل صوت المنبه
   const startAlarmListeners = useCallback(() => {
-    // الاستماع لإشارة زرّي الصوت القادمة من الكود الأصلي (أندرويد)
-    window.addEventListener('stopAlarmSound', buttonHandlerRef.current as EventListener);
-    // كشف الهز عبر الويب فقط؛ فالخدمة الأصلية تتولّى كشف الهز على الجهاز الحقيقي بكفاءة أعلى
-    // وتجنّب الإغلاق الخاطئ للشاشة بسبب اهتزاز المنبه نفسه
-    if (!Capacitor.isNativePlatform()) {
-      const DMEvent = (window as any).DeviceMotionEvent;
-      if (DMEvent && typeof DMEvent.requestPermission === 'function') {
-        DMEvent.requestPermission().catch(() => {});
-      }
-      window.addEventListener('devicemotion', shakeHandlerRef.current as EventListener);
+    // طلب إذن مستشعر الحركة على الأنظمة التي تتطلب ذلك لتفعيل كشف الهز
+    const DMEvent = (window as any).DeviceMotionEvent;
+    if (DMEvent && typeof DMEvent.requestPermission === 'function') {
+      DMEvent.requestPermission().catch(() => {});
     }
+    window.addEventListener('devicemotion', shakeHandlerRef.current as EventListener);
+    window.addEventListener('stopAlarmSound', buttonHandlerRef.current as EventListener);
   }, []);
 
   // 4. Update State
@@ -2068,7 +2059,7 @@ export default function App() {
           if (timer) clearInterval(timer);
           timer = setInterval(() => {
             self.postMessage('tick');
-          }, 10000);
+          }, 30000);
         } else if (e.data === 'stop') {
           if (timer) clearInterval(timer);
         }
