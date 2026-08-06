@@ -254,15 +254,6 @@ self.addEventListener('activate', (event) => {
                 );
             })
         ])
-        // NOTE: this previously auto-triggered a background precache of all 604
-        // pages (~130MB: 95MB fonts + 37MB JSON) 15s after activation. On the
-        // Android app that copies the whole bundle from APK assets into Cache
-        // Storage on every launch, hammering disk I/O for minutes and freezing
-        // the UI (the worst startup slowdown). Removed: on native the assets are
-        // already local and served directly via Capacitor, so the precache was
-        // pure waste. Pages are still cached on-demand as the user visits them
-        // (fetch handler below), and a full offline download remains available
-        // via the manual CACHE_ALL_FONTS message.
     );
 });
 
