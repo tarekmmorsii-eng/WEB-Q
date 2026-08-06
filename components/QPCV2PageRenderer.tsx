@@ -380,6 +380,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     const { activeWord, playWordAudio } = useWordByWordAudio();
     const [revealedIndices, setRevealedIndices] = useState<Set<string>>(new Set());
     const [randomMasks, setRandomMasks] = useState<Set<string>>(new Set());
+    // تتبّع آخر عنصر (أو مجموعة) تم كشفه. التبديل ومنع ظهور القوائم يعملان عليه فقط،
+    // أما العناصر المكشوفة قبله فتُعامل كنص عادي وتسمح بمرور النقرة لإظهار القوائم.
+    const lastRevealedIdsRef = useRef<Set<string> | null>(null);
     const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>(() => {
         if (typeof window !== 'undefined') {
             const width = window.innerWidth;
@@ -1018,6 +1021,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const cacheKey = `${pageNumber}-${mode}-${toggleState}`;
         const cachedSet = (window as any).revealedCache[cacheKey];
 
+        // عند تغيير الصفحة أو الوضع أو حالة التبديل: لا يوجد "آخر عنصر مكشوف"
+        // في السياق الجديد، فأفرّغ التتبع ليبقى متسقاً مع إعادة ضبط قائمة المكشوف.
+        lastRevealedIdsRef.current = null;
+
         if (cachedSet) {
             setRevealedIndices(new Set(cachedSet));
         } else {
@@ -1034,6 +1041,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 delete (window as any).revealedCache[cacheKey];
             }
             setRevealedIndices(new Set());
+            lastRevealedIdsRef.current = null;
         }
         lastResetRef.current = resetCounter;
     }, [resetCounter, pageNumber, mode, toggleState]);
@@ -1169,7 +1177,19 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         }
         setRevealedIndices(prev => {
             const next = new Set(prev);
-            idsToReveal.forEach((revealId: string) => next.add(revealId));
+            // منطق التبديل (Toggle): إن كان العنصر المضغوط مكشوفاً أصلاً (موجوداً في القائمة)
+            // أعد إخفاءه بحذف نفس المجموعة، وإن كان مخفياً فاكشفه بإضافة المجموعة.
+            // هكذا: الضغطة الأولى تُظهر، والضغطة الثانية تُخفي مجدداً.
+            const shouldUnreveal = prev.has(id);
+            if (shouldUnreveal) {
+                idsToReveal.forEach((revealId: string) => next.delete(revealId));
+                // أُخفي العنصر الأخير المكشوف → فرّغ التتبع فلا يبقى عنصر "أخير" بعد الآن.
+                lastRevealedIdsRef.current = null;
+            } else {
+                idsToReveal.forEach((revealId: string) => next.add(revealId));
+                // كشف عنصر مخف�� → عيّنه (هو ومجموعته) كآخر عنصر مكشوف حالياً.
+                lastRevealedIdsRef.current = new Set(idsToReveal);
+            }
             return next;
         });
     }, [mode, toggleState, ayahWordMap, setRevealedIndices]);
@@ -1207,6 +1227,42 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 return false;
         }
     }, [mode, toggleState, pageData, revealedIndices, randomMasks, ayahWordMap, getId]);
+
+    // هل تنتمي الكلمة إلى نظام الإخفاء في الوضع الحالي؟
+    // نفس منطق isHidden لكن بتجاهل حالة الكشف (revealedIndices)، أي: هل ستكون مخفية
+    // لو لم يكشفها المستخدم بعد؟ تُستخدم لتمييز الكلمة المكشوفة التي تنتمي للنظام
+    // كي نوقف انتشار نقرتها (stopPropagation) ونعيدها للحالة المخفية عند الضغط عليها،
+    // مع ترك الكلمات الطبيعية الخارجة عن النظام تعمل كالسابق دون أي اعتراض.
+    const wouldBeHidden = useCallback((lineIdx: number, wordIdx: number) => {
+        const line = pageData?.lines[lineIdx];
+        const word = line?.words[wordIdx];
+        if (!word) return false;
+
+        switch (mode) {
+            case ViewMode.HIDE_ALL_AYAHS:
+                return true;
+            case ViewMode.HIDE_RANDOM_AYAHS:
+                if (word.surah && word.ayah) {
+                    const key = `${word.surah}-${word.ayah}`;
+                    return randomMasks.has(key);
+                }
+                return false;
+            case ViewMode.HIDE_RANDOM_WORDS:
+                return randomMasks.has(getId(lineIdx, wordIdx));
+            case ViewMode.TOGGLE_FIRST_WORD:
+                return toggleState === 0 ? word.word === 1 : word.word !== 1;
+            case ViewMode.TOGGLE_LAST_WORD:
+                if (word.surah && word.ayah) {
+                    const info = ayahWordMap.get(`${word.surah}-${word.ayah}`);
+                    if (!info) return false;
+                    const isLast = word.id === info.lastWordId;
+                    return toggleState === 0 ? isLast : !isLast;
+                }
+                return false;
+            default:
+                return false;
+        }
+    }, [mode, toggleState, pageData, randomMasks, ayahWordMap, getId]);
 
     // =============================================================
     // UNIFIED AYAH SHADOW: DOM Overlays for HIDE_ALL_AYAHS mode
@@ -1563,15 +1619,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         let fitScheduled = false;    // guard: at most one rAF fit per frame
         let needsRefit = false;      // a trigger fired mid-flight → one more pass
 
-        // Fit-cache key: the fit result depends on (page + deviceType + orientation
-        // + fontSize). It does NOT depend on viewMode: hiding only turns words
-        // transparent / overlays an absolute-positioned shadow, neither of which
-        // changes the natural width of a line (shadow overlays are skipped in the
-        // width sum below). So switching hide modes must NOT invalidate the cache —
-        // the old key forced a cold re-measure on all 5 mounted pages on every mode
-        // tap (the multi-second freeze). The page number is the natural varying key.
-        // Resolved once per effect instance so the (possibly re-scheduled) fit
-        // reads a stable key.
         const settingsKey = `${deviceType}|${orientation}|${fontSizeClass}`;
         if (fitCacheGen !== settingsKey) {
             fitCacheGen = settingsKey;
@@ -2173,9 +2220,22 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                             }
                                                             handleRateClick(e, word.surah, word.ayah);
                                                         } else if (shouldHide) {
+                                                            // عنصر مخفي → اكشفه وعيّنه كآخر عنصر مكشوف، وأوقف انتشار النقرة
+                                                            // كي لا تصل إلى المستمع العام الذي يُظهر/يُخفي الأشرطة.
                                                             e.stopPropagation();
                                                             toggleReveal(wordId, word.surah, word.ayah);
+                                                        } else if (wouldBeHidden(idx, wIdx) && revealedIndices.has(wordId)) {
+                                                            // عنصر مكشوف ينتمي للنظام (سبق إخفاؤه ثم كشفه).
+                                                            // التبديل (إعادة الإخفاء) ومنع القوائم يعملان على آخر عنصر مكشوف فقط:
+                                                            if (lastRevealedIdsRef.current?.has(wordId) === true) {
+                                                                // هذا هو العنصر الأخير المكشوف → أعد إخفائه وأوقف انتشار النقرة.
+                                                                e.stopPropagation();
+                                                                toggleReveal(wordId, word.surah, word.ayah);
+                                                            }
+                                                            // وإلا (عنصر مكشوف سابق وليس الأخير): لا تخفِه ولا توقف انتشار النقرة،
+                                                            // فتمر النقرة بسلام لإظهار القوائم العامة كأنه نص عادي تماماً.
                                                         }
+                                                        // كلمة طبيعية (خارجة عن النظام): لا شيء → النقرة تمر لإظهار/إخفاء القوائم.
                                                     }}
                                                 >
                                                     {word.isEnd && word.surah && word.ayah && verseBookmarks?.some(b => b.id === `${pageNumber}-${word.surah}-${word.ayah}`) && (

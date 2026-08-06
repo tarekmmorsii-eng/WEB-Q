@@ -2802,7 +2802,6 @@ export default function App() {
 
         {showSplash && (
           <SplashScreen
-            ready={pageData !== null}
             onFinish={() => {
               setShowSplash(false);
               const langSelected = localStorage.getItem('quran_language_selected');

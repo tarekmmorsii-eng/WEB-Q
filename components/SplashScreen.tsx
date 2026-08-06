@@ -1,44 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface SplashScreenProps {
     onFinish: () => void;
-    /** When false the splash holds until data is ready; when true it fades out
-     *  after a short minimum brand time. Defaults to true for safety. */
-    ready?: boolean;
 }
 
-export default function SplashScreen({ onFinish, ready = true }: SplashScreenProps) {
+export default function SplashScreen({ onFinish }: SplashScreenProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [opacity, setOpacity] = useState(1);
-    const mountedAt = useRef(0);
-    const doneRef = useRef(false);
-    useEffect(() => { mountedAt.current = Date.now(); }, []);
 
-    const finish = () => {
-        if (doneRef.current) return;
-        doneRef.current = true;
-        setIsVisible(false);
-        onFinish();
-    };
-
-    // Fade out once data is ready AND a minimum brand time has elapsed. The old
-    // code waited a FIXED 2.5s + 1s fade (3.5s) on every launch regardless of
-    // readiness — a constant startup penalty. Now the splash clears as soon as
-    // the app is actually usable (data resolved).
     useEffect(() => {
-        if (!ready) return;
-        const elapsed = Date.now() - mountedAt.current;
-        const minRemaining = Math.max(0, 1200 - elapsed);
-        const fadeT = setTimeout(() => setOpacity(0), minRemaining);
-        const doneT = setTimeout(finish, minRemaining + 1000);
-        return () => { clearTimeout(fadeT); clearTimeout(doneT); };
-    }, [ready]);
-
-    // Safety: never block the app forever if `ready` never fires (e.g. fetch error).
-    useEffect(() => {
-        const t = setTimeout(finish, 8000);
-        return () => clearTimeout(t);
-    }, []);
+        const timer = setTimeout(() => {
+            setOpacity(0);
+            setTimeout(() => {
+                setIsVisible(false);
+                onFinish();
+            }, 1000);
+        }, 2500);
+        return () => { clearTimeout(timer); };
+    }, [onFinish]);
 
     if (!isVisible) return null;
 
