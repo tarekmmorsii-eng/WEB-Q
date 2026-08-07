@@ -11,6 +11,7 @@ export interface Translations {
     search: string;
     memorizationStats: string;
     notifications: string;
+    reminders: string;
     darkMode: string;
     lightMode: string;
     fontSize: string;

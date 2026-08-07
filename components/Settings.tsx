@@ -274,7 +274,7 @@ export default function Settings({
         { icon: Menu, label: t.index, onClick: onOpenIndex },
         { icon: BarChart3, label: t.memorizationStats, onClick: onOpenMemorization },
         { icon: PlayCircle, label: t.ayahRecitation, onClick: onOpenReciterSelection },
-        { icon: Bell, label: t.notifications, onClick: onOpenNotifications },
+        { icon: Bell, label: t.reminders, onClick: onOpenNotifications },
         { icon: FileWarning, label: t.similarVersesAlert, onClick: onOpenMutashabihat },
         { icon: Calculator, label: t.verseCalculatorTitle, onClick: () => setShowVerseCalculator(true), keepOpen: true },
         ...(!isNative && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) ? [{
@@ -695,7 +695,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                             { key: 'showIndex' as keyof BottomBarSettings, label: t.index },
                                             { key: 'showSearch' as keyof BottomBarSettings, label: t.search },
                                             { key: 'showMemorization' as keyof BottomBarSettings, label: t.memorizationStats },
-                                            { key: 'showNotifications' as keyof BottomBarSettings, label: t.notifications },
+                                            { key: 'showNotifications' as keyof BottomBarSettings, label: t.reminders },
                                             { key: 'showDarkMode' as keyof BottomBarSettings, label: t.darkMode + ' / ' + t.lightMode },
                                             { key: 'showBookmark' as keyof BottomBarSettings, label: t.bookmark },
                                             { key: 'showPrayerMode' as keyof BottomBarSettings, label: t.prayerMode },
