@@ -550,6 +550,8 @@
   "tourAudioPlayerDesc": "বিভিন্ন তেলাওয়াতকারীর কুরআন তেলাওয়াত শুনুন প্লেব্যাক গতি এবং আয়াত পুনরাবৃত্তি নিয়ন্ত্রণ সহ।",
   "tourDownloadAppTitle": "অ্যাপ ডাউনলোড করুন",
   "tourDownloadAppDesc": "সাইটটি মোবাইলে ইনস্টল করুন যাতে অ্যাপের মতো কাজ করে এবং অফলাইনে মুসহাফ ব্রাউজ করুন।",
+  "tourDownloadRecitationsTitle": "তেলাওয়াত ডাউনলোড করুন",
+  "tourDownloadRecitationsDesc": "এখান থেকে আপনি আপনার প্রিয় তেলাওয়াতকারীকে পরে অফলাইনে শোনার জন্য ডাউনলোড করতে পারেন।",
   "tourTutorialsTitle": "টিউটোরিয়াল",
   "tourTutorialsDesc": "একটি বিশেষ বিভাগ যেখানে ভিডিও টিউটোরিয়াল রয়েছে যা অ্যাপের সমস্ত বৈশিষ্ট্য ব্যাখ্যা করে।",
   "tourPrayerModeTitle": "নামাজ মোড",
@@ -687,6 +689,9 @@
   "themeName_calm_peach": "শান্ত পীচ",
   "themeName_morning_sun": "সকালের সূর্য",
   "manageTranslations": "অনুবাদ ও শব্দার্থ ডাউনলোড করুন",
+  "translationNotAvailable": "এখানে দেখানোর জন্য অনুগ্রহ করে সেটিংস থেকে এই ভাষার অনুবাদ ডাউনলোড করুন।",
+  "translationAyahNotFound": "এই আয়াতের পাঠ্য লোড করা ডেটাতে পাওয়া যায়নি।",
+  "wbwFallbackMessage": "শব্দার্থ এই ভাষায় উপলব্ধ নয় বলে বিকল্প ভাষা ব্যবহার করা হয়েছে।",
   "hideTooltipHint": "নোট: আপনি এই উইন্ডোটি সেটিংস থেকে লুকাতে পারেন",
   "builtInSubtitle": "Built-in • Bashir Yunus দ্বারা শব্দে শব্দে অর্থ",
   "badgeTafsirWbw": "তাফসির + শব্দের অর্থ",
@@ -734,5 +739,13 @@
   "pushNotifFooterSaved": "সর্বশেষ ২০টি বিজ্ঞপ্তি সংরক্ষিত",
   "pushNotifFooterInLog": "লগে আছে",
   "shareAppTitle": "মুশহাফ আল-মুরাজা অ্যাপটি শেয়ার করুন",
-  "shareAppText": "আসসালামু আলাইকুম 🌸\n\nআমি আপনাদের সাথে এই চমৎকার অ্যাপটি শেয়ার করতে চাই:\n📖 মুশহাফ আল-মুরাজা 📖\nপবিত্র কুরআন মুখস্থ এবং রিভিশন করার জন্য একটি স্মার্ট সঙ্গী। এতে মুখস্থ পরীক্ষা করার, আয়াতের শক্তি মূল্যায়ন করার এবং নিখুঁত দৈনিক রিভিশন অ্যালার্ম সেট করার জন্য উদ্ভাবনী ইন্টারেক্টিভ টুল রয়েছে!\n\n📥 এখনই বিনামূল্যে ডাউনলোড করুন:\n🔹 গুগল প্লে:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 সরাসরি লিঙ্ক (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 অফিসিয়াল ওয়েবসাইট:\nhttps://mushafalmurajaa.com\n\n📺 আরও জানতে আমাদের অনুসরণ করুন:\nফেসবুক: https://www.facebook.com/mushafalmurajaa\nইউটিউব: https://youtube.com/@mushafalmurajaa\n\n✨ আপনার প্রিয়জনদের সাথে শেয়ার করুন... যে ব্যক্তি ভালো কাজের পথ দেখায় সে ভালো কাজ করার মতোই পুণ্য পায় ✨"
+  "shareAppText": "আসসালামু আলাইকুম 🌸\n\nআমি আপনাদের সাথে এই চমৎকার অ্যাপটি শেয়ার করতে চাই:\n📖 মুশহাফ আল-মুরাজা 📖\nপবিত্র কুরআন মুখস্থ এবং রিভিশন করার জন্য একটি স্মার্ট সঙ্গী। এতে মুখস্থ পরীক্ষা করার, আয়াতের শক্তি মূল্যায়ন করার এবং নিখুঁত দৈনিক রিভিশন অ্যালার্ম সেট করার জন্য উদ্ভাবনী ইন্টারেক্টিভ টুল রয়েছে!\n\n📥 এখনই বিনামূল্যে ডাউনলোড করুন:\n🔹 গুগল প্লে:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 সরাসরি লিঙ্ক (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 অফিসিয়াল ওয়েবসাইট:\nhttps://mushafalmurajaa.com\n\n📺 আরও জানতে আমাদের অনুসরণ করুন:\nফেসবুক: https://www.facebook.com/mushafalmurajaa\nইউটিউব: https://youtube.com/@mushafalmurajaa\n\n✨ আপনার প্রিয়জনদের সাথে শেয়ার করুন... যে ব্যক্তি ভালো কাজের পথ দেখায় সে ভালো কাজ করার মতোই পুণ্য পায় ✨",
+  "batteryOptTitle": "বিজ্ঞপ্তি নিশ্চিত করতে",
+  "batteryOptDesc": "ফোন সিস্টেম ব্যাটারি সাশ্রয়ের জন্য বিজ্ঞপ্তি বন্ধ করতে পারে। সময়মতো বিজ্ঞপ্তি পেতে, সেটিংস খোলার পর নিম্নলিখিত ধাপ অনুসরণ করে অনুমতি সক্রিয় করুন:",
+  "batteryOptStepsTitle": "💡 সহজ সক্রিয়করণ ধাপ:",
+  "batteryOptStep1": "<b>\"ব্যাটারি\" (Battery)</b> বা \"ব্যাটারি ব্যবহার\"-এ ট্যাপ করুন।",
+  "batteryOptStep2": "<b>\"অসীমিত\" (Unrestricted)</b> বা \"কোনো সীমা নেই\" নির্বাচন করুন।",
+  "batteryOptDontShow": "এই বিজ্ঞপ্তি আবার দেখাবেন না",
+  "batteryOptAllowBg": "ব্যাকগ্রাউন্ডে চলতে অনুমতি দিন",
+  "batteryOptLater": "পরে"
 }

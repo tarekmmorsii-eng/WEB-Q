@@ -57,6 +57,37 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
     }
   }, [isOpen, activeTab, currentPage]);
 
+  // دعم السحب الأفقي للتنقل بين التبويبات داخل الفهرس
+  const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    // تجاهل الحركات القصيرة جداً
+    if (Math.abs(deltaX) < 60) return;
+    // تجاهل الحركة العمودية (للتمرير داخل القائمة)
+    if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+
+    const order: Tab[] = ['surah', 'juz', 'bookmarks'];
+    const currentIdx = order.indexOf(activeTab);
+    if (deltaX > 0) {
+      // السحب إلى اليمين: التقدم للأمام (سورة ← جزء ← مرجعيات)
+      if (currentIdx < order.length - 1) setActiveTab(order[currentIdx + 1]);
+    } else {
+      // السحب إلى اليسار: الرجوع للخلف (مرجعيات ← جزء ← سورة)
+      if (currentIdx > 0) setActiveTab(order[currentIdx - 1]);
+    }
+  };
+
   if (!isOpen) return null;
 
   const fullSurahList = Array.from({ length: 114 }, (_, i) => {
@@ -429,8 +460,14 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
           </button>
         </div>
 
-        {/* Content */}
-        {renderContent()}
+        {/* Content - منطقة استجابة السحب الأفقي بين التبويبات */}
+        <div
+          className="flex flex-col flex-1 overflow-hidden"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

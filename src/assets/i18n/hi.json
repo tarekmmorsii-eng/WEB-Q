@@ -550,6 +550,8 @@
   "tourAudioPlayerDesc": "विभिन्न पाठकों की कुरान तिलावत सुनें प्लेबैक गति और आयत पुनरावृत्ति नियंत्रण के साथ।",
   "tourDownloadAppTitle": "ऐप डाउनलोड करें",
   "tourDownloadAppDesc": "साइट को मोबाइल पर इंस्टॉल करें ताकि यह ऐप की तरह काम करे और पूरा मुसहफ ऑफलाइन देखें।",
+  "tourDownloadRecitationsTitle": "तिलावत डाउनलोड करें",
+  "tourDownloadRecitationsDesc": "यहाँ से आप अपने पसंदीदा कारी को बाद में ऑफ़लाइन सुनने के लिए डाउनलोड कर सकते हैं।",
   "tourTutorialsTitle": "ट्यूटोरियल",
   "tourTutorialsDesc": "एक विशेष अनुभाग जिसमें वीडियो ट्यूटोरियल हैं जो ऐप की सभी सुविधाओं को समझाते हैं।",
   "tourPrayerModeTitle": "नमाज़ मोड",
@@ -687,6 +689,9 @@
   "themeName_calm_peach": "शांत आडू",
   "themeName_morning_sun": "सुबह का सूरज",
   "manageTranslations": "अनुवाद और शब्द अर्थ डाउनलोड करें",
+  "translationNotAvailable": "यहाँ दिखाने के लिए कृपया इस भाषा का अनुवाद सेटिंग्स से डाउनलोड करें।",
+  "translationAyahNotFound": "इस आयत का पाठ लोड किए गए डेटा में नहीं मिला।",
+  "wbwFallbackMessage": "वैकल्पिक भाषा का उपयोग किया गया क्योंकि शब्द अर्थ इस भाषा में उपलब्ध नहीं हैं।",
   "hideTooltipHint": "नोट: आप इस विंडो को सेटिंग्स से छिपा सकते हैं",
   "builtInSubtitle": "Built-in • Bashir Yunus द्वारा शब्द दर शब्द अर्थ",
   "badgeTafsirWbw": "तफ़सीर + शब्द अर्थ",
@@ -734,5 +739,13 @@
   "pushNotifFooterSaved": "अंतिम 20 सूचनाएं सहेजी गईं",
   "pushNotifFooterInLog": "लॉग में",
   "shareAppTitle": "मुशफ अल-मुराजा ऐप शेयर करें",
-  "shareAppText": "अस्सलामु अलैकुम 🌸\n\nमैं आपके साथ यह शानदार ऐप शेयर करना चाहता था:\n📖 मुशफ अल-मुराजा 📖\nपवित्र कुरान को याद करने और दोहराने के लिए स्मार्ट साथी। इसमें याददाश्त का परीक्षण करने, आयतों की मजबूती का मूल्यांकन करने और सटीक दैनिक दोहराव अलार्म सेट करने के लिए नवीन इंटरैक्टिव उपकरण हैं!\n\n📥 अभी मुफ्त में डाउनलोड करें:\n🔹 Google Play:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 सीधा लिंक (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 आधिकारिक वेबसाइट:\nhttps://mushafalmurajaa.com\n\n📺 अधिक जानने के लिए हमें फॉलो करें:\nFacebook: https://www.facebook.com/mushafalmurajaa\nYouTube: https://youtube.com/@mushafalmurajaa\n\n✨ इसे अपने प्रियजनों के साथ साझा करें... जो व्यक्ति भलाई का रास्ता दिखाता है वह भलाई करने वाले के समान है ✨"
+  "shareAppText": "अस्सलामु अलैकुम 🌸\n\nमैं आपके साथ यह शानदार ऐप शेयर करना चाहता था:\n📖 मुशफ अल-मुराजा 📖\nपवित्र कुरान को याद करने और दोहराने के लिए स्मार्ट साथी। इसमें याददाश्त का परीक्षण करने, आयतों की मजबूती का मूल्यांकन करने और सटीक दैनिक दोहराव अलार्म सेट करने के लिए नवीन इंटरैक्टिव उपकरण हैं!\n\n📥 अभी मुफ्त में डाउनलोड करें:\n🔹 Google Play:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 सीधा लिंक (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 आधिकारिक वेबसाइट:\nhttps://mushafalmurajaa.com\n\n📺 अधिक जानने के लिए हमें फॉलो करें:\nFacebook: https://www.facebook.com/mushafalmurajaa\nYouTube: https://youtube.com/@mushafalmurajaa\n\n✨ इसे अपने प्रियजनों के साथ साझा करें... जो व्यक्ति भलाई का रास्ता दिखाता है वह भलाई करने वाले के समान है ✨",
+  "batteryOptTitle": "सूचनाएँ प्राप्त करना सुनिश्चित करने के लिए",
+  "batteryOptDesc": "फ़ोन सिस्टम बैटरी बचाने के लिए सूचनाएँ रोक सकते हैं। समय पर सूचना पाने के लिए, कृपया सेटिंग खुलने पर निम्नलिखित चरणों का पालन करके अनुमति सक्षम करें:",
+  "batteryOptStepsTitle": "💡 सरल सक्रियण चरण:",
+  "batteryOptStep1": "<b>\"बैटरी\" (Battery)</b> या \"बैटरी उपयोग\" पर टैप करें।",
+  "batteryOptStep2": "<b>\"अप्रतिबंधित\" (Unrestricted)</b> या \"कोई प्रतिबंध नहीं\" चुनें।",
+  "batteryOptDontShow": "यह सूचना पुनः न दिखाएँ",
+  "batteryOptAllowBg": "पृष्ठभूमि में काम करने की अनुमति दें",
+  "batteryOptLater": "बाद में"
 }

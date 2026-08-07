@@ -473,6 +473,8 @@ export interface Translations {
     tourAudioPlayerDesc: string;
     tourDownloadAppTitle: string;
     tourDownloadAppDesc: string;
+    tourDownloadRecitationsTitle: string;
+    tourDownloadRecitationsDesc: string;
     tourTutorialsTitle: string;
     tourTutorialsDesc: string;
     tourPrayerModeTitle: string;
@@ -570,6 +572,14 @@ export interface Translations {
     pushNotifFooterInLog: string;
     shareAppTitle: string;
     shareAppText: string;
+    batteryOptTitle: string;
+    batteryOptDesc: string;
+    batteryOptStepsTitle: string;
+    batteryOptStep1: string;
+    batteryOptStep2: string;
+    batteryOptDontShow: string;
+    batteryOptAllowBg: string;
+    batteryOptLater: string;
 }
 
 import ar from '../src/assets/i18n/ar.json';

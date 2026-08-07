@@ -550,6 +550,8 @@
   "tourAudioPlayerDesc": "به تلاوت‌های قرآنی قاریان مختلف گوش دهید با کنترل سرعت پخش و تکرار آیات.",
   "tourDownloadAppTitle": "دانلود برنامه",
   "tourDownloadAppDesc": "سایت را روی موبایل نصب کنید تا مثل اپ کار کند و مصحف را آفلاین مرور کنید.",
+  "tourDownloadRecitationsTitle": "دانلود تلاوت‌ها",
+  "tourDownloadRecitationsDesc": "از اینجا می‌توانید قاری‌های مورد علاقه خود را برای گوش دادن آفلاین بعداً دانلود کنید.",
   "tourTutorialsTitle": "آموزش‌ها",
   "tourTutorialsDesc": "بخش ویژه‌ای شامل آموزش‌های ویدیویی که تمام قابلیت‌های برنامه را توضیح می‌دهد.",
   "tourPrayerModeTitle": "حالت نماز",
@@ -687,6 +689,9 @@
   "themeName_calm_peach": "هلوی آرام",
   "themeName_morning_sun": "آفتاب صبحگاهی",
   "manageTranslations": "دانلود ترجمه و معانی کلمات",
+  "translationNotAvailable": "برای نمایش در اینجا، لطفاً ترجمه این زبان را از تنظیمات دانلود کنید.",
+  "translationAyahNotFound": "متن این آیه در داده‌های بارگذاری شده یافت نشد.",
+  "wbwFallbackMessage": "زبان جایگزین استفاده شد زیرا معانی کلمات در این زبان در دسترس نیست.",
   "hideTooltipHint": "توجه: می‌توانید این پنجره را از تنظیمات مخفی کنید",
   "builtInSubtitle": "داخلی • معنی کلمه به کلمه توسط بشیر یونس",
   "badgeTafsirWbw": "تفسیر + معانی کلمات",
@@ -734,5 +739,13 @@
   "pushNotifFooterSaved": "آخرین ۲۰ اعلان ذخیره شد",
   "pushNotifFooterInLog": "در گزارش",
   "shareAppTitle": "اشتراک گذاری اپلیکیشن مصحف المراجعة",
-  "shareAppText": "سلام علیکم 🌸\n\nمی‌خواستم این اپلیکیشن فوق‌العاده را با شما به اشتراک بگذارم:\n📖 اپلیکیشن مصحف المراجعة 📖\nهمراهی هوشمند برای حفظ و مرور قرآن کریم. دارای ابزارهای تعاملی نوآورانه برای آزمایش حفظ، ارزیابی قدرت آیات، و تنظیم آلارم‌های دقیق برای مرور روزانه!\n\n📥 هم‌اکنون رایگان دانلود کنید:\n🔹 گوگل پلی:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 لینک مستقیم (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 وب‌سایت رسمی:\nhttps://mushafalmurajaa.com\n\n📺 برای کسب اطلاعات بیشتر ما را دنبال کنید:\nفیس‌بوک: https://www.facebook.com/mushafalmurajaa\nیوتیوب: https://youtube.com/@mushafalmurajaa\n\n✨ با عزیزان خود به اشتراک بگذارید... کسی که به کار نیکی راهنمایی کند، مانند انجام‌دهنده آن است ✨"
+  "shareAppText": "سلام علیکم 🌸\n\nمی‌خواستم این اپلیکیشن فوق‌العاده را با شما به اشتراک بگذارم:\n📖 اپلیکیشن مصحف المراجعة 📖\nهمراهی هوشمند برای حفظ و مرور قرآن کریم. دارای ابزارهای تعاملی نوآورانه برای آزمایش حفظ، ارزیابی قدرت آیات، و تنظیم آلارم‌های دقیق برای مرور روزانه!\n\n📥 هم‌اکنون رایگان دانلود کنید:\n🔹 گوگل پلی:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 لینک مستقیم (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 وب‌سایت رسمی:\nhttps://mushafalmurajaa.com\n\n📺 برای کسب اطلاعات بیشتر ما را دنبال کنید:\nفیس‌بوک: https://www.facebook.com/mushafalmurajaa\nیوتیوب: https://youtube.com/@mushafalmurajaa\n\n✨ با عزیزان خود به اشتراک بگذارید... کسی که به کار نیکی راهنمایی کند، مانند انجام‌دهنده آن است ✨",
+  "batteryOptTitle": "برای اطمینان از دریافت اعلان‌ها",
+  "batteryOptDesc": "سیستم‌های گوشی ممکن است برای صرفه‌جویی در باتری اعلان‌ها را متوقف کنند. برای اطمینان از اعلان به‌موقع، لطفاً هنگام باز شدن تنظیمات با انجام مراحل زیر اجازه را فعال کنید:",
+  "batteryOptStepsTitle": "💡 مراحل ساده فعال‌سازی:",
+  "batteryOptStep1": "روی <b>\"باتری\" (Battery)</b> یا \"استفاده از باتری\" ضربه بزنید.",
+  "batteryOptStep2": "<b>\"بدون محدودیت\" (Unrestricted)</b> یا \"بدون قید\" را انتخاب کنید.",
+  "batteryOptDontShow": "این اعلان را دوباره نشان نده",
+  "batteryOptAllowBg": "اجازه فعالیت در پس‌زمینه",
+  "batteryOptLater": "بعداً"
 }

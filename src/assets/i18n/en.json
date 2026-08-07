@@ -550,6 +550,8 @@
   "tourAudioPlayerDesc": "Listen to Quran recitations by various reciters, with playback speed and verse repetition controls.",
   "tourDownloadAppTitle": "Download App",
   "tourDownloadAppDesc": "Install the site on your mobile device to work like an app, and browse the full Mushaf offline.",
+  "tourDownloadRecitationsTitle": "Download Recitations",
+  "tourDownloadRecitationsDesc": "From here you can download your favorite reciters to listen to them offline later.",
   "tourTutorialsTitle": "App Tutorials",
   "tourTutorialsDesc": "A special section containing video tutorials and guides explaining all the app features in detail.",
   "tourPrayerModeTitle": "Prayer Mode",
@@ -687,6 +689,9 @@
   "themeName_calm_peach": "Calm Peach",
   "themeName_morning_sun": "Morning Sun",
   "manageTranslations": "Download Translation & Word Meanings",
+  "translationNotAvailable": "Please download this language's translation from Settings to display it here.",
+  "translationAyahNotFound": "The text of this verse was not found in the loaded data.",
+  "wbwFallbackMessage": "The alternative language was used because word meanings are not available in this language.",
   "hideTooltipHint": "Note: You can hide this window in settings",
   "builtInSubtitle": "Built-in • Word by Word Meaning by Bashir Yunus",
   "badgeTafsirWbw": "Tafsir + Word Meanings",
@@ -734,5 +739,13 @@
   "pushNotifFooterSaved": "Last 20 notifications saved",
   "pushNotifFooterInLog": "in log",
   "shareAppTitle": "Share Mushaf Al-Murajaa App",
-  "shareAppText": "Peace be upon you 🌸\n\nI wanted to share this wonderful app with you:\n📖 Mushaf Al-Murajaa 📖\nThe smart companion for memorizing and revising the Holy Quran. It features innovative interactive tools to test memorization, evaluate ayah strength, and set precise daily revision alarms!\n\n📥 Download now for free:\n🔹 Google Play:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 Direct Link (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 Official Website:\nhttps://mushafalmurajaa.com\n\n📺 Follow us to learn more:\nFacebook: https://www.facebook.com/mushafalmurajaa\nYouTube: https://youtube.com/@mushafalmurajaa\n\n✨ Share it with those you love... The one who guides to good is like the one who does it ✨"
+  "shareAppText": "Peace be upon you 🌸\n\nI wanted to share this wonderful app with you:\n📖 Mushaf Al-Murajaa 📖\nThe smart companion for memorizing and revising the Holy Quran. It features innovative interactive tools to test memorization, evaluate ayah strength, and set precise daily revision alarms!\n\n📥 Download now for free:\n🔹 Google Play:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 Direct Link (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 Official Website:\nhttps://mushafalmurajaa.com\n\n📺 Follow us to learn more:\nFacebook: https://www.facebook.com/mushafalmurajaa\nYouTube: https://youtube.com/@mushafalmurajaa\n\n✨ Share it with those you love... The one who guides to good is like the one who does it ✨",
+  "batteryOptTitle": "To ensure notifications arrive",
+  "batteryOptDesc": "Phone systems may stop notifications to save battery. To ensure you are notified on time, please enable the permission by following these steps when settings open:",
+  "batteryOptStepsTitle": "💡 Simple activation steps:",
+  "batteryOptStep1": "Tap on <b>\"Battery\"</b> or \"Battery usage\".",
+  "batteryOptStep2": "Select <b>\"Unrestricted\"</b> or \"No restrictions\".",
+  "batteryOptDontShow": "Don't show this notification again",
+  "batteryOptAllowBg": "Allow background work",
+  "batteryOptLater": "Later"
 }

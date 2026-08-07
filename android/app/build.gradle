@@ -23,6 +23,16 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // نسخ منفصلة: النسخة الأصلية والنسخة التجريبية بمعرّف مختلف لتثبّت بجانب الأصلية
+    flavorDimensions "env"
+    productFlavors {
+        standard {
+            // النسخة الأصلية: المعرّف com.mushafalmurajaa.app (دون تغيير)
+        }
+        beta {
+            applicationIdSuffix ".beta"
+        }
+    }
     signingConfigs {
         release {
             storeFile file(keystoreProperties['storeFile'])

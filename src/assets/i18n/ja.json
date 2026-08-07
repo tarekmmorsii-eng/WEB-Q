@@ -550,6 +550,8 @@
   "tourAudioPlayerDesc": "様々な朗誦者によるクルアーン朗誦を聴き再生速度と節の繰り返しを制御できます。",
   "tourDownloadAppTitle": "アプリをダウンロード",
   "tourDownloadAppDesc": "サイトをスマートフォンにインストールしてアプリのように使用しオフラインでムスハフを閲覧できます。",
+  "tourDownloadRecitationsTitle": "読誦をダウンロード",
+  "tourDownloadRecitationsDesc": "ここからお気に入りの朗誦者をダウンロードして、後でオフラインで聴くことができます。",
   "tourTutorialsTitle": "チュートリアル",
   "tourTutorialsDesc": "アプリのすべての機能を詳しく説明するビデオチュートリアルを含む特別セクション。",
   "tourPrayerModeTitle": "礼拝モード",
@@ -687,6 +689,9 @@
   "themeName_calm_peach": "静かな桃",
   "themeName_morning_sun": "朝日",
   "manageTranslations": "翻訳と単語の意味をダウンロード",
+  "translationNotAvailable": "ここに表示するには、設定からこの言語の翻訳をダウンロードしてください。",
+  "translationAyahNotFound": "この節のテキストは読み込まれたデータに見つかりませんでした。",
+  "wbwFallbackMessage": "この言語では単語の意味を利用できないため、代替言語が使用されました。",
   "hideTooltipHint": "注：このウィンドウは設定から非表示にできます",
   "builtInSubtitle": "内蔵 • Bashir Yunus による単語ごとの意味",
   "badgeTafsirWbw": "タフシル + 単語の意味",
@@ -734,5 +739,13 @@
   "pushNotifFooterSaved": "最新20件の通知を保存しました",
   "pushNotifFooterInLog": "ログ内",
   "shareAppTitle": "Mushaf Al-Murajaaアプリを共有",
-  "shareAppText": "平安がありますように 🌸\n\nこの素晴らしいアプリをあなたと共有したいと思います:\n📖 Mushaf Al-Murajaa 📖\n聖クルアーンの暗記と復習のためのスマートなパートナー。暗記のテスト、アーヤの定着度の評価、正確な毎日の復習アラームの設定など、革新的なインタラクティブ機能を備えています！\n\n📥 今すぐ無料でダウンロード:\n🔹 Google Play:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 直接リンク (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 公式ウェブサイト:\nhttps://mushafalmurajaa.com\n\n📺 詳細についてはフォローしてください:\nFacebook: https://www.facebook.com/mushafalmurajaa\nYouTube: https://youtube.com/@mushafalmurajaa\n\n✨ 愛する人と共有してください... 良いことに導く者は、それを行う者と同じです ✨"
+  "shareAppText": "平安がありますように 🌸\n\nこの素晴らしいアプリをあなたと共有したいと思います:\n📖 Mushaf Al-Murajaa 📖\n聖クルアーンの暗記と復習のためのスマートなパートナー。暗記のテスト、アーヤの定着度の評価、正確な毎日の復習アラームの設定など、革新的なインタラクティブ機能を備えています！\n\n📥 今すぐ無料でダウンロード:\n🔹 Google Play:\nhttps://play.google.com/store/apps/details?id=com.mushafalmurajaa.app\n🔹 直接リンク (APK):\nhttps://apkpure.com/p/com.mushafalmurajaa.app\n\n🌐 公式ウェブサイト:\nhttps://mushafalmurajaa.com\n\n📺 詳細についてはフォローしてください:\nFacebook: https://www.facebook.com/mushafalmurajaa\nYouTube: https://youtube.com/@mushafalmurajaa\n\n✨ 愛する人と共有してください... 良いことに導く者は、それを行う者と同じです ✨",
+  "batteryOptTitle": "通知の確実な受信のために",
+  "batteryOptDesc": "電話システムはバッテリーを節約するために通知を停止する場合があります。時間通りに通知を受信するには、設定が開いたら以下の手順で権限を有効にしてください：",
+  "batteryOptStepsTitle": "💡 簡単な有効化手順：",
+  "batteryOptStep1": "<b>「バッテリー」(Battery)</b>または「バッテリー使用量」をタップします。",
+  "batteryOptStep2": "<b>「制限なし」(Unrestricted)</b>または「制限なし」を選択します。",
+  "batteryOptDontShow": "この通知を再び表示しない",
+  "batteryOptAllowBg": "バックグラウンドでの動作を許可",
+  "batteryOptLater": "後で"
 }

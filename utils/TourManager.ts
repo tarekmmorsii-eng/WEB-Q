@@ -384,10 +384,8 @@ const loadAndStartTour = async (t: Translations, stepIndex: number, onExit?: () 
             {
                 element: '#tour-download-btn-floating',
                 popover: {
-                    title: isNative ? (t.dir === 'rtl' ? 'تحميل التلاوات' : 'Download Recitations') : t.tourDownloadAppTitle,
-                    description: isNative 
-                        ? (t.dir === 'rtl' ? 'تحميل التلاوات: من هنا يمكنك تحميل أصوات القراء المفضلة لديك للاستماع إليها لاحقاً بدون إنترنت' : 'Download Recitations: From here you can download your favorite reciters to listen later offline.')
-                        : t.tourDownloadAppDesc,
+                    title: isNative ? t.tourDownloadRecitationsTitle : t.tourDownloadAppTitle,
+                    description: isNative ? t.tourDownloadRecitationsDesc : t.tourDownloadAppDesc,
                     side: "left",
                     align: 'center',
                     showButtons: ['next', 'previous', 'close'],

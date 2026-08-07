@@ -1560,29 +1560,29 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                         </div>
                         
                         <h3 className="text-xl font-bold text-center text-[var(--text-primary)] mb-2">
-                            لضمان وصول التنبيهات
+                            {t.batteryOptTitle}
                         </h3>
                         
                         <p className="text-xs text-center text-[var(--text-primary)] opacity-70 mb-4 leading-relaxed">
-                            أنظمة الهواتف قد تقوم بإيقاف التنبيهات لتوفير البطارية. لضمان تنبيهك في الوقت المناسب، يرجى تفعيل الصلاحية باتباع الآتي عند فتح الإعدادات:
+                            {t.batteryOptDesc}
                         </p>
 
-                        <div className="bg-[var(--bg-secondary)] rounded-xl p-3 mb-4 text-right" style={{ direction: 'rtl' }}>
-                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 block mb-1">💡 خطوات التفعيل البسيطة:</span>
+                        <div className="bg-[var(--bg-secondary)] rounded-xl p-3 mb-4" style={{ direction: isArabic ? 'rtl' : 'ltr', textAlign: isArabic ? 'right' : 'left' }}>
+                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 block mb-1">{t.batteryOptStepsTitle}</span>
                             <ol className="text-[11px] text-[var(--text-primary)] opacity-85 list-decimal list-inside space-y-0.5">
-                                <li>اضغط على <b>"البطارية" (Battery)</b> أو "استخدام البطارية".</li>
-                                <li>اختر <b>"غير مقيد" (Unrestricted)</b> أو "بلا قيود".</li>
+                                <li dangerouslySetInnerHTML={{ __html: t.batteryOptStep1 }} />
+                                <li dangerouslySetInnerHTML={{ __html: t.batteryOptStep2 }} />
                             </ol>
                         </div>
 
-                        <label className="flex items-center gap-2 cursor-pointer mb-4 justify-end select-none text-right" style={{ direction: 'rtl' }}>
+                        <label className="flex items-center gap-2 cursor-pointer mb-4 justify-end select-none text-right" style={{ direction: isArabic ? 'rtl' : 'ltr' }}>
                             <input
                                 type="checkbox"
                                 checked={dontShowAgain}
                                 onChange={(e) => setDontShowAgain(e.target.checked)}
                                 className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 bg-[var(--bg-secondary)] cursor-pointer"
                             />
-                            <span className="text-xs text-[var(--text-primary)] opacity-70">لا تظهر لي هذا التنبيه مجدداً</span>
+                            <span className="text-xs text-[var(--text-primary)] opacity-70">{t.batteryOptDontShow}</span>
                         </label>
                         
                         <div className="flex flex-col gap-3">
@@ -1593,7 +1593,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                         localStorage.setItem('battery_opt_requested', 'true');
                                     } catch (e) {}
                                     if (isNative) {
-                                        NativeSettings.openAndroid({ option: AndroidSettings.IgnoreBatteryOptimization })
+                                        // استخدام casting لتجاوز اختلاف إصدارات المكتبة
+                                        NativeSettings.openAndroid({ option: (AndroidSettings as any).IgnoreBatteryOptimization || (AndroidSettings as any).BatteryOptimization })
                                             .catch(() => {
                                                 // Fallback to app details if specific intent is not supported by the ROM
                                                 NativeSettings.openAndroid({ option: AndroidSettings.ApplicationDetails });
@@ -1603,7 +1604,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 }}
                                 className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-amber-600/20 active:scale-[0.98]"
                             >
-                                السماح بالعمل في الخلفية
+                                {t.batteryOptAllowBg}
                             </button>
                             
                             <button
@@ -1620,7 +1621,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                 }}
                                 className="w-full py-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] rounded-xl font-medium transition-all active:scale-[0.98]"
                             >
-                                لاحقاً
+                                {t.batteryOptLater}
                             </button>
                         </div>
                     </div>
