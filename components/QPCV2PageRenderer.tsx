@@ -35,23 +35,74 @@ const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89
 // fonts for a window of upcoming/previous pages AHEAD of time so the swap is
 // instant on swipe. This touches NOTHING about layout/data — only font decode.
 const warmedFontPages = new Set<number>();
-const ensurePageFontWarm = (p: number) => {
-    if (p < 1 || p > 604 || typeof document === 'undefined') return;
+const ensurePageFontStyle = (p: number) => {
     const fontName = `p${p}-v2`;
     const styleId = `font-v2-p${p}`;
     if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
         style.id = styleId;
-        style.textContent = `@font-face { font-family: '${fontName}'; src: url('/fonts/v2/p${p}.woff2') format('woff2'); font-display: swap; }`;
+        // block (not swap): during any residual load window the text stays
+        // INVISIBLE rather than flashing garbage PUA glyphs.
+        style.textContent = `@font-face { font-family: '${fontName}'; src: url('/fonts/v2/p${p}.woff2') format('woff2'); font-display: block; }`;
         document.head.appendChild(style);
     }
+};
+const ensurePageFontWarm = (p: number) => {
+    if (p < 1 || p > 604 || typeof document === 'undefined') return;
+    ensurePageFontStyle(p);
     if (warmedFontPages.has(p)) return;
     warmedFontPages.add(p);
     // Trigger an actual decode now (registered @font-face required first).
     const fonts = (document as any).fonts;
     if (fonts?.load) {
-        fonts.load(`1em '${fontName}'`).catch(() => { /* ignore */ });
+        fonts.load(`1em 'p${p}-v2'`).catch(() => { /* ignore */ });
     }
+};
+
+// --- Cold-jump font gate ---
+// A direct jump (page-number search, surah index, bookmark, history, deep
+// link) lands on a page whose ~150KB font has never been fetched. The page's
+// text is PUA codepoints that render as garbage glyphs in any fallback font,
+// so with font-display:swap the user saw ~seconds of mojibake until the real
+// font decoded. We keep the loading spinner on screen until THIS page's font
+// is actually decoded (fonts.load resolves), so the first paint of the page
+// is already in the correct Mushaf font. A safety timeout unblocks the render
+// if the font never arrives (font-display:block then shows blank, never
+// garbage). Covers ALL cold jumps since every navigation path renders here.
+const fontReadyPages = new Map<number, true>(); // decoded-once pages: re-jumps skip the gate
+const FONT_GATE_TIMEOUT = 4000;
+
+const requestPageFont = (p: number, onReady: () => void) => {
+    if (typeof document === 'undefined') { onReady(); return; }
+    ensurePageFontStyle(p);
+    const fontName = `p${p}-v2`;
+    let done = false;
+    const finish = (decoded: boolean) => {
+        if (done) return;
+        done = true;
+        // Only cache "ready" on a real decode; a timeout release must not
+        // poison the map, or a later jump would skip the gate prematurely.
+        if (decoded) fontReadyPages.set(p, true);
+        onReady();
+    };
+    const fonts = (document as any).fonts;
+    if (fonts?.load) {
+        fonts.load(`1em '${fontName}'`).then(() => finish(true)).catch(() => finish(false));
+    } else {
+        finish(false);
+    }
+    // Safety valve: never trap the user on the spinner if the font stalls.
+    setTimeout(() => finish(false), FONT_GATE_TIMEOUT);
+};
+
+// Synchronous readiness probe. fonts.check() answers instantly whether this
+// family is already decoded, so warm pages (swipes back to a visited page)
+// commit synchronously with ZERO spinner flash — the gate only engages for
+// genuinely cold fonts. Falls back to our records when the API is missing.
+const isPageFontReady = (p: number): boolean => {
+    const fonts = (document as any).fonts;
+    if (fonts?.check) return fonts.check(`1em 'p${p}-v2'`);
+    return fontReadyPages.has(p);
 };
 
 // --- Processed-page cache ---
@@ -818,9 +869,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // When pageNumber changes and data is in cache, update pageData BEFORE the browser paints.
     // This prevents the 3-slide carousel from showing stale content when jumping to center.
     // Prevent stale content flashes
+    // GATED on font readiness: serving a page whose font is still cold would
+    // paint its PUA codepoints in a fallback font (garbage glyphs) — the exact
+    // cold-jump bug. When the font isn't decoded yet we skip the sync serve and
+    // let the async effect gate on the font instead.
     React.useLayoutEffect(() => {
         const cachedRaw = (window as any).qpcV2Cache?.[pageNumber.toString()];
-        if (cachedRaw) {
+        if (cachedRaw && isPageFontReady(pageNumber)) {
             const fullData = (window as any).qpcV2Cache;
             const processed = processPageData(cachedRaw, pageNumber, fullData, showWordMeanings, wordMeaningsSource);
             setPageData(processed);
@@ -837,20 +892,14 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         const loadContent = async () => {
             const isCached = !!(window as any).qpcV2Cache?.[pageNumber.toString()];
             // If data was already processed by useLayoutEffect, only handle font injection
-            if (isCached) {
+            if (isCached && isPageFontReady(pageNumber)) {
                 // Font injection only — data already set by useLayoutEffect
-                const fontName = `p${pageNumber}-v2`;
-                const fontPath = `/fonts/v2/p${pageNumber}.woff2`;
-                const styleId = `font-v2-p${pageNumber}`;
-                if (!document.getElementById(styleId)) {
-                    const style = document.createElement('style');
-                    style.id = styleId;
-                    style.textContent = `@font-face { font-family: '${fontName}'; src: url('${fontPath}') format('woff2'); font-display: swap; }`;
-                    document.head.appendChild(style);
-                    new FontFace(fontName, `url('${fontPath}')`).load().catch(() => { });
-                }
+                ensurePageFontStyle(pageNumber);
                 return; // Skip entire async loading path
             }
+            // Data cached but FONT still cold (e.g. JS memory cache from a previous
+            // session's prefetch, font evicted): fall through to the gated path
+            // below so the spinner still covers the font decode.
             setLoading(true);
             setError(false);
 
@@ -863,8 +912,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 if ((window as any).qpcV2Cache && (window as any).qpcV2Cache[pageNumber.toString()]) {
                     fullData = (window as any).qpcV2Cache;
                     rawPage = fullData[pageNumber.toString()];
-                    // Process and set immediately so NO stale data flash
+                    // Same cold-font gate as the fetch path: warm fonts commit
+                    // immediately (swipes), cold fonts hold the spinner.
+                    const gate = isPageFontReady(pageNumber)
+                        ? null
+                        : new Promise<void>((resolve) => requestPageFont(pageNumber, resolve));
                     const processedData = processPageData(rawPage, pageNumber, fullData || undefined, showWordMeanings, wordMeaningsSource);
+                    if (gate) await gate;
                     if (isMounted) {
                         setPageData(processedData);
                         setLoading(false);
@@ -872,23 +926,36 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 } else {
                     // Try Fetching specific page JSON (Fast: ~40KB)
                     try {
+                        // Kick the page-font fetch off IN PARALLEL with the data
+                        // fetch (register @font-face + fonts.load immediately), so
+                        // the font download overlaps instead of starting after.
+                        const gate = isPageFontReady(pageNumber)
+                            ? null
+                            : new Promise<void>((resolve) => requestPageFont(pageNumber, resolve));
+
                         const res = await fetch(`/data/v2/pages/${pageNumber}.json`);
                         if (res.ok) {
                             rawPage = await res.json();
-                            // Store in memory for immediate use if user returns to this page
-                            if (!(window as any).qpcV2Cache) (window as any).qpcV2Cache = {};
-                            (window as any).qpcV2Cache[pageNumber.toString()] = rawPage;
-                            fullData = (window as any).qpcV2Cache; // Update fullData reference
 
                             if (!rawPage) {
                                 if (isMounted) { setError(true); setLoading(false); }
                                 return;
                             }
-                            const processedData = processPageData(rawPage, pageNumber, fullData || undefined, showWordMeanings, wordMeaningsSource);
-                            if (isMounted) {
-                                setPageData(processedData);
-                                setLoading(false);
-                            }
+                            const processedData = processPageData(rawPage, pageNumber, (window as any).qpcV2Cache || undefined, showWordMeanings, wordMeaningsSource);
+                            // Hold the spinner until the FONT (not just the data)
+                            // is decoded — this is the cold-jump gate.
+                            if (gate) await gate;
+                            if (!isMounted) return;
+                            // Commit cache + state in ONE synchronous block AFTER
+                            // the gate: storing the raw JSON earlier would flip
+                            // isPageInCache while pageData still holds the previous
+                            // page, and a re-render in that window would paint the
+                            // old page's glyphs under the NEW page's font family.
+                            if (!(window as any).qpcV2Cache) (window as any).qpcV2Cache = {};
+                            (window as any).qpcV2Cache[pageNumber.toString()] = rawPage;
+                            fullData = (window as any).qpcV2Cache;
+                            setPageData(processedData);
+                            setLoading(false);
                         } else {
                             if (isMounted) { setError(true); setLoading(false); }
                         }
@@ -899,18 +966,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 }
 
                 // 2. Inject and Load Font using FontFace API (faster than <style> injection)
-                const fontName = `p${pageNumber}-v2`;
-                const fontPath = `/fonts/v2/p${pageNumber}.woff2`;
-                const styleId = `font-v2-p${pageNumber}`;
-
-                if (!document.getElementById(styleId)) {
-                    const style = document.createElement('style');
-                    style.id = styleId;
-                    style.textContent = `@font-face { font-family: '${fontName}'; src: url('${fontPath}') format('woff2'); font-display: swap; }`;
-                    document.head.appendChild(style);
-                    // Force immediate font load for current page
-                    new FontFace(fontName, `url('${fontPath}')`).load().catch(() => { });
-                }
+                // Unified through the shared helper (block display-policy).
+                ensurePageFontStyle(pageNumber);
 
                 // 3. Prefetch neighboring pages (JSON data + fonts) in background
                 // Use setTimeout to not block current page render
@@ -1395,21 +1452,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     // --- Font Injection (V2) ---
     useEffect(() => {
-        const fontName = `p${pageNumber}-v2`;
-        const fontPath = `/fonts/v2/p${pageNumber}.woff2`;
-        const styleId = `font-v2-p${pageNumber}`;
-        if (!document.getElementById(styleId)) {
-            const style = document.createElement('style');
-            style.id = styleId;
-            style.textContent = `
-                @font-face {
-                    font-family: '${fontName}';
-                    src: url('${fontPath}') format('woff2');
-                    font-display: swap;
-                }
-            `;
-            document.head.appendChild(style);
-            new FontFace(fontName, `url('${fontPath}')`).load().catch(() => { });
+        // Unified: block (never garbage) + reuse the shared helper.
+        ensurePageFontStyle(pageNumber);
+        const fonts = (document as any).fonts;
+        if (fonts?.load && !warmedFontPages.has(pageNumber)) {
+            fonts.load(`1em 'p${pageNumber}-v2'`).catch(() => { /* ignore */ });
         }
     }, [pageNumber]);
 
@@ -1906,7 +1953,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     // Only show spinner if we have NO data for this page AND it's not in memory cache.
     // This effectively makes cached pages load INSTANTLY with zero flicker.
-    if ((!pageData || pageData.pageNumber !== pageNumber) && !isPageInCache) return (
+    // Font-readiness join: with cold fonts (direct jumps) we keep the spinner
+    // even when the JSON is cached — rendering PUA codepoints in a fallback
+    // font is the garbage-glyph bug this whole gate exists to prevent.
+    const fontReady = isPageFontReady(pageNumber);
+    if ((!pageData || pageData.pageNumber !== pageNumber) && (!isPageInCache || !fontReady)) return (
         <div className="flex flex-col h-full items-center justify-center min-h-[400px]">
             <div className="w-12 h-12 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin mb-4" />
             <p className="text-amber-800/60 dark:text-amber-200/60 text-sm font-bold tracking-widest">{t.loading}</p>
