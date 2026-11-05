@@ -125,3 +125,22 @@ test('all 31 locales render their own feedback copy and consent without sending 
  }
  expect(translations.ar.feedbackForm.adultConfirm).toBe('أنا سني 18 عامًا فأكثر، وأوافق على إرسال الملاحظة والصورة المرفقة.');
 });
+
+
+test('screenshot retry works without blob URLs or image.decode',async({page})=>{
+ await open(page,'en');
+ await page.evaluate(()=>{
+  URL.createObjectURL=()=>{throw new Error('Blob URLs unavailable')};
+  HTMLImageElement.prototype.decode=()=>Promise.reject(new Error('decode unavailable'));
+ });
+ const input=page.locator('input[type=file]');
+ await input.setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('invalid image')});
+ await expect(page.getByRole('alert')).toBeVisible();
+ const valid={name:'screen.png',mimeType:'image/png',buffer:await imageBuffer(page)};
+ await input.setInputFiles(valid);
+ await expect(page.getByAltText('Screenshot',{exact:true})).toBeVisible();
+ await expect(page.getByRole('alert')).toHaveCount(0);
+ await page.getByRole('button',{name:'Remove screenshot'}).click();
+ await input.setInputFiles(valid);
+ await expect(page.getByAltText('Screenshot',{exact:true})).toBeVisible();
+});

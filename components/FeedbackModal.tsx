@@ -49,7 +49,7 @@ const FeedbackModal = () => {
 
     const handleScreenshot = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        e.target.value = '';
+        const input = e.currentTarget;
         if (!file) return;
         const request = ++imageRequestRef.current;
         setImageError('');
@@ -62,6 +62,7 @@ const FeedbackModal = () => {
             const code = error instanceof Error ? error.message : '';
             setImageError(code === 'type' ? copy.invalidType : code === 'size' ? copy.invalidSize : copy.invalidImage);
         } finally {
+            input.value = '';
             if (request === imageRequestRef.current) setIsPreparingImage(false);
         }
     };
