@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { X, Trash2, AlertTriangle } from 'lucide-react';
+import DeleteIcon from './DeleteIcon';
+import React, { useMemo, useState, useRef, useLayoutEffect } from 'react';
+import { X,  AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 import { MemorizationRating } from '../types';
 import { SURAHS } from '../constants/surahData';
@@ -13,6 +14,31 @@ interface MemorizationStatsProps {
     onRateSurah: (surahNumber: number) => void;
     onClearAll: () => void;
     t: Translations;
+}
+
+// Keep long translated names complete on one line without reducing normal names.
+function SingleLineSurahName({ name }: { name: string }) {
+    const ref = useRef<HTMLSpanElement>(null);
+    useLayoutEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        let active = true;
+        const fit = () => {
+            if (!active) return;
+            element.style.fontSize = '18px';
+            const available = element.clientWidth;
+            const natural = element.scrollWidth;
+            if (available > 0 && natural > available) {
+                element.style.fontSize = `${18 * available / natural - 0.2}px`;
+            }
+        };
+        fit();
+        const observer = new ResizeObserver(fit);
+        observer.observe(element);
+        void document.fonts.ready.then(fit);
+        return () => { active = false; observer.disconnect(); };
+    }, [name]);
+    return <span ref={ref} data-stats-surah-name className="block whitespace-nowrap leading-normal">{name}</span>;
 }
 
 export default function MemorizationStats({ isOpen, onClose, ratings, onNavigateToSurah, onRateSurah, onClearAll, t }: MemorizationStatsProps) {
@@ -58,7 +84,7 @@ export default function MemorizationStats({ isOpen, onClose, ratings, onNavigate
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" style={{ fontFamily: "'Almarai', sans-serif" }}>
+        <div className="app-modal fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" style={{ fontFamily: "'Almarai', sans-serif" }}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col relative">
 
                 {/* Header */}
@@ -89,7 +115,7 @@ export default function MemorizationStats({ isOpen, onClose, ratings, onNavigate
                                 onClick={() => setShowConfirm(true)}
                                 className="w-full bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-bold"
                             >
-                                <Trash2 size={20} />
+                                <DeleteIcon size={20} />
                                 {t.clearAllRatings}
                             </button>
                         </div>
@@ -101,22 +127,28 @@ export default function MemorizationStats({ isOpen, onClose, ratings, onNavigate
                                 key={surah.number}
                                 className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-gray-200 dark:border-slate-800 hover:shadow-md transition-all duration-200"
                             >
-                                <div className="flex items-center justify-between gap-4 mb-3">
+                                <div className={isArabic ? "flex items-center justify-between gap-4 mb-3" : "flex flex-col items-stretch sm:flex-row sm:items-center justify-between gap-3 mb-3"}>
                                     {/* Surah Name - Clickable */}
-                                    <button
+                                    <button data-stats-navigate={surah.number}
                                         onClick={() => {
                                             onNavigateToSurah(surah.number);
                                             onClose();
                                         }}
-                                        className="text-right font-bold text-lg text-slate-800 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+                                        className={clsx("font-bold text-lg text-slate-800 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-500 transition-colors", isArabic ? "text-right" : "min-w-0 flex-1 text-start")}
                                     >
+                                        {isArabic ? <>
                                         <span className="text-amber-500 text-sm ml-2 font-light">{toLocale(surah.number)}</span>
-                                        {isArabic ? surah.name : t.surahNames[surah.number - 1]}
+                                        {surah.name}
                                         <span className="text-xs text-gray-400 mr-2 font-normal">({toLocale(surah.ayahCount)})</span>
+                                        </> : <>
+                                            <span data-stats-surah-number className="block text-amber-500 text-xs font-normal mb-1">{toLocale(surah.number)}</span>
+                                            <SingleLineSurahName name={t.surahNames[surah.number - 1]} />
+                                            <span data-stats-ayah-count className="block text-xs text-gray-500 dark:text-slate-400 font-normal mt-1">{toLocale(surah.ayahCount)} {t.ayahs}</span>
+                                        </>}
                                     </button>
 
                                     {/* Statistics Badges */}
-                                    <div className="flex items-center gap-3">
+                                    <div className={isArabic ? "flex items-center gap-3" : "flex items-center gap-3 shrink-0"}>
                                         {/* Simple Stats Pill - Updated Layout - Now Clickable */}
                                         <button
                                             onClick={() => onRateSurah(surah.number)}

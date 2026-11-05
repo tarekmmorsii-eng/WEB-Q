@@ -6,6 +6,11 @@ export type Language =
     | 'rw';
 
 export interface Translations {
+    libraryActions: typeof import('../src/assets/i18n/en.json')['libraryActions'];
+    wordReview: typeof import('../src/assets/i18n/en.json')['wordReview'];
+    initialLanguageDownload: typeof import('../src/assets/i18n/en.json')['initialLanguageDownload'];
+    privacyContribution: typeof import('../src/assets/i18n/en.json')['privacyContribution'];
+    feedbackForm: typeof import('../src/assets/i18n/en.json')['feedbackForm'];
     dir: string;
     index: string;
     search: string;
@@ -502,6 +507,8 @@ export interface Translations {
     downloaded: string;
     downloadAction: string;
     wordMeaningsNote: string;
+    verseDisplayOptions: string;
+    rateApp: string;
     ayahRecitation: string;
     interactiveTour: string;
     gotIt: string;

@@ -30,7 +30,7 @@ function savePushPrefs(token: string, lang: string) {
   try {
     const prefs = { fcmToken: token, userLang: lang };
     localStorage.setItem(PUSH_PREFS_KEY, JSON.stringify(prefs));
-    console.log(`[Push Sync] 🔄 Token synced with language: ${lang}`, prefs);
+    console.log('[Push Sync] Preferences updated');
   } catch (e) {
     console.error('[Push Sync] ❌ Failed to save push prefs:', e);
   }
@@ -126,7 +126,7 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
 
       // الاستماع لتسجيل الـ Token
       PushNotifications.addListener('registration', (token) => {
-        console.log('[Push] تم تسجيل الجهاز بنجاح، Token:', token.value);
+        console.log('[Push] تم تسجيل الجهاز بنجاح');
         setFcmToken(token.value);
         localStorage.setItem(PUSH_TOKEN_KEY, token.value);
         localStorage.setItem(PUSH_PERMISSION_KEY, 'granted');
@@ -144,7 +144,6 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
 
       // الاستماع للإشعارات عند فتح التطبيق
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('[Push] 🔔 إشعار مستلم في المقدمة:', JSON.stringify(notification, null, 2));
         setForegroundMessage(notification);
 
         // حفظ الإشعار في السجل
@@ -154,11 +153,6 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
           icon: '/final_logo.png',
           data: notification.data || {},
         });
-      });
-
-      // الاستماع عند النقر على الإشعار
-      PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-        console.log('[Push] تم النقر على الإشعار:', action);
       });
 
       return { success: true };
@@ -211,7 +205,7 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
       });
 
       if (token) {
-        console.log('[Push] FCM Token:', token);
+        console.log('[Push] Notification registration complete');
         setFcmToken(token);
         localStorage.setItem(PUSH_TOKEN_KEY, token);
         localStorage.setItem(PUSH_PERMISSION_KEY, 'granted');
@@ -224,10 +218,6 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
 
       // الاستماع للرسائل في المقدمة (عندما يكون التطبيق مفتوحاً)
       onMessage(messaging, (payload) => {
-        console.log('[Push] 🔔 رسالة مستلمة في المقدمة:', JSON.stringify(payload, null, 2));
-        console.log('[Push] 📋 العنوان:', payload.notification?.title || payload.data?.title);
-        console.log('[Push] 📋 النص:', payload.notification?.body || payload.data?.body);
-        console.log('[Push] 📋 البيانات:', payload.data);
         setForegroundMessage(payload);
 
         const notifTitle = payload.notification?.title || payload.data?.title || 'إشعار جديد';
@@ -258,7 +248,6 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', (event) => {
           if (event.data?.type === 'SAVE_PUSH_NOTIFICATION') {
-            console.log('[Push] 📨 إشعار من Service Worker:', event.data.notification);
             addNotificationToStore(event.data.notification);
           }
         });

@@ -1,5 +1,29 @@
 apply plugin: 'com.android.application'
 
+// Opt-in local tajweed APK; production assets and the standard flavor stay untouched.
+def tajweedTrial = providers.gradleProperty('tajweedTrial').orElse('false').get().toBoolean()
+if (tajweedTrial) {
+    gradle.taskGraph.whenReady { graph ->
+        if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('standard') }) {
+            throw new GradleException('Tajweed trial assets are allowed only in the beta flavor.')
+        }
+    }
+}
+
+// Keep Meta entirely out of the app until credentials and dashboard setup are ready.
+def metaEventsEnabled = providers.gradleProperty('metaEventsEnabled').orElse('false').get().toBoolean()
+def metaLocalProperties = new Properties()
+def metaLocalFile = rootProject.file('meta-events.local.properties')
+if (metaLocalFile.exists()) {
+    metaLocalFile.withInputStream { metaLocalProperties.load(it) }
+}
+def metaClientToken = providers.environmentVariable('META_CLIENT_TOKEN')
+        .orElse(metaLocalProperties.getProperty('META_CLIENT_TOKEN', '')).get().trim()
+if (metaEventsEnabled && !metaClientToken.matches('[a-zA-Z0-9]+')) {
+    throw new GradleException('Meta App Events requires a valid META_CLIENT_TOKEN before enabling.')
+}
+
+
 // تحميل بيانات التوقيع من ملف keystore.properties خارج تتبع git
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('keystore.properties')
@@ -8,14 +32,19 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
+    if (tajweedTrial) {
+        sourceSets.main.assets.srcDirs = [rootProject.file('../artifacts/tajweed-native-assets')]
+    }
     namespace = "com.mushafalmurajaa.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.mushafalmurajaa.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.8"
+        manifestPlaceholders += [metaEventsEnabled: metaEventsEnabled.toString()]
+        resValue "string", "facebook_client_token", metaEventsEnabled ? metaClientToken : ""
+        versionCode 10
+        versionName "1.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -69,6 +98,9 @@ repositories {
 }
 
 dependencies {
+    if (metaEventsEnabled) {
+        implementation 'com.facebook.android:facebook-core:19.0.0'
+    }
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"

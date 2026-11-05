@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube, Share2, PlayCircle } from 'lucide-react';
+import React, { useState, lazy, Suspense } from 'react';
+import { X, Star, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube, Share2, PlayCircle, Shield, StickyNote } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
 import { useFeedback } from '../contexts/FeedbackContext';
@@ -12,17 +12,25 @@ import { translations, LANGUAGE_NAMES, Language } from '../i18n/translations';
 import { fetchPage } from '../services/quranService';
 import HowToUseGuide from './HowToUseGuide';
 import VerseCalculatorModal from './VerseCalculatorModal';
+import { ayahToolsText } from '../i18n/ayahToolsText';
+import { readingViewText } from '../i18n/readingViewText';
 import VisitorCounter from './VisitorCounter';
 import { useOfflineManager } from '../hooks/useOfflineManager';
 import AudioDownloadModal from './AudioDownloadModal';
 import DownloadProgressBar from './DownloadProgressBar';
 
+const WordsLibrary=lazy(()=>import('./WordsLibrary'));
+const NotesLibrary=lazy(()=>import('./NotesLibrary'));
+
 interface SettingsProps {
     isOpen: boolean;
+    covered?: boolean;
     onClose: () => void;
     settings: AppSettings;
     onSave: (settings: AppSettings) => void;
     currentLanguage: Language;
+    onBeforeWordAudio?: () => void;
+    onNavigateToNote?: (surah:number,ayah:number)=>Promise<void>;
     onOpenIndex?: () => void;
     onOpenSearch?: () => void;
     onOpenMemorization?: () => void;
@@ -45,8 +53,8 @@ interface SettingsProps {
 }
 
 export default function Settings({
-    isOpen, onClose, settings, onSave, currentLanguage,
-    onOpenIndex, onOpenSearch, onOpenMemorization,
+    isOpen, covered = false, onClose, settings, onSave, currentLanguage,
+    onBeforeWordAudio, onNavigateToNote, onOpenIndex, onOpenSearch, onOpenMemorization,
     onOpenNotifications, notificationUnreadCount = 0, onOpenMutashabihat, onOpenColorPicker, onOpenReciterSelection,
     onTogglePageBookmark, isPageBookmarked,
     hasUpdate = false,
@@ -64,9 +72,11 @@ export default function Settings({
     const isRTL = t.dir === 'rtl';
 
     const [isExporting, setIsExporting] = useState(false);
-    const [showAllSettings, setShowAllSettings] = useState(false);
+    const [openDisplay, setOpenDisplay] = useState(false);
 
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [showWords,setShowWords]=useState(false);
+    const [showNotes,setShowNotes]=useState(false);
     const [showVerseCalculator, setShowVerseCalculator] = useState(false);
     const [showPushConsentModal, setShowPushConsentModal] = useState(false);
 
@@ -77,10 +87,8 @@ export default function Settings({
     const [openOffline, setOpenOffline] = useState(false);
     const [openHelp, setOpenHelp] = useState(false);
 
-    // حالة وميض أحمر مؤقت لزر "المزيد من الإعدادات"
-    const [showMoreSettingsGlow, setShowMoreSettingsGlow] = useState(true);
 
-    const { openFeedback } = useFeedback();
+    const { openFeedback, closeFeedback, isOpen: feedbackOpen } = useFeedback();
 
     // هوك الإشعارات الخارجية (Push Notifications)
     const {
@@ -108,7 +116,6 @@ export default function Settings({
 
     React.useEffect(() => {
         if (isOpen && highlightOffline) {
-            setShowAllSettings(true);
             setOpenOffline(true);
             setTimeout(() => {
                 if (offlineSectionRef.current) {
@@ -124,7 +131,6 @@ export default function Settings({
 
     React.useEffect(() => {
         if (isOpen && highlightHelp) {
-            setShowAllSettings(true);
             setOpenHelp(true);
             setTimeout(() => {
                 if (helpSectionRef.current) {
@@ -138,15 +144,6 @@ export default function Settings({
         }
     }, [isOpen, highlightHelp]);
 
-    // مؤقت لإخفاء الوميض الأحمر بعد 3.5 ثانية — يعمل عند كل فتح للنافذة
-    React.useEffect(() => {
-        if (isOpen) {
-            setShowMoreSettingsGlow(true);
-            const timer = setTimeout(() => setShowMoreSettingsGlow(false), 3500);
-            return () => clearTimeout(timer);
-        }
-    }, [isOpen]);
-
     // مزامنة الإعدادات المحلية عند فتح القائمة أو تغيير الإعدادات الخارجية
     // مزامنة الإعدادات المحلية عند تغيير الإعدادات الخارجية
     React.useEffect(() => {
@@ -157,9 +154,6 @@ export default function Settings({
     React.useEffect(() => {
         if (isOpen) {
             setLocalSettings(settings); // Ensure fresh start
-            if (!highlightHelp && !highlightOffline) {
-                setShowAllSettings(false);
-            }
             // ⭐ تحديث حالة الإشعارات الفورية من localStorage
             // هذا يضمن أن زر "تفعيل الإشعارات الفورية" يتحدث تلقائياً
             // بعد أن يكون المستخدم قد وافق على التصريح من NotificationManager
@@ -167,6 +161,22 @@ export default function Settings({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
+
+    React.useEffect(() => {
+        const closeChild = (event: Event) => {
+            const detail = (event as CustomEvent<{handled:boolean}>).detail;
+            if (feedbackOpen) closeFeedback();
+            else if (showWords) setShowWords(false);
+            else if (showNotes) setShowNotes(false);
+            else if (showVerseCalculator) setShowVerseCalculator(false);
+            else if (showHelpModal) setShowHelpModal(false);
+            else if (showPushConsentModal) setShowPushConsentModal(false);
+            else return;
+            detail.handled = true;
+        };
+        window.addEventListener('settings-close-top-child', closeChild);
+        return () => window.removeEventListener('settings-close-top-child', closeChild);
+    }, [showWords, showNotes, showVerseCalculator, showHelpModal, showPushConsentModal, feedbackOpen, closeFeedback]);
 
     if (!isOpen) return null;
 
@@ -267,7 +277,6 @@ export default function Settings({
         icon: React.ElementType;
         label: string;
         onClick?: () => void;
-        keepOpen?: boolean;
     }
 
     const quickAccessButtons: QuickAccessButton[] = [
@@ -276,7 +285,9 @@ export default function Settings({
         { icon: PlayCircle, label: t.ayahRecitation, onClick: onOpenReciterSelection },
         { icon: Bell, label: t.reminders, onClick: onOpenNotifications },
         { icon: FileWarning, label: t.similarVersesAlert, onClick: onOpenMutashabihat },
-        { icon: Calculator, label: t.verseCalculatorTitle, onClick: () => setShowVerseCalculator(true), keepOpen: true },
+        { icon: StickyNote, label: t.wordReview.wordsTitle, onClick:()=>setShowWords(true) },
+        { icon: StickyNote, label: ayahToolsText(currentLanguage).notes, onClick:()=>setShowNotes(true) },
+        { icon: Calculator, label: t.verseCalculatorTitle, onClick: () => setShowVerseCalculator(true) },
         ...(!isNative && !(/iPad|iPhone|iPod/.test(navigator.userAgent)) ? [{
             icon: Maximize,
             label: t.fullscreen,
@@ -297,7 +308,7 @@ export default function Settings({
 
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
+        <div data-settings-dialog style={covered || feedbackOpen ? {display:"none"} : undefined} data-covered={covered || feedbackOpen ? "true" : undefined} className="settings-dialog app-modal fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
             <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[96vh] md:max-h-[90vh] flex flex-col overflow-hidden border border-[var(--border-primary)]">
                 {/* Header - Non-sticky since parent is flex-col */}
                 <div className="bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] p-4 flex justify-between items-center shrink-0 z-10">
@@ -345,10 +356,9 @@ export default function Settings({
                                     <button
                                         key={idx}
                                         onClick={() => {
-                                            if (!btn.keepOpen) onClose();
                                             btn.onClick?.();
                                         }}
-                                        className="relative flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
+                                        className="relative flex flex-col items-center gap-2 settings-tile p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                                     >
                                         <div className="relative">
                                             <btn.icon size={24} className="text-amber-600" />
@@ -374,9 +384,8 @@ export default function Settings({
                                     const updatedSettings = { ...localSettings, theme: newThemeId };
                                     setLocalSettings(updatedSettings);
                                     onSave(updatedSettings);
-                                    onClose();
                                 }}
-                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
+                                className="flex flex-col items-center gap-2 settings-tile p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                             >
                                 {currentTheme.isDark ? <Sun size={24} className="text-amber-600" /> : <Moon size={24} className="text-amber-600" />}
                                 <span className="text-sm text-[var(--text-primary)]">
@@ -392,7 +401,7 @@ export default function Settings({
                                     onSave(updatedSettings);
                                     onClose();
                                 }}
-                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
+                                className="flex flex-col items-center gap-2 settings-tile p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                             >
                                 <div className="relative w-6 h-6 flex items-center justify-center mb-0.5">
                                     <div className={clsx(
@@ -401,8 +410,8 @@ export default function Settings({
                                     )} />
                                     <div className={clsx(
                                         "w-2.5 h-2.5 rounded-full bg-amber-600 transition-all duration-300",
-                                        localSettings.prayerMode 
-                                            ? "shadow-[0_0_8px_rgba(245,158,11,0.6)]" 
+                                        localSettings.prayerMode
+                                            ? "shadow-[0_0_8px_rgba(245,158,11,0.6)]"
                                             : ""
                                     )} />
                                 </div>
@@ -415,7 +424,7 @@ export default function Settings({
                                     onTogglePageBookmark?.();
                                     onClose();
                                 }}
-                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
+                                className="flex flex-col items-center gap-2 settings-tile p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                             >
                                 <Bookmark
                                     size={24}
@@ -428,41 +437,18 @@ export default function Settings({
                             {/* Search Button (Completes the 4-button row) */}
                             <button
                                 onClick={() => {
-                                    onClose();
                                     onOpenSearch?.();
                                 }}
-                                className="flex flex-col items-center gap-2 p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
+                                className="flex flex-col items-center gap-2 settings-tile p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-colors"
                             >
                                 <Search size={24} className="text-amber-600" />
                                 <span className="text-sm text-[var(--text-primary)]">{t.search}</span>
                             </button>
                         </div>
 
-                        {/* More Settings Toggle Button */}
-                        <div className="mt-4 rounded-lg">
-                        <button
-                            onClick={() => setShowAllSettings(!showAllSettings)}
-className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-primary)] hover:bg-opacity-20 transition-all duration-1000 ease-in-out group ${showMoreSettingsGlow ? 'ring-2 ring-red-500 shadow-lg shadow-red-500/50' : 'ring-0 shadow-none'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-[var(--bg-card)] rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                                    <Settings2 size={20} className="text-[var(--text-primary)] opacity-60" />
-                                </div>
-                                <span className="font-medium text-[var(--text-primary)]">
-                                    {showAllSettings ? t.hideDetailedSettings : t.moreSettings}
-                                </span>
-                            </div>
-                            {showAllSettings ? (
-                                <ChevronUp size={20} className="text-gray-500" />
-                            ) : (
-                                <ChevronDown size={20} className="text-gray-500" />
-                            )}
-                        </button>
-                        </div>
                     </section>
 
-                    {showAllSettings && (
-                        <>
+                    <>
 
                             {/* Language Selection */}
                             <section>
@@ -491,7 +477,6 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                 </h3>
                                 <button
                                     onClick={() => {
-                                        onClose(); // Close settings modal
                                         onOpenColorPicker?.(); // Open Color Picker Modal
                                     }}
                                     className="w-full p-6 rounded-xl border-2 border-dashed border-[var(--border-primary)] hover:border-amber-500 hover:bg-[var(--bg-secondary)] transition-all flex flex-col items-center justify-center gap-3 group"
@@ -506,11 +491,18 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                     </span>
                                 </button>
 
+                            </section>
+                            <section data-verse-display-options className="border border-[var(--border-primary)] rounded-xl overflow-hidden">
+                                <button type="button" onClick={()=>setOpenDisplay(v=>!v)} aria-expanded={openDisplay} className="w-full flex items-center justify-between gap-2 p-4 bg-[var(--bg-secondary)] text-[var(--text-primary)] font-semibold">
+                                    <span className="flex items-center gap-2"><Layout size={20}/>{t.verseDisplayOptions}</span>
+                                    {openDisplay?<ChevronUp size={18}/>:<ChevronDown size={18}/>}
+                                </button>
+                                {openDisplay&&<div className="p-3">
                                 {/* Color Stop Signs Toggle */}
                                 <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer mt-4">
-                                    <span className="text-[var(--text-primary)] flex items-center gap-2">
+                                    <span className="min-w-0 text-[var(--text-primary)] flex flex-col items-start gap-2">
                                         {t.colorStopSigns}
-                                        <span className="text-3xl text-amber-600 font-serif mx-4 gap-4 flex items-center">
+                                        <span className="text-3xl text-amber-600 font-serif gap-3 flex flex-wrap items-center">
                                             <span>ۘ</span> <span>ۚ</span> <span>ۖ</span> <span>ۗ</span> <span>ۙ</span> <span>ۛ</span>
                                         </span>
                                     </span>
@@ -575,20 +567,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                     </p>
                                 </div>
 
-                                {/* Floating Side Menu Toggle */}
-                                <div className="p-4 bg-[var(--bg-secondary)] rounded-lg mt-3">
-                                    <label className="flex items-center justify-between cursor-pointer">
-                                        <span className="text-[var(--text-primary)] font-medium">
-                                            {t.sideMenu}
-                                        </span>
-                                        <input
-                                            type="checkbox"
-                                            checked={localSettings.bottomBar.showSideMenu !== false}
-                                            onChange={(e) => toggleBottomBarItem('showSideMenu' as keyof BottomBarSettings)}
-                                            className="w-5 h-5 text-amber-600 rounded focus:ring-2 focus:ring-amber-500"
-                                        />
-                                    </label>
-                                </div>
+                                </div>}
 
                             </section>
 
@@ -645,6 +624,15 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                 </button>
                                 {openGestures && (
                                     <div className="p-4 space-y-3">
+                                        <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer gap-3">
+                                            <span className="text-[var(--text-primary)]">{readingViewText(localSettings.language).pinchGesture}</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={localSettings.gesturePinchZoom !== false}
+                                                onChange={e => setLocalSettings(prev => ({ ...prev, gesturePinchZoom: e.target.checked }))}
+                                                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+                                            />
+                                        </label>
                                         <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg cursor-pointer">
                                             <span className="text-[var(--text-primary)]">{t.gestureTwoFingerTap}</span>
                                             <input
@@ -762,11 +750,6 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                             )}
 
                                             <div className="space-y-4">
-                                                {/* Main Note about two-step process */}
-                                                <div className="p-3 bg-amber-50/50 dark:bg-amber-900/10 border-r-4 border-amber-500 rounded text-xs text-amber-900 dark:text-amber-100 font-medium">
-                                                    {t.noteInstallationSteps}
-                                                </div>
-
                                                 <div className="space-y-3">
                                                     {!isNative && (
                                                         <>
@@ -878,7 +861,6 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                                 <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-2">
                                                     <button
                                                         onClick={() => {
-                                                            onClose();
                                                             onOpenAudioDownload?.();
                                                         }}
                                                         className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-[0.98]"
@@ -896,7 +878,6 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                                 {/* زر تحميل الترجمة ومعاني الكلمات */}
                                                 <button
                                                     onClick={() => {
-                                                        onClose();
                                                         onOpenTranslationManager?.();
                                                     }}
                                                     className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all active:scale-[0.98] group"
@@ -937,7 +918,6 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                     <div className="p-4 space-y-3">
                                         <button
                                             onClick={() => {
-                                                onClose();
                                                 onStartInteractiveTour?.();
                                             }}
                                             className="w-full flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-100 dark:border-indigo-800 mb-3"
@@ -948,6 +928,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                             <PlayCircle size={20} className="text-indigo-600 dark:text-indigo-400" />
                                         </button>
 
+                                        {currentLanguage === 'ar' && (
                                         <button
                                             id="tour-tutorials-btn"
                                             onClick={() => setShowHelpModal(true)}
@@ -958,6 +939,7 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                             </span>
                                             <HelpCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
                                         </button>
+                                        )}
                                         <a
                                             href="https://youtu.be/t-oQKcEHSpA?si=eZEPZOHSJ8UL1OA4"
                                             target="_blank"
@@ -1019,8 +1001,58 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                 </div>
                             </section>
 
+                            <section data-app-rating className="pt-4 border-t border-[var(--border-primary)]">
+                                <a href="https://play.google.com/store/apps/details?id=com.mushafalmurajaa.app" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 w-full p-4 rounded-xl border border-amber-500/30 bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors">
+                                    <Star size={24} className="text-amber-500 shrink-0"/>
+                                    <span className="font-bold">{t.rateApp}</span>
+                                </a>
+                            </section>
+
+                            {/* Share Section */}
+                            <section data-app-share className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                <button
+                                    onClick={() => onOpenShare?.()}
+                                    className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-slate-800 border-2 border-amber-500/20 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98] shadow-sm group"
+                                >
+                                    <div className="flex flex-col items-start text-right">
+                                        <span className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                            <Share2 size={18} className="text-amber-600 dark:text-amber-500" />
+                                            {isNative
+                                                ? t.shareAppNative
+                                                : t.shareWebsite}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            {t.shareAppWithFriends}
+                                        </span>
+                                    </div>
+                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-full group-hover:scale-110 transition-transform">
+                                        <Share2 size={24} className="text-amber-600 dark:text-amber-500" />
+                                    </div>
+                                </button>
+
+                                {/* QR Code Section - Hide on Native */}
+                                {!isNative && (
+                                    <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm">
+                                        <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                                            {t.qrCode}
+                                        </h4>
+                                        <div className="relative p-2 bg-white rounded-lg shadow-inner border border-gray-100">
+                                            <img
+                                                src="/qr_code.jpg"
+                                                alt="QR Code"
+                                                className="w-48 h-48 object-contain rounded-sm"
+                                            />
+                                            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500 rounded-tl-sm -translate-x-1 -translate-y-1" />
+                                            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500 rounded-tr-sm translate-x-1 -translate-y-1" />
+                                            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500 rounded-bl-sm -translate-x-1 translate-y-1" />
+                                            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500 rounded-br-sm translate-x-1 translate-y-1" />
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
+
                             {/* ═══════ قسم الإشعارات الخارجية (Push Notifications) ═══════ */}
-                            <div className="space-y-3">
+                            <div data-push-notifications className="space-y-3">
                                 <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
                                     <Bell size={18} className="text-purple-500" />
                                     {t.pushNotifTitle}
@@ -1077,49 +1109,6 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                 </button>
                             </div>
 
-                            {/* Share Section */}
-                            <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
-                                <button
-                                    onClick={() => onOpenShare?.()}
-                                    className="w-full flex items-center justify-between p-4 bg-amber-50 dark:bg-slate-800 border-2 border-amber-500/20 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-[0.98] shadow-sm group"
-                                >
-                                    <div className="flex flex-col items-start text-right">
-                                        <span className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                            <Share2 size={18} className="text-amber-600 dark:text-amber-500" />
-                                            {isNative 
-                                                ? t.shareAppNative
-                                                : t.shareWebsite}
-                                        </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            {t.shareAppWithFriends}
-                                        </span>
-                                    </div>
-                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-full group-hover:scale-110 transition-transform">
-                                        <Share2 size={24} className="text-amber-600 dark:text-amber-500" />
-                                    </div>
-                                </button>
-
-                                {/* QR Code Section - Hide on Native */}
-                                {!isNative && (
-                                    <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm">
-                                        <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                                            {t.qrCode}
-                                        </h4>
-                                        <div className="relative p-2 bg-white rounded-lg shadow-inner border border-gray-100">
-                                            <img 
-                                                src="/qr_code.jpg" 
-                                                alt="QR Code" 
-                                                className="w-48 h-48 object-contain rounded-sm"
-                                            />
-                                            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500 rounded-tl-sm -translate-x-1 -translate-y-1" />
-                                            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500 rounded-tr-sm translate-x-1 -translate-y-1" />
-                                            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500 rounded-bl-sm -translate-x-1 translate-y-1" />
-                                            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500 rounded-br-sm translate-x-1 translate-y-1" />
-                                        </div>
-                                    </div>
-                                )}
-                            </section>
-
                             {!isNative && (
                                 <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
                                     <VisitorCounter t={t} language={currentLanguage} />
@@ -1131,12 +1120,28 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                                     </div>
                                 </div>
                             )}
-                        </>
-                    )}
+                            <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                <button
+                                    type="button"
+                                    onClick={() => { window.dispatchEvent(new Event('open-measurement-choice')); }}
+                                    className="w-full flex items-center justify-between gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all active:scale-[0.98] group"
+                                >
+                                    <span className="flex items-center gap-3 min-w-0 text-start">
+                                        <span className="p-2 bg-amber-100 dark:bg-amber-800/60 rounded-full shrink-0">
+                                            <Shield size={18} className="text-amber-600 dark:text-amber-400" />
+                                        </span>
+                                        <span className="font-medium text-amber-800 dark:text-amber-200">
+                                            {t.privacyContribution.title}
+                                        </span>
+                                    </span>
+                                    <ChevronDown size={18} className="text-amber-500 -rotate-90 rtl:rotate-90 shrink-0" />
+                                </button>
+                            </section>
+                    </>
 
                     {/* نافذة التوضيح - Two-Step Consent Modal */}
                     {showPushConsentModal && (
-                        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+                        <div className="app-modal fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
                             <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-[var(--border-primary)]">
                                 <div className="flex flex-col items-center text-center gap-4">
                                     <div className="p-4 bg-purple-100 dark:bg-purple-900/30 rounded-full">
@@ -1185,7 +1190,6 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                     {/* Feedback Button - First */}
                     <button
                         onClick={() => {
-                            onClose();
                             openFeedback('settings_notes');
                         }}
                         className="flex-1 mx-2 flex items-center justify-center gap-2 px-4 py-2.5 border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all font-medium text-sm active:scale-95"
@@ -1210,12 +1214,13 @@ className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)
                 </div>
             </div>
 
+            {showWords&&<Suspense fallback={null}><WordsLibrary language={currentLanguage} onBeforeWordAudio={onBeforeWordAudio} onClose={()=>setShowWords(false)} onNavigate={onNavigateToNote}/></Suspense>}
+            {showNotes&&<Suspense fallback={null}><NotesLibrary language={currentLanguage} onClose={()=>setShowNotes(false)} onNavigate={async(surah,ayah)=>{if(onNavigateToNote){await onNavigateToNote(surah,ayah);setShowNotes(false)}}}/></Suspense>}
             <HowToUseGuide isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} language={currentLanguage} />
             <VerseCalculatorModal
                 isOpen={showVerseCalculator}
                 onClose={() => {
                     setShowVerseCalculator(false);
-                    onClose();
                 }}
                 currentLanguage={currentLanguage}
                 memorizationRatings={memorizationRatings}

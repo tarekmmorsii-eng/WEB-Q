@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React, { useRef, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, HelpCircle, BookOpen, Settings, Zap, PlayCircle } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -78,10 +79,10 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="app-modal fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
             {/* Blurred Backdrop */}
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
+                className="modal-backdrop-hit-target absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
                 onClick={onClose}
             />
 
@@ -155,7 +156,7 @@ export default function HelpModal({ isOpen, onClose, language }: HelpModalProps)
                                     {/* Right Side: Content (Bottom on mobile) */}
                                     <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center text-right bg-[var(--bg-card)] absolute bottom-0 md:relative rounded-t-3xl md:rounded-none z-10 h-auto md:h-full shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:shadow-none">
                                         <div className="space-y-4 md:space-y-6">
-                                            <h3 className="text-2xl md:text-4xl font-bold text-[var(--text-primary)] leading-tight">
+                                            <h3 className="modal-branded-title text-2xl md:text-4xl font-bold text-[var(--text-primary)] leading-tight"><ModalLogo />
                                                 {slide.title}
                                             </h3>
                                             <p className="text-base md:text-lg text-[var(--text-primary)] opacity-70 leading-relaxed">

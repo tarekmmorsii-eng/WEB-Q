@@ -37,6 +37,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVisible, onInteraction, onMouseEnter, onMouseLeave, t, isRTL = false }) => {
+  const [showDifficultHint, setShowDifficultHint] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<ViewMode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { openFeedback } = useFeedback();
@@ -95,6 +96,7 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
         return [
           { label: t.hideRandomWords, state: 0, icon: Shuffle },
           { label: t.allWords, state: 1, icon: WholeWord },
+          { label: t.wordReview.difficultWords, state: 2, icon: WholeWord },
         ];
       case ViewMode.HIDE_RANDOM_AYAHS:
         return [
@@ -121,6 +123,7 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
       setOpenDropdown(null);
       return;
     }
+    setShowDifficultHint(false);
     setOpenDropdown(openDropdown === mode ? null : mode);
   };
 
@@ -132,6 +135,7 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
   return (
     <div
       ref={containerRef}
+      id="mushaf-controls-header"
       className={clsx(
         "fixed top-0 left-0 right-0 z-50 bg-[var(--bg-card)] shadow-md border-b border-[var(--border-primary)] transition-all duration-500 ease-in-out",
         isRTL ? "lg:left-20" : "lg:right-20",
@@ -194,6 +198,7 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
                   className="absolute top-16 left-0 right-0 z-[100000005] mt-1 flex flex-col gap-1.5 bg-[var(--bg-card)] bg-opacity-95 backdrop-blur-sm p-1.5 rounded-xl shadow-2xl border border-[var(--border-primary)] animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   {options.map((opt) => (
+                    <div key={opt.state} className="relative">
                     <button
                       key={opt.state}
                       onClick={() => handleOptionClick(config.mode, opt.state)}
@@ -216,6 +221,11 @@ const Header: React.FC<HeaderProps> = ({ currentMode, setMode, toggleState, isVi
                         </>
                       )}
                     </button>
+                    {config.mode===ViewMode.HIDE_RANDOM_WORDS && opt.state===2 && <>
+                      <button type="button" aria-label={t.wordReview.difficultWordsHelpLabel} aria-expanded={showDifficultHint} onClick={()=>setShowDifficultHint(v=>!v)} className="absolute top-0 end-0 p-1 text-amber-700 dark:text-amber-400"><HelpCircle size={12}/></button>
+                      {showDifficultHint&&<p role="status" className="p-2 text-xs rounded-lg border border-[var(--border-primary)] bg-[var(--bg-card)] w-44 max-w-[70vw]" dir={t.dir}>{t.wordReview.difficultWordsHelp}</p>}
+                    </>}
+                    </div>
                   ))}
                 </div>
               )}

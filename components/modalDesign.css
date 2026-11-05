@@ -1,0 +1,98 @@
+/* Dialogs have their own two-mode palette, independent of the Quran paper theme. */
+.app-modal, .app-dialog-colors {
+    --bg-primary: #fcfcfd;
+    --bg-secondary: #f9fafb;
+    --bg-card: #ffffff;
+    --bg-body: #fcfcfd;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-primary: #e5e7eb;
+    --accent-primary: #d97706;
+    --accent-color: #b45309;
+    color: var(--text-primary);
+    font-family: 'Almarai', sans-serif;
+}
+.dark .app-modal, .dark .app-dialog-colors {
+    --bg-primary: #080f20;
+    --bg-secondary: #0f172a;
+    --bg-card: #0f172a;
+    --bg-body: #080f20;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-primary: #1e293b;
+    --accent-primary: #f59e0b;
+    --accent-color: #f59e0b;
+}
+.app-modal.fixed.inset-0 {
+    padding: 16px;
+    padding-top: calc(16px + var(--android-status-bar-height, 0px));
+    padding-bottom: calc(16px + var(--android-navigation-bar-height, 0px));
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0 0 0 / .5);
+    backdrop-filter: blur(4px);
+}
+/* The backdrop's direct surface only: nested cards and menus keep their geometry. */
+.app-modal > :is(div, section):not(.absolute):not(.fixed) {
+    border-radius: 16px;
+    width: 100%;
+    max-height: min(90dvh, calc(100dvh - 32px - var(--android-status-bar-height, 0px) - var(--android-navigation-bar-height, 0px)));
+    min-height: 0;
+    overflow: hidden;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / .2);
+}
+.app-modal > .overflow-y-auto { overflow-y: auto; }
+.app-modal :is(header, input, select, textarea) { color: var(--text-primary); }
+.app-modal :is(input, select, textarea) { accent-color: var(--accent-primary); }
+.app-modal.library-backdrop { display: flex; }
+.app-modal > .app-modal-panel {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-width: 896px;
+    height: 90dvh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-primary);
+}
+.app-modal-panel > :is(header, div:first-child) { flex-shrink: 0; }
+.app-modal:has(> [data-search-panel]) { align-items: flex-start; }
+
+.app-modal :is(.bg-white, .dark\:bg-slate-800, .dark\:bg-slate-900) { background-color: var(--bg-card); }
+.app-modal :is(.bg-gray-50, .bg-gray-100, .bg-slate-50, .bg-slate-100) { background-color: var(--bg-secondary); }
+.app-modal :is(.border-gray-200, .border-slate-200, .dark\:border-slate-700, .dark\:border-slate-800) { border-color: var(--border-primary); }
+.app-modal :is(.text-slate-800, .text-gray-800, .dark\:text-slate-100) { color: var(--text-primary); }
+
+.modal-title-logo { width: 36px; height: 36px; flex: 0 0 36px; object-fit: cover; border-radius: 50%; border: 1px solid rgb(245 158 11 / .3); }
+.modal-branded-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.modal-backdrop-hit-target { background: transparent !important; backdrop-filter: none !important; }
+/* Only the foreground dialog paints glass. Hide the underlying panel too, so
+   opening a library over Settings doesn't blur a white panel instead of the app. */
+.app-modal.fixed.inset-0:has(.app-modal.fixed.inset-0) { background: transparent; backdrop-filter: none; }
+.app-modal:has(.app-modal.fixed.inset-0) > :is(div, section):not(.absolute):not(.fixed) { visibility: hidden; }
+.app-modal .app-modal.fixed.inset-0 { visibility: visible; }
+
+/* Settings stays mounted, preserving drafts and scroll while its child owns focus. */
+.settings-dialog.app-modal[data-covered="true"] { visibility: hidden; pointer-events: none; background: transparent; backdrop-filter: none; }
+.settings-dialog .settings-tile { border: 1px solid var(--border-primary); }
+.dark .settings-dialog .settings-tile { border-color: #475569; background-color: #111c30; }
+
+[data-verse-display-options] input[type="checkbox"] { flex-shrink: 0; }
+[data-verse-display-options] label { gap: 12px; }
+[data-verse-display-options] label > div { min-width: 0; }
+
+.modal-standard-header { display:flex; align-items:center; gap:12px; padding:14px 16px; background:var(--bg-secondary); }
+.modal-standard-header .modal-title-logo { width:40px; height:40px; flex-basis:40px; }
+.modal-standard-close { width:44px; height:44px; flex-shrink:0; padding:8px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:var(--text-secondary); }
+.modal-standard-close:hover { background:var(--border-primary); }
+
+/* This dialog scrolls its entire surface; the shared clipping rule must not
+   override its vertical scroll container. Keep the existing scaled height cap. */
+.app-modal > [data-mutashabihat-panel]:not(.absolute):not(.fixed) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}

@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Search, ChevronRight, ChevronLeft, Filter, BookOpen, AlertCircle, Bookmark, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
@@ -609,20 +610,13 @@ export default function MutashabihatIndex({
     const currentSurah = SURAHS.find(s => s.number === selectedSurahId);
 
     return (
-        <div className="fixed inset-0 bg-[var(--bg-card)] z-[110] flex flex-col animate-in fade-in duration-300" dir={t.dir}>
+        <div className="app-modal library-backdrop fixed inset-0 z-[110]"><div className="app-modal-panel bg-[var(--bg-card)] flex flex-col animate-in fade-in duration-300" dir={t.dir}>
             {/* Header */}
             <div className="bg-[var(--bg-card)] border-b border-[var(--border-primary)] shadow-sm shrink-0">
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button onClick={onClose} className="p-2 hover:bg-[var(--bg-primary)] hover:bg-opacity-10 rounded-lg">
-                        <X className="text-[var(--text-primary)]" />
-                    </button>
-
-                    <h1 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
-                        <MutashabihatIcon showGreenLine showRedLine size="w-8 h-8" />
-                        {t.mutashabihatIndex}
-                    </h1>
-
-                    <div className="w-10" />
+                <div className="modal-standard-header" dir={t.dir}>
+                    <ModalLogo />
+                    <h1 className="min-w-0 flex-1 text-xl font-bold text-[var(--text-primary)]">{t.mutashabihatIndex}</h1>
+                    <button onClick={onClose} aria-label={t.close} className="modal-standard-close"><X size={24}/></button>
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center">
@@ -790,7 +784,7 @@ export default function MutashabihatIndex({
                     </div>
                 </div>
             </div>
-        </div>
+        </div></div>
     );
 }
 

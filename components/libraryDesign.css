@@ -1,0 +1,114 @@
+/* Shared neutral palette, matching MemorizationStats regardless of reading theme. */
+.library-design {
+    --library-card: #fff;
+    --library-list: #fcfcfd;
+    --library-header: #f9fafb;
+    --library-border: #e5e7eb;
+    --library-text: #1e293b;
+    --library-muted: #64748b;
+    --library-accent: #b45309;
+    --library-hover: #f3f4f6;
+    --library-danger: #dc2626;
+    --library-title: #92400e;
+    --library-verse: #0f766e;
+    --library-body: #334155;
+    --library-word: #1d4ed8;
+    --bg-primary: var(--library-list);
+    --bg-card: var(--library-card);
+    --bg-secondary: var(--library-header);
+    --text-primary: var(--library-text);
+    --text-secondary: var(--library-muted);
+    --border-primary: var(--library-border);
+    --accent-color: var(--library-accent);
+    background: var(--library-list);
+    color: var(--library-text);
+    font-family: 'Almarai', sans-serif;
+    font-size: 14px;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 0;
+}
+.dark .library-design {
+    --library-card: #0f172a;
+    --library-list: #080f20;
+    --library-header: #0f172a;
+    --library-border: #1e293b;
+    --library-text: #f1f5f9;
+    --library-muted: #94a3b8;
+    --library-accent: #f59e0b;
+    --library-hover: #1e293b;
+    --library-danger: #f87171;
+    --library-title: #fbbf24;
+    --library-verse: #5eead4;
+    --library-body: #cbd5e1;
+    --library-word: #93c5fd;
+}
+.library-design .library-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 16px;
+    padding-inline-start: max(16px, env(safe-area-inset-left));
+    padding-inline-end: max(16px, env(safe-area-inset-right));
+    background: var(--library-header);
+    border-bottom: 1px solid var(--library-border);
+}
+.library-logo { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; border: 1px solid #f59e0b4d; flex-shrink: 0; }
+.library-design .library-header h2 { min-width: 0; flex: 1; font-size: 20px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
+.library-header h2 small { display: block; color: var(--library-muted); font-size: 12px; font-weight: 400; }
+.library-design button, .library-design input, .library-design select { font-family: inherit; }
+.library-design button { min-height: 44px; transition: background-color .15s, border-color .15s; }
+.library-design button:disabled { opacity: .4; }
+.library-design .library-close { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 8px; flex-shrink: 0; border: 0; border-radius: 50%; background: transparent; color: var(--library-muted); }
+.library-design button:not(:disabled):hover { background: var(--library-hover); }
+.library-design :is(button, input, select, textarea):focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
+.library-design :is(input:not([type=checkbox]), select, textarea) { min-height: 44px; min-width: 0; border: 1px solid var(--library-border); border-radius: 10px; background: var(--library-card); color: var(--library-text); font-size: 16px; }
+.library-design :is(.library-controls, .words-library-controls) { background: var(--library-card); border-bottom: 1px solid var(--library-border); padding: 16px; }
+.library-design :is(.library-list, .words-library-list) { padding: 16px; scroll-padding-block: 16px; background: var(--library-list); }
+.library-design :is(.library-card, .words-library-card) { padding: 16px; border-radius: 12px; overflow-wrap: anywhere; }
+.library-design :is(.library-card h3, .words-library-card h3) { font-size: 16px; line-height: 1.7; }
+.library-design .library-verse { font-family: 'UthmanicHafs', 'Amiri', serif; font-size: 21px; line-height: 2; color: var(--library-muted); }
+.library-design :is(.library-actions, .words-library-actions) { padding-top: 12px; border-top: 1px solid var(--library-border); }
+.library-design :is(.library-actions, .words-library-actions) button { font-size: 13px; }
+.library-design .text-amber-600 { color: var(--library-accent); }
+.library-design :is(.text-red-600, .library-danger) { color: var(--library-danger); }
+.library-design .words-library-reference, .library-design .words-library-results { color: var(--library-muted); opacity: 1; }
+.library-design .words-library-editor textarea { scroll-margin-block: 20px; }
+@media (min-width: 768px) {
+    .library-design :is(.library-controls, .words-library-controls, .library-list, .words-library-list) { padding-inline: max(24px, calc((100% - 864px) / 2)); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    .library-design :is(.library-controls, .words-library-controls) { max-height: 30vh; overflow-y: auto; }
+    .library-design .library-header { padding-block: 8px; }
+}
+
+/* Shared content hierarchy for word reviews and personal notes. */
+.library-design :is(.library-card h3, .words-library-card h3) { color: var(--library-title); }
+.library-design :is(.library-verse, .words-library-verse) { color: var(--library-verse); }
+.library-design :is(.library-note, .words-library-note) { color: var(--library-body); line-height: 1.8; border-inline-start: 3px solid var(--library-verse); padding-inline-start: 10px; }
+.library-design .library-reference { display:block; color:var(--library-muted); font-size:12px; font-weight:400; }
+.library-design [data-review-word] { color: var(--library-word); }
+.library-design :is(.words-library-expand, .library-go, .words-library-actions button:has(.lucide-map-pin)) { color:var(--library-verse); }
+.library-design :is(.library-edit, .words-library-actions button:has(.lucide-pencil)) { color:var(--library-word); }
+/* Opaque semantic colors stay recognizable on both light and dark surfaces. */
+.library-design .words-library-status .forgotten { background:#facc15; color:#422006; border-color:#ca8a04; }
+.library-design .words-library-status .pronunciation { background:#fb923c; color:#431407; border-color:#ea580c; }
+.library-design .words-library-status span:not(.forgotten):not(.pronunciation) { color:var(--library-muted); }
+
+/* Bulk actions live in the existing title bar, never in a separate list row. */
+.library-design .library-header-actions { display:flex; gap:2px; flex-shrink:0; position:relative; }
+.library-design .library-header-actions button { width:40px; min-width:40px; padding:7px; border:0; background:transparent; display:inline-flex; align-items:center; justify-content:center; border-radius:9px; color:var(--library-muted); }
+.library-design .library-header-actions .library-danger { color:var(--library-danger); }
+.library-design .library-export-menu { position:absolute; top:100%; inset-inline-end:0; z-index:20; width:220px; max-width:75vw; padding:6px; background:var(--library-card); border:1px solid var(--library-border); border-radius:10px; box-shadow:0 8px 28px #0003; }
+.library-design .library-export-menu button { width:100%; justify-content:flex-start; text-align:start; gap:8px; }
+.library-design .library-bulk-overlay { position:absolute; inset:0; z-index:100; background:#0006; display:flex; align-items:center; justify-content:center; padding:16px; }
+.library-design .library-bulk-confirm { max-width:420px; max-height:100%; overflow-y:auto; background:var(--library-card); color:var(--library-text); border:1px solid var(--library-border); border-radius:14px; padding:20px; box-shadow:0 12px 40px #0004; }
+.library-bulk-confirm h3 { font-weight:700; margin-bottom:12px; }
+.library-bulk-confirm p { line-height:1.8; margin-bottom:16px; }
+.library-bulk-confirm > div { display:flex; flex-wrap:wrap; gap:8px; }
+.library-design .library-bulk-confirm button { padding:8px 12px; border:1px solid var(--library-border); border-radius:9px; background:var(--library-header); }
+@media(max-width:420px) { .library-design .library-header { gap:6px; padding-inline:10px; } .library-design .library-header h2 { font-size:16px; } .library-design .library-header .library-logo { width:32px; height:32px; } }
+
+/* Keep destructive actions toward the center, away from the edge close button. */
+.library-design .library-header-actions .library-header-delete { margin-inline-end:24px; }

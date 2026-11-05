@@ -1,3 +1,4 @@
+import DeleteIcon from './DeleteIcon';
 import React, { useState } from 'react';
 import { JUZ_SECTIONS, JUZ_START_PAGES } from '../constants';
 import { SURAHS } from '../constants/surahData';
@@ -330,7 +331,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                       onClick={() => onRemovePageBookmark(item.page)}
                       title={t.delete}
                     >
-                      <X size={18} />
+                      <DeleteIcon size={18} />
                     </button>
                     <div
                       className={clsx("flex-1 mr-4 cursor-pointer", isRTL ? "text-right" : "text-left")}
@@ -365,7 +366,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
                       onClick={() => onRemoveVerseBookmark(item.id)}
                       title={t.delete}
                     >
-                      <X size={18} />
+                      <DeleteIcon size={18} />
                     </button>
 
                     {/* 2. Content (Middle) */}
@@ -396,7 +397,7 @@ const SurahIndex: React.FC<SurahIndexProps> = ({
   };
 
   return (
-    <div className={clsx("fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex animate-fade-in", isRTL ? "justify-end" : "justify-start")} onClick={onClose}>
+    <div className={clsx("app-modal fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex animate-fade-in", isRTL ? "justify-end" : "justify-start")} onClick={onClose}>
       <div
         className={clsx("w-full sm:w-96 bg-[var(--bg-card)] h-full shadow-2xl flex flex-col transition-colors duration-300", isRTL ? "animate-slide-in" : "animate-slide-in-left")}
         onClick={(e) => e.stopPropagation()}

@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "allowJs": false, "types": ["node", "vite/client"], "lib": ["ES2022", "ES2022.Intl", "DOM", "DOM.Iterable"] },
+  "include": ["../services/juzOneTajweed.ts", "../components/JuzOneTajweedModal.tsx", "../components/AyahOptionsModal.tsx"],
+  "exclude": ["../node_modules", "../artifacts", "../dist"]
+}

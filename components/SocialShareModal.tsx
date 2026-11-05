@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React from 'react';
 import { X, MessageCircle, Send, Facebook, MessageSquare, Copy, Share } from 'lucide-react';
 import clsx from 'clsx';
@@ -87,14 +88,14 @@ export default function SocialShareModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-300 backdrop-blur-sm">
+        <div className="app-modal fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-300 backdrop-blur-sm">
             <div 
                 className="bg-[var(--bg-card)] rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-[var(--border-primary)] animate-in zoom-in duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="p-4 border-b border-[var(--border-primary)] flex justify-between items-center bg-[var(--bg-secondary)]">
-                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                    <h3 className="modal-branded-title text-lg font-bold text-[var(--text-primary)]"><ModalLogo />
                         {t.shareAppNative}
                     </h3>
                     <button onClick={onClose} className="p-1 hover:bg-[var(--border-primary)] rounded-full transition-colors">

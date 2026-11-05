@@ -1,3 +1,5 @@
+import DeleteIcon from './DeleteIcon';
+import ModalLogo from './ModalLogo';
 import React from 'react';
 import { X, Bell, BellOff, CheckCheck, Info, Lightbulb, Sparkles, Gift, Megaphone, Settings } from 'lucide-react';
 import clsx from 'clsx';
@@ -108,7 +110,7 @@ export default function InAppNotificationsModal({
 
     return (
         <div
-            className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+            className="app-modal fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
@@ -130,7 +132,7 @@ export default function InAppNotificationsModal({
                                 </span>
                             )}
                         </div>
-                        <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                        <h2 className="modal-branded-title text-lg font-bold text-[var(--text-primary)] flex items-center gap-2"><ModalLogo />
                             {t.inAppNotifModalTitle}
                             {onOpenAlarmSettings && (
                                 <button
@@ -178,7 +180,7 @@ export default function InAppNotificationsModal({
                                 onClick={onClearAll}
                                 className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors"
                             >
-                                <X size={14} />
+                                <DeleteIcon size={14} />
                                 <span>{t.inAppNotifClearAll}</span>
                             </button>
                         )}
@@ -271,7 +273,7 @@ export default function InAppNotificationsModal({
                                             }}
                                             className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-all shrink-0 self-center"
                                         >
-                                            <X size={14} className="text-red-500" />
+                                            <DeleteIcon size={14} />
                                         </button>
                                     </div>
                                 </div>

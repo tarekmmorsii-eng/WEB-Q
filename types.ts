@@ -129,6 +129,7 @@ export interface AppSettings {
   gestureTwoFingerTap?: boolean;
   gestureDoubleTap?: boolean;
   gestureSwipeUp?: boolean;
+  gesturePinchZoom?: boolean;
   showWordMeanings?: boolean;
   wordMeaningsSource?: 'siraj' | 'new';
 }

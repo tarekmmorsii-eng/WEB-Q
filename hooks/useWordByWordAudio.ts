@@ -20,14 +20,18 @@ function createAudioFromBlob(blob: Blob): HTMLAudioElement {
     return audio;
 }
 
-export function useWordByWordAudio() {
+export function useWordByWordAudio(playbackErrorMessage?: string) {
     const [activeWord, setActiveWord] = useState<ActiveWord | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const requestRef = useRef(0);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
+            requestRef.current++;
             if (audioRef.current) {
+                audioRef.current.onerror = null;
+                audioRef.current.onended = null;
                 audioRef.current.pause();
                 audioRef.current.src = '';
                 audioRef.current = null;
@@ -43,6 +47,7 @@ export function useWordByWordAudio() {
     };
 
     const stopAudio = useCallback(() => {
+        requestRef.current++;
         if (audioRef.current) {
             audioRef.current.oncanplaythrough = null;
             audioRef.current.onended = null;
@@ -88,24 +93,26 @@ export function useWordByWordAudio() {
 
     const playWordAudio = useCallback(async (surah: number, ayah: number, word: number) => {
         stopAudio();
+        const request = requestRef.current;
         const url = generateAudioUrl(surah, ayah, word);
 
         // ─── Step 1: Try IndexedDB Blob Cache ──────────────────────
         try {
             const cachedBlob = await getAudioBlob(url);
+            if (request !== requestRef.current) return;
             
             if (cachedBlob) {
                 // ✅ Blob found → create Object URL for guaranteed local playback
                 const audio = createAudioFromBlob(cachedBlob);
-                audio.onended = () => setActiveWord(null);
-                audio.onerror = () => setActiveWord(null);
+                audio.onended = () => { if (request === requestRef.current) setActiveWord(null); };
+                audio.onerror = () => { if (request === requestRef.current) setActiveWord(null); };
                 audioRef.current = audio;
                 setActiveWord({ surah, ayah, word });
                 try { 
                     await audio.play(); 
                 } catch (e) { 
                     console.log('[word play] blob play failed:', e); 
-                    setActiveWord(null); 
+                    if (request === requestRef.current) setActiveWord(null);
                 }
                 return;
             }
@@ -114,6 +121,7 @@ export function useWordByWordAudio() {
         }
 
         // ─── Step 2: Not in cache → play from network ─────────────
+        if (request !== requestRef.current) return;
         // (لا نعتمد على navigator.onLine لأنها غير موثوقة على بعض الأجهزة،
         //  بل نحاول دائماً ونعرض رسالة عامة عند الفشل الفعلي فقط)
         // Passive Caching: Fetch and cache in the background while playing
@@ -121,23 +129,23 @@ export function useWordByWordAudio() {
 
         // Play directly from network
         const audio = new Audio(url);
-        audio.onended = () => setActiveWord(null);
-        audio.onerror = () => {
+        let errorShown = false;
+        const fail = (error?: unknown) => {
+            if (request !== requestRef.current || audioRef.current !== audio || errorShown) return;
+            if ((error as { name?: string })?.name === 'AbortError') return;
+            errorShown = true;
             setActiveWord(null);
             window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { message: 'عذراً، تعذّر تشغيل هذا الصوت، تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.', type: 'error' }
+                detail: { message: playbackErrorMessage || 'عذراً، تعذّر تشغيل هذا الصوت، تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.', type: 'error' }
             }));
         };
+        audio.onended = () => { if (request === requestRef.current) setActiveWord(null); };
+        audio.onerror = () => fail();
         audioRef.current = audio;
         setActiveWord({ surah, ayah, word });
-        audio.play().catch(() => {
-            setActiveWord(null);
-            window.dispatchEvent(new CustomEvent('showToast', {
-                detail: { message: 'عذراً، تعذّر تشغيل هذا الصوت، تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.', type: 'error' }
-            }));
-        });
+        audio.play().catch(fail);
         return;
-    }, [stopAudio, preCacheWords]);
+    }, [stopAudio, preCacheWords, playbackErrorMessage]);
 
     return {
         activeWord,

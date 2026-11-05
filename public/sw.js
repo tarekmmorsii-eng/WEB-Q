@@ -40,35 +40,13 @@ try {
   const messaging = firebase.messaging();
   console.log('[SW-FCM] ✅ تم إنشاء كائن Messaging بنجاح');
 
-  // ---- مستمع Push خام للتشخيص فقط (لا يعرض إشعار) ----
-  self.addEventListener('push', (event) => {
-    console.log('[SW-FCM] 🔥🔥🔥 ========== PUSH EVENT RAW FIRED ==========');
-    console.log('[SW-FCM] 🔥🔥🔥 event:', event);
-    console.log('[SW-FCM] 🔥🔥🔥 event.data exists:', !!event.data);
-    if (event.data) {
-      try {
-        const jsonData = event.data.json();
-        console.log('[SW-FCM] 🔥🔥🔥 JSON payload:', JSON.stringify(jsonData, null, 2));
-      } catch (e) {
-        console.log('[SW-FCM] 🔥🔥🔥 Raw text:', event.data.text());
-      }
-    } else {
-      console.log('[SW-FCM] 🔥🔥⚠️ PUSH EVENT بدون بيانات!');
-    }
-    console.log('[SW-FCM] 🔥🔥🔥 ========== END PUSH RAW ==========');
-  });
-
   // ---- Firebase onBackgroundMessage ----
   messaging.onBackgroundMessage((payload) => {
     console.log('[SW-FCM] 🔔🔔🔔 ========== onBackgroundMessage FIRED ==========');
-    console.log('[SW-FCM] 🔔 Full payload:', JSON.stringify(payload, null, 2));
 
     const notificationTitle = payload.notification?.title || payload.data?.title || 'إشعار جديد';
     const notificationBody = payload.notification?.body || payload.data?.body || '';
 
-    console.log('[SW-FCM] 🔔 Title:', notificationTitle);
-    console.log('[SW-FCM] 🔔 Body:', notificationBody);
-    console.log('[SW-FCM] 🔔 Data:', JSON.stringify(payload.data));
 
     const notificationOptions = {
       body: notificationBody,
@@ -535,7 +513,7 @@ self.addEventListener('fetch', (event) => {
 // 5. Notification Click Event (موحد - يدعم التنقل لصفحة محددة)
 // ---------------------------
 self.addEventListener('notificationclick', (event) => {
-    console.log('[SW-FCM] 👆 تم النقر على الإشعار:', event.notification.tag);
+    console.log('[SW-FCM] Notification opened');
     event.notification.close();
 
     // تحديد الصفحة المستهدفة من بيانات الإشعار

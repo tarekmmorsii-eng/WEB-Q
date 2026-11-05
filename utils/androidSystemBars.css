@@ -1,0 +1,35 @@
+/* Reserve system-bar space for fixed application controls only. Quran pages
+   keep their original geometry, fonts, and line fitting in both bar states. */
+html[data-android-system-bars] [data-mushaf-viewport] {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+/* Paint behind native icons without reserving any space in the document. */
+html[data-android-system-bars="true"] [data-mushaf-viewport]::before,
+html[data-android-system-bars="true"] [data-mushaf-viewport]::after {
+    content: '';
+    position: fixed;
+    inset-inline: 0;
+    background: var(--bg-card);
+    pointer-events: none;
+    z-index: 49;
+}
+html[data-android-system-bars="true"] [data-mushaf-viewport]::before {
+    top: 0;
+    height: var(--android-status-bar-height, 0px);
+}
+html[data-android-system-bars="true"] [data-mushaf-viewport]::after {
+    bottom: 0;
+    height: var(--android-navigation-bar-height, 0px);
+}
+html[data-android-system-bars="true"] #mushaf-controls-header {
+    top: var(--android-status-bar-height, 0px);
+}
+html[data-android-system-bars="true"] #navigation-bar {
+    bottom: var(--android-navigation-bar-height, 0px);
+}
+@media (min-width: 1024px) {
+    html[data-android-system-bars="true"] #navigation-bar {
+        top: var(--android-status-bar-height, 0px);
+    }
+}

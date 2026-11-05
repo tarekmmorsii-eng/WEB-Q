@@ -1,0 +1,44 @@
+.words-library {
+    position: relative; display: flex; flex-direction: column;
+    
+    background: var(--library-list); color: var(--library-text);
+    font-family: system-ui, sans-serif; font-size: 14px; min-height: 0;
+}
+.words-library button, .words-library input, .words-library select { color: inherit; font: inherit; }
+.words-library button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--library-border); border-radius: 9px; background: var(--library-card); display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.words-library button:disabled { opacity: .4; }
+.words-library-header { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid var(--library-border); flex-shrink: 0; }
+.words-library-header h2 { flex: 1; font-weight: 700; font-size: 16px; }
+.words-library-header small { font-weight: 400; }
+.words-library-controls { padding: 12px; flex-shrink: 0; display: grid; gap: 8px; }
+.words-library-search { display: flex; align-items: center; gap: 8px; }
+.words-library-search input { flex: 1; width: 100%; min-width: 0; border: 1px solid var(--library-border); border-radius: 9px; background: var(--library-card); padding: 10px; }
+.words-library-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.words-library-filters select { min-width: 0; padding: 9px 6px; border-radius: 9px; border: 1px solid var(--library-border); background: var(--library-card); }
+.words-library-filters select:last-child { grid-column: 1 / -1; }
+.words-library-results { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.words-library-results button { font-size: 12px; }
+.words-library-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+.words-library-card { max-width: 760px; margin: 0 auto 12px; padding: 14px; border-radius: 12px; border: 1px solid var(--library-border); background: var(--library-card); display: flex; flex-direction: column; gap: 12px; }
+.words-library-card-heading { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; }
+.words-library-card h3 { font-weight: 700; }
+.words-library-reference { font-size: 12px; opacity: .75; }
+.words-library button.words-library-pin { color: var(--library-accent); }
+.words-library-status { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+.words-library-status span { border: 1px solid var(--library-border); border-radius: 8px; padding: 4px 8px; }
+.words-library-status .forgotten { background: rgba(250,204,21,.16); }
+.words-library-status .pronunciation { background: rgba(251,146,60,.16); }
+.words-library-verse { font-family: 'UthmanicHafs', 'Amiri', serif; font-size: 21px; line-height: 2; overflow-wrap: break-word; }
+.words-library-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.words-library button.words-library-expand { padding: 4px 8px; font-size: 12px; }
+.words-library-note { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; border-inline-start: 3px solid var(--library-border); padding-inline-start: 10px; }
+.words-library-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.words-library-actions button { font-size: 12px; }
+.words-library-editor, .words-library-confirm { padding: 12px; border: 1px solid var(--library-border); border-radius: 9px; }
+.words-library-confirm p { margin-bottom: 8px; }
+.words-library-message { margin: 4px 12px; padding: 8px; border: 1px solid var(--library-border); border-radius: 8px; flex-shrink: 0; }
+.words-library-empty { padding: 24px 8px; text-align: center; }
+@media (min-width: 640px) { .words-library-filters { grid-template-columns: repeat(3,minmax(0,1fr)); } .words-library-filters select:last-child { grid-column: auto; } }
+
+.words-library-word-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.words-library button.words-library-audio { font-size: 12px; color: var(--library-accent); }

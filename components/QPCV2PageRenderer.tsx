@@ -1,3 +1,4 @@
+import { useWordReviews, wordReviewKey, WordReview } from '../services/wordReview';
 
 /**
  * QPC V2 Page Renderer - Merged Version
@@ -18,12 +19,13 @@ import { JUZ_SECTIONS } from '../constants';
 import { translations, Language } from '../i18n/translations';
 import { getMushafData, saveMushafData } from '../utils/db';
 import { getWbwData, getWbwWordMeaning } from '../services/translationStorageService';
+import { useLanguageDataVersion } from '../hooks/useLanguageDataVersion';
 import { hasWbwSupport } from '../utils/translationMapper';
-import { findMutashabihatForAyah, findAllMutashabihatForAyah } from '../utils/mutashabihatProcessor';
+import { findAllMutashabihatForAyah } from '../utils/mutashabihatProcessor';
 import { formatNumber } from '../utils/quranUtils';
 import { useWordByWordAudio } from '../hooks/useWordByWordAudio';
 import { LINE_STYLE_OVERRIDES } from '../constants/lineOverrides';
-import { subscribeSwipeActive } from '../utils/swipeStore';
+import { subscribeSwipeActive, isSwipeActive } from '../utils/swipeStore';
 
 // --- Constants ---
 const CENTERED_SURAHS = new Set([112, 113, 114, 110, 108, 107, 111, 106, 101, 89, 88, 80, 55, 53, 13]);
@@ -341,6 +343,8 @@ interface QPCV2PageRendererProps {
     audioModeActive?: boolean;
     playingAyahId?: string | null;
     onAyahClickForAudio?: (surah: number, ayah: number) => void;
+    readingFontSize?: number;
+    readingGestureRef?: React.MutableRefObject<boolean>;
 }
 
 const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
@@ -372,8 +376,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     resetCounter = 0,
     audioModeActive = false,
     playingAyahId = null,
-    onAyahClickForAudio
+    onAyahClickForAudio,
+    readingFontSize,
+    readingGestureRef
 }) => {
+    const isReadingView = readingFontSize !== undefined;
     // Force a local reference to ensure we use the latest prop value in closures
     const audioEnabledRef = useRef<boolean>(enableWordLongPressAudio);
     useEffect(() => {
@@ -387,7 +394,15 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // transition ends. This is a ref (not state) updated via an external-store
     // subscription, so reacting to swipe start/end does NOT re-render this
     // (heavy) component — it just flips the ref and nudges the fit scheduler.
-    const swipeActiveRef = useRef(false);
+    const swipeActiveRef = useRef(isSwipeActive());
+    useEffect(() => {
+        const cancelWordPress = () => {
+            if(longPressTimerRef.current)clearTimeout(longPressTimerRef.current);
+            pointerStartPosRef.current=null;
+        };
+        window.addEventListener('mushaf-pinch-start',cancelWordPress);
+        return () => window.removeEventListener('mushaf-pinch-start',cancelWordPress);
+    },[]);
     // isActiveRef lets the swipe-end callback tell apart the VISIBLE page (which
     // must be fitted immediately) from neighbour pages (which should be pre-fit
     // in idle time, so they don't compete with the gesture and never freeze it).
@@ -400,7 +415,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         return subscribeSwipeActive((v) => {
             swipeActiveRef.current = v;
             if (v || !scheduleFitRef.current) return; // mid-flip: do nothing
-            if (isActiveRef.current) {
+            const slide = linesContainerRef.current?.closest('.swiper-slide');
+            if (slide ? slide.classList.contains('swiper-slide-active') : isActiveRef.current) {
                 // The now-visible page: fit it right away so the user sees it
                 // correctly aligned the instant the flip lands.
                 scheduleFitRef.current();
@@ -453,8 +469,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         return 'desktop';
     });
 
-    const [selectedWordMeaning, setSelectedWordMeaning] = useState<{ word: string, meaning: string, x: number, y: number, isFallback?: boolean } | null>(null);
+    const wordReviews = useWordReviews();
+    const [selectedWordMeaning, setSelectedWordMeaning] = useState<{ word: string, meaning: string, x: number, y: number, isFallback?: boolean, review: WordReview } | null>(null);
     const [wbwTranslationData, setWbwTranslationData] = useState<any>(null);
+    const languageDataVersion = useLanguageDataVersion(language);
     // ⭐ Ref لضمان الوصول لأحدث بيانات WbW في معالجات الأحداث (حل مشكلة Closure القديم)
     const wbwDataRef = useRef<any>(null);
 
@@ -466,7 +484,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             wbwDataRef.current = null;
             return;
         }
+        let cancelled = false;
         getWbwData(language).then(result => {
+            if (cancelled) return;
             if (result?.data) {
                 setWbwTranslationData(result.data);
                 wbwDataRef.current = result.data;
@@ -483,11 +503,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 console.warn(`⚠️ No WbW data found in IndexedDB for language: ${language}`);
             }
         }).catch(err => {
+            if (cancelled) return;
             console.warn('⚠️ Failed to load WbW data:', err);
             setWbwTranslationData(null);
             wbwDataRef.current = null;
         });
-    }, [language]);
+        return () => { cancelled = true; };
+    }, [language, languageDataVersion]);
 
     const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => {
         if (typeof window !== 'undefined') {
@@ -525,6 +547,40 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         return getSurahRating(surahNumber);
     };
 
+    // These decorations depend on verse data, not on hide/reveal or audio state.
+    // Keep the original lookup/precedence rules, but do the scans only when their
+    // inputs change rather than for every separator on every interaction.
+    const verseDecorations = useMemo(() => {
+        const result = new Map<string, {
+            rating: 'weak' | 'medium' | 'good' | null;
+            bookmarked: boolean;
+            mutashabihatType: 'none' | 'inside' | 'outside' | 'both';
+        }>();
+        pageData?.lines.forEach(line => line.words.forEach(word => {
+            if (!word.isEnd) return;
+            const key = `${word.surah}-${word.ayah}`;
+            if (result.has(key)) return;
+            let hasInside = false, hasOutside = false;
+            if (showMutashabihatIndicators) {
+                findAllMutashabihatForAyah(word.surah, word.ayah, mutashabihatData).forEach(group => {
+                    if (group.sourceAyah.surahNumber !== word.surah || group.sourceAyah.ayahNumber !== word.ayah) {
+                        if (group.sourceAyah.surahNumber === word.surah) hasInside = true; else hasOutside = true;
+                    }
+                    group.similarAyahs.forEach(ayah => {
+                        if (ayah.surahNumber === word.surah && ayah.ayahNumber === word.ayah) return;
+                        if (ayah.surahNumber === word.surah) hasInside = true; else hasOutside = true;
+                    });
+                });
+            }
+            result.set(key, {
+                rating: getEffectiveRating(word.surah, word.ayah),
+                bookmarked: !!(word.surah && word.ayah && verseBookmarks?.some(b => b.id === `${pageNumber}-${word.surah}-${word.ayah}`)),
+                mutashabihatType: hasInside && hasOutside ? 'both' : hasInside ? 'inside' : hasOutside ? 'outside' : 'none',
+            });
+        }));
+        return result;
+    }, [pageData, pageNumber, memorizationRatings, surahRatings, verseBookmarks, mutashabihatData, showMutashabihatIndicators]);
+
     const handleRateClick = (e: React.MouseEvent, surahNumber: number, ayahNumber: number) => {
         e.stopPropagation(); // Stop propagation to prevent hiding/revealing
         if (!onRateAyah) return;
@@ -536,6 +592,17 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
     const linesContainerRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        if (!isReadingView) return;
+        const scroll = linesContainerRef.current?.closest('.enlarged-reading-scroll');
+        const dismiss = () => {
+            setSelectedWordMeaning(null);
+            if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        };
+        scroll?.addEventListener('scroll', dismiss, { passive: true });
+        return () => { dismiss(); scroll?.removeEventListener('scroll', dismiss); };
+    }, [isReadingView, pageNumber, pageData]);
+
     // =============================================================
     // UNIFIED AYAH HIGHLIGHTING: DOM Overlays for all lines
     // Handles BOTH Search (highlightedAyah) and Audio (playingAyahId)
@@ -543,6 +610,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     // ⭐ FIX: Added pageNumber to dependencies for page-change reactivity
     // =============================================================
     useLayoutEffect(() => {
+        if (isReadingView) return; // Reflow uses word highlights, never fixed-line overlays.
         const container = linesContainerRef.current;
         if (!container) return;
 
@@ -625,11 +693,34 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         });
 
         return () => cancelAnimationFrame(rafId);
-    }, [highlightedAyah, playingAyahId, pageData, pageNumber, isDarkMode, toggleState, deviceType, orientation]);
+    }, [highlightedAyah, playingAyahId, pageData, pageNumber, isDarkMode, toggleState, deviceType, orientation, isReadingView]);
+
+    useEffect(() => {
+        if (!isReadingView) return;
+        const target = highlightedAyah || (playingAyahId ? {
+            surah: Number(playingAyahId.split('-')[0]), ayah: Number(playingAyahId.split('-')[1]),
+        } : null);
+        if (!target) return;
+        const frame = requestAnimationFrame(() => {
+            const word = linesContainerRef.current?.querySelector<HTMLElement>(`[data-word-surah="${target.surah}"][data-word-ayah="${target.ayah}"]`);
+            const scroll = word?.closest('.enlarged-reading-scroll');
+            if (!word || !scroll) return;
+            const bounds = scroll.getBoundingClientRect(), rect = word.getBoundingClientRect();
+            if (rect.top < bounds.top || rect.bottom > bounds.bottom) word.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [isReadingView, highlightedAyah, playingAyahId, pageData]);
 
     // --- Device Detection & Resize Handler ---
     useEffect(() => {
+        // A virtual pager mounts seven expensive pages. Resizing all seven
+        // blocks WebView's first correctly sized frame; Android displays the
+        // previous raster stretched into the new surface while JS is busy.
+        const slide = isReadingView ? null : document.querySelector<HTMLElement>(
+            `.swiper-slide[data-swiper-slide-index="${pageNumber - 1}"]`
+        );
         const handleResize = () => {
+            if (slide && !slide.classList.contains('swiper-slide-active')) return;
             const isMobile = window.matchMedia(
                 '(max-width: 899px) and (hover: none) and (pointer: coarse)'
             ).matches;
@@ -670,8 +761,19 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         window.addEventListener('resize', handleResize);
         handleResize();
 
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+        // Catch up deferred pages when Swiper activates them, before a user
+        // sees their text. Standalone/enlarged renderers keep normal resizing.
+        const activeObserver = slide ? new MutationObserver(() => {
+            if (!slide.classList.contains('swiper-slide-active')) return;
+            handleResize();
+            scheduleFitRef.current?.();
+        }) : null;
+        if (slide) activeObserver?.observe(slide, { attributes: true, attributeFilter: ['class'] });
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            activeObserver?.disconnect();
+        };
+    }, [pageNumber, isReadingView]);
 
     // --- Data Processing (V2 Logic) ---
     const processPageData = (rawPage: any, pageNum: number, fullMushafData?: MushafDataV2, showWordMeanings: boolean = true, wordMeaningsSource: 'siraj' | 'new' = 'siraj'): AdaptedPage => {
@@ -687,27 +789,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         if (!linesMap) return { pageNumber: pageNum, lines: [] };
         const finalLines: Line[] = [];
 
-        // 1. Identify Surah Starts on this page
-        const verseStarts: { [line: number]: number } = {}; // LineIndex -> SurahNumber
-
-        for (let i = 1; i <= 15; i++) {
-            const words = linesMap[i.toString()];
-            if (!words) continue;
-
-            // Check if any word starts a new surah (Ayah 1, position 1)
-            const firstWordOfSurah = words.find(w => {
-                const parts = w.verse_key.split(/[:\-_]/);
-                // Ensure position is treated as number regardless of JSON type
-                return parseInt(parts[1]) === 1 && Number(w.position) === 1;
-            });
-
-            if (firstWordOfSurah) {
-                const s = parseInt(firstWordOfSurah.verse_key.split(/[:\-_]/)[0]);
-                verseStarts[i] = s;
-            }
-        }
-
-        // 2. Map words into a raw lines cache (pre-assembly)
+        // Map words into a raw lines cache (pre-assembly).
         // === STRICT SORTING: Surah ASC → Ayah ASC → Position ASC ===
         const rawLinesCache: { [key: number]: AdaptedWord[] } = {};
         for (let i = 1; i <= 15; i++) {
@@ -761,67 +843,25 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             }
         }
 
-        // 3. Final Assembly using Sequential Injection
-        // This ensures headers appear even if there's no empty line provided by API
-        const surahsInjected = new Set<number>();
-
+        // The bundled 604 pages explicitly include every surah heading and
+        // standalone basmallah. Preserve those rows exactly. A heading can be
+        // on the PREVIOUS page (e.g. 76/77), so guessing from ayah 1 duplicates
+        // it on cold/direct navigation and makes layout depend on cache order.
         for (let i = 1; i <= 15; i++) {
-            const sNum = verseStarts[i];
-
-            // --- AUTO-INJECTION CHECK ---
-            if (sNum && !surahsInjected.has(sNum)) {
-                // Check if this surah already has a header in the raw JSON of this page
-                const hasHeaderInCurrentJson = Object.values(rawPage.lines).some((lineWords: any) => 
-                    lineWords.some((w: any) => (w.char_type === 'surah_name' || w.line_type === 'surah_name') && (w.surah_number === sNum || parseInt(w.verse_key.split(/[:\-_]/)[0]) === sNum))
-                );
-
-                // Check if previous page ended with this surah's header (Madinah Mushaf style, e.g. p584/585)
-                let hasHeaderInPrevJson = false;
-                if (pageNum > 1 && fullMushafData) {
-                    const prevPage = fullMushafData[(pageNum - 1).toString()];
-                    const lastLineOfPrev = prevPage?.lines ? prevPage.lines["15"] : null;
-                    if (lastLineOfPrev && lastLineOfPrev.some((w: any) => 
-                        (w.char_type === 'surah_name' || w.line_type === 'surah_name') && 
-                        (w.surah_number === sNum || parseInt(w.verse_key.split(/[:\-_]/)[0]) === sNum)
-                    )) {
-                        hasHeaderInPrevJson = true;
-                    }
-                }
-
-                if (!hasHeaderInCurrentJson && !hasHeaderInPrevJson) {
-                    // Prepend Headers only if not already in JSON
-                    if (sNum === 1 || sNum === 9) {
-                        finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNum });
-                    } else {
-                        finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNum });
-                        finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [], surahNumber: sNum });
-                    }
-                }
-                surahsInjected.add(sNum);
+            const source = linesMap[i.toString()]?.[0];
+            if (source?.line_type === 'surah_name' || source?.char_type === 'surah_name') {
+                const surahNumber = Number(source.surah_number) || parseInt(source.verse_key.split(/[:\-_]/)[0]);
+                finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber });
+                continue;
+            }
+            if (source?.line_type === 'basmallah' || source?.char_type === 'bismillah') {
+                const surahNumber = rawLinesCache[i]?.[0]?.surah || 0;
+                finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [], surahNumber });
+                continue;
             }
 
             // Append the actual text line if it exists
             if (rawLinesCache[i]) {
-                const words = rawLinesCache[i];
-                const combinedText = words.map(w => w.originalText || w.text).join(' ');
-
-                // --- RAW HEADER DETECTION ---
-                const isV2SurahHeader = words.some(w => w.originalText?.includes('سورة') || w.text?.includes('سورة'));
-                const isV2Basmallah = (combinedText.includes('بسم') && combinedText.includes('الله')) && !combinedText.includes('إنه من سليمان');
-
-                if (isV2SurahHeader && combinedText.length < 50) {
-                    const sNumber = words[0].surah || parseInt(words[0].id.toString().substring(0, 3)) || 1; // Fallback surah detection
-                    finalLines.push({ lineNumber: i, lineType: 'surah_name', isCentered: true, words: [], surahNumber: sNumber });
-                    surahsInjected.add(sNumber);
-                    continue;
-                }
-
-                if (isV2Basmallah && pageNum !== 1 && combinedText.length < 50) {
-                    const sNumber = words[0].surah || 0;
-                    finalLines.push({ lineNumber: i, lineType: 'basmallah', isCentered: true, words: [], surahNumber: sNumber });
-                    continue;
-                }
-
                 // Regular Ayah Line
                 const lineWords = rawLinesCache[i];
                 const currentSurah = lineWords[lineWords.length - 1]?.surah;
@@ -1082,11 +1122,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         // في السياق الجديد، فأفرّغ التتبع ليبقى متسقاً مع إعادة ضبط قائمة المكشوف.
         lastRevealedIdsRef.current = null;
 
-        if (cachedSet) {
-            setRevealedIndices(new Set(cachedSet));
-        } else {
-            setRevealedIndices(new Set());
-        }
+        const next = new Set<string>(cachedSet || []);
+        setRevealedIndices(previous => {
+            // Restoring the same contents must not trigger another commit and
+            // synchronous shadow measurement on every mounted neighbour page.
+            if (previous.size === next.size && [...previous].every(id => next.has(id))) return previous;
+            return next;
+        });
     }, [mode, pageNumber, toggleState]);
 
     const lastResetRef = useRef(resetCounter);
@@ -1097,7 +1139,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             if ((window as any).revealedCache) {
                 delete (window as any).revealedCache[cacheKey];
             }
-            setRevealedIndices(new Set());
+            setRevealedIndices(previous => previous.size === 0 ? previous : new Set());
             lastRevealedIdsRef.current = null;
         }
         lastResetRef.current = resetCounter;
@@ -1141,7 +1183,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         } else if (mode === ViewMode.HIDE_RANDOM_WORDS) {
             // toggleState 0: Random
             // toggleState 1: Hide All (Review Mode - Legacy)
-            if (toggleState === 1) {
+            if (toggleState === 2) {
+                // Difficult words are selected dynamically by occurrence below.
+            } else if (toggleState === 1) {
                 pageData.lines.forEach((line, lineIdx) => {
                     if (line.lineType === 'ayah') {
                         line.words.forEach((word, wordIdx) => {
@@ -1162,7 +1206,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             }
             setRandomMasks(newMasks);
         } else {
-            setRandomMasks(newMasks);
+            // Most pages need no second commit for an already empty mask. Keep
+            // the existing settling pass on centered short-surah pages: their
+            // font-dependent line widths can settle after the first measurement.
+            const needsLayoutSettle = pageData.lines.some(line => line.lineType === 'ayah' && line.isCentered);
+            setRandomMasks(previous => previous.size === 0 && !needsLayoutSettle ? previous : newMasks);
         }
     }, [mode, pageNumber, toggleState, memorizationRatings, ayahWordMap, pageData]);
 
@@ -1269,7 +1317,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 }
                 return false;
             case ViewMode.HIDE_RANDOM_WORDS:
-                return randomMasks.has(id);
+                return toggleState === 2 ? !!(wordReviews[wordReviewKey(word.surah, word.ayah, word.word)]?.forgotten || wordReviews[wordReviewKey(word.surah, word.ayah, word.word)]?.pronunciation) && !word.isEnd : randomMasks.has(id);
             case ViewMode.TOGGLE_FIRST_WORD:
                 return toggleState === 0 ? word.word === 1 : word.word !== 1;
             case ViewMode.TOGGLE_LAST_WORD:
@@ -1283,7 +1331,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             default:
                 return false;
         }
-    }, [mode, toggleState, pageData, revealedIndices, randomMasks, ayahWordMap, getId]);
+    }, [mode, toggleState, pageData, revealedIndices, randomMasks, ayahWordMap, getId, wordReviews]);
 
     // هل تنتمي الكلمة إلى نظام الإخفاء في الوضع الحالي؟
     // نفس منطق isHidden لكن بتجاهل حالة الكشف (revealedIndices)، أي: هل ستكون مخفية
@@ -1305,7 +1353,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 }
                 return false;
             case ViewMode.HIDE_RANDOM_WORDS:
-                return randomMasks.has(getId(lineIdx, wordIdx));
+                return toggleState === 2 ? !!(wordReviews[wordReviewKey(word.surah, word.ayah, word.word)]?.forgotten || wordReviews[wordReviewKey(word.surah, word.ayah, word.word)]?.pronunciation) && !word.isEnd : randomMasks.has(getId(lineIdx, wordIdx));
             case ViewMode.TOGGLE_FIRST_WORD:
                 return toggleState === 0 ? word.word === 1 : word.word !== 1;
             case ViewMode.TOGGLE_LAST_WORD:
@@ -1319,13 +1367,14 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             default:
                 return false;
         }
-    }, [mode, toggleState, pageData, randomMasks, ayahWordMap, getId]);
+    }, [mode, toggleState, pageData, randomMasks, ayahWordMap, getId, wordReviews]);
 
     // =============================================================
     // UNIFIED AYAH SHADOW: DOM Overlays for HIDE_ALL_AYAHS mode
     // Creates a single continuous shadow block per ayah per line
     // =============================================================
     useLayoutEffect(() => {
+        if (isReadingView) return; // Each hidden word owns its shadow in flowing text.
         const container = linesContainerRef.current;
         if (!container) return;
 
@@ -1334,6 +1383,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
         // 2. Only active in ayah hiding modes (unified shadow)
         if (mode !== ViewMode.HIDE_ALL_AYAHS && mode !== ViewMode.HIDE_RANDOM_AYAHS && !(mode === ViewMode.TOGGLE_FIRST_WORD) && !(mode === ViewMode.TOGGLE_LAST_WORD)) return;
+
+        // Establish the offsetParent BEFORE reading word offsets. Previously
+        // this happened after the reads, so a redundant state-reset commit was
+        // inadvertently needed to correct the first measurement on each line.
+        container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]').forEach(lineEl => {
+            (lineEl as HTMLElement).style.position = 'relative';
+        });
 
         // ===== PERF: read ALL layout once, then write. The old code ran a triple-
         // nested loop (line × ayah × word) with a querySelectorAll PER (line,ayah)
@@ -1381,11 +1437,6 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
         // ===== PHASE 2 (WRITE): create + append every overlay AFTER all reads,
         // so the browser invalidates layout once for the whole batch, not per word.
-        // Mark every ayah/basmallah line as the positioning context (relative) —
-        // matches the original behavior for ALL lines, not only those with overlays.
-        container.querySelectorAll('.qpc-v2-line[data-line-type="ayah"], .qpc-v2-line[data-line-type="basmallah"]').forEach(lineEl => {
-            (lineEl as HTMLElement).style.position = 'relative';
-        });
         groups.forEach((lineMap, lineEl) => {
             const lineWidth = lineWidths.get(lineEl) || lineEl.clientWidth;
 
@@ -1417,11 +1468,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 lineEl.appendChild(overlay);
             });
         });
-    }, [mode, pageData, revealedIndices, isDarkMode, toggleState, deviceType, orientation, ayahWordMap, randomMasks]);
+    }, [mode, pageData, revealedIndices, isDarkMode, toggleState, deviceType, orientation, ayahWordMap, randomMasks, isReadingView]);
 
     // --- Prefetching Neighbor Pages ---
     useEffect(() => {
-        if (loading || error) return;
+        if (!isActive || loading || error) return;
 
         const prefetch = async (p: number) => {
             if (p < 1 || p > 604) return;
@@ -1448,7 +1499,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         }, 100); // Only 100ms delay to be ready for fast swipes
 
         return () => clearTimeout(timer);
-    }, [pageNumber, loading, error]);
+    }, [pageNumber, loading, error, isActive]);
 
     // --- Font Injection (V2) ---
     useEffect(() => {
@@ -1461,7 +1512,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     }, [pageNumber]);
 
     // --- Styling Helpers ---
-    const containerStyles = useMemo(() => {
+    const containerStyles = useMemo<React.CSSProperties>(() => {
         const isTabLandscape = deviceType === 'tablet' && orientation === 'landscape';
         const isMobLandscape = deviceType === 'mobile' && orientation === 'landscape';
         const isLandscape = isTabLandscape || isMobLandscape;
@@ -1659,6 +1710,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     //   otherwise widths are measured against a fallback font.
     // =============================================================
     useLayoutEffect(() => {
+        if (isReadingView) return; // Font scaling / fixed-line fitting belongs only to the original view.
         const container = linesContainerRef.current;
         if (!container) return;
 
@@ -1842,12 +1894,13 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         // and caused repeated forced reflows).
         const fonts = (document as any).fonts;
         if (fonts?.load) {
+            const alreadyDecoded = isPageFontReady(pageNumber);
             fonts.load(`1em '${fontName}'`)
                 .then(() => {
                     // The pre-font pass measured against the fallback font; drop
                     // that cached entry so the re-fit measures the true glyph
                     // widths and stores the correct transforms.
-                    fitCache.delete(cacheKey);
+                    if (!alreadyDecoded) fitCache.delete(cacheKey);
                     scheduleFit();   // was: requestAnimationFrame(fitLines)
                 })
                 .catch(() => { });
@@ -1855,10 +1908,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
         // Debounced resize. A live drag fires `resize` dozens of times per
         // second; the old code reflowed on each. Now we coalesce into one fit
-        // shortly after the gesture settles. (settleTimer below still covers the
-        // orientation-transition case.)
+        // shortly after the gesture settles. Actual container width changes are
+        // fitted before paint by the observer below.
         let resizeTimer: ReturnType<typeof setTimeout>;
         const onResize = () => {
+            const slide = container.closest('.swiper-slide');
+            if (slide && !slide.classList.contains('swiper-slide-active')) return;
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 // Every page's available width changes with the window, so the
@@ -1870,28 +1925,30 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
         };
         window.addEventListener('resize', onResize);
 
-        // Post-transition re-fit. On an orientation change the layout containers
-        // animate their width over ~500ms (transition-all). The `resize` event
-        // fires at the START of that animation, so a fit triggered by it measures
-        // a transitional (wrong) width and would lock in a wrong scaleX — the
-        // cause of a portrait page looking "broken" after rotating to landscape
-        // and back. Re-measure once the animation has fully settled so the final
-        // scaleX is computed against the true portrait width.
-        const settleTimer = setTimeout(() => {
-            // Drop the transitional-width entry so the re-fit measures against
-            // the true settled portrait width (not the mid-animation width).
+        // Observe the actual line area, including Swiper's new slide width.
+        // ResizeObserver runs before paint, so no frame uses the previous
+        // orientation's fit or waits for a delayed corrective pass.
+        let measuredWidth = container.clientWidth;
+        const widthObserver = new ResizeObserver(() => {
+            const width = container.clientWidth;
+            if (width === measuredWidth) return;
+            measuredWidth = width;
             fitCache.delete(cacheKey);
-            scheduleFit();
-        }, 550);   // was: ...requestAnimationFrame(fitLines)...
+            const slide = container.closest('.swiper-slide');
+            if (slide && !slide.classList.contains('swiper-slide-active')) return;
+            cancelAnimationFrame(raf);
+            fitLines();
+        });
+        widthObserver.observe(container);
 
         return () => {
             cancelAnimationFrame(raf);
-            clearTimeout(settleTimer);
+            widthObserver.disconnect();
             clearTimeout(resizeTimer);
             window.removeEventListener('resize', onResize);
             scheduleFitRef.current = null; // effect torn down — drop the stale nudge handle
         };
-    }, [pageData, pageNumber, deviceType, orientation, mode, toggleState, fontSizeClass]);
+    }, [pageData, pageNumber, deviceType, orientation, mode, toggleState, fontSizeClass, isReadingView]);
 
     // Clear meaning on page change
     useEffect(() => {
@@ -1912,40 +1969,35 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
     //   - BACKGROUND ±4..±7 with a longer timeout to absorb momentum swipes.
     useEffect(() => {
         if (!isActive) return;
-        let urgentTimer: any;
-        let idleTimer: any;
-
-        // Urgent tier: the pages most likely to be swiped to next (±3 each side).
-        const warmUrgent = () => {
-            ensurePageFontWarm(pageNumber + 1);
-            ensurePageFontWarm(pageNumber - 1);
-            ensurePageFontWarm(pageNumber + 2);
-            ensurePageFontWarm(pageNumber - 2);
-            ensurePageFontWarm(pageNumber + 3);
-            ensurePageFontWarm(pageNumber - 3);
-        };
-        // Background tier: extend the warm window further out (±4..±7) for rapid momentum.
-        const BG_RADIUS = 7;
-        const warmBackground = () => {
-            for (let d = 4; d <= BG_RADIUS; d++) {
-                ensurePageFontWarm(pageNumber + d);
-                ensurePageFontWarm(pageNumber - d);
-            }
-        };
-
+        let cancelled = false;
+        let timer: ReturnType<typeof setTimeout>;
+        let idleId: number | undefined;
+        const queue = Array.from({ length: 7 }, (_, i) => [pageNumber + i + 1, pageNumber - i - 1])
+            .flat().filter(p => p >= 1 && p <= 604 && !warmedFontPages.has(p));
         const ric = (window as any).requestIdleCallback;
-        if (typeof ric === 'function') {
-            urgentTimer = ric(warmUrgent, { timeout: 100 });
-            idleTimer = ric(warmBackground, { timeout: 1500 });
-            return () => {
-                try { (window as any).cancelIdleCallback(urgentTimer); } catch { }
-                try { (window as any).cancelIdleCallback(idleTimer); } catch { }
-            };
-        }
-        // Fallback when requestIdleCallback is unavailable.
-        urgentTimer = setTimeout(warmUrgent, 100);
-        idleTimer = setTimeout(warmBackground, 400);
-        return () => { clearTimeout(urgentTimer); clearTimeout(idleTimer); };
+        const schedule = (delay: number) => {
+            if (cancelled || !queue.length) return;
+            timer = setTimeout(() => {
+                if (typeof ric === 'function') idleId = ric(step, { timeout: 500 });
+                else step();
+            }, delay);
+        };
+        const step = () => {
+            idleId = undefined;
+            if (cancelled) return;
+            // Idle callbacks with a timeout may fire during an active gesture.
+            // Never start a burst of font decodes in the middle of that gesture.
+            if (isSwipeActive()) { schedule(80); return; }
+            const next = queue.shift();
+            if (next !== undefined) ensurePageFontWarm(next);
+            schedule(queue.length && Math.abs(queue[0] - pageNumber) > 3 ? 200 : 40);
+        };
+        schedule(60);
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+            if (idleId !== undefined) (window as any).cancelIdleCallback?.(idleId);
+        };
     }, [isActive, pageNumber]);
 
     // Final check: is this page in our global memory cache?
@@ -1978,16 +2030,16 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
             data-orientation={orientation}
             translate="no"
             className={clsx(
-                "mushaf-page-qpc w-full mx-auto flex flex-col justify-between px-2 pb-2 pt-0 shadow-lg mt-0 mb-0 rounded-sm relative notranslate",
-                isSpecialPage && "special-page-frame",
+                isReadingView ? "reading-page-qpc relative notranslate" : "mushaf-page-qpc w-full mx-auto flex flex-col justify-between px-2 pb-2 pt-0 shadow-lg mt-0 mb-0 rounded-sm relative notranslate",
+                !isReadingView && isSpecialPage && "special-page-frame",
                 className
             )}
             style={{
-                ...containerStyles,
+                ...(isReadingView ? { fontFamily: fontName } : containerStyles),
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
                 // Apply "Book" constraint
-                aspectRatio: (deviceType === 'desktop' && !isSpecialPage) ? '0.65' : undefined,
+                aspectRatio: (!isReadingView && deviceType === 'desktop' && !isSpecialPage) ? '0.65' : undefined,
                 // NOTE: content-visibility:auto is intentionally NOT used here.
                 // Diagnostics proved it HURTS: when a slide leaves the viewport it
                 // gets un-painted, and on return the browser RE-PAINTS it from
@@ -2072,10 +2124,10 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                 })()}
             </div>
 
-            <div ref={linesContainerRef} className="quran-lines-container flex-1 flex flex-col" style={{ 
+            <div ref={linesContainerRef} className={isReadingView ? 'reading-lines-container' : 'quran-lines-container flex-1 flex flex-col'} style={{
                 direction: 'rtl',
                 margin: '0 auto',
-                width: isNativeApp && (deviceType === 'mobile' || deviceType === 'tablet') ? '96%' : '100%'
+                width: !isReadingView && isNativeApp && (deviceType === 'mobile' || deviceType === 'tablet') ? '96%' : '100%'
             }}>
                 {pageData.lines.map((line, idx) => (
                     <div key={`line-${idx}`}
@@ -2106,6 +2158,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                             // Manual clipping fixes apply in both orientations: the
                             // same overflowing lines get cut in landscape too.
                             ...(LINE_STYLE_OVERRIDES[pageNumber]?.[idx] || {}),
+                            ...(isReadingView ? { display: line.lineType === 'ayah' ? 'contents' : 'flex', flex: '0 0 100%', minHeight: 'auto', margin: 0, transform: 'none' } : {}),
                         }}
                     >
                         {line.lineType === 'surah_name' && renderSurahName(line)}
@@ -2116,6 +2169,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                     {line.words.map((word, wIdx) => {
                                         const shouldHide = isHidden(idx, wIdx) && !word.isEnd;
                                         const wordId = getId(idx, wIdx);
+                                        const review = !word.isEnd ? wordReviews[wordReviewKey(word.surah, word.ayah, word.word)] : undefined;
 
                                         return (
                                             <React.Fragment key={wIdx}>
@@ -2123,10 +2177,12 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                     id={isActive && word.surah === 1 && word.ayah === 2 && word.word === 1 ? 'tour-word-long-press' : undefined}
                                                     data-word-surah={word.surah}
                                                     data-word-ayah={word.ayah}
+                                                    data-word-position={isReadingView ? word.word : undefined}
                                                     data-reveal-key={shouldHide ? wordId : undefined}
                                                     className={clsx(
                                                         `qpc-v2-text cursor-pointer transition-colors duration-300 relative`,
                                                         (activeWord?.surah === word.surah && activeWord?.ayah === word.ayah && activeWord?.word === word.word) && "bg-amber-300 dark:bg-amber-700/80 rounded px-1",
+                                                        isReadingView && ((highlightedAyah?.surah === word.surah && highlightedAyah?.ayah === word.ayah) || playingAyahId === `${word.surah}-${word.ayah}`) && 'reading-word-highlight',
                                                         shouldHide
                                                             ? (mode === ViewMode.HIDE_RANDOM_WORDS
                                                                 ? "rounded-sm" // Per-word shadow: bg applied via style below
@@ -2138,17 +2194,29 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         lineHeight: '1.2',
                                                         flexShrink: line.isCentered ? 0 : 1,
                                                         color: shouldHide ? 'transparent' : (isDarkMode ? '#f5f5f5' : '#1a1a1a'),
-                                                        backgroundColor: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS ? (isDarkMode ? '#1e293b' : '#334155') : undefined,
+                                                        backgroundColor: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS ? (isDarkMode ? '#1e293b' : '#334155') : review?.forgotten ? 'rgba(250,204,21,0.16)' : review?.pronunciation ? 'rgba(251,146,60,0.16)' : undefined,
+                                                        boxShadow: !shouldHide && review?.forgotten && review?.pronunciation ? 'inset 0 -1px rgba(251,146,60,0.55)' : undefined,
                                                         borderRadius: shouldHide && mode === ViewMode.HIDE_RANDOM_WORDS ? '3px' : undefined,
                                                         zIndex: 10,
+                                                        ...(isReadingView ? {
+                                                            fontSize: readingFontSize,
+                                                            flexShrink: 0,
+                                                            backgroundColor: shouldHide ? (isDarkMode ? '#1e293b' : '#334155') : review?.forgotten ? 'rgba(250,204,21,0.16)' : review?.pronunciation ? 'rgba(251,146,60,0.16)' : undefined,
+                                                            borderRadius: shouldHide ? '3px' : undefined,
+                                                        } : {}),
                                                     }}
                                                     onPointerDown={(e) => {
+                                                        if (readingGestureRef?.current) return;
+                                                        // A second finger must not orphan the first finger's
+                                                        // timer before the pinch-start cancellation can run.
+                                                        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
                                                         isLongPressRef.current = false;
                                                         const startX = e.clientX;
                                                         const startY = e.clientY;
                                                         pointerStartPosRef.current = { x: startX, y: startY };
 
                                                         longPressTimerRef.current = setTimeout(() => {
+                                                            if (readingGestureRef?.current) return;
                                                             isLongPressRef.current = true;
                                                             const currentAyahKey = `${word.surah}-${word.ayah}`;
 
@@ -2222,10 +2290,11 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                                 // ⭐ كشف Fallback: إذا لم تتوفر ترجمة أجنبية واستخدمنا العربية/الإنجليزية كبديل
                                                                 const isFallback = language !== 'ar' && !foreignMeaning && !hasWbwSupport(language);
 
-                                                                if (displayMeaning) {
+                                                                if (!word.isEnd) {
                                                                     setSelectedWordMeaning({
+                                                                        review: {key:wordReviewKey(word.surah,word.ayah,word.word),surah:word.surah,ayah:word.ayah,position:word.word,page:pageNumber,word:word.originalText || displayWord,forgotten:false,pronunciation:false,note:''},
                                                                         word: displayWord,
-                                                                        meaning: displayMeaning,
+                                                                        meaning: displayMeaning || t.wordReview.meaningUnavailable,
                                                                         x: startX,
                                                                         y: startY,
                                                                         isFallback
@@ -2248,14 +2317,26 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
                                                         pointerStartPosRef.current = null;
                                                     }}
+                                                    onPointerCancel={isReadingView ? () => {
+                                                        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                                                        pointerStartPosRef.current = null;
+                                                    } : undefined}
                                                     onPointerLeave={() => {
                                                         if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
                                                         pointerStartPosRef.current = null;
                                                     }}
                                                     onClick={(e) => {
+                                                        if (readingGestureRef?.current) { e.stopPropagation(); return; }
                                                         if (isLongPressRef.current) {
                                                             isLongPressRef.current = false;
                                                             e.stopPropagation();
+                                                            return;
+                                                        }
+
+                                                        if (isReadingView && audioModeActive && !word.isEnd && !shouldHide) {
+                                                            // Keep the normal page tap bubbling to the shared
+                                                            // player/menu toggle while recitation is active.
+                                                            onAyahClickForAudio?.(word.surah, word.ayah);
                                                             return;
                                                         }
 
@@ -2289,7 +2370,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         // كلمة طبيعية (خارجة عن النظام): لا شيء → النقرة تمر لإظهار/إخفاء القوائم.
                                                     }}
                                                 >
-                                                    {word.isEnd && word.surah && word.ayah && verseBookmarks?.some(b => b.id === `${pageNumber}-${word.surah}-${word.ayah}`) && (
+                                                    {word.isEnd && verseDecorations.get(`${word.surah}-${word.ayah}`)?.bookmarked && (
                                                         <div className="absolute left-1/2 -translate-x-1/2 text-amber-500 animate-in zoom-in duration-200 z-10 drop-shadow-sm select-none pointer-events-none" style={{ bottom: '100%', marginBottom: deviceType === 'desktop' ? '-6px' : '-5px' }}>
                                                             <Bookmark size={14} fill="currentColor" />
                                                         </div>
@@ -2298,23 +2379,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                     {word.isEnd ? (
                                                         <span className="ayah-number-wrapper" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
                                                             {(() => {
-                                                                let mutType: 'none' | 'inside' | 'outside' | 'both' = 'none';
-                                                                if (showMutashabihatIndicators) {
-                                                                    const allGroups = findAllMutashabihatForAyah(word.surah, word.ayah, mutashabihatData);
-                                                                    if (allGroups.length > 0) {
-                                                                        let hasInside = false, hasOutside = false;
-                                                                        allGroups.forEach(group => {
-                                                                            if (group.sourceAyah.surahNumber !== word.surah || group.sourceAyah.ayahNumber !== word.ayah) {
-                                                                                if (group.sourceAyah.surahNumber === word.surah) hasInside = true; else hasOutside = true;
-                                                                            }
-                                                                            group.similarAyahs.forEach(a => {
-                                                                                if (a.surahNumber === word.surah && a.ayahNumber === word.ayah) return;
-                                                                                if (a.surahNumber === word.surah) hasInside = true; else hasOutside = true;
-                                                                            });
-                                                                        });
-                                                                        if (hasInside && hasOutside) mutType = 'both'; else if (hasInside) mutType = 'inside'; else if (hasOutside) mutType = 'outside';
-                                                                    }
-                                                                }
+                                                                const decoration = verseDecorations.get(`${word.surah}-${word.ayah}`);
                                                                 return (
                                                                     <AyahSeparator
                                                                         id={isActive && word.surah === 1 && word.ayah === 1 ? 'tour-ayah-number' : undefined}
@@ -2323,9 +2388,9 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                                         accentColor={accentColor}
                                                                         deviceType={deviceType}
                                                                         orientation={orientation}
-                                                                        rating={getEffectiveRating(word.surah, word.ayah)}
+                                                                        rating={decoration?.rating ?? null}
                                                                         language={language}
-                                                                        mutashabihatType={mutType}
+                                                                        mutashabihatType={decoration?.mutashabihatType ?? 'none'}
                                                                     />
                                                                 );
                                                             })()}
@@ -2354,7 +2419,7 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
                                                         }} />
                                                     )}
                                                 </span>
-                                                {!isSpecialPage && !line.isCentered && wIdx < line.words.length - 1 && (() => {
+                                                {!isReadingView && !isSpecialPage && !line.isCentered && wIdx < line.words.length - 1 && (() => {
                                                     // In unified shadow modes: skip spacer between hidden words of same ayah
                                                     if (mode === ViewMode.HIDE_ALL_AYAHS || mode === ViewMode.HIDE_RANDOM_AYAHS || (mode === ViewMode.TOGGLE_FIRST_WORD && toggleState === 1) || (mode === ViewMode.TOGGLE_LAST_WORD && toggleState === 1)) {
                                                         const nextWord = line.words[wIdx + 1];
@@ -2377,6 +2442,8 @@ const QPCV2PageRenderer: React.FC<QPCV2PageRendererProps> = ({
 
                 {selectedWordMeaning && (
                     <WordMeaningTooltip
+                        language={language}
+                        review={wordReviews[selectedWordMeaning.review.key] || selectedWordMeaning.review}
                         word={selectedWordMeaning.word}
                         meaning={selectedWordMeaning.meaning}
                         position={{ x: selectedWordMeaning.x, y: selectedWordMeaning.y }}

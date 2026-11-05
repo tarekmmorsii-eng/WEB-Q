@@ -27,11 +27,11 @@ export default function TourWelcomeModal({ isOpen, onStart, onClose, t }: TourWe
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="app-modal fixed inset-0 z-[200] flex items-center justify-center p-4">
             {/* Blurred Backdrop */}
             <div
                 className={clsx(
-                    "absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-500 ease-out",
+                    "modal-backdrop-hit-target absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-500 ease-out",
                     isVisible ? "opacity-100" : "opacity-0"
                 )}
             />

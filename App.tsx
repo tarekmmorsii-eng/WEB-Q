@@ -1,6 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition, lazy, Suspense } from 'react';
+import { resizeMushafPager } from './utils/resizeMushafPager';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, startTransition, lazy, Suspense } from 'react';
 import { flushSync } from 'react-dom';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+const nativeReadingLayout = registerPlugin<{ setOriginalLayout(options: { enabled: boolean }): Promise<void> }>('MushafSystemBars');
+import MeasurementConsent from './components/MeasurementConsent';
+import { useSearchImmersiveRestore } from './hooks/useSearchImmersiveRestore';
+import './utils/androidSystemBars.css';
 import { Share } from '@capacitor/share';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import AlarmSound from './src/plugins/AlarmSound';
@@ -16,6 +21,8 @@ import 'swiper/css';
 import clsx from 'clsx';
 import Header from './components/Header';
 import QPCV2PageRenderer from './components/QPCV2PageRenderer';
+import EnlargedReadingView, { clampReadingSize } from './components/EnlargedReadingView';
+import { ReadingUiScaleProvider, ReadingDialogScale } from './components/ReadingUiScale';
 import SurahIndex from './components/SurahIndex';
 const SearchModal = lazy(() => import('./components/SearchModal'));
 import NotificationManager from './components/NotificationManager';
@@ -44,6 +51,7 @@ import PrayerModeButton from './components/PrayerModeButton';
 import FullscreenExitButton from './components/FullscreenExitButton';
 import SplashScreen from './components/SplashScreen';
 import LanguageSelection from './components/LanguageSelection';
+import InitialLanguageDownload from './components/InitialLanguageDownload';
 import { ViewMode, LocationData, VerseBookmark, Ayah, PageData, NotificationItem, MemorizationRating, SurahRating, AppSettings } from './types';
 import { fetchPage, getAyahPage, getAyahPageSync } from './services/quranService';
 import { getAyahText } from './utils/ayahTextHelper';
@@ -61,6 +69,7 @@ import { useWakeLock } from './hooks/useWakeLock';
 import FloatingAudioPlayer from './components/FloatingAudioPlayer';
 const TranslationManagerModal = lazy(() => import('./components/TranslationManagerModal'));
 import AudioSettingsModal from './components/AudioSettingsModal';
+import { PLAYBACK_SPEEDS } from './constants/playbackSpeeds';
 import { getGlobalAyahNumber, getAyahFromGlobalNumber } from './utils/quranUtils';
 import { setSwipeActive } from './utils/swipeStore';
 import { useNotifications } from './hooks/useNotifications';
@@ -219,6 +228,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   prayerMode: false,
   showMutashabihatIndicators: true,
   enableWordLongPressAudio: true,
+  gesturePinchZoom: true,
   showWordMeanings: true,
   wordMeaningsSource: 'new',
 };
@@ -337,12 +347,20 @@ export default function App() {
 
   const t = translations[settings.language as Language] || translations['ar'];
   const isRTL = t.dir === 'rtl';
+  const paintedThemeRef = useRef(settings.theme);
 
   useEffect(() => {
     localStorage.setItem('quran_app_settings', JSON.stringify(settings));
+  }, [settings]);
 
+  // Update the reading surface and glyph palette in the same paint. Cross-
+  // fading opposite text colors against the new background makes glyphs vanish.
+  useLayoutEffect(() => {
     const theme = getThemeById(settings.theme);
     const root = document.documentElement;
+    const switching = paintedThemeRef.current !== settings.theme;
+    paintedThemeRef.current = settings.theme;
+    if (switching) root.classList.add('mushaf-theme-switching');
 
     if (theme.isDark) {
       root.classList.add('dark');
@@ -380,7 +398,16 @@ export default function App() {
     // if (isNative) {
     //   applyDynamicSystemBars(theme.colors.background);
     // }
-  }, [settings, t]);
+    let firstFrame = 0, secondFrame = 0;
+    if (switching) firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => root.classList.remove('mushaf-theme-switching'));
+    });
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+      root.classList.remove('mushaf-theme-switching');
+    };
+  }, [settings.theme, settings.language, t.dir]);
 
   // Force disable window scrolling programmatically (except in landscape for scrolling)
   useEffect(() => {
@@ -429,6 +456,22 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showLanguageSelection, setShowLanguageSelection] = useState(false);
+  const [initialDownloadLanguage, setInitialDownloadLanguage] = useState<string | null>(() => localStorage.getItem('quran_initial_download_language'));
+  const [measurementVisible, setMeasurementVisible] = useState(true);
+  const [confirmLanguageDownload, setConfirmLanguageDownload] = useState(false);
+
+  // Onboarding replay is opt-in for a specifically prepared test build.
+  // It preserves settings, reminders, notes, consent and downloaded data.
+  useEffect(() => {
+    const replay = import.meta.env.VITE_TEST_LANGUAGE_ONBOARDING;
+    if (replay && (replay === 'every-launch' || localStorage.getItem('quran_test_onboarding_replayed') !== replay)) {
+      localStorage.removeItem('quran_language_selected');
+      localStorage.removeItem('hasSeenTour');
+      localStorage.removeItem('quran_initial_download_language');
+      setInitialDownloadLanguage(null);
+      localStorage.setItem('quran_test_onboarding_replayed', replay);
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('quran_last_page', currentPage.toString());
@@ -456,6 +499,8 @@ export default function App() {
   const [isMemorizationStatsOpen, setIsMemorizationStatsOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsAudioActive, setSettingsAudioActive] = useState(false);
+  const [preparingSettingsTour, setPreparingSettingsTour] = useState(false);
 
   // ⭐ مركز إشعارات Push الخارجية
   const [isPushCenterOpen, setIsPushCenterOpen] = useState(false);
@@ -603,7 +648,7 @@ export default function App() {
 
 
   const handleToggleSpeed = () => {
-    const rates = [1.0, 1.25, 1.5, 0.5, 0.75];
+    const rates: readonly number[] = PLAYBACK_SPEEDS;
     const currentIndex = rates.indexOf(audioSettings.playbackRate);
     const nextRate = rates[(currentIndex + 1) % rates.length];
     
@@ -700,6 +745,10 @@ export default function App() {
     setAudioModeActive(false);
     setPlayingAyahId(null);
   }, [ayahAudio]);
+
+  useEffect(() => {
+    if (!audioModeActive) setSettingsAudioActive(false);
+  }, [audioModeActive]);
 
   const openAudioPlayer = useCallback(() => {
     setAudioModeActive(true);
@@ -819,12 +868,28 @@ export default function App() {
   }, [ayahAudio, startPagePlayback, selectedReciterId, audioSettings]);
 
   const [showUi, setShowUi] = useState(true);
+  const [isEnlargedReading, setIsEnlargedReading] = useState(false);
+  useEffect(() => {
+    if (isNative) void nativeReadingLayout.setOriginalLayout({ enabled: !isEnlargedReading }).catch(() => {});
+  }, [isEnlargedReading]);
+  const [readingFontSize, setReadingFontSize] = useState(() => {
+    const saved = Number(localStorage.getItem('quran_reading_font_size'));
+    return Number.isFinite(saved) && saved >= 24 ? clampReadingSize(saved) : 32;
+  });
+  const readingFontSizeRef = useRef(readingFontSize);
+  readingFontSizeRef.current = readingFontSize;
+  const originalPinchBlockedUntil = useRef(0);
+  useEffect(() => {
+    localStorage.setItem('quran_reading_font_size', String(readingFontSize));
+  }, [readingFontSize]);
+  useSearchImmersiveRestore(isSearchOpen, showUi, !getThemeById(settings.theme).isDark);
 
   // Removed old hardcoded StatusBar style to allow dynamic camouflage
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastToggleTime = useRef<number>(0);
   const swiperRef = useRef<SwiperClass | null>(null);
+  const resizingPagerRef = useRef(false);
   const [swiperReady, setSwiperReady] = useState(false);
 
   const [pageBookmarks, setPageBookmarks] = useState<LocationData[]>([]);
@@ -1327,6 +1392,19 @@ export default function App() {
     }
   }, [activeAlarm, stopAlarmAudio]);
 
+  const closeSettingsChildRef = useRef<() => boolean>(() => false);
+  closeSettingsChildRef.current = () => {
+    if (isMutashabihatIndexOpen) setIsMutashabihatIndexOpen(false);
+    else if (isAudioDownloadOpen) setIsAudioDownloadOpen(false);
+    else if (isTranslationManagerOpen) setIsTranslationManagerOpen(false);
+    else if (isShareModalOpen) setIsShareModalOpen(false);
+    else if (isAudioSettingsOpen) setIsAudioSettingsOpen(false);
+    else if (isHowToUseOpen) setIsHowToUseOpen(false);
+    else if (audioModeActive && settingsAudioActive) closeAudioPlayer();
+    else return false;
+    return true;
+  };
+
   // State Ref to access current state inside the event listener without dependencies
   const stateRef = useRef({
     isIndexOpen,
@@ -1381,7 +1459,12 @@ export default function App() {
       const modalType = e.detail.modalType;
       if (modalType === 'index') setIsIndexOpen(false);
       else if (modalType === 'search') setIsSearchOpen(false);
-      else if (modalType === 'settings') setIsSettingsOpen(false);
+      else if (modalType === 'settings') {
+        if (closeSettingsChildRef.current()) return;
+        const detail = { handled: false };
+        window.dispatchEvent(new CustomEvent('settings-close-top-child', { detail }));
+        if (!detail.handled) setIsSettingsOpen(false);
+      }
       else if (modalType === 'stats') setIsMemorizationStatsOpen(false);
       else if (modalType === 'notifications') setIsNotificationOpen(false);
       else if (modalType === 'colorPicker') setIsColorPickerOpen(false);
@@ -1434,11 +1517,11 @@ export default function App() {
         // Since we already popped state, we just update UI
         if (current.isIndexOpen) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'index' } }));
         else if (current.isSearchOpen) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'search' } }));
-        else if (current.isSettingsOpen) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'settings' } }));
         else if (current.isMemorizationStatsOpen) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'stats' } }));
         else if (current.isNotificationOpen) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'notifications' } }));
         else if (current.isColorPickerOpen) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'colorPicker' } }));
         else if (current.ratingModalData) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'rating' } }));
+        else if (current.isSettingsOpen) window.dispatchEvent(new CustomEvent('backButtonCloseModal', { detail: { modalType: 'settings' } }));
 
         // REMOVED: The setTimeout re-push was causing issues on Mobile.
         // We rely on the natural history depth, or the Interaction Trap to re-engage if needed later.
@@ -1562,6 +1645,7 @@ export default function App() {
   };
 
   const handleClickTutorialComplete = () => {
+    setIsTourActive(true);
     setShowTourClickOverlay(false);
     // Reveal UI
     setShowUi(true);
@@ -1577,6 +1661,7 @@ export default function App() {
 
       startTour(t, 0, () => {
         setIsTourActive(false);
+        setPreparingSettingsTour(false);
         // Resume normal auto-hide behavior after tour ends
         handleUiInteraction();
         showNotificationsIfNeeded();
@@ -1612,8 +1697,8 @@ export default function App() {
   }, [t, isNative]);
 
   const handleStartInteractiveTour = () => {
-    // Close settings modal if it's open
-    setIsSettingsOpen(false);
+    // Keep the settings session mounted while the interactive tour uses the reader.
+    setPreparingSettingsTour(true);
 
     // Go to Page 1 so the tour elements match Fatiha
     if (currentPage !== 1) {
@@ -1628,6 +1713,7 @@ export default function App() {
 
       startTour(t, 0, () => {
         setIsTourActive(false);
+        setPreparingSettingsTour(false);
         handleUiInteraction();
         showNotificationsIfNeeded();
       });
@@ -1642,6 +1728,7 @@ export default function App() {
   };
 
   const handleSearchResultSelect = (page: number, surah: number, ayah: number) => {
+    setIsSettingsOpen(false);
     setCurrentPage(page);
     setHighlightedAyah({ surah, ayah });
     setIsSearchOpen(false);
@@ -1710,6 +1797,8 @@ export default function App() {
   };
 
   // --- Touch Gesture System ---
+  const pinchZoomEnabledRef = useRef(settings.gesturePinchZoom !== false);
+  pinchZoomEnabledRef.current = settings.gesturePinchZoom !== false;
   const gestureRef = useRef({
     lastTapTime: 0,
     lastTapX: 0,
@@ -1718,6 +1807,9 @@ export default function App() {
     touchStartX: 0,
     isTwoFingerTouch: false,
     gestureHandled: false,
+    pinchDistance: 0,
+    pinchScale: 1,
+    pinchIntent: false,
   });
 
   useEffect(() => {
@@ -1725,24 +1817,18 @@ export default function App() {
     if (!main) return;
 
     const onTouchStart = (e: TouchEvent) => {
+      if ((e.target as Element)?.closest?.('[data-enlarged-reading]')) return;
       const g = gestureRef.current;
 
-      // --- Two-finger tap: Toggle UI ---
+      // Decide between a two-finger tap and an outward pinch after the gesture.
       if (e.touches.length >= 2) {
         g.isTwoFingerTouch = true;
         g.gestureHandled = true;
-
-        // Toggle UI menus
-        setShowUi(prev => {
-          if (prev) {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            return false;
-          } else {
-            return true;
-          }
-        });
-        // Trigger auto-hide timer when showing
-        handleUiInteraction();
+        g.pinchDistance = Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+        g.pinchScale = 1;
+        g.pinchIntent = false;
+        window.dispatchEvent(new Event('mushaf-pinch-start'));
+        if(e.cancelable)e.preventDefault();
         return;
       }
 
@@ -1753,13 +1839,33 @@ export default function App() {
       g.touchStartX = e.touches[0].clientX;
     };
 
+    const onTouchMove = (e: TouchEvent) => {
+      if ((e.target as Element)?.closest?.('[data-enlarged-reading]')) return;
+      const g=gestureRef.current;
+      if(!g.isTwoFingerTouch || e.touches.length<2 || g.pinchDistance<=0)return;
+      const distance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      g.pinchScale=Math.max(g.pinchScale,distance/g.pinchDistance);
+      if(distance-g.pinchDistance>24 && g.pinchScale>1.15)g.pinchIntent=true;
+      if(e.cancelable)e.preventDefault();
+    };
     const onTouchEnd = (e: TouchEvent) => {
+      if ((e.target as Element)?.closest?.('[data-enlarged-reading]')) return;
       const g = gestureRef.current;
 
       // If was a two-finger gesture, ignore
       if (g.isTwoFingerTouch) {
         if (e.touches.length === 0) {
           g.isTwoFingerTouch = false;
+          originalPinchBlockedUntil.current=performance.now()+750;
+          if(e.type!=='touchcancel' && g.pinchIntent && pinchZoomEnabledRef.current){
+            setSwipeActive(false); // The original pager is about to unmount.
+            setReadingFontSize(clampReadingSize(Math.max(32,readingFontSizeRef.current)*g.pinchScale));
+            setIsEnlargedReading(true);
+            setShowUi(true);
+          } else if(e.type!=='touchcancel' && !g.pinchIntent) {
+            setShowUi(prev=>!prev);
+          }
+          handleUiInteraction();
         }
         return;
       }
@@ -1817,12 +1923,16 @@ export default function App() {
       }
     };
 
-    main.addEventListener('touchstart', onTouchStart, { passive: true });
+    main.addEventListener('touchstart', onTouchStart, { passive: false });
+    main.addEventListener('touchmove', onTouchMove, { passive: false });
     main.addEventListener('touchend', onTouchEnd, { passive: true });
+    main.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
       main.removeEventListener('touchstart', onTouchStart);
+      main.removeEventListener('touchmove', onTouchMove);
       main.removeEventListener('touchend', onTouchEnd);
+      main.removeEventListener('touchcancel', onTouchEnd);
     };
   }, [handleUiInteraction]);
 
@@ -2230,7 +2340,7 @@ export default function App() {
         if (newMode === ViewMode.TOGGLE_FIRST_WORD) showToast(specificState === 0 ? t.firstWordHidden : t.firstWordShown);
         else if (newMode === ViewMode.TOGGLE_LAST_WORD) showToast(specificState === 0 ? t.lastWordHidden : t.lastWordShown);
         else if (newMode === ViewMode.HIDE_ALL_AYAHS) showToast(specificState === 0 ? t.allAyahsHidden : t.ayahsHiddenAtStopSigns);
-        else if (newMode === ViewMode.HIDE_RANDOM_WORDS) showToast(specificState === 0 ? t.randomWordsHidden : t.allWordsHidden);
+        else if (newMode === ViewMode.HIDE_RANDOM_WORDS) showToast(specificState === 2 ? t.wordReview.difficultWordsHidden : specificState === 0 ? t.randomWordsHidden : t.allWordsHidden);
         else if (newMode === ViewMode.HIDE_RANDOM_AYAHS) {
           const messages = [t.randomHidden, t.weakAyahsHidden, t.mediumAyahsHidden, t.goodAyahsHidden, t.notMemorizedAyahsHidden];
           showToast(messages[specificState]);
@@ -2296,7 +2406,7 @@ export default function App() {
           }
           break;
         case ViewMode.HIDE_RANDOM_WORDS:
-          showToast(startState === 0 ? t.randomWordsHidden : t.allWordsHidden);
+          showToast(startState === 2 ? t.wordReview.difficultWordsHidden : startState === 0 ? t.randomWordsHidden : t.allWordsHidden);
           break;
         case ViewMode.TOGGLE_FIRST_WORD:
           showToast(startState === 0 ? t.firstWordHidden : t.firstWordShown);
@@ -2309,9 +2419,22 @@ export default function App() {
   };
 
   // Helper function to change page without scrolling.
+  const navigateReadingPage = (page: number) => {
+    const nextPage = Math.max(1, Math.min(TOTAL_PAGES, page));
+    if (nextPage === currentPageRef.current) return;
+    currentPageRef.current = nextPage;
+    setCurrentPage(nextPage);
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+    (window as any).playPageFlipSound?.();
+  };
+
   // Let Swiper drive: slideNext/Prev updates the active index, and
   // handleActiveIndexChange then syncs currentPage + sound. Avoids double state.
   const changePageWithoutScroll = (direction: 'next' | 'prev') => {
+    if (isEnlargedReading) {
+      navigateReadingPage(currentPageRef.current + (direction === 'next' ? 1 : -1));
+      return;
+    }
     const s = swiperRef.current;
     if (!s || s.destroyed) return;
     if (direction === 'next' && currentPage < TOTAL_PAGES) {
@@ -2323,6 +2446,7 @@ export default function App() {
 
   const jumpToPage = (pageNum: number) => {
     if (pageNum === currentPage) return;
+    if (isEnlargedReading) { navigateReadingPage(pageNum); return; }
     // Move Swiper directly; handleActiveIndexChange syncs currentPage. The
     // external-sync effect is a fallback if the swiper ref isn't ready yet.
     const s = swiperRef.current;
@@ -2368,7 +2492,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, isSearchOpen, isIndexOpen, isSettingsOpen]);
+  }, [currentPage, isSearchOpen, isIndexOpen, isSettingsOpen, isEnlargedReading]);
 
   // Check if current page is bookmarked
   const isPageBookmarked = pageBookmarks.some(b => b.page === currentPage);
@@ -2556,6 +2680,7 @@ export default function App() {
   const handleNavigateToSurah = (surahNumber: number) => {
     const surah = SURAHS.find(s => s.number === surahNumber);
     if (surah) {
+      setIsSettingsOpen(false);
       setCurrentPage(surah.startPage);
     }
   };
@@ -2596,7 +2721,7 @@ export default function App() {
   // directly to page (1-based). Swiping mounts only the newly-entering slide,
   // so there is no per-swipe 3-page recenter burst.
   const handleActiveIndexChange = useCallback((swiper: any) => {
-    if (!swiper || swiper.destroyed) return;
+    if (!swiper || swiper.destroyed || resizingPagerRef.current) return;
     const newPage = swiper.activeIndex + 1;
     if (newPage === currentPageRef.current) return;
 
@@ -2654,56 +2779,28 @@ export default function App() {
     }
   }, [currentPage]);
 
-  // ── Orientation round-trip fix ──────────────────────────────────────────
-  // Rotating portrait → landscape → portrait left the page "broken": the
-  // Virtual pager keeps slide offsets sized for the OTHER orientation (with
-  // slidesPerView=1 the Virtual module short-circuits its re-render because the
-  // visible from/to range is unchanged, so stale widths/left offsets survive),
-  // and a landscape page that grew taller than the viewport leaves a leftover
-  // scroll offset. Both only bite on the way *back*, which is why the first
-  // rotation looked fine but returning to portrait did not.
-  //
-  // Fix: after the rotation animation + WebView viewport resize FULLY settle,
-  // hard-recompute Swiper + the Virtual module against the new viewport, re-snap
-  // (no animation) to the active page, and reset scroll to the top. Debounced so
-  // it runs once after rotation settles, never on transitional resize ticks.
+  // Resizing must preserve the logical page, never derive it from the old
+  // pixel translate against a new slide grid. Handle geometry before paint;
+  // Swiper's independent resize handlers are disabled below.
   useEffect(() => {
-    let settleTimer: ReturnType<typeof setTimeout> | null = null;
-
     const resettle = () => {
       const s = swiperRef.current;
       if (!s || s.destroyed) return;
+      resizingPagerRef.current = true;
       try {
-        s.updateSize();
-        s.updateSlides();
-        // Force the Virtual module to re-render its slides with the new sizes
-        // (plain update() no-ops when the from/to window is unchanged).
-        if (s.virtual) s.virtual.update(true);
-        s.update();
-        // Re-snap to the active slide so its translate matches the new width.
-        s.slideTo(s.activeIndex, 0, false);
-      } catch { /* swiper mid-teardown — safe to ignore */ }
-      // Clear any leftover scroll from the taller landscape layout.
-      window.scrollTo(0, 0);
-      if (mainRef.current) mainRef.current.scrollTop = 0;
+        resizeMushafPager(s, currentPageRef.current);
+      } finally {
+        resizingPagerRef.current = false;
+      }
     };
-
-    const onOrientationSettle = () => {
-      if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(() => {
-        // Two rAFs after the debounce so we measure only once layout has
-        // fully committed. 550ms clears the containers' 500ms width transition,
-        // so Swiper re-snaps against the settled width, not a transitional one.
-        requestAnimationFrame(() => requestAnimationFrame(resettle));
-      }, 550);
-    };
-
-    window.addEventListener('resize', onOrientationSettle);
-    window.addEventListener('orientationchange', onOrientationSettle);
+    const observer = new ResizeObserver(resettle);
+    // The container survives reading-view switches; the window listener also
+    // handles a newly mounted Swiper before the observer's next delivery.
+    if (mainRef.current) observer.observe(mainRef.current);
+    window.addEventListener('resize', resettle);
     return () => {
-      if (settleTimer) clearTimeout(settleTimer);
-      window.removeEventListener('resize', onOrientationSettle);
-      window.removeEventListener('orientationchange', onOrientationSettle);
+      observer.disconnect();
+      window.removeEventListener('resize', resettle);
     };
   }, []);
 
@@ -2739,11 +2836,11 @@ export default function App() {
     }
   );
 
-  const renderPageSlide = (p: number) => (
+  const renderPageSlide = (p: number, enlargedFontSize?: number, readingGestureRef?: React.MutableRefObject<boolean>) => (
     <QPCV2PageRenderer
       key={`page-${settings.language}-${settings.defaultFontSize}-${settings.enableWordLongPressAudio}`}
       pageNumber={p}
-      isActive
+      isActive={p === currentPage}
       fontSize={settings.defaultFontSize as any}
       isDarkMode={currentTheme.isDark}
       className="!pb-0 w-full"
@@ -2771,15 +2868,17 @@ export default function App() {
       audioModeActive={audioModeActive}
       playingAyahId={playingAyahId}
       onAyahClickForAudio={stableOnAyahClickForAudio}
+      {...(enlargedFontSize !== undefined ? { readingFontSize: enlargedFontSize, readingGestureRef } : {})}
     />
   );
 
   return (
+    <ReadingUiScaleProvider active={isEnlargedReading} fontSize={readingFontSize}>
     <FeedbackProvider language={settings.language}>
       <ModalMonitor 
         modals={[
           isIndexOpen, isSearchOpen, isNotificationOpen, isMemorizationStatsOpen,
-          isColorPickerOpen, isSettingsOpen, isMutashabihatIndexOpen,
+          isColorPickerOpen, isSettingsOpen && !settingsAudioActive, isMutashabihatIndexOpen,
           isMutashabihatModalOpen, isMutashabihatSelectionOpen, isSelectorOpen,
           isAudioSettingsOpen, isHowToUseOpen, showLanguageSelection, !!activeAlarm
         ]} 
@@ -2787,6 +2886,7 @@ export default function App() {
         onClosePrayerMode={() => setSettings(prev => ({ ...prev, prayerMode: false }))}
       />
       <div
+        data-mushaf-viewport
         className={clsx(
           "w-full flex flex-col relative transition-colors duration-300",
           !isTouchDevice ? "min-h-[100vh] overflow-visible" : "h-[100dvh] overflow-hidden"
@@ -2799,6 +2899,13 @@ export default function App() {
         }}
       >
         <FeedbackModal />
+        <MeasurementConsent language={settings.language} ready={!showSplash && !showLanguageSelection} onVisibilityChange={setMeasurementVisible} />
+        <InitialLanguageDownload key={`${initialDownloadLanguage}-${confirmLanguageDownload}`} language={initialDownloadLanguage}
+          requireConfirmation={confirmLanguageDownload}
+          forceTranslationRefresh={!!import.meta.env.VITE_TEST_LANGUAGE_ONBOARDING && !confirmLanguageDownload}
+          onDownloadStart={() => { if (initialDownloadLanguage) localStorage.setItem('quran_initial_download_language', initialDownloadLanguage); }}
+          ready={!showSplash && !showLanguageSelection && !measurementVisible && !!localStorage.getItem('hasSeenTour') && !showTourWelcome && !showTourClickOverlay && !isTourActive}
+          onDismiss={() => { localStorage.removeItem('quran_initial_download_language'); setInitialDownloadLanguage(null); }} />
 
         {showSplash && (
           <SplashScreen
@@ -2820,6 +2927,14 @@ export default function App() {
         {showLanguageSelection && (
           <LanguageSelection
             onSelect={(lang) => {
+              setConfirmLanguageDownload(false);
+              if (lang !== 'ar') {
+                localStorage.setItem('quran_initial_download_language', lang);
+                setInitialDownloadLanguage(lang);
+              } else {
+                localStorage.removeItem('quran_initial_download_language');
+                setInitialDownloadLanguage(null);
+              }
               setSettings(prev => ({ ...prev, language: lang }));
               localStorage.setItem('quran_language_selected', 'true');
               setShowLanguageSelection(false);
@@ -2837,7 +2952,7 @@ export default function App() {
           currentMode={viewMode}
           setMode={handleSetMode}
           toggleState={toggleState}
-          isVisible={showUi}
+          isVisible={showUi && !isNotificationOpen && !isMemorizationStatsOpen && !isSearchOpen}
           onInteraction={handleHeaderInteraction}
           onMouseEnter={handleMouseEnterUi}
           onMouseLeave={handleMouseLeaveUi}
@@ -2848,10 +2963,13 @@ export default function App() {
         <main
           ref={mainRef}
           className={clsx(
-            "flex-1 w-full overflow-auto relative transition-all duration-500 ease-in-out flex flex-col",
+            "flex-1 w-full overflow-auto relative transition-colors duration-500 ease-in-out flex flex-col",
             "pt-0"
           )}
           onClick={handleContentTap}
+          onClickCapture={event => {
+            if(performance.now()<originalPinchBlockedUntil.current){event.preventDefault();event.stopPropagation();}
+          }}
         >
           <div className="flex-1 flex flex-col relative items-center w-full">
             <div className="w-full flex-1 flex flex-col">
@@ -2872,8 +2990,19 @@ export default function App() {
                     {t.retry}
                   </button>
                 </div>
+              ) : isEnlargedReading ? (
+                <div className="absolute inset-0">
+                  <EnlargedReadingView pageNumber={currentPage} totalPages={TOTAL_PAGES}
+                    pinchZoomEnabled={settings.gesturePinchZoom !== false}
+                    controlsVisible={showUi}
+                    fontSize={readingFontSize} onFontSizeChange={setReadingFontSize}
+                    language={settings.language} onNavigate={navigateReadingPage}
+                    onExit={() => { setIsEnlargedReading(false); handleUiInteraction(); }}>
+                    {gestureRef => renderPageSlide(currentPage, readingFontSize, gestureRef)}
+                  </EnlargedReadingView>
+                </div>
               ) : (
-                <div className="min-h-full flex flex-col flex-1 transition-all duration-500 quran-swiper-container w-full h-full">
+                <div className="min-h-full flex flex-col flex-1 transition-colors duration-500 quran-swiper-container w-full h-full">
                   {swiperReady && (
                     <Swiper
                       key={`swiper-mushaf-${settings.language}`}
@@ -2881,9 +3010,17 @@ export default function App() {
                       modules={SWIPER_MODULES}
                       onSwiper={handleOnSwiper}
                       onSlideChangeTransitionStart={handleSlideTransitionStart}
-                      onSlideChangeTransitionEnd={handleSlideTransitionEnd}
+                      onSliderFirstMove={handleSlideTransitionStart}
+                      onTransitionEnd={handleSlideTransitionEnd}
+                      onTouchEnd={(swiper) => {
+                        requestAnimationFrame(() => {
+                          if (!swiper.destroyed && !swiper.animating) handleSlideTransitionEnd(swiper);
+                        });
+                      }}
                       virtual={{ enabled: true, addSlidesBefore: 2, addSlidesAfter: 2 }}
                       initialSlide={Math.max(0, currentPage - 1)}
+                      updateOnWindowResize={false}
+                      resizeObserver={false}
                       speed={260}
                       className="w-full h-full flex-1"
                       resistance={true}
@@ -2916,13 +3053,14 @@ export default function App() {
               ? "lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-l lg:shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)]"
               : "lg:top-0 lg:left-0 lg:bottom-0 lg:right-auto lg:w-20 lg:flex-col lg:border-t-0 lg:border-r lg:shadow-[4px_0_6px_-1px_rgba(0,0,0,0.1)]",
             settings.bottomBar.showPageNavigation ? "justify-between lg:justify-center" : "justify-center",
-            showUi
+            (showUi && !isNotificationOpen && !isMemorizationStatsOpen && !isSearchOpen)
               ? "translate-y-0 opacity-100 lg:translate-x-0"
               : isRTL
                 ? "translate-y-full opacity-0 lg:translate-y-0 lg:translate-x-full lg:opacity-0 pointer-events-none"
                 : "translate-y-full opacity-0 lg:translate-y-0 lg:-translate-x-full lg:opacity-0 pointer-events-none"
           )}
           style={{
+            display: isNotificationOpen || isMemorizationStatsOpen || isSearchOpen ? "none" : undefined,
             backgroundColor: currentTheme.colors.cardBg,
             borderColor: currentTheme.colors.border
           }}
@@ -3102,7 +3240,7 @@ export default function App() {
         <SurahIndex
           isOpen={isIndexOpen}
           onClose={() => setIsIndexOpen(false)}
-          onSelectPage={(p) => setCurrentPage(p)}
+          onSelectPage={(p) => { setIsSettingsOpen(false); setCurrentPage(p); }}
           pageBookmarks={pageBookmarks}
           verseBookmarks={verseBookmarks}
           history={history}
@@ -3119,6 +3257,7 @@ export default function App() {
               isOpen
               onClose={() => setIsSearchOpen(false)}
               onSelectPage={(page) => {
+                setIsSettingsOpen(false);
                 setCurrentPage(page);
                 setIsSearchOpen(false);
               }}
@@ -3166,10 +3305,20 @@ export default function App() {
           <Suspense fallback={null}>
             <Settings
               isOpen
+              covered={isIndexOpen || isSearchOpen || isMemorizationStatsOpen || isNotificationOpen || isColorPickerOpen || isMutashabihatIndexOpen || isMutashabihatModalOpen || isSelectorOpen || isAudioDownloadOpen || isTranslationManagerOpen || isShareModalOpen || isAudioSettingsOpen || isHowToUseOpen || measurementVisible || (audioModeActive && settingsAudioActive) || preparingSettingsTour || isTourActive}
               onClose={() => setIsSettingsOpen(false)}
               settings={settings}
-              onSave={setSettings}
+              onSave={(next) => {
+                if (next.language !== settings.language) {
+                  localStorage.removeItem('quran_initial_download_language');
+                  setConfirmLanguageDownload(true);
+                  setInitialDownloadLanguage(next.language === 'ar' ? null : next.language);
+                }
+                setSettings(next);
+              }}
               currentLanguage={settings.language as Language}
+              onBeforeWordAudio={closeAudioPlayer}
+              onNavigateToNote={async(surah,ayah)=>{const page=await getAyahPage(surah,ayah);setIsSettingsOpen(false);handleSearchResultSelect(page,surah,ayah)}}
               onOpenIndex={() => setIsIndexOpen(true)}
               onOpenSearch={() => setIsSearchOpen(true)}
               onOpenMemorization={() => setIsMemorizationStatsOpen(true)}
@@ -3182,7 +3331,7 @@ export default function App() {
                 setIsMutashabihatIndexOpen(true);
               }}
               onOpenColorPicker={() => setIsColorPickerOpen(true)}
-              onOpenReciterSelection={openAudioPlayer}
+              onOpenReciterSelection={() => { setSettingsAudioActive(true); openAudioPlayer(); }}
               onTogglePageBookmark={togglePageBookmark}
               isPageBookmarked={isPageBookmarked}
               hasUpdate={hasAppUpdate}
@@ -3206,11 +3355,11 @@ export default function App() {
 
         {isTranslationManagerOpen && (
           <Suspense fallback={null}>
-            <TranslationManagerModal
+            <ReadingDialogScale><TranslationManagerModal
               isOpen
               onClose={() => setIsTranslationManagerOpen(false)}
               currentLanguage={settings.language}
-            />
+            /></ReadingDialogScale>
           </Suspense>
         )}
 
@@ -3230,14 +3379,16 @@ export default function App() {
           onOpenHelp={handleOpenHelpFromSideMenu}
           onOpenOffline={handleOpenOfflineSettings}
           onOpenReciterSelection={openAudioPlayer}
-          isVisible={showUi}
-          isEnabled={settings.bottomBar.showSideMenu !== false}
+          isVisible={showUi && !isNotificationOpen && !isMemorizationStatsOpen && !isSearchOpen}
+          isEnabled={settings.bottomBar.showSideMenu !== false && !isNotificationOpen && !isMemorizationStatsOpen && !isSearchOpen}
           isRTL={isRTL}
           onOpenShare={handleOpenShare}
           onOpenAudioDownload={() => setIsAudioDownloadOpen(true)}
           onOpenNotifications={handleOpenNotifications}
           onOpenSearch={() => setIsSearchOpen(true)}
           notificationUnreadCount={totalUnread}
+          isEnlargedReading={isEnlargedReading}
+          onToggleEnlargedReading={() => { setIsEnlargedReading(value => !value); handleUiInteraction(); }}
         />
 
         <InAppNotificationsModal
@@ -3295,7 +3446,7 @@ export default function App() {
         {
           ratingModalData && (
             <Suspense fallback={null}>
-            <AyahOptionsModal
+            <ReadingDialogScale><AyahOptionsModal
               isOpen={!!ratingModalData}
               onClose={() => setRatingModalData(null)}
               surahNumber={ratingModalData.surah}
@@ -3328,12 +3479,14 @@ export default function App() {
               isBookmarked={verseBookmarks.some(vb => vb.id === `${currentPage}-${ratingModalData.surah}-${ratingModalData.ayah}`)}
               language={settings.language}
               hasMutashabihat={!!findMutashabihatForAyah(ratingModalData.surah, ratingModalData.ayah, actualMutashabihatData)}
+              selectedReciterId={selectedReciterId}
+              shareMutashabihat={findAllMutashabihatForAyah(ratingModalData.surah,ratingModalData.ayah,actualMutashabihatData)}
               onOpenMutashabihat={() => {
                 handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
               }}
               tafsir={((window as any).__ma3anyData || {})[`${ratingModalData.surah}:${ratingModalData.ayah}`]?._tafsir}
               onOpenTranslationManager={() => setIsTranslationManagerOpen(true)}
-            />
+            /></ReadingDialogScale>
             </Suspense>
           )
         }
@@ -3341,7 +3494,7 @@ export default function App() {
         {
           surahRatingModalData && (
             <Suspense fallback={null}>
-            <SurahRatingModal
+            <ReadingDialogScale><SurahRatingModal
               isOpen={!!surahRatingModalData}
               onClose={() => setSurahRatingModalData(null)}
               surahNumber={surahRatingModalData}
@@ -3350,7 +3503,7 @@ export default function App() {
               onRateAyah={handleSaveAyahRatingDirect}
               ayahCount={SURAHS.find(s => s.number === surahRatingModalData)?.ayahCount || 1}
               language={settings.language}
-            />
+            /></ReadingDialogScale>
             </Suspense>
           )
         }
@@ -3367,7 +3520,7 @@ export default function App() {
 
         {isMutashabihatIndexOpen && (
           <Suspense fallback={null}>
-            <MutashabihatIndex
+            <ReadingDialogScale fullScreen><MutashabihatIndex
               isOpen
               onClose={() => setIsMutashabihatIndexOpen(false)}
               mutashabihatData={actualMutashabihatData}
@@ -3382,13 +3535,13 @@ export default function App() {
               }}
               t={t}
               language={settings.language}
-            />
+            /></ReadingDialogScale>
           </Suspense>
         )}
 
         {isMutashabihatModalOpen && (
           <Suspense fallback={null}>
-            <MutashabihatModal
+            <ReadingDialogScale><MutashabihatModal
               isOpen
               onClose={() => setIsMutashabihatModalOpen(false)}
               mutashabiha={currentMutashabiha}
@@ -3408,20 +3561,20 @@ export default function App() {
               }}
               onDeleteSimilarAyah={handleDeleteSimilarAyah}
               onAddSimilarAyah={handleAddSimilarAyah}
-            />
+            /></ReadingDialogScale>
           </Suspense>
         )}
 
         {isSelectorOpen && (
           <Suspense fallback={null}>
-            <MutashabihatSelectorModal
+            <ReadingDialogScale><MutashabihatSelectorModal
               isOpen
               onClose={() => setIsSelectorOpen(false)}
               onSelect={handleSelectSimilarAyah}
               language={settings.language}
               lockedSurah={selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
               excludedSurah={!selectorIsInsideSurah ? currentMutashabiha?.sourceAyah.surahNumber : undefined}
-            />
+            /></ReadingDialogScale>
           </Suspense>
         )}
 
@@ -3537,7 +3690,7 @@ export default function App() {
             onOpenSettings={() => setIsAudioSettingsOpen(true)}
         />
 
-        <AudioSettingsModal
+        <ReadingDialogScale><AudioSettingsModal
             isOpen={isAudioSettingsOpen}
             onClose={() => setIsAudioSettingsOpen(false)}
             currentLanguage={settings.language as Language}
@@ -3549,7 +3702,7 @@ export default function App() {
                 ayahAudio.stopAudio();
                 startPagePlayback(selectedReciterId, newSettings);
             }}
-        />
+        /></ReadingDialogScale>
 
         {/* Alarm Dismiss Overlay - Guaranteed visible on all devices */}
         {
@@ -3815,5 +3968,6 @@ export default function App() {
         )}
       </div >
     </FeedbackProvider >
+    </ReadingUiScaleProvider>
   );
 }

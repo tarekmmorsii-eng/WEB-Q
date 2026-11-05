@@ -33,7 +33,7 @@ export interface EditionInfo {
  * ملاحظة: اللغة العربية (ar) غير موجودة هنا لأنها مدمجة محلياً
  * 
  * hasWbw: اللغات المدعومة بمعاني الكلمات من Quran.com API:
- *   true: en, ur, bn, id, tr, hi, de, ta
+ *   true: en, ur, bn, id, hi, ta
  *   false: باقي اللغات (لا تتوفر لها معاني كلمات في API)
  */
 export const TRANSLATION_EDITIONS: Record<string, EditionInfo> = {
@@ -73,7 +73,9 @@ export const TRANSLATION_EDITIONS: Record<string, EditionInfo> = {
         nameAr: 'التركية',
         nameEn: 'Türkçe',
         direction: 'ltr',
-        hasWbw: true,
+        // The source mixes Turkish and English word meanings (e.g. 2:4).
+        // Do not offer a complete Turkish word-meaning download until available.
+        hasWbw: false,
     },
     id: {
         editionId: 'id.indonesian',
@@ -91,7 +93,8 @@ export const TRANSLATION_EDITIONS: Record<string, EditionInfo> = {
         nameAr: 'الألمانية',
         nameEn: 'Deutsch',
         direction: 'ltr',
-        hasWbw: true,
+        // Quran.com currently falls back to English for language=de.
+        hasWbw: false,
     },
     hi: {
         editionId: 'hi.hindi',
@@ -358,10 +361,10 @@ export const TRANSLATION_EDITIONS: Record<string, EditionInfo> = {
         direction: 'ltr',
         hasWbw: false,
     },
-    // التغالوغ - غير متوفرة حالياً في أي API
+    // Filipino edition verified in the source catalog (6236 verses).
     tl: {
-        editionId: '',
-        author: '',
+        editionId: 'fil_abdullatifeduar',
+        author: 'Abdullatif Eduardo M. Arceo',
         source: 'fawazahmed',
         nameAr: 'التغالوغ',
         nameEn: 'Filipino',

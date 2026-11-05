@@ -1,3 +1,5 @@
+import DeleteIcon from './DeleteIcon';
+import ModalLogo from './ModalLogo';
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Download, BookOpen, Volume2 } from 'lucide-react';
 import clsx from 'clsx';
@@ -299,7 +301,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
 
     return (
         <div
-            className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            className="app-modal fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
             onClick={handleBackdropClick}
             style={{ fontFamily: "'Almarai', sans-serif" }}
             dir={isArabic ? 'rtl' : 'ltr'}
@@ -309,7 +311,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                 {/* Header */}
                 <div className="p-6 pb-4 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] flex justify-between items-center">
                     <div>
-                        <h2 className="text-xl font-bold text-[var(--text-primary)]">
+                        <h2 className="modal-branded-title text-xl font-bold text-[var(--text-primary)]"><ModalLogo />
                             {t.downloadManager}
                         </h2>
                         <p className="text-[var(--text-primary)] opacity-60 text-xs mt-1">
@@ -510,7 +512,7 @@ export default function AudioDownloadModal({ isOpen, onClose, language }: AudioD
                             onClick={() => setShowConfirmDelete(true)}
                             className="w-full py-3 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all flex items-center justify-center gap-2 text-sm font-bold"
                         >
-                            <X size={18} />
+                            <DeleteIcon size={18} />
                             {t.clearAudioCache.replace('{{size}}', cacheSizeMB)}
                         </button>
                     </div>

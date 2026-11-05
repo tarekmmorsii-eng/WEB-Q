@@ -1,6 +1,8 @@
+import ModalLogo from './ModalLogo';
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import { SURAHS } from '../constants/surahData';
+import { PLAYBACK_SPEEDS } from '../constants/playbackSpeeds';
 import { Language, translations } from '../i18n/translations';
 import clsx from 'clsx';
 
@@ -57,7 +59,7 @@ export default function AudioSettingsModal({
 
     const GROUP_REP_OPTIONS = [1, 2, 3, 5, 10, -1];
     const AYAH_REP_OPTIONS = [1, 2, 3, 5, 10, -1];
-    const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 1.75];
+
 
     const getAyahCount = (surahNum: number) => {
         const surah = SURAHS.find(s => s.number === surahNum);
@@ -67,7 +69,7 @@ export default function AudioSettingsModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="app-modal fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div 
                 className={clsx(
                     "bg-[var(--bg-card)] text-[var(--text-primary)] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-primary)]",
@@ -77,7 +79,7 @@ export default function AudioSettingsModal({
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-3 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)]">
-                    <h2 className="text-xl font-bold text-amber-500">
+                    <h2 className="modal-branded-title text-xl font-bold text-amber-500"><ModalLogo />
                         {t.recitationSettings}
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-[var(--text-primary)] opacity-50 hover:opacity-100">
@@ -248,7 +250,7 @@ export default function AudioSettingsModal({
                             {t.playbackSpeed}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {SPEED_OPTIONS.map(opt => (
+                            {PLAYBACK_SPEEDS.map(opt => (
                                 <button
                                     key={opt}
                                     onClick={() => setPlaybackRate(opt)}

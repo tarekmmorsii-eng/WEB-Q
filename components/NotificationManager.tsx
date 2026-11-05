@@ -1,3 +1,5 @@
+import DeleteIcon from './DeleteIcon';
+import ModalLogo from './ModalLogo';
 import React, { useState, useRef } from 'react';
 import { X, Plus, Bell, BellOff, Clock, Music, Play, Pause, Upload, Calendar } from 'lucide-react';
 import clsx from 'clsx';
@@ -631,12 +633,12 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="app-modal fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-[var(--bg-card)] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)]">
                     <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-bold text-amber-600 dark:text-amber-400">{t.notificationManagerTitle}</h2>
+                        <h2 className="modal-branded-title text-xl font-bold text-amber-600 dark:text-amber-400"><ModalLogo />{t.notificationManagerTitle}</h2>
                         {!showAddForm && (
                             <button
                                 onClick={() => setShowAddForm(true)}
@@ -764,7 +766,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                         title={t.deleteNotification}
                                                         className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                                     >
-                                                        <X size={20} />
+                                                        <DeleteIcon size={20} />
                                                     </button>
                                                 </div>
                                             </div>
@@ -1331,7 +1333,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                                     onClick={() => handleRemoveTime(index)}
                                                     className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                                 >
-                                                    <X size={20} />
+                                                    <DeleteIcon size={20} />
                                                 </button>
                                             )}
                                         </div>
@@ -1546,7 +1548,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             </div>
             {/* Battery Optimization Custom Modal */}
             {showBatteryModal && (
-                <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
+                <div className="app-modal fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
                     <div className="bg-[var(--bg-card)] w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in zoom-in-95">
                         <button
                             onClick={() => setShowBatteryModal(false)}
@@ -1559,7 +1561,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             <Bell size={32} />
                         </div>
                         
-                        <h3 className="text-xl font-bold text-center text-[var(--text-primary)] mb-2">
+                        <h3 className="modal-branded-title text-xl font-bold text-center text-[var(--text-primary)] mb-2"><ModalLogo />
                             {t.batteryOptTitle}
                         </h3>
                         
@@ -1631,7 +1633,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             {/* FCM Token Display Custom Modal */}
             {/*
             showTokenPopup && fcmToken && (
-                <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
+                <div className="app-modal fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
                     <div className="bg-[var(--bg-card)] w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in zoom-in-95" style={{ direction: isArabic ? 'rtl' : 'ltr' }}>
                         <button
                             onClick={() => setShowTokenPopup(false)}
@@ -1644,7 +1646,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             <Bell size={32} />
                         </div>
                         
-                        <h3 className="text-xl font-bold text-center text-[var(--text-primary)] mb-2">
+                        <h3 className="modal-branded-title text-xl font-bold text-center text-[var(--text-primary)] mb-2"><ModalLogo />
                             {isArabic ? 'رمز الإشعارات (FCM Token)' : 'FCM Token'}
                         </h3>
                         

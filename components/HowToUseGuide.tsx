@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Layout, Settings, Maximize2, ChevronRight, ChevronLeft, Info, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
@@ -233,13 +234,11 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[200] bg-[var(--bg-card)] flex flex-col animate-in fade-in slide-in-from-bottom duration-300 select-none">
+        <div className="app-modal library-backdrop fixed inset-0 z-[200]"><div className="app-modal-panel bg-[var(--bg-card)] flex flex-col animate-in fade-in slide-in-from-bottom duration-300 select-none">
             {/* Header */}
             <header className="h-16 md:h-20 flex items-center justify-between px-4 md:px-8 border-b border-[var(--border-primary)] bg-[var(--bg-card)] sticky top-0 z-40 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/20">
-                        <Info size={24} />
-                    </div>
+                    <ModalLogo />
                     <h1 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">
                         {t.howToUse}
                     </h1>
@@ -548,6 +547,6 @@ export default function HowToUseGuide({ isOpen, onClose, language }: HowToUseGui
                     </div>
                 </div>
             )}
-        </div>
+        </div></div>
     );
 }

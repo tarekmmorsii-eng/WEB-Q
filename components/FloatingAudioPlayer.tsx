@@ -58,6 +58,17 @@ export default function FloatingAudioPlayer({
 
     // State for sticky behavior
     const [isSticky, setIsSticky] = useState(false);
+    const [bottomClearance, setBottomClearance] = useState(110);
+    useEffect(() => {
+        if(!isOpen)return;
+        const navigation=document.getElementById('navigation-bar');
+        const measure=()=>setBottomClearance(window.innerWidth>=1024 ? 56 : (navigation?.offsetHeight || 74)+20);
+        measure();
+        const observer=new ResizeObserver(measure);
+        if(navigation)observer.observe(navigation);
+        window.addEventListener('resize',measure);
+        return()=>{observer.disconnect();window.removeEventListener('resize',measure)};
+    },[isOpen]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -80,6 +91,7 @@ export default function FloatingAudioPlayer({
     return (
         <div 
             id="tour-audio-player"
+            style={!isSticky ? {bottom:`calc(${bottomClearance}px + var(--android-navigation-bar-height, 0px))`} : undefined}
             className={clsx(
                 "fixed z-[1000] transition-all duration-700 ease-in-out flex items-center pointer-events-auto shadow-2xl overflow-hidden",
                 isSticky 
@@ -161,8 +173,8 @@ export default function FloatingAudioPlayer({
                         </button>
 
                         {/* Close Button */}
-                        <button onClick={onClose} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-20 hover:text-red-500 transition-colors border-l border-[var(--border-primary)] ml-1 md:ml-2">
-                            <X size={16} md:size={18} />
+                        <button onClick={onClose} aria-label={t.close} title={t.close} className="p-1.5 md:p-2 min-w-9 min-h-9 text-red-600 hover:text-red-700 transition-colors border-l border-[var(--border-primary)] ml-1 md:ml-2">
+                            <X size={20} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
@@ -212,8 +224,8 @@ export default function FloatingAudioPlayer({
                             <SettingsIcon size={18} md:size={20} />
                         </button>
 
-                        <button onClick={onClose} className="p-1.5 md:p-2 text-[var(--text-primary)] opacity-20 hover:text-red-500 transition-colors">
-                            <X size={18} md:size={20} />
+                        <button onClick={onClose} aria-label={t.close} title={t.close} className="p-1.5 md:p-2 min-w-9 min-h-9 text-red-600 hover:text-red-700 transition-colors">
+                            <X size={22} strokeWidth={2.5} />
                         </button>
                     </>
                 )}

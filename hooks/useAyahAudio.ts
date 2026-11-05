@@ -1,6 +1,10 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { buildAudioUrl } from '../services/reciterService';
 import { cacheAudioBlob, getAudioBlob } from '../services/audioCacheService';
+import { softenAudioEdges } from '../services/audioEdgeSmoothing';
+import { Capacitor } from '@capacitor/core';
+import { BufferedVerseAudio, prepareBufferedVerse, preparePitchPreservedVerse, primeVerseOutput } from '../services/bufferedVerseAudio';
+type VerseAudio = HTMLAudioElement | BufferedVerseAudio;
 
 
 export interface PlayerSettings {
@@ -16,27 +20,98 @@ export interface UseAyahAudioProps {
     onAudioError?: (msg: string) => void;
 }
 
-/**
- * Creates an audio element from a Blob using Object URL.
- * This is the KEY fix for mobile browsers:
- *   - Desktop browsers can play from Cache API via SW interception
- *   - Mobile browsers FAIL with Range Requests through SW
- *   - Object URL (blob:) is 100% local — no network, no Range issues
- */
-function createAudioFromBlob(blob: Blob): HTMLAudioElement {
-    const objectUrl = URL.createObjectURL(blob);
-    const audio = new Audio(objectUrl);
-    // When audio loads metadata, revoke the URL to free memory
-    // (audio keeps playing even after revoke)
-    audio.addEventListener('loadeddata', () => {
-        URL.revokeObjectURL(objectUrl);
-    }, { once: true });
-    return audio;
+// Preloading preserves duration; edge and signal-onset envelopes are applied in memory.
+interface PreparedAudio {
+    url: string;
+    audio: VerseAudio;
+    objectUrl?: string;
+    fromNetwork: boolean;
+    disconnect?: () => void;
+}
+interface PendingAudio {
+    url: string;
+    playbackRate: number;
+    cancelled: boolean;
+    controller: AbortController;
+    prepared?: PreparedAudio;
+    promise: Promise<PreparedAudio | null>;
+}
+function disposeAudio(prepared?: PreparedAudio | null) {
+    if (!prepared) return;
+    const { audio, objectUrl } = prepared;
+    audio.onended = null;
+    audio.onerror = null;
+    audio.onplaying = null;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    prepared.disconnect?.();
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+}
+function cancelPreparation(pending: PendingAudio | null) {
+    if (!pending) return;
+    pending.cancelled = true;
+    pending.controller.abort();
+    disposeAudio(pending.prepared);
+}
+function prepareAudio(url: string, playbackRate: number): PendingAudio {
+    const pending: PendingAudio = { url, playbackRate, cancelled: false, controller: new AbortController(), promise: Promise.resolve(null) };
+    pending.promise = (async () => {
+        const cachedBlob = await getAudioBlob(url).catch(() => null);
+        if (pending.cancelled) return null;
+        let blob = cachedBlob;
+        // Process decoded samples, not timeupdate events/timers, so the 3 ms
+        // envelope is accurate and remains present after pause/resume/repeat.
+        // Keep only current + next prepared audio; never replace the raw cache.
+        const timeout = setTimeout(() => pending.controller.abort(), 12000);
+        try {
+            if (!blob) {
+                const response = await fetch(url, { signal: pending.controller.signal, mode: 'cors' });
+                if (!response.ok) throw new Error(`Audio download failed: ${response.status}`);
+                blob = await response.blob();
+            }
+            blob = await softenAudioEdges(blob, pending.controller.signal);
+        } catch (error) {
+            if (pending.cancelled) return null;
+            // If decoding/CORS is unavailable, retain ordinary playback rather
+            // than leaving a reading session silent. Original cache stays intact.
+            console.warn('[useAyahAudio] Edge smoothing unavailable; using original audio', error);
+        } finally {
+            clearTimeout(timeout);
+        }
+        if (pending.cancelled) return null;
+        if (blob && Capacitor.isNativePlatform()) {
+            try {
+                if (playbackRate !== 1) {
+                    const media = preparePitchPreservedVerse(blob);
+                    pending.prepared = { url, ...media, fromNetwork: !cachedBlob };
+                    return pending.prepared;
+                }
+                const audio = await prepareBufferedVerse(blob);
+                if (pending.cancelled) { audio.removeAttribute('src'); return null; }
+                pending.prepared = { url, audio, fromNetwork: !cachedBlob };
+                return pending.prepared;
+            } catch { /* Retain ordinary playback if Web Audio decoding fails. */ }
+        }
+        const objectUrl = blob ? URL.createObjectURL(blob) : undefined;
+        const audio = new Audio(objectUrl || url);
+        pending.prepared = { url, audio, objectUrl, fromNetwork: !cachedBlob };
+        audio.preservesPitch = true;
+        audio.preload = 'auto';
+        audio.load();
+        return pending.prepared;
+    })();
+    return pending;
 }
 
 export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const preloadAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<VerseAudio | null>(null);
+  const currentAudioRef = useRef<PreparedAudio | null>(null);
+  const preloadRef = useRef<PendingAudio | null>(null);
+  const loadingRef = useRef<PendingAudio | null>(null);
+  const requestRef = useRef(0);
+  const sequenceRef = useRef(0);
+  const pausedRef = useRef(false);
   const [isPlayingSeq, setIsPlayingSeq] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const isPlayingRef = useRef(false);
@@ -66,190 +141,142 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
     setIsPaused(false);
   }, []);
 
-  // تشغيل آية واحدة مخصصة (وإرجاع Promise للانتظار)
+  const clearPreload = useCallback(() => {
+    cancelPreparation(preloadRef.current);
+    preloadRef.current = null;
+  }, []);
+
   const playAyahAudio = useCallback((globalAyahNumber: number, reciterID: string, playbackRate: number = 1.0, nextGlobalAyahNumber?: number): Promise<void> => {
-    return new Promise(async (resolve) => {
-      // حفظ دالة الحل لإمكانية استدعائها لاحقاً عند الإيقاف فلا يبقى الوعد معلّقاً
-      activeResolveRef.current = resolve;
+    if (Capacitor.isNativePlatform()) {
+        try { primeVerseOutput(); } catch { /* HTML audio remains available. */ }
+    }
+    const request = ++requestRef.current;
+    activeResolveRef.current?.();
+    cancelPreparation(loadingRef.current);
+    loadingRef.current = null;
+    disposeAudio(currentAudioRef.current);
+    currentAudioRef.current = null;
+    audioRef.current = null;
 
-      // إيقاف أي صوت سابق
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.removeAttribute('src');
-      }
-
-      // حماية: التأكد من وجود معرف المقرئ
-      if (!reciterID) {
-        console.error('[useAyahAudio] reciterID is missing!');
-        showError('معرف المقرئ غير متوفر، يرجى إعادة اختيار المقرئ');
-        resetPlayState();
+    return new Promise(resolve => {
+      const finish = () => {
+        if (activeResolveRef.current === finish) activeResolveRef.current = null;
         resolve();
-        return;
-      }
-
+      };
+      activeResolveRef.current = finish;
       const url = buildAudioUrl(reciterID, globalAyahNumber);
       const nextUrl = nextGlobalAyahNumber ? buildAudioUrl(reciterID, nextGlobalAyahNumber) : null;
-
-      if (!url) {
-        showError('رابط الصوت غير متاح لهذا القارئ');
+      const fail = (error: unknown) => {
+        if (request !== requestRef.current) return;
+        console.warn('[useAyahAudio] Playback failed:', error);
+        clearPreload();
         resetPlayState();
-        resolve();
+        showError('عذراً، تعذّر تشغيل التلاوة، تحقق من اتصالك بالإنترنت أو جرّب قارئاً آخر.');
+        finish();
+      };
+      if (!url) {
+        fail('Missing audio URL');
         return;
       }
 
-      const tryPlay = async () => {
-          // ─── Step 1: Try IndexedDB Blob Cache ──────────────────────
-          // This is the PRIMARY method — works on ALL mobile browsers
-          try {
-            const cachedBlob = await getAudioBlob(url);
-            
-            if (cachedBlob) {
-                // ✅ Blob found in IndexedDB → create Object URL for guaranteed local playback
-                const audio = createAudioFromBlob(cachedBlob);
-                audio.playbackRate = playbackRate;
-                
-                // Preload next ayah in background
-                let preloaded = false;
-                audio.ontimeupdate = () => {
-                    if (nextUrl && !preloaded && audio.duration && (audio.duration - audio.currentTime < 1.5)) {
-                        preloaded = true;
-                        // Preload next ayah blob
-                        getAudioBlob(nextUrl).then(blob => {
-                            if (blob) {
-                                const nextAudio = createAudioFromBlob(blob);
-                                nextAudio.preload = 'auto';
-                                nextAudio.load();
-                                preloadAudioRef.current = nextAudio;
-                            }
-                        }).catch(() => {});
-                    }
-                };
-
-                audio.onended = () => {
-                    if (audio.duration === 0 || isNaN(audio.duration)) {
-                        showError('الملف الصوتي تالف أو غير متاح');
-                        resetPlayState();
-                    }
-                    resolve();
-                };
-
-                audio.onerror = () => {
-                    console.warn(`[useAyahAudio] Playback error for cached blob: ${url}`);
-                    resetPlayState();
-                    resolve();
-                };
-
-                audioRef.current = audio;
-                try {
-                    await audio.play();
-                } catch (e) {
-                    console.log('[audio.play] failed or interrupted:', e);
-                    resetPlayState();
-                    resolve();
-                }
-                return; // Done — played from IndexedDB
-            }
-          } catch (err) {
-            console.warn('[useAyahAudio] IndexedDB lookup failed, falling back:', err);
-          }
-
-          // ─── Step 2: Not in cache → play from network ─────────────
-          // (لا نعتمد على navigator.onLine لأنها غير موثوقة على بعض الأجهزة)
-          // Online: Play from network + cache in background
-          preCacheAudio([globalAyahNumber], reciterID).catch(() => {});
-          
-          let audio: HTMLAudioElement;
-          if (preloadAudioRef.current && preloadAudioRef.current.src) {
-              audio = preloadAudioRef.current;
-              preloadAudioRef.current = null;
+      const run = async () => {
+        // Match by source URL (reader AND ayah), and consume the prepared element
+        // before another IndexedDB lookup. Cached and online playback share this path.
+        let pending = preloadRef.current;
+        preloadRef.current = null;
+        if (!pending || pending.url !== url || (pending.playbackRate === 1) !== (playbackRate === 1) || pending.prepared?.audio.error) {
+          cancelPreparation(pending);
+          pending = prepareAudio(url, playbackRate);
+        }
+        loadingRef.current = pending;
+        const prepared = await pending.promise;
+        if (loadingRef.current === pending) loadingRef.current = null;
+        if (!prepared || request !== requestRef.current) {
+          disposeAudio(prepared);
+          finish();
+          return;
+        }
+        const audio = prepared.audio;
+        currentAudioRef.current = prepared;
+        audioRef.current = audio;
+        audio.playbackRate = playbackRate;
+        audio.onended = () => {
+          if (request !== requestRef.current) return;
+          if (!Number.isFinite(audio.duration) || audio.duration === 0) {
+            fail('Invalid audio duration');
           } else {
-              audio = new Audio(url);
+            finish();
           }
-
-          audio.playbackRate = playbackRate;
-          
-          let preloaded = false;
-          audio.ontimeupdate = () => {
-              if (nextUrl && !preloaded && audio.duration && (audio.duration - audio.currentTime < 1.5)) {
-                  preloaded = true;
-                  const nextAudio = new Audio(nextUrl);
-                  nextAudio.preload = 'auto';
-                  nextAudio.load();
-                  preloadAudioRef.current = nextAudio;
-              }
-          };
-
-          audio.onended = () => {
-              if (audio.duration === 0 || isNaN(audio.duration)) {
-                  showError('الملف الصوتي تالف أو غير متاح');
-                  resetPlayState();
-              }
-              resolve();
-          };
-
-          audio.onerror = () => {
-              console.warn(`[useAyahAudio] Audio error for ${url}`);
-              resetPlayState();
-              showError('عذراً، تعذّر تشغيل التلاوة، تحقق من اتصالك بالإنترنت أو جرّب قارئاً آخر.');
-              resolve();
-          };
-
-          audioRef.current = audio;
+        };
+        audio.onerror = () => fail(audio.error);
+        audio.onplaying = () => {
+          if (request !== requestRef.current) return;
+          audio.onplaying = null;
+          // Start preparing as soon as playback begins, not in its last 1.5 s.
+          // This also fetches a missing next ayah when the current one is cached.
+          if (nextUrl) {
+            clearPreload();
+            const next = prepareAudio(nextUrl, runtimeSettingsRef.current?.playbackRate ?? playbackRate);
+            preloadRef.current = next;
+            void next.promise.catch(() => {
+              if (preloadRef.current === next) clearPreload();
+            });
+          }
+          if (prepared.fromNetwork) void cacheAudioBlob(url).catch(() => {});
+        };
+        if (!pausedRef.current) {
           try {
-              await audio.play();
-          } catch (e) {
-              console.log('[audio.play] failed or interrupted:', e);
-              resetPlayState();
-              showError('عذراً، تعذّر تشغيل التلاوة، تحقق من اتصالك بالإنترنت أو جرّب قارئاً آخر.');
-              resolve();
+            await audio.play();
+          } catch (error) {
+            // A deliberate pause/stop may reject an in-flight play request.
+            if (request === requestRef.current && !pausedRef.current) fail(error);
           }
+        }
       };
-
-      tryPlay();
+      void run().catch(fail);
     });
-  }, [showError, resetPlayState]);
-
-
+  }, [clearPreload, showError, resetPlayState]);
 
   const pauseAudio = useCallback(() => {
-      if (audioRef.current && !audioRef.current.paused) {
-          audioRef.current.pause();
-          setIsPaused(true);
-      }
+    pausedRef.current = true;
+    audioRef.current?.pause();
+    setIsPaused(true);
   }, []);
 
   const resumeAudio = useCallback(() => {
-      if (audioRef.current && audioRef.current.paused) {
-          audioRef.current.play().catch(console.error);
-          setIsPaused(false);
-      }
+    pausedRef.current = false;
+    if (audioRef.current?.paused) audioRef.current.play().catch(console.error);
+    setIsPaused(false);
   }, []);
 
   const stopAudio = useCallback(() => {
-    // حل الوعد المعلّق إن وُجد لمنع بقائه محتجزاً وتراكمه وتعليق تسلسل التلاوة
-    if (activeResolveRef.current) {
-      const resolveFn = activeResolveRef.current;
-      activeResolveRef.current = null;
-      resolveFn();
-    }
+    ++requestRef.current;
+    ++sequenceRef.current;
+    activeResolveRef.current?.();
+    activeResolveRef.current = null;
+    cancelPreparation(loadingRef.current);
+    loadingRef.current = null;
+    clearPreload();
+    disposeAudio(currentAudioRef.current);
+    currentAudioRef.current = null;
+    audioRef.current = null;
+    pausedRef.current = false;
     isPlayingRef.current = false;
     setIsPlayingSeq(false);
     setIsPaused(false);
     setCurrentGlobalAyah(null);
     runtimeSettingsRef.current = null;
-    if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.removeAttribute('src');
-        audioRef.current.load();
-        audioRef.current = null;
-    }
-    if (preloadAudioRef.current) {
-        preloadAudioRef.current.pause();
-        preloadAudioRef.current.removeAttribute('src');
-        preloadAudioRef.current.load();
-        preloadAudioRef.current = null;
-    }
-  }, []);
+  }, [clearPreload]);
+
+  useEffect(() => () => {
+    ++requestRef.current;
+    ++sequenceRef.current;
+    isPlayingRef.current = false;
+    activeResolveRef.current?.();
+    cancelPreparation(loadingRef.current);
+    clearPreload();
+    disposeAudio(currentAudioRef.current);
+  }, [clearPreload]);
 
   const updateRuntimeSettings = useCallback((partialSettings: Partial<PlayerSettings>) => {
     if (runtimeSettingsRef.current) {
@@ -264,20 +291,22 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
   ) => {
     if (isPlayingRef.current) return;
     
+    const sequence = ++sequenceRef.current;
+    pausedRef.current = false;
     isPlayingRef.current = true;
     setIsPlayingSeq(true);
     setIsPaused(false);
     runtimeSettingsRef.current = settings;
 
     let groupRep = 0;
-    while (isPlayingRef.current) {
+    while (isPlayingRef.current && sequence === sequenceRef.current) {
         // قراءة الإعدادات الحية في كل دورة
         const liveGroupSettings = runtimeSettingsRef.current || settings;
         if (liveGroupSettings.groupRepetitions !== -1 && groupRep >= liveGroupSettings.groupRepetitions) break;
 
-        for (let current = settings.startGlobalAyah; isPlayingRef.current && current <= liveGroupSettings.endGlobalAyah; current++) {
+        for (let current = settings.startGlobalAyah; isPlayingRef.current && sequence === sequenceRef.current && current <= liveGroupSettings.endGlobalAyah; current++) {
             let ayahRep = 0;
-            while (isPlayingRef.current) {
+            while (isPlayingRef.current && sequence === sequenceRef.current) {
                 // قراءة إعدادات التكرار الحية في كل تكرار
                 const liveSettings = runtimeSettingsRef.current || settings;
                 if (liveSettings.ayahRepetitions !== -1 && ayahRep >= liveSettings.ayahRepetitions) break;
@@ -286,7 +315,9 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
                 if (onAyahChange) onAyahChange(current);
                 
                 let nextAyah: number | undefined;
-                if (current < liveSettings.endGlobalAyah) {
+                if (liveSettings.ayahRepetitions === -1 || ayahRep + 1 < liveSettings.ayahRepetitions) {
+                    nextAyah = current;
+                } else if (current < liveSettings.endGlobalAyah) {
                     nextAyah = current + 1;
                 } else {
                     if (liveSettings.groupRepetitions === -1 || groupRep + 1 < liveSettings.groupRepetitions) {
@@ -301,12 +332,17 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
         groupRep++;
     }
     
+    if (sequence !== sequenceRef.current) return;
+    clearPreload();
+    disposeAudio(currentAudioRef.current);
+    currentAudioRef.current = null;
+    audioRef.current = null;
     setIsPlayingSeq(false);
     isPlayingRef.current = false;
     setIsPaused(false);
     setCurrentGlobalAyah(null);
     runtimeSettingsRef.current = null;
-  }, [playAyahAudio]);
+  }, [playAyahAudio, clearPreload]);
 
   const preCacheAudio = useCallback(async (
       ayahGlobalNumbers: number[],

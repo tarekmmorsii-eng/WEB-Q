@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import ModalLogo from './ModalLogo';
+import React, { useState, useEffect, useRef } from 'react';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { X, Search as SearchIcon, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
+import './searchModal.css';
+
+const searchKeyboard = registerPlugin<{ hideKeyboard(): Promise<void> }>('MushafSystemBars');
 
 interface SearchResult {
     page: number;
@@ -115,6 +120,33 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
     const [ayahInput, setAyahInput] = useState('');
     // State to store the full Quran data in memory
     const [quranData, setQuranData] = useState<any>(null);
+    const leavingSearch = useRef(false);
+
+    const releaseInputFocus = () => {
+        // Release WebView editing focus before removing the focused input.
+        // This also applies when Android's Back button already hid the IME.
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+    };
+
+    const finishSearch = async (action: () => void) => {
+        if (leavingSearch.current) return;
+        leavingSearch.current = true;
+        releaseInputFocus();
+        try {
+            // Keep the dialog mounted until Android finishes resizing WebView.
+            // Otherwise the destination page first fits the keyboard's reduced
+            // height, then jumps back when the keyboard animation ends.
+            if (Capacitor.getPlatform() === 'android') await searchKeyboard.hideKeyboard();
+            action();
+        } catch (error) {
+            console.warn('Search keyboard has not settled', error);
+        } finally {
+            leavingSearch.current = false;
+        }
+    };
+    const closeSearch = () => { void finishSearch(onClose); };
 
     useEffect(() => {
         if (!isOpen) {
@@ -148,8 +180,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
     const handlePageSearch = () => {
         const pageNum = parseInt(pageInput, 10);
         if (pageNum >= 1 && pageNum <= totalPages) {
-            onSelectPage(pageNum);
-            onClose();
+            void finishSearch(() => { onSelectPage(pageNum); onClose(); });
         }
     };
 
@@ -266,18 +297,21 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                 // Check if ayah exists
                 const ayah = surah.ayahs.find((a: any) => a.numberInSurah === ayahNum);
                 if (ayah) {
+                    void finishSearch(() => {
                     if (onSelectResult) {
                         onSelectResult(ayah.page, selectedSurah, ayahNum);
                     } else {
                         onSelectPage(ayah.page);
                     }
                     onClose();
+                    });
                 }
             }
         }
     };
 
     const handleResultClick = (result: SearchResult) => {
+        void finishSearch(() => {
         // Use extended result with surahNumber if possible
         const surahNum = (result as any).surahNumber;
         if (onSelectResult && surahNum) {
@@ -286,24 +320,26 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
             onSelectPage(result.page);
         }
         onClose();
+        });
     };
 
     if (!isOpen) return null;
 
     return (
         <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+            data-search-dialog
+            className="search-dialog app-modal fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center p-4"
             style={{ fontFamily: "'Almarai', sans-serif" }}
         >
-            <div className="bg-[var(--bg-card)] rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-[var(--border-primary)]">
+            <div data-search-panel className="bg-[var(--bg-card)] rounded-xl shadow-2xl max-w-lg w-full flex flex-col overflow-hidden border border-[var(--border-primary)]">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] shrink-0">
-                    <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                    <h2 className="modal-branded-title text-xl font-bold text-[var(--text-primary)] flex items-center gap-2"><ModalLogo />
                         <SearchIcon size={20} className="text-amber-600" />
                         {t.search}
                     </h2>
                     <button
-                        onClick={onClose}
+                        onClick={closeSearch}
                         className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors text-[var(--text-primary)] opacity-50"
                     >
                         <X size={24} />
@@ -311,7 +347,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelectPage
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                <div className="search-dialog-content flex-1 min-h-0 overflow-y-auto p-6 space-y-8 custom-scrollbar">
 
                     {/* Section 1: Page Search */}
                     <div className="space-y-3">

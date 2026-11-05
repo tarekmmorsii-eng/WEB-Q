@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React, { useState } from 'react';
 import { X, ThumbsUp as GoodIcon, ThumbsDown as WeakIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -90,7 +91,7 @@ export default function SurahRatingModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            className="app-modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
             onClick={handleBackdropClick}
             style={{ fontFamily: "'Almarai', sans-serif" }}
         >
@@ -99,7 +100,7 @@ export default function SurahRatingModal({
             >
                 {/* Header */}
                 <div className="text-center mb-3">
-                    <h2 className="text-base font-bold text-[var(--text-primary)] mb-1">
+                    <h2 className="modal-branded-title text-base font-bold text-[var(--text-primary)] mb-1"><ModalLogo />
                         {t.rateSurah} {surahName}
                     </h2>
                     <p className="text-[var(--text-primary)] opacity-60 text-[10px]">

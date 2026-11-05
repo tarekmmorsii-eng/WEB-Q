@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React from 'react';
 import { X, Check, Sun, Moon } from 'lucide-react';
 import clsx from 'clsx';
@@ -17,10 +18,10 @@ export default function ColorPickerModal({ isOpen, onClose, currentThemeId, onSe
     const currentTheme = THEMES.find(t => t.id === currentThemeId);
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center pointer-events-none">
+        <div className="app-modal fixed inset-0 z-[60] flex items-end justify-center pointer-events-none">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/50 pointer-events-auto animate-in fade-in duration-300"
+                className="modal-backdrop-hit-target absolute inset-0 bg-black/50 pointer-events-auto animate-in fade-in duration-300"
                 onClick={onClose}
             />
 
@@ -29,7 +30,7 @@ export default function ColorPickerModal({ isOpen, onClose, currentThemeId, onSe
             >
                 {/* Drag Handle & Close */}
                 <div className="relative flex items-center justify-center py-3">
-                    <div className="w-12 h-1.5 bg-[var(--text-primary)] opacity-20 rounded-full" />
+                    <ModalLogo />
                     <button
                         onClick={onClose}
                         className="absolute right-4 p-2 bg-[var(--bg-secondary)] rounded-full text-[var(--text-primary)] opacity-60 hover:bg-red-900/50 hover:text-red-400 transition-colors"

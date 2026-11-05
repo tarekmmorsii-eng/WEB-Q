@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     textBrightness: 100,
     backgroundBrightness: 0,
     soundEnabled: false,
+    gesturePinchZoom: true,
     bottomBar: {
         showIndex: true,
         showSearch: true,

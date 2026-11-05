@@ -1,0 +1,33 @@
+/* Only dialogs explicitly placed in ReadingDialogScale participate. CSS zoom
+   enlarges text, icons, controls and spacing together while reflowing layout. */
+.reading-dialog-scale[data-reading-dialog="panel"] > .fixed {
+    padding: calc((16px + var(--android-status-bar-height, 0px)) / var(--reading-ui-scale))
+        calc(16px / var(--reading-ui-scale))
+        calc((16px + var(--android-navigation-bar-height, 0px)) / var(--reading-ui-scale));
+}
+.reading-dialog-scale[data-reading-dialog="panel"] > .fixed > :first-child {
+    max-height: calc((100dvh - 32px - var(--android-status-bar-height, 0px) - var(--android-navigation-bar-height, 0px)) / var(--reading-ui-scale));
+    overflow-y: auto;
+    min-width: 0;
+    overscroll-behavior: contain;
+}
+.reading-dialog-scale button { white-space: normal; max-width: 100%; }
+.reading-dialog-scale .flex:not(.flex-col) { flex-wrap: wrap; min-width: 0; }
+.reading-dialog-scale .truncate { white-space: normal; overflow: visible; text-overflow: clip; }
+.reading-dialog-scale h1, .reading-dialog-scale h2, .reading-dialog-scale h3 { min-width: 0; }
+.reading-dialog-scale input, .reading-dialog-scale select, .reading-dialog-scale textarea { max-width: 100%; min-width: 0; }
+.reading-dialog-scale[data-reading-dialog="screen"] > .fixed {
+    min-height: 0;
+    padding-top: calc(var(--android-status-bar-height, 0px) / var(--reading-ui-scale));
+    padding-bottom: calc(var(--android-navigation-bar-height, 0px) / var(--reading-ui-scale));
+}
+.reading-dialog-scale[data-reading-dialog="screen"] > .fixed > :first-child > div { height: auto; min-height: 4rem; flex-wrap: wrap; gap: 8px; }
+.reading-dialog-scale[data-reading-dialog="screen"] > .fixed > :first-child h1 { flex: 1; flex-wrap: wrap; }
+.reading-dialog-scale[data-reading-dialog="screen"] > .fixed > :first-child > div > :last-child:empty { display: none; }
+@media (max-width: 479px) {
+    /* Preserve room for enlarged Arabic words instead of magnifying nested
+       decorative padding until it consumes most of a narrow screen. */
+    .reading-dialog-scale[data-reading-dialog="panel"] > .fixed > .p-6 { padding: calc(16px / var(--reading-ui-scale)); }
+    .reading-dialog-scale .p-5 { padding: calc(12px / var(--reading-ui-scale)); }
+    .reading-dialog-scale > .fixed > .max-w-3xl > .text-center.mt-2 { margin-top: 2.5rem; }
+}

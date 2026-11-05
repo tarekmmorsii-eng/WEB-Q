@@ -69,3 +69,17 @@ android/app/release-key.jks
 android/app/*.jks
 android/app/*.keystore
 android/keystore.properties
+android/meta-events.local.properties
+artifacts/gradle-cache/
+artifacts/android-user/
+dist-tajweed-trial/
+artifacts/tajweed-native-assets/
+
+# Local build caches, device backups, and investigation outputs
+/.android-user-home/
+/.gradle-user-home/
+/.claude/
+/APK/
+/artifacts/
+/audio-investigation/
+/test-results/

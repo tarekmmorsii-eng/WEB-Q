@@ -1,3 +1,5 @@
+import DeleteIcon from './DeleteIcon';
+import ModalLogo from './ModalLogo';
 /**
  * مركز الإشعارات الخارجية (Push Notification Center)
  * يعرض سجل الإشعارات المحفوظة مع إمكانية الحذف والتحديد كمقروء
@@ -56,16 +58,14 @@ export default function PushNotificationCenter({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[150] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+      className="app-modal fixed inset-0 bg-black/60 z-[150] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
       style={{ direction: isRTL ? 'rtl' : 'ltr' }}
     >
       <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden border border-[var(--border-primary)]">
         {/* Header */}
         <div className="bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-800/30 p-4 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-800/60 rounded-full">
-              <Bell size={20} className="text-purple-600 dark:text-purple-400" />
-            </div>
+            <ModalLogo />
             <div>
               <h2 className="text-lg font-bold text-purple-800 dark:text-purple-200">
                 {t.pushNotifCenterTitle || 'مركز الإشعارات'}
@@ -100,7 +100,7 @@ export default function PushNotificationCenter({
               onClick={clearAll}
               className="flex items-center gap-1.5 text-xs font-medium text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
             >
-              <X size={14} />
+              <DeleteIcon size={14} />
               {t.pushNotifClearAll || 'حذف الكل'}
             </button>
           </div>
@@ -157,7 +157,7 @@ export default function PushNotificationCenter({
                       className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0"
                       title={t.pushNotifDelete || 'حذف'}
                     >
-                      <X size={14} className="text-red-400 hover:text-red-600" />
+                      <DeleteIcon size={14} />
                     </button>
                   </div>
                 </div>

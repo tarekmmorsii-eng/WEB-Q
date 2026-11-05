@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React, { useState, useMemo, useEffect } from 'react';
 import { X, Calculator, BookOpen, AlertCircle, ChevronRight, Check, CheckCircle2, BarChart3, Layers } from 'lucide-react';
 import clsx from 'clsx';
@@ -165,15 +166,16 @@ export default function VerseCalculatorModal({ isOpen, onClose, currentLanguage,
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="app-modal fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border border-[var(--border-primary)]">
                 {/* Header */}
                 <div className="bg-[var(--bg-secondary)] p-4 border-b border-[var(--border-primary)] flex justify-between items-center shrink-0">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <ModalLogo />
+                        <h2 className="min-w-0 flex-1 text-lg font-bold text-[var(--text-primary)]">{t.title}</h2>
+                        <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg shrink-0 mx-2">
                             <Calculator size={20} className="text-amber-600 dark:text-amber-500" />
                         </div>
-                        <h2 className="text-lg font-bold text-[var(--text-primary)]">{t.title}</h2>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                         <X size={24} />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface SplashScreenProps {
     onFinish: () => void;
@@ -7,23 +7,26 @@ interface SplashScreenProps {
 export default function SplashScreen({ onFinish }: SplashScreenProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [opacity, setOpacity] = useState(1);
+    const finishRef = useRef(onFinish);
+    finishRef.current = onFinish;
 
     useEffect(() => {
+        let fadeTimer: ReturnType<typeof setTimeout>;
         const timer = setTimeout(() => {
             setOpacity(0);
-            setTimeout(() => {
+            fadeTimer = setTimeout(() => {
                 setIsVisible(false);
-                onFinish();
-            }, 1000);
-        }, 2500);
-        return () => { clearTimeout(timer); };
-    }, [onFinish]);
+                finishRef.current();
+            }, 250);
+        }, 1200);
+        return () => { clearTimeout(timer); clearTimeout(fadeTimer); };
+    }, []);
 
     if (!isVisible) return null;
 
     return (
         <div
-            className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-[#000000] transition-opacity duration-1000"
+            className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-[#000000] transition-opacity duration-[250ms]"
             style={{ opacity }}
         >
             {/* Main Logo: Absolutely Centered */}

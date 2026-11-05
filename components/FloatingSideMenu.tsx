@@ -1,5 +1,6 @@
 import React from 'react';
-import { Download, HelpCircle, Share2, PlayCircle, Headphones, Bell, Search } from 'lucide-react';
+import { Download, HelpCircle, Share2, PlayCircle, Headphones, Bell, Search, Type, BookOpen } from 'lucide-react';
+import { readingViewText } from '../i18n/readingViewText';
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
 import { useOfflineManager } from '../hooks/useOfflineManager';
@@ -20,6 +21,8 @@ interface FloatingSideMenuProps {
     isVisible?: boolean;
     isEnabled?: boolean;
     isRTL?: boolean;
+    isEnlargedReading?: boolean;
+    onToggleEnlargedReading?: () => void;
 }
 
 export default function FloatingSideMenu({
@@ -35,7 +38,9 @@ export default function FloatingSideMenu({
     notificationUnreadCount = 0,
     isVisible = true,
     isEnabled = true,
-    isRTL = false
+    isRTL = false,
+    isEnlargedReading = false,
+    onToggleEnlargedReading
 }: FloatingSideMenuProps) {
     const t = translations[currentLanguage];
     const {
@@ -52,6 +57,14 @@ export default function FloatingSideMenu({
 
     return (
         <div className={`fixed ${isRTL ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 z-[55] flex flex-col gap-2 p-2 transition-all duration-500 ease-in-out ${isVisible ? 'translate-x-0' : isRTL ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+            {onToggleEnlargedReading && <button type="button"
+                id="enlarged-reading-toggle" onClick={onToggleEnlargedReading} disabled={!isVisible}
+                aria-label={isEnlargedReading ? readingViewText(currentLanguage).original : readingViewText(currentLanguage).open}
+                aria-pressed={isEnlargedReading}
+                className={`w-12 h-12 ${isRTL ? 'rounded-r-xl border-y border-r' : 'rounded-l-xl border-y border-l'} border-amber-500/30 flex items-center justify-center bg-[var(--bg-card)] text-amber-600 shadow-lg hover:bg-[var(--bg-secondary)] transition-all hover:w-14`}
+                title={isEnlargedReading ? readingViewText(currentLanguage).original : readingViewText(currentLanguage).open}>
+                {isEnlargedReading ? <BookOpen size={24} /> : <span className="relative"><Type size={24} /><Search size={13} className="absolute -bottom-1 -right-2 bg-[var(--bg-card)] rounded-full" /></span>}
+            </button>}
             {/* Recitation Auto-Play Button */}
             <button
                 id="tour-audio-btn-floating"

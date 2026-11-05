@@ -1,5 +1,6 @@
+import DeleteIcon from './DeleteIcon';
 import React, { useState, useEffect, useRef } from 'react';
-import { X, MousePointer2 } from 'lucide-react';
+import { MousePointer2 } from 'lucide-react';
 import clsx from 'clsx';
 
 interface PrayerModeButtonProps {
@@ -158,7 +159,7 @@ export default function PrayerModeButton({ onDismiss, onNextPage, t }: PrayerMod
                             : "bg-black/40 border-red-500/70"
                     )}
                 >
-                    <X className={clsx("transition-transform duration-300", isOverDeleteZone ? "scale-125 text-red-500" : "text-red-500")} size={32} />
+                    <DeleteIcon className={clsx("transition-transform duration-300", isOverDeleteZone && "scale-125")} size={32} />
                     <span className="text-[10px] text-red-100 font-medium mt-1 uppercase tracking-wider">{t.cancelMode}</span>
                 </div>
             )}

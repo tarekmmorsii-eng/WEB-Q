@@ -1,3 +1,4 @@
+import ModalLogo from './ModalLogo';
 import React, { useState } from 'react';
 import { X, Search } from 'lucide-react';
 import clsx from 'clsx';
@@ -51,10 +52,10 @@ export default function MutashabihatSelectorModal({
     const ayahCount = surah?.ayahCount || 0;
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="app-modal fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-[var(--bg-card)] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-primary)]">
                 <div className="p-4 bg-amber-500 text-white flex justify-between items-center">
-                    <h3 className="font-bold text-lg">{t.addSimilarAyah}</h3>
+                    <h3 className="modal-branded-title font-bold text-lg"><ModalLogo />{t.addSimilarAyah}</h3>
                     <button onClick={onClose} className="p-1 hover:bg-amber-600 rounded-full transition-colors">
                         <X size={20} />
                     </button>

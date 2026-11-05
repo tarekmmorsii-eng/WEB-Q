@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css?v=2026-01-02-v2';
 import App from './App';
+import './components/modalDesign.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

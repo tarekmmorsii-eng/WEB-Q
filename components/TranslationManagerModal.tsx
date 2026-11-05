@@ -1,3 +1,5 @@
+import DeleteIcon from './DeleteIcon';
+import ModalLogo from './ModalLogo';
 /**
  * TranslationManagerModal
  * واجهة مدير التحميلات - إدارة ترجمات اللغات
@@ -5,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Download, Trash2, Check, Loader2, HardDrive, Globe, Wifi, WifiOff, AlertCircle } from 'lucide-react';
+import { X, Download,  Check, Loader2, HardDrive, Globe, Wifi, WifiOff, AlertCircle } from 'lucide-react';
 import {
     getAllTranslations,
     deleteTranslation,
@@ -320,7 +322,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            className="app-modal fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div
@@ -332,7 +334,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-2">
                         <Globe size={22} className="text-amber-600" />
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                        <h2 className="modal-branded-title text-lg font-bold text-slate-800 dark:text-slate-100"><ModalLogo />
                             {t.manageTranslations || 'Download Translation & Word Meanings'}
                         </h2>
                     </div>
@@ -476,7 +478,7 @@ const TranslationManagerModal: React.FC<TranslationManagerModalProps> = ({
                                             className="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors group"
                                             title={t.delete || 'Delete'}
                                         >
-                                            <Trash2 size={18} className="text-red-400 group-hover:text-red-600" />
+                                            <DeleteIcon size={18} />
                                         </button>
                                     ) : (
                                         <button
