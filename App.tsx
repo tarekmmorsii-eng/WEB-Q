@@ -907,6 +907,7 @@ export default function App() {
   const [mutashabihatIndexSurah, setMutashabihatIndexSurah] = useState<number>(1);
   const [mutashabihatIndexAyah, setMutashabihatIndexAyah] = useState<number | undefined>(undefined);
   const [currentMutashabiha, setCurrentMutashabiha] = useState<Mutashabiha | null>(null);
+  const [mutashabihatReturnAyah, setMutashabihatReturnAyah] = useState<{surah:number;ayah:number}|null>(null);
 
   const [highlightSettingsHelp, setHighlightSettingsHelp] = useState(false);
   const [highlightOffline, setHighlightOffline] = useState(false);
@@ -1282,6 +1283,7 @@ export default function App() {
   }, [actualMutashabihatData, isMutashabihatModalOpen]);
 
   const handleOpenMutashabihat = useCallback((surah: number, ayah: number) => {
+    setMutashabihatReturnAyah(null);
     let merged = getMergedMutashabihaForAyah(surah, ayah, actualMutashabihatData);
 
     if (!merged) {
@@ -2828,6 +2830,7 @@ export default function App() {
   const stableOnOpenMutashabihat = useStableCallback(
     (mutOrSurah: Mutashabiha | number, optAyah?: number) => {
       if (typeof mutOrSurah === 'object' && 'id' in mutOrSurah) {
+        setMutashabihatReturnAyah(null);
         setCurrentMutashabiha(mutOrSurah);
         setIsMutashabihatModalOpen(true);
       } else if (typeof mutOrSurah === 'number' && typeof optAyah === 'number') {
@@ -3483,6 +3486,7 @@ export default function App() {
               shareMutashabihat={findAllMutashabihatForAyah(ratingModalData.surah,ratingModalData.ayah,actualMutashabihatData)}
               onOpenMutashabihat={() => {
                 handleOpenMutashabihat(ratingModalData.surah, ratingModalData.ayah);
+                setMutashabihatReturnAyah({surah:ratingModalData.surah,ayah:ratingModalData.ayah});
               }}
               tafsir={((window as any).__ma3anyData || {})[`${ratingModalData.surah}:${ratingModalData.ayah}`]?._tafsir}
               onOpenTranslationManager={() => setIsTranslationManagerOpen(true)}
@@ -3543,7 +3547,8 @@ export default function App() {
           <Suspense fallback={null}>
             <ReadingDialogScale><MutashabihatModal
               isOpen
-              onClose={() => setIsMutashabihatModalOpen(false)}
+              onClose={() => {setIsMutashabihatModalOpen(false);setMutashabihatReturnAyah(null);}}
+              onBack={() => {setIsMutashabihatModalOpen(false);if(mutashabihatReturnAyah)setRatingModalData(mutashabihatReturnAyah);setMutashabihatReturnAyah(null);}}
               mutashabiha={currentMutashabiha}
               mutashabihatData={actualMutashabihatData}
               language={settings.language}

@@ -1,7 +1,8 @@
+import AyahDialogButton from './AyahDialogButton';
 import DeleteIcon from './DeleteIcon';
 import ModalLogo from './ModalLogo';
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import { Mutashabiha } from '../types';
 import { getSurahName } from '../utils/quranHelpers';
@@ -265,6 +266,7 @@ const HighlightedText = React.memo(({ text, absoluteAyahNumber, manualRules, ref
 interface MutashabihatModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onBack?: () => void;
     mutashabiha: Mutashabiha | null;
     mutashabihatData?: Mutashabiha[]; // Added to allow external data passing
     language?: string;
@@ -279,6 +281,7 @@ import { parseMutashabihatText } from '../utils/mutashabihatProcessor';
 export default function MutashabihatModal({
     isOpen,
     onClose,
+    onBack,
     mutashabiha,
     mutashabihatData,
     language,
@@ -351,22 +354,13 @@ export default function MutashabihatModal({
             <div data-mutashabihat-panel
                 className="w-full max-w-3xl rounded-2xl shadow-2xl border border-[var(--border-primary)] p-6 relative animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-x-hidden overflow-y-auto bg-[var(--bg-card)]"
             >
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 left-4 p-2 rounded-full hover:bg-[var(--bg-secondary)] transition-colors z-10"
-                >
-                    <X size={20} className="text-[var(--text-primary)] opacity-50" />
-                </button>
-
-                {/* Header */}
-                <div className="text-center mb-6 mt-2">
-                    <h2 className="modal-branded-title text-2xl font-bold text-amber-600 dark:text-amber-400 mb-2 flex items-center justify-center gap-2"><ModalLogo />
-                        {t.similarVersesAlert}
-                    </h2>
-                    <p className="text-[var(--text-primary)] opacity-60 text-sm">
-                        {t.similarVersesDescription}
-                    </p>
+                <div className="mb-6 mt-2">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                        <AyahDialogButton kind="back" language={language || 'ar'} onClick={onBack || onClose}/>
+                        <h2 className="modal-branded-title min-w-0 flex-1 text-xl font-bold text-amber-600 dark:text-amber-400 justify-center"><ModalLogo />{t.similarVersesAlert}</h2>
+                        <AyahDialogButton kind="close" language={language || 'ar'} label={t.close} onClick={onClose}/>
+                    </div>
+                    <p className="text-center text-[var(--text-primary)] opacity-60 text-sm">{t.similarVersesDescription}</p>
                 </div>
 
                 {/* Source Ayah */}

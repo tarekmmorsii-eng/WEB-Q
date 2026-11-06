@@ -1,7 +1,8 @@
+import AyahDialogButton from './AyahDialogButton';
 import DeleteIcon from './DeleteIcon';
 import ModalLogo from './ModalLogo';
 import React,{useEffect,useRef,useState}from'react';
-import{X,ArrowRight,StickyNote,Share2}from'lucide-react';
+import{StickyNote,Share2}from'lucide-react';
 import{ayahToolsText,notesDirection}from'../i18n/ayahToolsText';
 import{translations,Language}from'../i18n/translations';
 import{RECITERS_LIST}from'../services/reciterService';
@@ -72,9 +73,9 @@ export default function AyahToolsModal({mode,surah,ayah,language,reciter,explana
  return <div data-ayah-tools={mode} className="app-modal fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" dir={notesDirection(language)} style={mode==='notes'?{height:viewport.height/scale,top:viewport.top/scale,bottom:'auto',padding:8/scale,paddingTop:24/scale,alignItems:'flex-start'}:undefined}>
   <section style={mode==='notes'?{maxWidth:'28rem',maxHeight:Math.min(560,(viewport.height-40)/scale),overflow:'hidden'}:undefined} className="bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-xl shadow-xl w-full max-w-xl max-h-[90dvh] min-h-0 flex flex-col overflow-hidden">
    <header className="flex items-center justify-between gap-2 p-3 border-b border-[var(--border-primary)] shrink-0">
-    <button type="button" className={button} disabled={busy&&mode==='notes'} onClick={()=>leave(onBack)} aria-label={t.back}><ArrowRight size={18} style={{transform:notesDirection(language)==='ltr'?'rotate(180deg)':undefined}}/></button>
+    <AyahDialogButton kind="back" language={language} disabled={busy&&mode==='notes'} onClick={()=>leave(onBack)}/>
     <h2 className="modal-branded-title font-bold text-center text-sm min-w-0"><ModalLogo />{mode==='notes'?t.notes:t.share} · {surah}:{ayah}</h2>
-    <button type="button" className={`${button} text-red-600`} disabled={busy&&mode==='notes'} onClick={()=>leave(onClose)} aria-label={t.close}><X size={22}/></button>
+    <AyahDialogButton kind="close" language={language} disabled={busy&&mode==='notes'} onClick={()=>leave(onClose)}/>
    </header>
    <div className="p-4 overflow-y-auto min-h-0 flex-1 space-y-3" style={{overscrollBehavior:'contain'}}>
     {error&&<p role="alert" className="text-red-600 text-sm whitespace-pre-wrap">{error}</p>}

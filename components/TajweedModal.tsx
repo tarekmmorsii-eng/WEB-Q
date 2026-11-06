@@ -1,3 +1,4 @@
+import AyahDialogButton from './AyahDialogButton';
 import ModalLogo from './ModalLogo';
 import React, { useEffect, useRef, useState } from 'react';
 import { getTajweedVerse, TAJWEED_RULES, TajweedSegment } from '../services/tajweedService';
@@ -44,9 +45,9 @@ export default function TajweedModal({ surahNumber, ayahNumber, onBack, onClose,
             }
         }}>
             <header className="p-4 border-b border-[var(--border-primary)] flex items-center justify-between gap-3">
-                <div><h2 id="tajweed-title" className="modal-branded-title font-bold text-lg"><ModalLogo />{ar ? 'أحكام التجويد' : 'Tajweed rules'}</h2><p className="text-sm opacity-70">{SURAHS[surahNumber - 1]?.name} · {ayahNumber}</p></div>
-                <button onClick={onBack} className="p-3 rounded-lg bg-[var(--bg-secondary)]">{ar ? 'رجوع' : 'Back'}</button>
-                <button onClick={onClose} aria-label={ar ? 'إغلاق التجويد' : 'Close tajweed'} className="p-3">×</button>
+                <AyahDialogButton kind="back" language={language} onClick={onBack}/>
+                <div className="min-w-0 flex-1"><h2 id="tajweed-title" className="modal-branded-title font-bold text-lg"><ModalLogo />{ar ? 'أحكام التجويد' : 'Tajweed rules'}</h2><p className="text-sm opacity-70">{SURAHS[surahNumber - 1]?.name} · {ayahNumber}</p></div>
+                <AyahDialogButton kind="close" language={language} onClick={onClose}/>
             </header>
             {key === '2:22' && <div dir="rtl" style={{ padding: 12, borderBottom: '1px solid var(--border-primary)', flexShrink: 0 }}>
                 <p style={{ fontSize: 14, marginBottom: 8 }}>مقارنة النموذجين — اختر طريقة العرض</p>

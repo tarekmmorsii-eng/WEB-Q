@@ -1,9 +1,10 @@
+import AyahDialogButton from './AyahDialogButton';
 import ModalLogo from './ModalLogo';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import TajweedModal from './TajweedModal';
 import JuzOneTajweedModal from './JuzOneTajweedModal';
 import { isJuzOne, tajweedTrialEnabled } from '../services/juzOneTajweed';
-import { Bookmark, X, Check, StickyNote, Share2, ThumbsUp as GoodIcon, Circle as MediumIcon, ThumbsDown as WeakIcon, Settings as SettingsIcon } from 'lucide-react';
+import { Bookmark, Check, StickyNote, Share2, ThumbsUp as GoodIcon, Circle as MediumIcon, ThumbsDown as WeakIcon, Settings as SettingsIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { translations, Language } from '../i18n/translations';
 import { getTranslation } from '../services/translationStorageService';
@@ -220,7 +221,8 @@ export default function AyahOptionsModal({
         >
             <div className="w-full max-w-[280px] rounded-xl shadow-xl border border-[var(--border-primary)] p-3 relative animate-in zoom-in-95 duration-200 bg-[var(--bg-card)] text-[var(--text-primary)]">
                 {/* Header */}
-                <div className="text-center mb-3">
+                <div className="mb-3 flex items-start gap-2">
+                    <div className="min-w-0 flex-1 text-center">
                     <h2 className="modal-branded-title text-base font-bold text-[var(--text-primary)] mb-1"><ModalLogo />
                         {t.ayahOptions.replace('{ayah}', (() => {
                             if (language === 'ar') return ayahNumber.toLocaleString('ar-EG');
@@ -230,6 +232,8 @@ export default function AyahOptionsModal({
                         })())}
                     </h2>
                     <p className="text-[var(--text-primary)] opacity-50 text-[10px]">{t.rateMemorization}</p>
+                    </div>
+                    <AyahDialogButton kind="close" language={language} label={t.close} onClick={onClose}/>
                 </div>
 
                 {/* Rating Buttons */}
@@ -333,23 +337,18 @@ export default function AyahOptionsModal({
                     {(import.meta.env.DEV || (tajweedTrialEnabled && isJuzOne(surahNumber, ayahNumber))) && <button onClick={() => setShowTajweed(true)} className="w-full bg-amber-700 hover:bg-amber-600 text-white py-2 rounded-lg font-bold text-xs">{language === 'ar' ? 'أحكام التجويد' : 'Tajweed rules'}</button>}
                 </div>
 
-                <button onClick={onClose} className="w-full text-[var(--text-primary)] opacity-50 hover:opacity-100 py-1 transition-colors text-[10px] font-medium">
-                    {t.close}
-                </button>
-
                 {/* Tafsir / Translation Overlay Panel */}
                 {showTafsir && (
                     <div data-tafsir-panel className="absolute inset-0 bg-[var(--bg-card)] rounded-xl z-20 flex flex-col p-3 animate-in slide-in-from-bottom-5 duration-300">
                         <div className="flex justify-between items-center mb-2">
-                            <h3 className="modal-branded-title text-sm font-bold text-[var(--text-primary)]"><ModalLogo />{tafsirPanelTitle} <span className="text-red-500">{(() => {
+                            <AyahDialogButton kind="back" language={language} onClick={()=>setShowTafsir(false)}/>
+                            <h3 className="modal-branded-title min-w-0 flex-1 text-sm font-bold text-[var(--text-primary)]"><ModalLogo />{tafsirPanelTitle} <span className="text-red-500">{(() => {
                                 if (language === 'ar') return ayahNumber.toLocaleString('ar-EG');
                                 if (language === 'ur') return ayahNumber.toLocaleString('ur-PK');
                                 if (language === 'fa') return ayahNumber.toLocaleString('fa-IR');
                                 return ayahNumber.toString();
                             })()}</span></h3>
-                            <button aria-label={t.close} onClick={() => { setShowTafsir(false); onClose(); }} className="p-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white transition-colors flex-shrink-0">
-                                <X size={16} />
-                            </button>
+                            <AyahDialogButton kind="close" language={language} label={t.close} onClick={()=>{setShowTafsir(false);onClose();}}/>
                         </div>
                         <div
                             className={clsx(
@@ -388,9 +387,7 @@ export default function AyahOptionsModal({
                                 translatedText
                             )}
                         </div>
-                        <button onClick={() => { setShowTafsir(false); onClose(); }} className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg font-bold text-xs transition-colors mt-1">
-                            {t.close}
-                        </button>
+
                     </div>
                 )}
             </div>

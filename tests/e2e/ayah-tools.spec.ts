@@ -85,7 +85,7 @@ test('saved note dialog stays over Quran until keyboard settles; failure does no
  await page.getByRole('button',{name:'حفظ الملاحظة',exact:true}).click();await expect.poll(()=>page.evaluate(()=>typeof(window as any).finishKeyboard)).toBe('function');
  await expect(page.locator('[data-ayah-tools]')).toHaveCount(1);expect(await page.evaluate(()=>(window as any).notes.getAyahNote(2,17))).toBe('ثبات الصفحة');
  await page.evaluate(()=>(window as any).failKeyboard(Error('Layout not settled')));await expect(page.getByRole('alert')).toBeVisible();await expect(page.locator('[data-ayah-tools]')).toHaveCount(1);
- await page.getByRole('button',{name:'حفظ الملاحظة',exact:true}).click();await expect(page.getByRole('button',{name:'حفظ الملاحظة',exact:true})).toBeDisabled();await page.evaluate(()=>(window as any).finishKeyboard());await expect(page.locator('[data-ayah-tools]')).toHaveCount(0);
+ await page.evaluate(()=>{delete (window as any).finishKeyboard});await page.getByRole('button',{name:'حفظ الملاحظة',exact:true}).click();await expect(page.getByRole('button',{name:'حفظ الملاحظة',exact:true})).toBeDisabled();await expect.poll(()=>page.evaluate(()=>typeof(window as any).finishKeyboard)).toBe('function');await page.evaluate(()=>(window as any).finishKeyboard());await expect(page.locator('[data-ayah-tools]')).toHaveCount(0);
 });
 
 test('note dialog top remains fixed when keyboard reduces viewport',async({page})=>{

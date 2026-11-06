@@ -20,8 +20,8 @@ test.beforeAll(async()=>{
         window.ui={setSize,setActive,setView,setSimilarData};
         return <ReadingUiScaleProvider active={active} fontSize={size}><FeedbackProvider language="ar">
         {view==='meaning'?<Tooltip word="كلمة تجريبية" meaning={'معنى تجريبي طويل لاختبار وضوح القراءة داخل الكرت. '.repeat(12)} position={{x:180,y:600}} onClose={()=>setView('none')}/>:null}
-        {view==='ayah'?<ReadingDialogScale><Ayah isOpen surahNumber={2} ayahNumber={17} language="ar" currentRating={null} onClose={()=>setView('none')} onRate={()=>{}} onBookmark={()=>{}} isBookmarked={false} tafsir={'تفسير تجريبي للتحقق من تكبير النص والأزرار. '.repeat(30)} hasMutashabihat onOpenMutashabihat={()=>setView('similar')}/></ReadingDialogScale>:null}
-        {view==='similar'?<ReadingDialogScale><Similar isOpen mutashabiha={similarData} mutashabihatData={[similarData]} language="ar" onClose={()=>setView('none')} onAddSimilarAyah={()=>setView('selector')} onOpenInIndex={()=>setView('index')}/></ReadingDialogScale>:null}
+        {view==='ayah'?<ReadingDialogScale><Ayah isOpen surahNumber={2} ayahNumber={17} language="ar" currentRating={null} onClose={()=>setView(current=>current==='ayah'?'none':current)} onRate={()=>{}} onBookmark={()=>{}} isBookmarked={false} tafsir={'تفسير تجريبي للتحقق من تكبير النص والأزرار. '.repeat(30)} hasMutashabihat onOpenMutashabihat={()=>setView('similar')}/></ReadingDialogScale>:null}
+        {view==='similar'?<ReadingDialogScale><Similar isOpen onBack={()=>setView('ayah')} mutashabiha={similarData} mutashabihatData={[similarData]} language="ar" onClose={()=>setView('none')} onAddSimilarAyah={()=>setView('selector')} onOpenInIndex={()=>setView('index')}/></ReadingDialogScale>:null}
         {view==='selector'?<ReadingDialogScale><Selector isOpen language="ar" onClose={()=>setView('none')} onSelect={()=>{}}/></ReadingDialogScale>:null}
         {view==='index'?<ReadingDialogScale fullScreen><Index isOpen language="ar" initialSurahId={2} t={translations.ar} mutashabihatData={[data]} isDarkMode={false} onClose={()=>setView('none')}/></ReadingDialogScale>:null}
         </FeedbackProvider></ReadingUiScaleProvider>}
@@ -123,4 +123,26 @@ test('verse similarities scroll to the end and have no report entry, normal and 
         await page.screenshot({path:`artifacts/similarities-scroll-${active?'enlarged':'normal'}.png`});
         await page.evaluate(()=>(window as any).ui.setView('ayah'));
     }
+});
+
+
+test('ayah child windows share close/back controls and return to verse options',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await open(page);
+ const buttons=page.locator('[data-ayah-dialog-button]');
+ await expect(page.locator('[data-ayah-dialog-button="close"]')).toHaveCount(1);
+ await expect(page.locator('[data-ayah-dialog-button="back"]')).toHaveCount(0);
+ await page.getByRole('button',{name:'مشاركة الآية',exact:true}).click();
+ const share=page.locator('[data-ayah-tools="share"]');await expect(share).toBeVisible();
+ const signature=await share.locator('[data-ayah-dialog-button]').evaluateAll(el=>el.map(e=>({kind:e.getAttribute('data-ayah-dialog-button'),classes:e.className,size:e.querySelector('svg')?.getAttribute('width')})));
+ await share.locator('[data-ayah-dialog-button="back"]').click();
+ await page.getByRole('button',{name:'ملاحظاتي',exact:true}).click();const notes=page.locator('[data-ayah-tools="notes"]');await expect(notes).toBeVisible();
+ expect(await notes.locator('[data-ayah-dialog-button]').evaluateAll(el=>el.map(e=>({kind:e.getAttribute('data-ayah-dialog-button'),classes:e.className,size:e.querySelector('svg')?.getAttribute('width')})))).toEqual(signature);
+ await notes.locator('[data-ayah-dialog-button="back"]').click();
+ await page.getByRole('button',{name:/تفسير الآية/}).click();const tafsir=page.locator('[data-tafsir-panel]');await expect(tafsir).toBeVisible();
+ expect(await tafsir.locator('[data-ayah-dialog-button]').evaluateAll(el=>el.map(e=>({kind:e.getAttribute('data-ayah-dialog-button'),classes:e.className,size:e.querySelector('svg')?.getAttribute('width')})))).toEqual(signature);
+ await tafsir.locator('[data-ayah-dialog-button="back"]').click();await expect(tafsir).toHaveCount(0);
+ await page.getByRole('button',{name:/عرض المتشابهات/}).click();const similar=page.locator('[data-mutashabihat-panel]');await expect(similar).toBeVisible();
+ expect(await similar.locator('[data-ayah-dialog-button]').evaluateAll(el=>el.map(e=>({kind:e.getAttribute('data-ayah-dialog-button'),classes:e.className,size:e.querySelector('svg')?.getAttribute('width')})))).toEqual(signature);
+ await similar.locator('[data-ayah-dialog-button="back"]').click();await expect(page.getByRole('button',{name:'ملاحظاتي',exact:true})).toBeVisible();
+ await page.locator('[data-ayah-dialog-button="close"]').click();await expect(buttons).toHaveCount(0);
 });

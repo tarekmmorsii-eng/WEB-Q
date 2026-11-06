@@ -1,3 +1,4 @@
+import AyahDialogButton from './AyahDialogButton';
 import ModalLogo from './ModalLogo';
 import React, { useEffect, useRef, useState } from 'react';
 import { SURAHS } from '../constants/surahData';
@@ -83,9 +84,9 @@ export default function JuzOneTajweedModal({ surahNumber, ayahNumber, language, 
             }
         }}>
             <header className="p-3 border-b border-[var(--border-primary)] flex items-center justify-between gap-2">
-                <div><h2 id="juz-tajweed-title" className="modal-branded-title font-bold text-lg"><ModalLogo />أحكام التجويد</h2><p className="text-sm">{SURAHS[surahNumber - 1]?.name} · {ayahNumber} — تجربة الجزء الأول</p></div>
-                <button className="p-3 rounded-lg bg-[var(--bg-secondary)]" onClick={onBack}>رجوع</button>
-                <button className="p-3" aria-label="إغلاق التجويد" onClick={onClose}>×</button>
+                <AyahDialogButton kind="back" language={language} onClick={onBack}/>
+                <div className="min-w-0 flex-1"><h2 id="juz-tajweed-title" className="modal-branded-title font-bold text-lg"><ModalLogo />أحكام التجويد</h2><p className="text-sm">{SURAHS[surahNumber - 1]?.name} · {ayahNumber} — تجربة الجزء الأول</p></div>
+                <AyahDialogButton kind="close" language={language} onClick={onClose}/>
             </header>
             <div className="overflow-y-auto min-h-0 p-3" style={{ overflowWrap: 'anywhere' }}>
                 <p className="text-sm leading-relaxed mb-3">تجربة تعليمية ببيانات QuranHub. تعرض العلامات المتاحة، ولم تُعتمد حصرًا لجميع الأحكام. أحكام الوقف والوصل تُبيّن داخل كل بطاقة.</p>
