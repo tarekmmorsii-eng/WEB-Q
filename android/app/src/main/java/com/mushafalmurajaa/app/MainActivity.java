@@ -103,6 +103,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(MetaMeasurementPlugin.class);
         registerPlugin(MushafSystemBarsPlugin.class);
         registerPlugin(AyahFilesPlugin.class);
+        registerPlugin(FeedbackImagesPlugin.class);
         // Added after auto-loaded plugins by BridgeActivity.load(), so this safe
         // implementation replaces the default PushNotifications bridge.
         initialPlugins.add(SafePushNotificationsPlugin.class);

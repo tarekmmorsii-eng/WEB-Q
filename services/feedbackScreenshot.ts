@@ -1,3 +1,5 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
 export interface FeedbackScreenshot {
     name: string;
     mimeType: 'image/jpeg';
@@ -45,4 +47,18 @@ export async function prepareFeedbackScreenshot(file: File): Promise<FeedbackScr
         }
     }
     throw new Error('size');
+}
+
+const nativeImages = registerPlugin<{
+    choose(): Promise<{ cancelled?: boolean; mimeType?: string; base64?: string }>;
+}>('FeedbackImages');
+
+export const usesNativeFeedbackImages = () => Capacitor.getPlatform() === 'android' && Capacitor.isPluginAvailable('FeedbackImages');
+
+export async function chooseNativeFeedbackScreenshot(): Promise<FeedbackScreenshot | null> {
+    const result = await nativeImages.choose();
+    if (result.cancelled) return null;
+    if (!result.base64 || !result.mimeType) throw new Error('decode');
+    const bytes = Uint8Array.from(atob(result.base64), character => character.charCodeAt(0));
+    return prepareFeedbackScreenshot(new File([bytes], 'screenshot', { type: result.mimeType }));
 }

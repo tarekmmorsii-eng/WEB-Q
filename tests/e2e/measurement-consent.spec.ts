@@ -36,7 +36,7 @@ test('all 31 privacy locales show localized adult, minor, returning and error st
         const {privacyContribution:copy,dir,feedbackForm}=locales[language];
         expect(Object.keys(copy).sort(),language).toEqual(keys);
         for(const value of Object.values(copy)) expect(typeof value==='string' && value.trim().length>0,language).toBe(true);
-        expect(feedbackForm.ageUnavailable,language).toContain(copy.title);
+        expect(feedbackForm.ageUnavailable.trim().length,language).toBeGreaterThan(0);
         if(language!=='en') expect(copy.disclosure,language).not.toBe(locales.en.privacyContribution.disclosure);
         await open(page,language);
         await expect(page.getByRole('heading')).toHaveText(copy.title);
@@ -53,7 +53,7 @@ test('all 31 privacy locales show localized adult, minor, returning and error st
         await page.getByRole('button',{name:copy.allow,exact:true}).click();
         await expect(page.getByRole('alert')).toHaveText(copy.error);
         await expect(page.getByRole('button',{name:copy.retry,exact:true})).toBeVisible();
-        for(const age of ['under13','13to17']){
+        for(const age of ['under18']){
             await page.locator('#measurement-age').selectOption(age);
             await expect(page.getByRole('button',{name:copy.allow,exact:true})).toHaveCount(0);
             await expect(page.getByText(copy.disclosure,{exact:true})).toHaveCount(0);
@@ -64,9 +64,9 @@ test('all 31 privacy locales show localized adult, minor, returning and error st
         expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('mushaf_measurement_choice_v1')!).allowed)).toBe(false);
     }
 });
-test('both minor groups cannot opt into measurement', async ({ page }) => {
+test('under-18 choice cannot opt into measurement', async ({ page }) => {
     await open(page);
-    for (const age of ['under13', '13to17']) {
+    for (const age of ['under18']) {
         await page.getByLabel('اختر فئتك العمرية').selectOption(age);
         await expect(page.getByRole('button', { name: 'أوافق على المساهمة' })).toHaveCount(0);
         await expect(page.getByText('Meta', { exact: false })).toHaveCount(0);
@@ -101,4 +101,25 @@ test('adult consent is explicit and can be withdrawn through settings event', as
     await page.evaluate(() => window.dispatchEvent(new Event('open-measurement-choice')));
     await expect(page.getByText('عند الموافقة مجددًا، قد تُرسل إحصاءات سابقة', { exact: false })).toBeVisible();
     await expect.poll(() => page.evaluate(() => (window as any).nativeChoices.at(-1).allowed)).toBe(false);
+});
+
+
+test('adult disclosure scrolls while both actions remain visible on small screens',async({page})=>{
+ const file=fs.readdirSync('dist/assets').find(n=>n.startsWith('index-')&&n.endsWith('.css'))!;
+ const css=fs.readFileSync('dist/assets/'+file,'utf8');
+ for(const viewport of [{width:360,height:640},{width:832,height:384}]){
+  await page.setViewportSize(viewport);await open(page,'en');await page.addStyleTag({content:css});
+  await page.locator('#measurement-age').selectOption('adult');
+  const scroll=page.locator('[data-age-scroll]'),actions=page.locator('[data-age-actions]');
+  await expect(page.getByRole('button',{name:'I agree to contribute',exact:true})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'Continue without agreeing',exact:true})).toBeInViewport();
+  const before=await actions.boundingBox();
+  expect(await scroll.evaluate(e=>getComputedStyle(e).overflowY)).toBe('auto');
+  expect(await scroll.evaluate(e=>e.scrollHeight>e.clientHeight)).toBe(true);
+  const box=await scroll.boundingBox();await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);await page.mouse.wheel(0,1200);
+  await expect.poll(()=>scroll.evaluate(e=>e.scrollTop)).toBeGreaterThan(0);
+  const after=await actions.boundingBox();expect(Math.abs(after!.y-before!.y)).toBeLessThan(1);
+  await expect(page.getByRole('button',{name:'I agree to contribute',exact:true})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'Continue without agreeing',exact:true})).toBeInViewport();
+ }
 });

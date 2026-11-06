@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { useFeedback } from '../contexts/FeedbackContext';
 import { translations, Language } from '../i18n/translations';
 import { getFeedbackFormText } from '../i18n/feedbackFormText';
-import { FeedbackScreenshot, prepareFeedbackScreenshot } from '../services/feedbackScreenshot';
+import { FeedbackScreenshot, prepareFeedbackScreenshot, usesNativeFeedbackImages, chooseNativeFeedbackScreenshot } from '../services/feedbackScreenshot';
 const FeedbackModal = () => {
     const { isOpen, closeFeedback, initialType, contextData, language } = useFeedback();
     const t = translations[language as Language] || translations['ar'];
@@ -67,22 +67,43 @@ const FeedbackModal = () => {
         }
     };
 
+    const chooseScreenshot = async () => {
+        if (!usesNativeFeedbackImages()) { fileInputRef.current?.click(); return; }
+        const request = ++imageRequestRef.current;
+        setImageError('');
+        setIsPreparingImage(true);
+        try {
+            const prepared = await chooseNativeFeedbackScreenshot();
+            if (request === imageRequestRef.current && prepared) setScreenshot(prepared);
+        } catch (error) {
+            if (request !== imageRequestRef.current) return;
+            const code = error instanceof Error ? error.message : '';
+            setImageError(code === 'type' ? copy.invalidType : code === 'size' ? copy.invalidSize : copy.invalidImage);
+        } finally {
+            if (request === imageRequestRef.current) setIsPreparingImage(false);
+        }
+    };
+
+    const requestAgeChoice = () => {
+        alert(copy.ageUnavailable);
+        window.dispatchEvent(new Event('open-measurement-choice'));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isSubmitting || isPreparingImage || !message.trim()) return;
         // Feedback eligibility is separate from optional advertising measurement.
-        // A known minor choice must not be bypassed by an adult confirmation.
+        // Use the saved onboarding age; optional measurement consent is not required.
         try {
             const ageChoice = JSON.parse(localStorage.getItem('mushaf_measurement_choice_v1') || 'null');
-            if (ageChoice?.version === 1 && ['under13', '13to17'].includes(ageChoice.age)) {
-                alert(copy.adultRequired);
+            if (ageChoice?.version !== 1 || ageChoice.age !== 'adult' || typeof ageChoice.allowed !== 'boolean') {
+                requestAgeChoice();
                 return;
             }
         } catch {
-            alert(copy.ageUnavailable);
+            requestAgeChoice();
             return;
         }
-        if (!window.confirm(copy.adultConfirm)) return;
         const session = sessionRef.current;
         setIsSubmitting(true);
 
@@ -221,7 +242,7 @@ const FeedbackModal = () => {
                                 <p className="text-sm font-medium text-[var(--text-primary)]">{copy.screenshot}</p>
                                 <p id="feedback-screenshot-hint" className="text-sm rounded-xl p-3 bg-amber-50 text-amber-900 border border-amber-200">{copy.screenshotHint}</p>
                                 <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleScreenshot} className="hidden" aria-label={copy.add} />
-                                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isPreparingImage} aria-describedby="feedback-screenshot-hint" className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-amber-500 p-3 text-[var(--text-primary)] disabled:opacity-50">
+                                <button type="button" onClick={chooseScreenshot} disabled={isPreparingImage} aria-describedby="feedback-screenshot-hint" className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-amber-500 p-3 text-[var(--text-primary)] disabled:opacity-50">
                                     <ImagePlus size={20} />{isPreparingImage ? copy.preparing : screenshot ? copy.replace : copy.add}
                                 </button>
                                 <p className="text-xs text-[var(--text-primary)] opacity-60">{copy.imageLimits}</p>

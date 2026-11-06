@@ -4,13 +4,13 @@ import { getPrivacyContributionText } from '../i18n/privacyContributionText';
 import { applyMeasurementChoice } from '../services/measurementConsent';
 
 const KEY = 'mushaf_measurement_choice_v1';
-type Age = 'under13' | '13to17' | 'adult' | 'unknown';
+type Age = 'under18' | 'adult' | 'unknown';
 type Choice = { version: 1; age: Age; allowed: boolean; savedAt: string };
 function readChoice(): Choice | null {
     try {
         const value = JSON.parse(localStorage.getItem(KEY) || 'null');
-        return value?.version === 1 && ['under13', '13to17', 'adult', 'unknown'].includes(value.age)
-            && typeof value.allowed === 'boolean' && (!value.allowed || value.age === 'adult') ? value : null;
+        return value?.version === 1 && ['under18', 'under13', '13to17', 'adult', 'unknown'].includes(value.age)
+            && typeof value.allowed === 'boolean' && (!value.allowed || value.age === 'adult') ? { ...value, age: ['under13', '13to17'].includes(value.age) ? 'under18' : value.age } : null;
     } catch { return null; }
 }
 
@@ -25,7 +25,7 @@ export default function MeasurementConsent({ language, ready, onVisibilityChange
     useLayoutEffect(() => { onVisibilityChange?.(ready && (!choice || editing)); }, [ready, choice, editing, onVisibilityChange]);
     useEffect(() => { applyMeasurementChoice(readChoice()).catch(() => { setError(true); setEditing(true); }); }, []);
     useEffect(() => {
-        const open = () => { setAge(choice?.age || ''); setEditing(true); setError(false); setRetryChoice(null); };
+        const open = () => { const saved = readChoice(); setAge(saved?.age === 'unknown' ? '' : saved?.age || ''); setEditing(true); setError(false); setRetryChoice(null); };
         window.addEventListener('open-measurement-choice', open);
         return () => window.removeEventListener('open-measurement-choice', open);
     }, [choice]);
@@ -52,13 +52,13 @@ export default function MeasurementConsent({ language, ready, onVisibilityChange
     };
     if (!ready || (choice && !editing)) return null;
     return <div className="app-modal fixed inset-0 z-[100000] bg-black/60 flex items-center justify-center p-4" dir={dir}>
-        <section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-white text-slate-800 p-6 shadow-xl">
+        <section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="w-full max-w-md max-h-[90dvh] min-h-0 flex flex-col overflow-hidden rounded-2xl bg-white text-slate-800 shadow-xl">
+            <div data-age-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y p-6 pb-4">
             <h2 id="measurement-title" className="modal-branded-title text-xl font-bold mb-3"><ModalLogo />{copy.title}</h2>
             <label htmlFor="measurement-age" className="block mb-2">{copy.age}</label>
             <select autoFocus disabled={saving} id="measurement-age" value={age} onChange={e => { setAge(e.target.value as Age); setRetryChoice(null); setError(false); }} className="w-full border border-slate-400 rounded-lg p-3 bg-white mb-4">
                 <option value="" disabled>{copy.select}</option>
-                <option value="under13">{copy.under13}</option>
-                <option value="13to17">{copy.teen}</option>
+                <option value="under18">{copy.under18}</option>
                 <option value="adult">{copy.adult}</option>
             </select>
             {age === 'adult' && <>
@@ -74,12 +74,14 @@ export default function MeasurementConsent({ language, ready, onVisibilityChange
                     <p>{copy.withdraw}</p>
                 </div>}
             </>}
-            <p className="text-sm mt-3 mb-4">{age === 'under13' || age === '13to17'
+            <p className="text-sm mt-3 mb-4">{age === 'under18'
                 ? (copy.minor)
                 : (copy.general)}</p>
+            </div>
+            <div data-age-actions className="shrink-0 border-t border-slate-200 bg-white p-4">
             <div className="flex flex-col gap-3">
                 {age === 'adult' && <button disabled={saving} onClick={() => save('adult', true)} className="rounded-lg border border-amber-700 p-3 font-bold text-amber-900">{copy.allow}</button>}
-                <button disabled={saving} onClick={() => save(age || 'unknown', false)} className="rounded-lg border border-slate-500 p-3 font-bold">{age === 'under13' || age === '13to17' ? (copy.continue) : (copy.skip)}</button>
+                <button disabled={saving} onClick={() => save(age || 'unknown', false)} className="rounded-lg border border-slate-500 p-3 font-bold">{age === 'under18' ? (copy.continue) : (copy.skip)}</button>
             </div>
             {error && <div className="mt-3">
                 <p role="alert" className="text-red-700">{copy.error}</p>
@@ -88,6 +90,7 @@ export default function MeasurementConsent({ language, ready, onVisibilityChange
                     void save(retry.age, retry.allowed);
                 }}>{copy.retry}</button>
             </div>}
+            </div>
         </section>
     </div>;
 }
