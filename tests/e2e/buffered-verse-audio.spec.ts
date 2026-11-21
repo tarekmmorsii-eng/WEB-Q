@@ -10,14 +10,14 @@ test.beforeAll(async () => {
     `,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',plugins:[{name:'native-fixture',setup(b){
         b.onResolve({filter:/^@capacitor\/core$/},()=>({path:'native',namespace:'fixture'}));
         b.onResolve({filter:/audioCacheService$/},()=>({path:'cache',namespace:'fixture'}));
-        b.onLoad({filter:/.*/,namespace:'fixture'},args=>({contents:args.path==='native' ? 'export const Capacitor={isNativePlatform:()=>true}' : `
+        b.onLoad({filter:/.*/,namespace:'fixture'},args=>({contents:args.path==='native' ? 'export const Capacitor={getPlatform:()=> "android"}' : `
             import {encodeWithSoftEdges} from '${process.cwd().replace(/\\/g,'/')}/services/audioEdgeSmoothing';
             export async function getAudioBlob(url){window.reads.push(url);const b=new AudioBuffer({length:9600,numberOfChannels:1,sampleRate:48000});b.getChannelData(0).fill(.02);return encodeWithSoftEdges(b)}
             export async function cacheAudioBlob(){}
         `,resolveDir:process.cwd()}));
     }}]})).outputFiles[0].text;
 });
-test('native sequence shares output and supports repeats, pause, rate, stop and restart',async({page})=>{
+test('Android sequence shares output and supports repeats, pause, rate, stop and restart',async({page})=>{
     await page.setContent('<div id="root"></div>');
     await page.evaluate(()=>{
         const w=window as any;w.errors=[];w.reads=[];w.contexts=0;w.starts=[];

@@ -2,6 +2,7 @@ import React, { useState, lazy, Suspense } from 'react';
 import { X, Star, Globe, Volume2, VolumeX, Palette, Layout, Menu, Search, BarChart3, Bell, Moon, Sun, Download, FileSpreadsheet, Loader2, Maximize, Minimize, MousePointer2, Bookmark, Settings2, ChevronDown, ChevronUp, Mail, HelpCircle, FileWarning, Calculator, MessageSquare, Check, Facebook, Youtube, Share2, PlayCircle, Shield, StickyNote } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
+const isIOS = Capacitor.getPlatform() === 'ios';
 import { useFeedback } from '../contexts/FeedbackContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
@@ -1052,7 +1053,7 @@ export default function Settings({
                             </section>
 
                             {/* ═══════ قسم الإشعارات الخارجية (Push Notifications) ═══════ */}
-                            <div data-push-notifications className="space-y-3">
+                            {!isIOS && <div data-push-notifications className="space-y-3">
                                 <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
                                     <Bell size={18} className="text-purple-500" />
                                     {t.pushNotifTitle}
@@ -1107,7 +1108,7 @@ export default function Settings({
                                         <Bell size={18} className="text-purple-500" />
                                     )}
                                 </button>
-                            </div>
+                            </div>}
 
                             {!isNative && (
                                 <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
@@ -1120,7 +1121,7 @@ export default function Settings({
                                     </div>
                                 </div>
                             )}
-                            <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                            {!isIOS && <section className="pt-4 border-t border-gray-100 dark:border-slate-700">
                                 <button
                                     type="button"
                                     onClick={() => { window.dispatchEvent(new Event('open-measurement-choice')); }}
@@ -1136,7 +1137,7 @@ export default function Settings({
                                     </span>
                                     <ChevronDown size={18} className="text-amber-500 -rotate-90 rtl:rotate-90 shrink-0" />
                                 </button>
-                            </section>
+                            </section>}
                     </>
 
                     {/* نافذة التوضيح - Two-Step Consent Modal */}

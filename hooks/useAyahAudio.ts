@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { BufferedVerseAudio, prepareBufferedVerse, preparePitchPreservedVerse, primeVerseOutput } from '../services/bufferedVerseAudio';
 type VerseAudio = HTMLAudioElement | BufferedVerseAudio;
 
+const isAndroid = Capacitor.getPlatform() === 'android';
 
 export interface PlayerSettings {
     startGlobalAyah: number;
@@ -80,7 +81,7 @@ function prepareAudio(url: string, playbackRate: number): PendingAudio {
             clearTimeout(timeout);
         }
         if (pending.cancelled) return null;
-        if (blob && Capacitor.isNativePlatform()) {
+        if (blob && isAndroid) {
             try {
                 if (playbackRate !== 1) {
                     const media = preparePitchPreservedVerse(blob);
@@ -147,7 +148,7 @@ export function useAyahAudio({ onAudioError }: UseAyahAudioProps = {}) {
   }, []);
 
   const playAyahAudio = useCallback((globalAyahNumber: number, reciterID: string, playbackRate: number = 1.0, nextGlobalAyahNumber?: number): Promise<void> => {
-    if (Capacitor.isNativePlatform()) {
+    if (isAndroid) {
         try { primeVerseOutput(); } catch { /* HTML audio remains available. */ }
     }
     const request = ++requestRef.current;

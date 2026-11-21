@@ -5,6 +5,29 @@ const config: CapacitorConfig = {
   appName: 'مصحف المراجعة',
   webDir: 'dist',
   backgroundColor: '#000000',
+  android: {
+    // Filesystem is used on iOS to stage shareable files.
+    includePlugins: [
+      '@capacitor/local-notifications',
+      '@capacitor/push-notifications',
+      '@capacitor/share',
+      '@capacitor/status-bar',
+      '@capawesome/capacitor-badge',
+      '@capgo/capacitor-navigation-bar',
+      'capacitor-native-settings'
+    ]
+  },
+  ios: {
+    // The reader handles WKWebView safe areas in CSS.
+    contentInset: 'never',
+    includePlugins: [
+      '@capacitor/filesystem',
+      '@capacitor/local-notifications',
+      '@capacitor/share',
+      '@capawesome/capacitor-badge',
+      'capacitor-native-settings'
+    ]
+  },
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_book',

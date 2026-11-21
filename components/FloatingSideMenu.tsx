@@ -56,7 +56,7 @@ export default function FloatingSideMenu({
     if (!isEnabled) return null;
 
     return (
-        <div className={`fixed ${isRTL ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 z-[55] flex flex-col gap-2 p-2 transition-all duration-500 ease-in-out ${isVisible ? 'translate-x-0' : isRTL ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+        <div data-mushaf-side-menu className={`fixed ${isRTL ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 z-[55] flex flex-col gap-2 p-2 transition-all duration-500 ease-in-out ${isVisible ? 'translate-x-0' : isRTL ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-full opacity-0 pointer-events-none'}`}>
             {onToggleEnlargedReading && <button type="button"
                 id="enlarged-reading-toggle" onClick={onToggleEnlargedReading} disabled={!isVisible}
                 aria-label={isEnlargedReading ? readingViewText(currentLanguage).original : readingViewText(currentLanguage).open}

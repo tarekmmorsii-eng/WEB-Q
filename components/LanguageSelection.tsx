@@ -50,14 +50,14 @@ export default function LanguageSelection({ onSelect }: LanguageSelectionProps) 
     };
 
     return (
-        <div className="fixed inset-0 z-[110000] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-4 animate-in fade-in duration-700">
+        <div data-language-selection className="fixed inset-0 z-[110000] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-4 animate-in fade-in duration-700">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
                 <div className="absolute -top-24 -left-24 w-64 h-64 bg-amber-600 rounded-full blur-[120px]" />
                 <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-900 rounded-full blur-[120px]" />
             </div>
 
-            <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
+            <div data-language-selection-content className="relative z-10 w-full max-w-lg flex flex-col items-center">
                 <div className="mb-6 text-center animate-in slide-in-from-top-10 duration-1000">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-3 shadow-xl">
                         <Globe className="text-amber-500 w-6 h-6" />

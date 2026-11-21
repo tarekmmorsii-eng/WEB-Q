@@ -14,16 +14,32 @@ test.beforeAll(async()=>{
  function App(){const[library,setLibrary]=useState(false);const[open,set]=useState(true),[explanation,explain]=useState(window.explanation);window.explain=explain;
  return <ReadingUiScaleProvider active={window.scaled} fontSize={52}><button onClick={()=>set(true)}>Open verse</button><button onClick={()=>setLibrary(true)}>Open notes library</button>{library&&<Library language={window.language} onClose={()=>setLibrary(false)} onNavigate={async(surah,ayah)=>{window.destination={surah,ayah};setLibrary(false)}}/>}<ReadingDialogScale><Modal isOpen={open} onClose={()=>set(false)} surahNumber={2} ayahNumber={17} language={window.language} currentRating={null} onRate={()=>{}} onBookmark={()=>{}} isBookmarked={false} tafsir={explanation} hasMutashabihat shareMutashabihat={groups} selectedReciterId="minshawy"/></ReadingDialogScale></ReadingUiScaleProvider>}
  createRoot(document.getElementById('root')).render(<App/>);`,loader:'tsx',resolveDir:process.cwd()},bundle:true,write:false,format:'iife',outdir:'out',define:{'import.meta.env':'{}'},plugins:[{name:'native',setup(b){
- b.onResolve({filter:/^@capacitor\/core$/},()=>({path:'core',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:`export const Capacitor={getPlatform:()=>window.platform,isNativePlatform:()=>window.platform==='android'};export const registerPlugin=()=>({hideKeyboard:async()=>{if(window.keyboardPending)await new Promise((resolve,reject)=>{window.finishKeyboard=resolve;window.failKeyboard=reject})},prepareFile:async options=>{window.prepared=options;return{url:'file:///test.mp3'}},saveText:async({text})=>{window.notesTextFile=text},saveBackup:async({text})=>{window.backup=text}});`}));
- b.onResolve({filter:/^@capacitor\/share$/},()=>({path:'share',namespace:'share'}));b.onLoad({filter:/.*/,namespace:'share'},()=>({contents:'export const Share={share:async options=>{window.shareCalls.push(options);return{}}}'}));
+ b.onResolve({filter:/^@capacitor\/core$/},()=>({path:'core',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:`export const Capacitor={getPlatform:()=>window.platform,isNativePlatform:()=>['android','ios'].includes(window.platform)};export const registerPlugin=()=>({hideKeyboard:async()=>{if(window.keyboardPending)await new Promise((resolve,reject)=>{window.finishKeyboard=resolve;window.failKeyboard=reject})},prepareFile:async options=>{window.prepared=options;return{url:'file:///test.mp3'}},saveText:async({text})=>{window.notesTextFile=text},saveBackup:async({text})=>{window.backup=text}});`}));
+ b.onResolve({filter:/^@capacitor\/share$/},()=>({path:'share',namespace:'share'}));b.onLoad({filter:/.*/,namespace:'share'},()=>({contents:`
+  export const Share = { share: async options => {
+    window.shareCalls.push(options);
+    if (window.cancelShare) throw Error('Share canceled');
+    return {};
+  } };
+ `}));
+ b.onResolve({filter:/^@capacitor\/filesystem$/},()=>({path:'filesystem',namespace:'filesystem'}));b.onLoad({filter:/.*/,namespace:'filesystem'},()=>({contents:`
+  export const Directory = { Temporary: 'TEMPORARY' };
+  export const Filesystem = {
+    writeFile: async options => {
+      (window.writes ??= []).push(options);
+      return { uri: 'file:///tmp/' + options.path };
+    },
+    rmdir: async options => { (window.removals ??= []).push(options); }
+  };
+ `}));
  }}]});script=r.outputFiles.find(f=>f.path.endsWith('.js'))!.text;
  const index=fs.readFileSync('dist/index.html','utf8'),cssPath=index.match(/href="([^"]+\.css)"/)![1];css=fs.readFileSync('dist'+cssPath,'utf8')+fs.readFileSync('components/libraryDesign.css','utf8')+fs.readFileSync('components/modalDesign.css','utf8');
 });
-async function open(page:Page,language='ar',scaled=false){
+async function open(page:Page,language='ar',scaled=false,platform='android'){
  await page.route('**/ayah-tools-harness',r=>r.fulfill({contentType:'text/html',body:'<div id="root"></div>'}));
  await page.route('**/quran.json',r=>r.fulfill({json:{data:{surahs:[{...chapter,ayahs:chapter.ayahs.filter((a:any)=>[17,18].includes(a.numberInSurah))}]}}}));
  await page.goto('http://127.0.0.1:5180/ayah-tools-harness');
- await page.evaluate(({language,scaled})=>Object.assign(window,{platform:'android',language,scaled,explanation:'تفسير محفوظ للاختبار',shareCalls:[],__ma3anyData:{'2:17':{'1':{phrase:'مَثَلُهُمْ',meaning:'معنى عربي متاح'},'2':{phrase:'كَمَثَلِ',meaning:'معنى ثان'}}}}),{language,scaled});
+ await page.evaluate(({language,scaled,platform})=>Object.assign(window,{platform,language,scaled,explanation:'تفسير محفوظ للاختبار',shareCalls:[],__ma3anyData:{'2:17':{'1':{phrase:'مَثَلُهُمْ',meaning:'معنى عربي متاح'},'2':{phrase:'كَمَثَلِ',meaning:'معنى ثان'}}}}),{language,scaled,platform});
  await page.addStyleTag({content:css});await page.addScriptTag({content:script});
  await expect(page.getByRole('button',{name:messages[language].notes,exact:true})).toBeVisible();
 }
@@ -50,6 +66,37 @@ test('audio error pages cannot be shared as MP3 and text remains available',asyn
  await page.route('https://everyayah.com/**',r=>r.fulfill({body:'<html>error</html>',contentType:'text/html'}));await open(page);await page.getByRole('button',{name:'مشاركة الآية',exact:true}).click();
  await page.getByRole('checkbox',{name:/صوت الآية/}).check();await expect(page.getByRole('alert')).toContainText('تعذّر تجهيز الصوت');await expect(page.getByRole('button',{name:'مشاركة الصوت',exact:true})).toBeDisabled();await page.getByRole('checkbox',{name:/صوت الآية/}).uncheck();await expect(page.getByRole('button',{name:/^مشاركة النص/})).toBeEnabled();
 
+});
+test('iOS shares text directly and deletes the temporary MP3 after a canceled or completed sheet', async ({ page }) => {
+    const bytes = Buffer.alloc(2048);
+    bytes.write('ID3');
+    await page.route('https://everyayah.com/**', route => route.fulfill({ body: bytes, contentType: 'audio/mpeg' }));
+    await open(page, 'en', false, 'ios');
+    await page.getByRole('button', { name: 'Share verse', exact: true }).click();
+    await page.getByRole('button', { name: /^Share text/ }).click();
+    await expect.poll(() => page.evaluate(() => (window as any).shareCalls[0]?.text)).toContain(verse17);
+    expect(await page.evaluate(() => (window as any).writes)).toBeUndefined();
+
+    await page.getByRole('checkbox', { name: /Verse audio/ }).check();
+    await page.evaluate(() => { (window as any).cancelShare = true; });
+    const audio = page.getByRole('button', { name: /^Share audio/ });
+    await audio.click();
+    await expect.poll(() => page.evaluate(() => (window as any).removals?.length)).toBe(1);
+    const first = await page.evaluate(() => ({
+        write: (window as any).writes[0],
+        share: (window as any).shareCalls[1],
+        remove: (window as any).removals[0],
+    }));
+    expect(first.write).toMatchObject({ directory: 'TEMPORARY', data: bytes.toString('base64') });
+    expect(first.write.path).toMatch(/\/ayah-2-17-minshawy\.mp3$/);
+    expect(first.share.files).toEqual(['file:///tmp/' + first.write.path]);
+    expect(first.remove).toEqual({ directory: 'TEMPORARY', path: first.write.path.split('/')[0], recursive: true });
+    await expect(audio).toBeVisible();
+
+    await page.evaluate(() => { (window as any).cancelShare = false; });
+    await audio.click();
+    await expect.poll(() => page.evaluate(() => (window as any).removals?.length)).toBe(2);
+    await expect(page.locator('[data-ayah-tools]')).toHaveCount(0);
 });
 test('scaled notes remain within a narrow viewport',async({page})=>{
  await page.setViewportSize({width:320,height:844});await open(page,'ar',true);await page.getByRole('button',{name:'ملاحظاتي',exact:true}).click();const text=page.getByRole('textbox',{name:'ملاحظاتي'});await expect(text).toBeEnabled();const box=await text.boundingBox();expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(321);

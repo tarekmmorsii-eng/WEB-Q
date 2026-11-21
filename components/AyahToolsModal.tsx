@@ -70,8 +70,15 @@ export default function AyahToolsModal({mode,surah,ayah,language,reciter,explana
   const next={...shared,[kind]:true};setShared(next);if(next.text&&next.audio)onClose();
  },t.shareError);
  const button='rounded-lg px-3 py-2 min-h-11 border border-[var(--border-primary)] font-bold disabled:opacity-40';
- return <div data-ayah-tools={mode} className="app-modal fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" dir={notesDirection(language)} style={mode==='notes'?{height:viewport.height/scale,top:viewport.top/scale,bottom:'auto',padding:8/scale,paddingTop:24/scale,alignItems:'flex-start'}:undefined}>
-  <section style={mode==='notes'?{maxWidth:'28rem',maxHeight:Math.min(560,(viewport.height-40)/scale),overflow:'hidden'}:undefined} className="bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-xl shadow-xl w-full max-w-xl max-h-[90dvh] min-h-0 flex flex-col overflow-hidden">
+ const nativeIos=Capacitor.getPlatform()==='ios';
+ const notesPadding= nativeIos ? {
+  paddingTop:`calc((24px + max(0px, env(safe-area-inset-top) - ${viewport.top}px)) / ${scale})`,
+  paddingRight:`calc((8px + env(safe-area-inset-right)) / ${scale})`,
+  paddingBottom:`calc((8px + env(safe-area-inset-bottom)) / ${scale})`,
+  paddingLeft:`calc((8px + env(safe-area-inset-left)) / ${scale})`,
+ } : {padding:8/scale,paddingTop:24/scale};
+ return <div data-ayah-tools={mode} className="app-modal fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" dir={notesDirection(language)} style={mode==='notes'?{height:viewport.height/scale,top:viewport.top/scale,bottom:'auto',...notesPadding,alignItems:'flex-start'}:undefined}>
+  <section style={mode==='notes'?{maxWidth:'28rem',maxHeight:nativeIos?'min(560px, 100%)':Math.min(560,(viewport.height-40)/scale),overflow:'hidden'}:undefined} className="bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-xl shadow-xl w-full max-w-xl max-h-[90dvh] min-h-0 flex flex-col overflow-hidden">
    <header className="flex items-center justify-between gap-2 p-3 border-b border-[var(--border-primary)] shrink-0">
     <AyahDialogButton kind="back" language={language} disabled={busy&&mode==='notes'} onClick={()=>leave(onBack)}/>
     <h2 className="modal-branded-title font-bold text-center text-sm min-w-0"><ModalLogo />{mode==='notes'?t.notes:t.share} · {surah}:{ayah}</h2>

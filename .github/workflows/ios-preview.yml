@@ -1,0 +1,71 @@
+name: iPhone Simulator Preview
+
+on:
+  push:
+    branches: ['codex/ios-iphone']
+
+permissions:
+  contents: read
+
+jobs:
+  simulator:
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and sync web assets
+        run: |
+          npm run build
+          npx cap sync ios
+
+      - name: Build unsigned simulator app
+        run: |
+          xcodebuild -version
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/ios-build" \
+            CODE_SIGNING_ALLOWED=NO build
+
+      - name: Launch on an iPhone 17 simulator
+        shell: bash
+        run: |
+          app="$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
+          test -s "$app/public/index.html"
+          test -s "$app/public/quran.json"
+          test -s "$app/public/fonts/v2/p1.woff2"
+
+          bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist")
+          device=$(xcrun simctl list devices available -j | jq -er \
+            '[.devices[][] | select(.name == "iPhone 17")][0].udid')
+          xcrun simctl bootstatus "$device" -b
+          xcrun simctl install "$device" "$app"
+          launch_result=$(xcrun simctl launch "$device" "$bundle_id")
+          echo "$launch_result"
+
+          sleep 10
+          mkdir -p "$RUNNER_TEMP/ios-preview"
+          xcrun simctl io "$device" screenshot "$RUNNER_TEMP/ios-preview/first-launch.png"
+          kill -0 "${launch_result##*: }"
+          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/ios-preview/App-simulator.zip"
+
+      - name: Attach simulator app and first-launch screenshot
+        uses: actions/upload-artifact@v6
+        with:
+          name: iphone-simulator-preview
+          path: ${{ runner.temp }}/ios-preview/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0

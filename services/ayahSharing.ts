@@ -8,6 +8,7 @@ import type { Mutashabiha } from '../types';
 import { translations } from '../i18n/translations';
 import { notesLocale } from '../i18n/ayahToolsText';
 import { ayahToolsText } from '../i18n/ayahToolsText';
+import { readShareFileBase64, shareIOSFile } from './iosShareFile';
 
 const files=registerPlugin<{prepareFile(options:{name:string;base64:string}):Promise<{url:string}>;saveBackup(options:{text:string}):Promise<void>}>('AyahFiles');
 let quran:Promise<any>|undefined;
@@ -60,16 +61,27 @@ export async function prepareVerseAudio(surah:number,ayah:number,reciter:string,
     if(!(signature[0]===73&&signature[1]===68&&signature[2]===51)&&!(signature[0]===255&&(signature[1]&224)===224))throw Error('Invalid MP3');
     return new File([blob],`ayah-${surah}-${ayah}-${reciter}.mp3`,{type:'audio/mpeg'});
 }
-const base64=(blob:Blob):Promise<string>=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=()=>reject(r.error);r.readAsDataURL(blob)});
 export async function shareVerse(text:string,audio?:File,language='en'):Promise<'opened'|'copied'>{
-    if(Capacitor.getPlatform()==='android'){
-        const file=audio?await files.prepareFile({name:audio.name,base64:await base64(audio)}):null;
-        await Share.share({title:ayahToolsText(language).share,text:text||undefined,files:file?[file.url]:undefined,dialogTitle:ayahToolsText(language).share});return 'opened';
+    const platform = Capacitor.getPlatform();
+    const title = ayahToolsText(language).share;
+    if (platform === 'android') {
+        const file = audio ? await files.prepareFile({ name: audio.name, base64: await readShareFileBase64(audio) }) : null;
+        await Share.share({ title, text: text || undefined, files: file ? [file.url] : undefined, dialogTitle: title });
+        return 'opened';
+    }
+    if (platform === 'ios') {
+        if (audio) await shareIOSFile(audio, audio.name, title, text || undefined);
+        else await Share.share({ title, text });
+        return 'opened';
     }
     if(navigator.share){if(audio&&navigator.canShare&&!navigator.canShare({files:[audio]}))throw Error('Audio sharing unsupported');await navigator.share({text:text||undefined,files:audio?[audio]:undefined});return 'opened'}
     if(!audio&&navigator.clipboard){await navigator.clipboard.writeText(text);return 'copied'}throw Error('Sharing unavailable');
 }
 export async function exportNotesBackup(text:string){
     if(Capacitor.getPlatform()==='android'){await files.saveBackup({text});return}
+    if (Capacitor.getPlatform() === 'ios') {
+        await shareIOSFile(new Blob([text], { type: 'application/json' }), 'mushaf-personal-notes.json');
+        return;
+    }
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='mushaf-personal-notes.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }

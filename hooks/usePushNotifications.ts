@@ -22,6 +22,7 @@ const PUSH_TOKEN_KEY = 'quran_push_fcm_token';
 
 // ⭐ مفتاح حفظ إعدادات الإشعارات المرتبطة باللغة (Localization Routing)
 const PUSH_PREFS_KEY = 'push_notification_prefs';
+const nativePushUnavailable = Capacitor.getPlatform() === 'ios';
 
 /**
  * حفظ كائن الارتباط (Token + Language) في localStorage
@@ -80,7 +81,7 @@ interface PushNotificationResult {
 export function usePushNotifications(options?: UsePushNotificationsOptions) {
   const currentLanguage = options?.language || 'ar';
   
-  const [permissionStatus, setPermissionStatus] = useState<PushPermissionStatus>('prompt');
+  const [permissionStatus, setPermissionStatus] = useState<PushPermissionStatus>(nativePushUnavailable ? 'unsupported' : 'prompt');
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +91,8 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
    * التحقق من حالة الصلاحية الحالية
    */
   const checkPermissionStatus = useCallback((): PushPermissionStatus => {
+    if (nativePushUnavailable) return 'unsupported';
+
     // على الأندرويد - Capacitor يتعامل مع الصلاحيات
     if (Capacitor.isNativePlatform()) {
       const saved = localStorage.getItem(PUSH_PERMISSION_KEY);
@@ -265,6 +268,8 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
    * هذه الدالة الرئيسية التي يجب استدعاؤها
    */
   const requestPermission = useCallback(async (): Promise<PushNotificationResult> => {
+    if (nativePushUnavailable) return { success: false };
+
     setIsLoading(true);
     setError(null);
 
@@ -297,6 +302,7 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
    * التحقق من الحالة المحفوظة عند تحميل الهوك
    */
   useEffect(() => {
+    if (nativePushUnavailable) return;
     const status = checkPermissionStatus();
     setPermissionStatus(status);
 
@@ -317,6 +323,7 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
    * هذا يضمن أن أي إشعار مستقبلي سيُرسل باللغة الصحيحة للمستخدم.
    */
   useEffect(() => {
+    if (nativePushUnavailable) return;
     // لا نعمل شيء إذا لم يكن هناك توكن محفوظ
     const savedToken = localStorage.getItem(PUSH_TOKEN_KEY);
     if (!savedToken) return;
@@ -342,6 +349,7 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
    * يُستدعى من Settings.tsx عند فتح النافذة لضمان مزامنة حالة الزر
    */
   const refreshPermissionStatus = useCallback(() => {
+    if (nativePushUnavailable) return;
     const status = checkPermissionStatus();
     setPermissionStatus(status);
     // استعادة الـ Token المحفوظ أيضاً
@@ -366,7 +374,7 @@ export function usePushNotifications(options?: UsePushNotificationsOptions) {
 
     // معلومات مساعدة
     isNative: Capacitor.isNativePlatform(),
-    isPushSupported: typeof window !== 'undefined' && ('Notification' in window || Capacitor.isNativePlatform()),
+    isPushSupported: !nativePushUnavailable && typeof window !== 'undefined' && ('Notification' in window || Capacitor.isNativePlatform()),
   };
 }
 

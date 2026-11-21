@@ -11,6 +11,9 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import AlarmSound from './src/plugins/AlarmSound';
 import { Badge } from '@capawesome/capacitor-badge';
 const isNative = Capacitor.isNativePlatform();
+const isAndroid = Capacitor.getPlatform() === 'android';
+const isIOS = Capacitor.getPlatform() === 'ios';
+const appWebsite = 'https://mushafalmurajaa.com';
 import { Loader2, ChevronRight, Menu, Sun, Moon, Bookmark, ChevronLeft, Type, Search, Bell, BarChart3, Settings as SettingsIcon, MousePointer2, Maximize, Minimize } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual } from 'swiper/modules';
@@ -457,7 +460,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [showLanguageSelection, setShowLanguageSelection] = useState(false);
   const [initialDownloadLanguage, setInitialDownloadLanguage] = useState<string | null>(() => localStorage.getItem('quran_initial_download_language'));
-  const [measurementVisible, setMeasurementVisible] = useState(true);
+  const [measurementVisible, setMeasurementVisible] = useState(!isIOS);
   const [confirmLanguageDownload, setConfirmLanguageDownload] = useState(false);
 
   // Onboarding replay is opt-in for a specifically prepared test build.
@@ -870,7 +873,7 @@ export default function App() {
   const [showUi, setShowUi] = useState(true);
   const [isEnlargedReading, setIsEnlargedReading] = useState(false);
   useEffect(() => {
-    if (isNative) void nativeReadingLayout.setOriginalLayout({ enabled: !isEnlargedReading }).catch(() => {});
+    if (isAndroid) void nativeReadingLayout.setOriginalLayout({ enabled: !isEnlargedReading }).catch(() => {});
   }, [isEnlargedReading]);
   const [readingFontSize, setReadingFontSize] = useState(() => {
     const saved = Number(localStorage.getItem('quran_reading_font_size'));
@@ -1040,14 +1043,7 @@ export default function App() {
   useEffect(() => {
     if (isNative) {
       // Clear badges on start
-      LocalNotifications.removeAllDeliveredNotifications();
-      (async () => {
-        try {
-          await LocalNotifications.setCount({ count: 0 });
-        } catch (e) {
-          console.warn('Badge count not supported on this platform', e);
-        }
-      })();
+      void LocalNotifications.removeAllDeliveredNotifications().catch(() => {});
 
       // Listen for notification clicks
       const listener = LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
@@ -1080,7 +1076,7 @@ export default function App() {
 
         // 🔔 تشغيل خدمة الصوت الأصلية تلقائياً عند وصول منبه (يعمل في الخلفية أيضاً)
         // هذا يضمن تشغيل الصوت العالي + الاهتزاز + كشف الهز حتى لو كان التطبيق مغلقاً
-        const isAlarmNotif = notification.extra?.isAlarm === true || !!notification.extra?.sound;
+        const isAlarmNotif = isAndroid && (notification.extra?.isAlarm === true || !!notification.extra?.sound);
         if (isAlarmNotif) {
           // بناء كائن المنبه النشط لعرض شاشة المنبه داخل التطبيق
           setActiveAlarm({
@@ -1111,8 +1107,8 @@ export default function App() {
       });
 
       return () => {
-        listener.remove();
-        receiveListener.remove();
+        void listener.then(handle => handle.remove()).catch(() => {});
+        void receiveListener.then(handle => handle.remove()).catch(() => {});
       };
     }
   }, [addInAppNotification, t]);
@@ -1321,7 +1317,7 @@ export default function App() {
 
   // دالة موحّدة لإيقاف صوت المنبه: تُستدعى عند الهز أو زر الصوت أو الإيقاف اليدوي
   const stopAlarmAudio = useCallback(() => {
-    if (Capacitor.isNativePlatform()) {
+    if (isAndroid) {
       AlarmSound.stop().catch(() => {});
     }
     if (alarmAudioRef.current) {
@@ -1675,18 +1671,21 @@ export default function App() {
     if (isNative) {
       try {
         const title = t.shareAppTitle;
-        const text = t.shareAppText;
+        const text = isIOS ? title : t.shareAppText;
 
         await Share.share({
           title,
           text,
+          ...(isIOS ? { url: appWebsite } : {}),
           dialogTitle: 'مشاركة التطبيق'
         });
       } catch (error) {
+        if (isIOS && error instanceof Error && /cancel/i.test(error.message)) return;
         console.error('Error sharing:', error);
         // Fallback to clipboard if share fails
         try {
-          await navigator.clipboard.writeText(`${t.shareAppTitle}\n${t.shareAppText}\n${window.location.origin}`);
+          const shareText = isIOS ? `${t.shareAppTitle}\n${appWebsite}` : `${t.shareAppTitle}\n${t.shareAppText}\n${window.location.origin}`;
+          await navigator.clipboard.writeText(shareText);
           setToastMessage(t.shareCopied || 'تم نسخ نص المشاركة بنجاح');
         } catch (clipboardError) {
           console.error('Clipboard fallback failed:', clipboardError);
@@ -1696,7 +1695,7 @@ export default function App() {
     } else {
       setIsShareModalOpen(true);
     }
-  }, [t, isNative]);
+  }, [t]);
 
   const handleStartInteractiveTour = () => {
     // Keep the settings session mounted while the interactive tour uses the reader.
@@ -2035,7 +2034,7 @@ export default function App() {
       }
       // تشغيل صوت منبه التجربة: على الأندرويد نستخدم خدمة أصلية تعمل في الخلفية
       // وتكشف الهز، وعلى الويب نستخدم عنصر الصوت العادي
-      if (Capacitor.isNativePlatform()) {
+      if (isAndroid) {
         AlarmSound.start().catch(() => {});
       } else {
         if (alarmAudioRef.current) {
@@ -2052,6 +2051,9 @@ export default function App() {
       startAlarmListeners();
     };
     window.addEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
+
+    // On iOS the system delivers scheduled reminders, including while the app is open.
+    if (isIOS) return () => window.removeEventListener('triggerTestAlarm', handleTestAlarm as EventListener);
 
     // 3. Notification Scheduling Logic
     const checkNotifications = () => {
@@ -2121,7 +2123,7 @@ export default function App() {
             }
             // تشغيل صوت المنبه المجدول: على الأندرويد نستخدم خدمة أصلية تعمل في الخلفية
             // وتكشف الهز، وعلى الويب نستخدم عنصر الصوت العادي
-            if (Capacitor.isNativePlatform()) {
+            if (isAndroid) {
               AlarmSound.start().catch(() => {});
             } else {
               if (alarmAudioRef.current) {
@@ -2902,7 +2904,7 @@ export default function App() {
         }}
       >
         <FeedbackModal />
-        <MeasurementConsent language={settings.language} ready={!showSplash && !showLanguageSelection} onVisibilityChange={setMeasurementVisible} />
+        {!isIOS && <MeasurementConsent language={settings.language} ready={!showSplash && !showLanguageSelection} onVisibilityChange={setMeasurementVisible} />}
         <InitialLanguageDownload key={`${initialDownloadLanguage}-${confirmLanguageDownload}`} language={initialDownloadLanguage}
           requireConfirmation={confirmLanguageDownload}
           forceTranslationRefresh={!!import.meta.env.VITE_TEST_LANGUAGE_ONBOARDING && !confirmLanguageDownload}
@@ -3354,6 +3356,7 @@ export default function App() {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           currentLanguage={settings.language as Language}
+          shareUrl={isIOS ? appWebsite : undefined}
         />
 
         {isTranslationManagerOpen && (

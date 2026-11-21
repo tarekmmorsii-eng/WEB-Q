@@ -1,6 +1,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import type { AyahNote } from './ayahNotes';
+import { shareIOSFile } from './iosShareFile';
 const files=registerPlugin<{saveText(options:{text:string}):Promise<void>}>('AyahFiles');
 export function formatNotesText(notes:AyahNote[],surahName:(surah:number)=>string,ayahLabel:string):string {
  return [...notes].filter(note=>note.text.trim()).sort((a,b)=>a.surah-b.surah||a.ayah-b.ayah)
@@ -8,11 +9,16 @@ export function formatNotesText(notes:AyahNote[],surahName:(surah:number)=>strin
 }
 export async function saveNotesText(text:string):Promise<void> {
  if(Capacitor.getPlatform()==='android'){await files.saveText({text});return;}
- const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));
+ const file = new Blob([text], { type: 'text/plain;charset=utf-8' });
+ if (Capacitor.getPlatform() === 'ios') {
+  await shareIOSFile(file, 'mushaf-notes.txt');
+  return;
+ }
+ const url=URL.createObjectURL(file);
  const anchor=document.createElement('a');anchor.href=url;anchor.download='mushaf-notes.txt';document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export async function shareNotesText(text:string,title:string):Promise<'opened'|'copied'> {
- if(Capacitor.getPlatform()==='android'){await Share.share({title,text,dialogTitle:title});return 'opened';}
+ if(Capacitor.isNativePlatform()){await Share.share({title,text,dialogTitle:title});return 'opened';}
  if(navigator.share){await navigator.share({title,text});return 'opened';}
  if(navigator.clipboard){await navigator.clipboard.writeText(text);return 'copied';}
  throw Error('Sharing unavailable');

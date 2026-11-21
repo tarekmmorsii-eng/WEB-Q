@@ -13,8 +13,10 @@ import { formatTimeLocalized } from '../i18n/translations';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Badge } from '@capawesome/capacitor-badge';
 import { NativeSettings, AndroidSettings } from 'capacitor-native-settings';
+import { syncIOSReminder } from '../services/iosReminders';
 
-const isNative = Capacitor.isNativePlatform();
+const isAndroid = Capacitor.getPlatform() === 'android';
+const isIOS = Capacitor.getPlatform() === 'ios';
 
 /** Bulletproof: force Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) regardless of browser locale */
 const forceArabicNumerals = (num: number | string): string => {
@@ -115,7 +117,39 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     );
     const [showBatteryModal, setShowBatteryModal] = useState(false);
     const [dontShowAgain, setDontShowAgain] = useState(false);
+    const iosReminderInFlight = useRef(false);
+    const [iosReminderBusy, setIOSReminderBusy] = useState(false);
+    const [iosReminderError, setIOSReminderError] = useState('');
     // const [showTokenPopup, setShowTokenPopup] = useState(false);
+
+    const changeIOSReminder = async (reminder: NotificationItem, apply: () => void) => {
+        if (iosReminderInFlight.current) return;
+        iosReminderInFlight.current = true;
+        setIOSReminderBusy(true);
+        setIOSReminderError('');
+        try {
+            if (reminder.isEnabled) {
+                const current = await LocalNotifications.checkPermissions();
+                const status = current.display === 'prompt' ? await LocalNotifications.requestPermissions() : current;
+                if (status.display !== 'granted') {
+                    setIOSReminderError(isArabic ? 'اسمح بإشعارات مصحف المراجعة من إعدادات iPhone لتفعيل التذكير.' : 'Allow notifications for Mushaf Al-Murajaa in iPhone Settings to enable this reminder.');
+                    return;
+                }
+            }
+            await syncIOSReminder(
+                reminder,
+                resolveName(reminder.name, reminder.metadata?.surahNumber),
+                t.notificationBodyRegular
+            );
+            apply();
+        } catch (error) {
+            console.warn('[NotifManager] Failed to update iOS reminder:', error);
+            setIOSReminderError(isArabic ? 'تعذّر تحديث التذكير. تحقّق من الموعد وحاول مجددًا.' : 'Could not update the reminder. Check its scheduled time and try again.');
+        } finally {
+            iosReminderInFlight.current = false;
+            setIOSReminderBusy(false);
+        }
+    };
 
     // ⭐ فحص صلاحية المنبه الدقيق — معطّل بعد إزالة إذن SCHEDULE_EXACT_ALARM من AndroidManifest
     // لتمرير مراجعة جوجل بلاي. الإشعارات تعمل الآن كإشعارات عادية عبر Capacitor بدون دقة الثانية،
@@ -125,7 +159,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     };
 
     React.useEffect(() => {
-        if (isOpen && isNative) {
+        if (isOpen && isAndroid) {
             LocalNotifications.requestPermissions().then(async (status) => {
                 setPermissionStatus(status.display);
                 
@@ -166,7 +200,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     }, [isOpen, requestPushPermission]);
 
     const scheduleNativeNotification = async (notification: NotificationItem) => {
-        if (!isNative) return;
+        if (!isAndroid) return;
 
         try {
             // Cancel existing notifications for this ID group
@@ -541,8 +575,8 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             id: editingId || Date.now().toString(),
             name: formName,
             isEnabled: true,
-            isAlarm: formIsAlarm,
-            sound: formSound,
+            isAlarm: !isIOS && formIsAlarm,
+            sound: isIOS ? undefined : formSound,
             type: isOnce ? 'once' : formType === 'daily' ? 'daily' : 'weekly',
             days: formType === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : formDays,
             times: formTimes,
@@ -562,13 +596,24 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
             }
         };
 
+        if (isIOS) {
+            const updated = editingId
+                ? notifications.map(n => n.id === editingId ? newNotification : n)
+                : [...notifications, newNotification];
+            void changeIOSReminder(newNotification, () => {
+                onSave(updated);
+                resetForm();
+            });
+            return;
+        }
+
         if (editingId) {
             onSave(notifications.map(n => n.id === editingId ? newNotification : n));
         } else {
             onSave([...notifications, newNotification]);
         }
 
-        if (isNative) {
+        if (isAndroid) {
             scheduleNativeNotification(newNotification);
             
             // ⭐ فحص حالة تحسين البطارية عند حفظ أو تعديل أي تنبيه جديد
@@ -616,12 +661,24 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
     };
 
     const handleToggle = (id: string) => {
-        onSave(notifications.map(n => n.id === id ? { ...n, isEnabled: !n.isEnabled } : n));
+        const updated = notifications.map(n => n.id === id ? { ...n, isEnabled: !n.isEnabled } : n);
+        if (isIOS) {
+            const reminder = updated.find(n => n.id === id);
+            if (reminder) void changeIOSReminder(reminder, () => onSave(updated));
+            return;
+        }
+        onSave(updated);
     };
 
     const handleDelete = (id: string) => {
-        onSave(notifications.filter(n => n.id !== id));
-        if (isNative) {
+        const updated = notifications.filter(n => n.id !== id);
+        if (isIOS) {
+            const reminder = notifications.find(n => n.id === id);
+            if (reminder) void changeIOSReminder({ ...reminder, isEnabled: false }, () => onSave(updated));
+            return;
+        }
+        onSave(updated);
+        if (isAndroid) {
             const baseId = parseInt(id.slice(-6)) || 0;
             // Attempt to cancel all potential sub-IDs (brute force or track them)
             // For now, just cancel the base. Real app would track scheduled IDs.
@@ -659,6 +716,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4">
+                    {iosReminderError && <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-300">{iosReminderError}</p>}
                     {!showAddForm ? (
                         <>
                             {/* Notifications List */}
@@ -1349,6 +1407,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                             </div>
 
                             {/* Sound Selection */}
+                            {!isIOS && <>
                             <div className="space-y-3">
                                 <label className="block text-sm font-bold text-amber-900 dark:text-amber-100">
                                     {t.notificationSound}
@@ -1525,12 +1584,13 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
 
 
                             </div>
+                            </>}
 
                             {/* Action Buttons */}
                             <div className="flex gap-3 pt-4">
                                 <button
                                     onClick={handleSaveNotification}
-                                    disabled={!formName.trim() || formTimes.length === 0 || (formType === 'weekly' && formDays.length === 0 && !formTargetDate)}
+                                    disabled={iosReminderBusy || !formName.trim() || formTimes.length === 0 || (formType === 'weekly' && formDays.length === 0 && !formTargetDate)}
                                     className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg font-bold transition-colors disabled:cursor-not-allowed"
                                 >
                                     {editingId ? t.saveChangesAction : t.addNotificationAction}
@@ -1547,7 +1607,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                 </div>
             </div>
             {/* Battery Optimization Custom Modal */}
-            {showBatteryModal && (
+            {isAndroid && showBatteryModal && (
                 <div className="app-modal fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4 animate-in fade-in">
                     <div className="bg-[var(--bg-card)] w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in zoom-in-95">
                         <button
@@ -1594,7 +1654,7 @@ export default function NotificationManager({ isOpen, onClose, notifications, on
                                         localStorage.setItem('battery_opt_status', 'granted');
                                         localStorage.setItem('battery_opt_requested', 'true');
                                     } catch (e) {}
-                                    if (isNative) {
+                                    if (isAndroid) {
                                         // استخدام casting لتجاوز اختلاف إصدارات المكتبة
                                         NativeSettings.openAndroid({ option: (AndroidSettings as any).IgnoreBatteryOptimization || (AndroidSettings as any).BatteryOptimization })
                                             .catch(() => {

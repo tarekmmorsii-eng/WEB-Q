@@ -1,0 +1,61 @@
+html[data-native-platform="ios"] {
+    -webkit-text-size-adjust: 100%;
+}
+
+[data-native-platform="ios"] [data-mushaf-viewport] {
+    height: 100vh;
+    height: 100dvh;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+[data-native-platform="ios"] #mushaf-controls-header,
+[data-native-platform="ios"] #tour-audio-player.top-0 {
+    top: env(safe-area-inset-top);
+}
+
+@media (max-width: 1023px) {
+    [data-native-platform="ios"] #mushaf-controls-header {
+        left: env(safe-area-inset-left);
+        right: env(safe-area-inset-right);
+    }
+
+    [data-native-platform="ios"] #navigation-bar {
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        padding-left: max(12px, env(safe-area-inset-left));
+    }
+}
+
+[data-native-platform="ios"][dir="rtl"] [data-mushaf-side-menu] {
+    left: env(safe-area-inset-left);
+}
+
+[data-native-platform="ios"][dir="ltr"] [data-mushaf-side-menu] {
+    right: env(safe-area-inset-right);
+}
+
+[data-native-platform="ios"] [data-language-selection],
+[data-native-platform="ios"] .app-modal.fixed.inset-0:not([data-ayah-tools="notes"]) {
+    padding: calc((16px + env(safe-area-inset-top)) / var(--reading-ui-scale, 1))
+        calc((16px + env(safe-area-inset-right)) / var(--reading-ui-scale, 1))
+        calc((16px + env(safe-area-inset-bottom)) / var(--reading-ui-scale, 1))
+        calc((16px + env(safe-area-inset-left)) / var(--reading-ui-scale, 1));
+}
+
+[data-native-platform="ios"] [data-language-selection-content] {
+    max-height: 100%;
+    min-height: 0;
+}
+
+[data-native-platform="ios"] .app-modal.fixed.inset-0 > :is(div, section):not(.absolute):not(.fixed) {
+    max-height: 100%;
+    max-height: min(90dvh, 100%);
+}
+
+[data-native-platform="ios"] .app-modal.fixed.inset-0:is([data-search-dialog], .library-backdrop) {
+    height: calc(var(--ios-viewport-height, 100vh) / var(--reading-ui-scale, 1));
+    top: calc(var(--ios-viewport-top, 0px) / var(--reading-ui-scale, 1));
+    bottom: auto;
+    padding-top: calc((16px + max(0px, env(safe-area-inset-top) - var(--ios-viewport-top, 0px))) / var(--reading-ui-scale, 1));
+}
