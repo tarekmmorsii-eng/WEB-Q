@@ -39,33 +39,82 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/ios-build" \
             CODE_SIGNING_ALLOWED=NO build
 
-      - name: Launch on an iPhone 17 simulator
-        shell: bash
+      - name: Verify bundled assets and archive the simulator app
         run: |
           app="$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
           test -s "$app/public/index.html"
           test -s "$app/public/quran.json"
           test -s "$app/public/fonts/v2/p1.woff2"
+          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/App-simulator.zip"
 
+      - name: Attach simulator app
+        uses: actions/upload-artifact@v6
+        with:
+          name: iphone-simulator-preview
+          path: ${{ runner.temp }}/App-simulator.zip
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Launch on an iPhone 17 simulator
+        id: launch
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          app="$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
           bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist")
-          device=$(xcrun simctl list devices available -j | jq -er \
-            '[.devices[][] | select(.name == "iPhone 17")][0].udid')
-          xcrun simctl bootstatus "$device" -b
+          sdk_version=$(xcrun --sdk iphonesimulator --show-sdk-version)
+          preferred_runtime="com.apple.CoreSimulator.SimRuntime.iOS-${sdk_version//./-}"
+          echo "Looking for iPhone 17 on $preferred_runtime"
+          device=$(xcrun simctl list devices available -j | jq -er --arg runtime "$preferred_runtime" '
+            [.devices[$runtime][]? | select(.name == "iPhone 17")][0].udid //
+            [.devices[][] | select(.name == "iPhone 17")][0].udid')
+          echo "Booting simulator $device"
+          xcrun simctl boot "$device"
+          python3 - "$device" <<'PY'
+          import subprocess
+          import sys
+          import time
+
+          simctl = ["xcrun", "simctl"]
+          device = sys.argv[1]
+          try:
+              subprocess.run([*simctl, "bootstatus", device], check=True, timeout=120)
+          except subprocess.TimeoutExpired:
+              print("bootstatus timed out; checking whether app services are ready", flush=True)
+              for attempt in range(3):
+                  try:
+                      result = subprocess.run([*simctl, "listapps", device], timeout=10, stdout=subprocess.DEVNULL)
+                      if result.returncode == 0:
+                          break
+                  except subprocess.TimeoutExpired:
+                      print(f"App services check {attempt + 1} timed out", flush=True)
+                  time.sleep(5)
+              else:
+                  raise SystemExit("Simulator app services did not become ready")
+          PY
+
+          echo "Installing $bundle_id"
           xcrun simctl install "$device" "$app"
           launch_result=$(xcrun simctl launch "$device" "$bundle_id")
           echo "$launch_result"
 
           sleep 10
-          mkdir -p "$RUNNER_TEMP/ios-preview"
-          xcrun simctl io "$device" screenshot "$RUNNER_TEMP/ios-preview/first-launch.png"
+          xcrun simctl io "$device" screenshot "$RUNNER_TEMP/first-launch.png"
           kill -0 "${launch_result##*: }"
-          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/ios-preview/App-simulator.zip"
 
-      - name: Attach simulator app and first-launch screenshot
+      - name: Print simulator diagnostics
+        if: failure() && steps.launch.conclusion == 'failure'
+        timeout-minutes: 2
+        run: |
+          tail -n 100 "$HOME/Library/Logs/CoreSimulator/CoreSimulator.log" || true
+          xcrun simctl list runtimes || true
+          xcrun simctl list devices || true
+
+      - name: Attach first-launch screenshot
         uses: actions/upload-artifact@v6
         with:
-          name: iphone-simulator-preview
-          path: ${{ runner.temp }}/ios-preview/
+          name: iphone-simulator-first-launch
+          path: ${{ runner.temp }}/first-launch.png
           if-no-files-found: error
           retention-days: 7
-          compression-level: 0

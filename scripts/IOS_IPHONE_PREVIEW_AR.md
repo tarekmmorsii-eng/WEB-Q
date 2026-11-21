@@ -15,7 +15,9 @@ npx cap open ios
 
 اختر المخطط `App` ومحاكي iPhone في Xcode واضغط Run. أعد البناء والمزامنة بعد تعديل واجهة الويب. يمكن أيضًا فتح `ios/App/App.xcodeproj` مباشرة.
 
-يبني [مسار GitHub Actions](https://github.com/tarekmmorsii-eng/WEB-Q/actions/workflows/ios-preview.yml?query=branch%3Acodex%2Fios-iphone) نسخة Debug غير موقّعة ويشغّلها على محاكي iPhone. يستطيع المراجع تنزيل `iphone-simulator-preview` من تشغيل ناجح لمراجعة لقطة بدء التشغيل وتجربة `App-simulator.zip` على محاكي Mac بمعالج Apple. بعد فك الضغط ومع تشغيل المحاكي:
+يبني مسار GitHub Actions نسخة Debug غير موقّعة ويرفق `App-simulator.zip` في المرفق `iphone-simulator-preview` قبل محاولة تشغيل المحاكي. عند نجاح التشغيل، تُرفق لقطة بدء التشغيل في `iphone-simulator-first-launch`. [عمليات بناء فرع iPhone](https://github.com/tarekmmorsii-eng/WEB-Q/actions/workflows/ios-preview.yml?query=branch%3Acodex%2Fios-iphone)
+
+لتجربة الحزمة على Mac بمعالج Apple، فك الضغط وشغّل المحاكي، ثم نفّذ:
 
 ```bash
 xcrun simctl install booted App.app
