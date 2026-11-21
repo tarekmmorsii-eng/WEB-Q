@@ -535,8 +535,8 @@ export default function App() {
     markAllAsRead();
     markAllPushAsRead();
     clearAllPush();
-    // تصفير الشارة الخارجية (Badge) فوراً
-    if (isNative) {
+    // تصفير الشارة الخارجية (Badge) فوراً على Android
+    if (isAndroid) {
       try {
         const { isSupported } = await Badge.isSupported();
         if (isSupported) await Badge.set({ count: 0 });
@@ -552,7 +552,7 @@ export default function App() {
     markAllAsRead();
     markAllPushAsRead();
     clearAllPush();
-    if (isNative) {
+    if (isAndroid) {
       try {
         const { isSupported } = await Badge.isSupported();
         if (isSupported) await Badge.set({ count: 0 });
@@ -1096,8 +1096,8 @@ export default function App() {
           startAlarmListeners();
         }
         
-        // تحديث البادج الخارجي
-        Badge.isSupported().then(res => {
+        // On iOS the in-app notification count updates the badge after authorization.
+        if (isAndroid) Badge.isSupported().then(res => {
             if (res.isSupported) {
                Badge.get().then(current => {
                    Badge.set({ count: current.count + 1 });

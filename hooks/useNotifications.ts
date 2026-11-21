@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { Badge } from '@capawesome/capacitor-badge';
 
 const isNative = Capacitor.isNativePlatform();
+const isIOS = Capacitor.getPlatform() === 'ios';
 
 /**
  * تحديث شارة الأيقونة الخارجية (App Badge)
@@ -12,6 +13,8 @@ const isNative = Capacitor.isNativePlatform();
 async function updateAppBadge(count: number): Promise<void> {
   if (!isNative) return;
   try {
+    // Badge.set requests authorization on iOS. Leave the first prompt to the reminder form.
+    if (isIOS && (await LocalNotifications.checkPermissions()).display !== 'granted') return;
     const { isSupported } = await Badge.isSupported();
     if (!isSupported) {
       console.warn('[Badge] ⚠️ الجهاز لا يدعم الشارة');
