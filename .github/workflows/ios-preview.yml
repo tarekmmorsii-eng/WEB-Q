@@ -58,7 +58,7 @@ jobs:
 
       - name: Launch on an iPhone 17 simulator
         id: launch
-        timeout-minutes: 5
+        timeout-minutes: 15
         shell: bash
         run: |
           app="$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
@@ -71,28 +71,8 @@ jobs:
             [.devices[][] | select(.name == "iPhone 17")][0].udid')
           echo "Booting simulator $device"
           xcrun simctl boot "$device"
-          python3 - "$device" <<'PY'
-          import subprocess
-          import sys
-          import time
-
-          simctl = ["xcrun", "simctl"]
-          device = sys.argv[1]
-          try:
-              subprocess.run([*simctl, "bootstatus", device], check=True, timeout=120)
-          except subprocess.TimeoutExpired:
-              print("bootstatus timed out; checking whether app services are ready", flush=True)
-              for attempt in range(3):
-                  try:
-                      result = subprocess.run([*simctl, "listapps", device], timeout=10, stdout=subprocess.DEVNULL)
-                      if result.returncode == 0:
-                          break
-                  except subprocess.TimeoutExpired:
-                      print(f"App services check {attempt + 1} timed out", flush=True)
-                  time.sleep(5)
-              else:
-                  raise SystemExit("Simulator app services did not become ready")
-          PY
+          # Initial iOS data migration can take several minutes on hosted runners.
+          xcrun simctl bootstatus "$device"
 
           echo "Installing $bundle_id"
           xcrun simctl install "$device" "$app"
